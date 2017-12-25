@@ -1,5 +1,7 @@
 extern crate voodoo as vd;
+extern crate voodoo_winit;
 
+use voodoo_winit::winit as vdw;
 use std::ffi::CString;
 
 fn init_vulkan() -> vd::Result<vd::Instance> {
@@ -23,11 +25,24 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build(loader)
 }
 
+fn init_window() -> (vdw::Window, vdw::EventsLoop) {
+    let events = vdw::EventsLoop::new();
+
+    let window = vdw::WindowBuilder::new()
+        .with_title("NMG")
+        .build(&events)
+        .unwrap();
+
+    (window, events)
+}
+
 fn update(instance: vd::Instance) {
     loop { }
 }
 
 fn main() {
     let instance = init_vulkan().unwrap();
+    let (window, events) = init_window();
+
     update(instance);
 }

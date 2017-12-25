@@ -1,8 +1,8 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit;
 
-use voodoo_winit::winit as vdw;
 use std::ffi::CString;
+use voodoo_winit::winit as vdw;
 
 #[cfg(debug_assertions)]
 const ENABLE_VALIDATION_LAYERS: bool = true;
@@ -39,12 +39,20 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         }
     }
 
-    vd::Instance::builder()
+    let instance = vd::Instance::builder()
         .application_info(&app_info)
         .enabled_extensions(&extensions)
         .enabled_layer_names(layers)
         .print_debug_report(ENABLE_VALIDATION_LAYERS)
-        .build(loader)
+        .build(loader)?;
+
+    let physical_devices = instance.loader().enumerate_physical_devices(&instance)?;
+
+    if physical_devices.is_empty() {
+        return Err("no GPUs with Vulkan support".into())
+    }
+
+    Ok(instance)
 }
 
 fn init_window() -> (vdw::Window, vdw::EventsLoop) {

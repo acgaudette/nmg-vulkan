@@ -55,11 +55,16 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     }
 
     let mut physical_device = None;
+    let mut graphics_family = None;
 
     for device in physical_devices {
-        if suitable(&device) {
-            physical_device = Some(device);
-            break;
+        match get_indices(&device) {
+            Ok(i) => {
+                physical_device = Some(device);
+                graphics_family = Some(i);
+                break;
+            }
+            _ => {}
         }
     }
 
@@ -67,11 +72,28 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         return Err("no suitable GPUs found".into())
     }
 
+    let physical_device = physical_device.unwrap();
+    let graphics_family = graphics_family.unwrap();
+
     Ok(instance)
 }
 
-fn suitable(physical_device: &vd::PhysicalDevice) -> bool {
-    true
+fn get_indices(physical_device: &vd::PhysicalDevice) -> vd::Result<u32> {
+    let q_families = physical_device.queue_family_properties()?;
+
+    let mut i = 0;
+
+    for family in &q_families {
+        if family.queue_count() > 0
+            && family.queue_flags().contains(vd::QueueFlags::GRAPHICS)
+        {
+            return Ok(i)
+        }
+
+        i += 1;
+    }
+
+    Err("graphics family index not found".into())
 }
 
 fn init_window() -> (vdw::Window, vdw::EventsLoop) {

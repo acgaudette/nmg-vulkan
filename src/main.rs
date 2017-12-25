@@ -75,6 +75,23 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let physical_device = physical_device.unwrap();
     let graphics_family = graphics_family.unwrap();
 
+    /* Logical device */
+
+    let device_q_create_info = vd::DeviceQueueCreateInfo::builder()
+        .queue_family_index(graphics_family)
+        .queue_priorities(&[1.0])
+        .build();
+
+    let features = vd::PhysicalDeviceFeatures::builder()
+        .build();
+
+    let device = vd::Device::builder()
+        .queue_create_infos(&[device_q_create_info])
+        .enabled_features(&features)
+        .build(physical_device)?;
+
+    let graphics_q = device.get_device_queue(graphics_family, 0);
+
     Ok(instance)
 }
 

@@ -4,6 +4,11 @@ extern crate voodoo_winit;
 use voodoo_winit::winit as vdw;
 use std::ffi::CString;
 
+#[cfg(debug_assertions)]
+const ENABLE_VALIDATION_LAYERS: bool = true;
+#[cfg(not(debug_assertions))]
+const ENABLE_VALIDATION_LAYERS: bool = false;
+
 fn init_vulkan() -> vd::Result<vd::Instance> {
     let app_name = CString::new("NMG")?;
 
@@ -18,10 +23,23 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build();
 
     let loader = vd::Loader::new()?;
+    let extensions = loader.enumerate_instance_extension_properties()?;
+
+    /* Validation layers */
+
+    let mut layers: &[&str] = &[];
+
+    if ENABLE_VALIDATION_LAYERS {
+        let layer_names: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
+        if loader.verify_layer_support(layer_names).unwrap() {
+            layers = layer_names
+        }
+    }
 
     vd::Instance::builder()
         .application_info(&app_info)
-        .enabled_extensions(&loader.enumerate_instance_extension_properties()?)
+        .enabled_extensions(&extensions)
+        .enabled_layer_names(layers)
         .build(loader)
 }
 

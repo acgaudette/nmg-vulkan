@@ -32,7 +32,10 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     if ENABLE_VALIDATION_LAYERS {
         let layer_names: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
         if loader.verify_layer_support(layer_names).unwrap() {
-            layers = layer_names
+            layers = layer_names;
+            println!("Validation layers successfully loaded");
+        } else {
+            eprintln!("Validation layers could not be loaded");
         }
     }
 
@@ -40,6 +43,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .application_info(&app_info)
         .enabled_extensions(&extensions)
         .enabled_layer_names(layers)
+        .print_debug_report(ENABLE_VALIDATION_LAYERS)
         .build(loader)
 }
 

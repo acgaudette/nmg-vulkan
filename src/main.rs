@@ -46,13 +46,32 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .print_debug_report(ENABLE_VALIDATION_LAYERS)
         .build(loader)?;
 
-    let physical_devices = instance.loader().enumerate_physical_devices(&instance)?;
+    /* Physical device */
+
+    let physical_devices = instance.physical_devices()?;
 
     if physical_devices.is_empty() {
         return Err("no GPUs with Vulkan support".into())
     }
 
+    let mut physical_device = None;
+
+    for device in physical_devices {
+        if suitable(&device) {
+            physical_device = Some(device);
+            break;
+        }
+    }
+
+    if let None = physical_device {
+        return Err("no suitable GPUs found".into())
+    }
+
     Ok(instance)
+}
+
+fn suitable(physical_device: &vd::PhysicalDevice) -> bool {
+    true
 }
 
 fn init_window() -> (vdw::Window, vdw::EventsLoop) {

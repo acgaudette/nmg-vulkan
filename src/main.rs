@@ -192,10 +192,15 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .queue_priorities(&[1.0])
         .build();
 
+    // Combine queues if they share the same index
     let mut infos = vec![graphics_q_create_info];
+    let mut indices = vec![graphics_family];
+    let mut sharing_mode = vd::SharingMode::Exclusive;
 
     if graphics_family != present_family {
         infos.push(present_q_create_info);
+        indices.push(present_family);
+        sharing_mode = vd::SharingMode::Concurrent;
     }
 
     let features = vd::PhysicalDeviceFeatures::builder()
@@ -206,9 +211,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .enabled_features(&features)
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device)?;
-
-    let graphics_q = device.get_device_queue(graphics_family, 0);
-    let present_q = device.get_device_queue(present_family, 0);
 
     /* Swapchain */
 
@@ -226,14 +228,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         count
     };
 
-    let mut indices = vec![graphics_family];
-    let mut sharing_mode = vd::SharingMode::Exclusive;
-
-    if graphics_family != present_family {
-        indices.push(present_family);
-        sharing_mode = vd::SharingMode::Concurrent;
-    }
-
     let swapchain = vd::SwapchainKhr::builder()
         .surface(&surface)
         .min_image_count(image_count)
@@ -248,7 +242,31 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
         .present_mode(present_mode)
         .clipped(true)
-        .build(device);
+        .build(device.clone())?;
+
+    /* Image views */
+
+    let images = swapchain.images();
+    let mut views = Vec::with_capacity(images.len());
+
+    for i in 0..views.len() {
+        let view = vd::ImageView::builder()
+            .image(&images[i])
+            .view_type(vd::ImageViewType::Type2d)
+            .format(swapchain.image_format())
+            .components(vd::ComponentMapping::default())
+            .subresource_range(
+                vd::ImageSubresourceRange::builder()
+                    .aspect_mask(vd::ImageAspectFlags::COLOR)
+                    .base_mip_level(0)
+                    .level_count(1)
+                    .base_array_layer(0)
+                    .layer_count(1)
+                    .build()
+            ).build(device.clone(), Some(swapchain.clone()))?;
+
+        views[i] = view;
+    }
 
     Ok(instance)
 }

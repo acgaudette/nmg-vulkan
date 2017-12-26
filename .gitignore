@@ -2,3 +2,4 @@
 /target/
 **/*.rs.bk
 *.spv
+Cargo.lock

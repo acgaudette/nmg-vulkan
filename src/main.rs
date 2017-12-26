@@ -285,8 +285,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     let main = std::ffi::CString::new("main")?;
 
-    /* Pipeline */
-
     let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
         .stage(vd::ShaderStageFlags::VERTEX)
         .module(&vert_mod)
@@ -300,6 +298,8 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build();
 
     let stages = &[vert_stage, frag_stage];
+
+    /* Fixed-functions */
 
     let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
         .build();
@@ -383,7 +383,40 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build();
 
     let layout = vd::PipelineLayout::builder()
-        .build(device);
+        .build(device.clone())?;
+
+    /* Render passes */
+
+    // Clear framebuffer
+    let color_attachment = vd::AttachmentDescription::builder()
+        .format(swapchain.image_format())
+        .samples(vd::SampleCountFlags::COUNT_1)
+        .load_op(vd::AttachmentLoadOp::Clear)
+        .store_op(vd::AttachmentStoreOp::Store)
+        .stencil_load_op(vd::AttachmentLoadOp::DontCare)
+        .stencil_store_op(vd::AttachmentStoreOp::DontCare)
+        .initial_layout(vd::ImageLayout::Undefined)
+        .final_layout(vd::ImageLayout::PresentSrcKhr)
+        .build();
+
+    let color_attachment_ref = vd::AttachmentReference::builder()
+        .attachment(0)
+        .layout(vd::ImageLayout::ColorAttachmentOptimal)
+        .build();
+
+    let color_attachments = &[color_attachment_ref];
+
+    let subpass = vd::SubpassDescription::builder()
+        .pipeline_bind_point(vd::PipelineBindPoint::Graphics)
+        .color_attachments(color_attachments)
+        .build();
+
+    let pass = vd::RenderPass::builder()
+        .attachments(&[color_attachment])
+        .subpasses(&[subpass])
+        .build(device.clone())?;
+
+    /* Pipeline */
 
     let pipeline = vd::GraphicsPipeline::builder()
         .stages(stages)
@@ -393,8 +426,11 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .rasterization_state(&rasterizer)
         .multisample_state(&multisampling)
         .color_blend_state(&blending)
-        .layout(layout)
-        .build(device);
+        .layout(&layout)
+        .render_pass(&pass)
+        .subpass(0)
+        .base_pipeline_index(-1)
+        .build(device)?;
 
     Ok(instance)
 }

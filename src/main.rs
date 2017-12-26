@@ -718,28 +718,13 @@ fn main() {
     let (events, window) = init_window();
 
     if let Ok(context) = VulkanContext::new(&window) {
-        update(
-            events,
-            &context.device,
-            &context.swapchain,
-            &context.image_available,
-            &context.render_complete,
-            &context.command_buffers,
-            context.graphics_family,
-            context.present_family
-        );
+        update(events, &context);
     }
 }
 
 fn update(
     mut events: vdw::winit::EventsLoop,
-    device: &vd::Device,
-    swapchain: &vd::SwapchainKhr,
-    image_available: &vd::Semaphore,
-    render_complete: &vd::Semaphore,
-    command_buffers: &Vec<vd::CommandBuffer>,
-    graphics_family: u32,
-    present_family: u32
+    context: &VulkanContext,
 ) {
     let mut running = true;
 
@@ -763,18 +748,18 @@ fn update(
 
         // Render frame
         if let Err(e) = render(
-            device,
-            swapchain,
-            image_available,
-            render_complete,
-            command_buffers,
-            graphics_family,
-            present_family
+            &context.device,
+            &context.swapchain,
+            &context.image_available,
+            &context.render_complete,
+            &context.command_buffers,
+            context.graphics_family,
+            context.present_family
         ) {
             panic!("{}", e);
         }
     }
 
     // Synchronize
-    device.wait_idle();
+    context.device.wait_idle();
 }

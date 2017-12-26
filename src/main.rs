@@ -413,9 +413,20 @@ fn init_vulkan(window: vdw::winit::Window) -> vd::Result<vd::Device> {
         .color_attachments(color_attachments)
         .build();
 
+    let dependency = vd::SubpassDependency::builder()
+        .src_subpass(vd::SUBPASS_EXTERNAL)
+        .dst_subpass(0)
+        .src_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+        .dst_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+        .dst_access_mask(
+            vd::AccessFlags::COLOR_ATTACHMENT_READ
+            | vd::AccessFlags::COLOR_ATTACHMENT_WRITE
+        ).build();
+
     let pass = vd::RenderPass::builder()
         .attachments(&[color_attachment])
         .subpasses(&[subpass])
+        .dependencies(&[dependency])
         .build(device.clone())?;
 
     /* Pipeline */

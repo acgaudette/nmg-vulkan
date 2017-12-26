@@ -662,13 +662,13 @@ fn init_drawing(device: vd::Device) -> vd::Result<(vd::Semaphore, vd::Semaphore)
 }
 
 fn render(
-    device: &vd::Device,
-    swapchain: &vd::SwapchainKhr,
+    device:          &vd::Device,
+    swapchain:       &vd::SwapchainKhr,
     image_available: &vd::Semaphore,
     render_complete: &vd::Semaphore,
     command_buffers: &Vec<vd::CommandBuffer>,
     graphics_family: u32,
-    present_family: u32
+    present_family:  u32
 ) -> vd::Result<()> {
     let index = swapchain.acquire_next_image_khr(
         u64::max_value(),
@@ -676,15 +676,18 @@ fn render(
         None
     )?;
 
-    let waits = &[image_available.handle()];
-    let signals = &[render_complete.handle()];
     let command_buffers = &[command_buffers[index as usize].handle()];
 
+    // Synchronization primitives
+    let available_signals = &[image_available.handle()];
+    let complete_signals = &[render_complete.handle()];
+
+    // Wait for available images to render to
     let info = vd::SubmitInfo::builder()
-        .wait_semaphores(waits)
+        .wait_semaphores(available_signals)
         .wait_dst_stage_mask(&vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
         .command_buffers(command_buffers)
-        .signal_semaphores(signals)
+        .signal_semaphores(complete_signals)
         .build();
 
     let graphics_q = device.get_device_queue(graphics_family, 0);
@@ -692,6 +695,7 @@ fn render(
     match graphics_q {
         Some(gq) => {
             unsafe {
+                // Render
                 device.queue_submit(gq, &[info], None)?;
             }
 
@@ -702,13 +706,15 @@ fn render(
 
             match present_q {
                 Some(pq) => {
+                    // Wait for complete frames to present
                     let info = vd::PresentInfoKhr::builder()
-                        .wait_semaphores(waits)
+                        .wait_semaphores(complete_signals)
                         .swapchains(swapchains)
                         .image_indices(indices)
                         .build();
 
                     unsafe {
+                        // Present
                         device.queue_present_khr(pq, &info)?;
                     }
 

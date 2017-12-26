@@ -19,8 +19,14 @@ struct VulkanContext {
     command_buffers: Vec<vd::CommandBuffer>,
     graphics_family: u32,
     present_family:  u32,
+
     image_available: vd::Semaphore,
-    render_complete: vd::Semaphore
+    render_complete: vd::Semaphore,
+
+    _framebuffers: Vec<vd::Framebuffer>,
+    _render_pass:  vd::RenderPass,
+    _views:        Vec<vd::ImageView>,
+    _pipeline:     vd::GraphicsPipeline
 }
 
 impl VulkanContext {
@@ -30,7 +36,11 @@ impl VulkanContext {
             swapchain,
             command_buffers,
             graphics_family,
-            present_family
+            present_family,
+            _framebuffers,
+            _render_pass,
+            _views,
+            _pipeline
         ) = init_vulkan(window)?;
 
         let (image_available, render_complete) = init_drawing(device.clone())?;
@@ -43,15 +53,27 @@ impl VulkanContext {
                 graphics_family,
                 present_family,
                 image_available,
-                render_complete
+                render_complete,
+                _framebuffers,
+                _render_pass,
+                _views,
+                _pipeline
             }
         )
     }
 }
 
-fn init_vulkan(
-    window: &vdw::winit::Window
-) -> vd::Result<(vd::Device, vd::SwapchainKhr, Vec<vd::CommandBuffer>, u32, u32)> {
+fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
+    vd::Device,
+    vd::SwapchainKhr,
+    Vec<vd::CommandBuffer>,
+    u32,
+    u32,
+    Vec<vd::Framebuffer>,
+    vd::RenderPass,
+    Vec<vd::ImageView>,
+    vd::GraphicsPipeline
+)> {
     /* Application */
 
     let app_name = std::ffi::CString::new(TITLE)?;
@@ -560,7 +582,17 @@ fn init_vulkan(
         command_buffers[i].end()?;
     }
 
-    Ok((device, swapchain, command_buffers.into_vec(), graphics_family, present_family))
+    Ok((
+        device,
+        swapchain,
+        command_buffers.into_vec(),
+        graphics_family,
+        present_family,
+        framebuffers,
+        pass,
+        views,
+        pipeline
+    ))
 }
 
 fn get_q_indices(

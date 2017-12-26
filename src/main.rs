@@ -299,9 +299,9 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .name(&main)
         .build();
 
-    let stages = [vert_stage, frag_stage];
+    let stages = &[vert_stage, frag_stage];
 
-    let vertex_input_info = vd::PipelineVertexInputStateCreateInfo::builder()
+    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
         .build();
 
     let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
@@ -331,10 +331,70 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
             .build()
     ];
 
-    let state = vd::PipelineViewportStateCreateInfo::builder()
+    let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
         .viewports(viewports)
         .scissors(scissors)
         .build();
+
+    let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
+        .depth_clamp_enable(false)
+        .rasterizer_discard_enable(false)
+        .polygon_mode(vd::PolygonMode::Fill)
+        .cull_mode(vd::CullModeFlags::NONE)
+        .front_face(vd::FrontFace::CounterClockwise)
+        .depth_bias_enable(false)
+        .depth_bias_constant_factor(0f32)
+        .depth_bias_clamp(0f32)
+        .depth_bias_slope_factor(0f32)
+        .line_width(1f32)
+        .build();
+
+    let multisampling = vd::PipelineMultisampleStateCreateInfo::builder()
+        .rasterization_samples(vd::SampleCountFlags::COUNT_1)
+        .sample_shading_enable(false)
+        .min_sample_shading(1f32)
+        .alpha_to_coverage_enable(false)
+        .alpha_to_one_enable(false)
+        .build();
+
+    // Alpha blending
+    let attachments = &[
+        vd::PipelineColorBlendAttachmentState::builder()
+            .blend_enable(true)
+            .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
+            .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
+            .color_blend_op(vd::BlendOp::Add)
+            .src_alpha_blend_factor(vd::BlendFactor::One)
+            .src_alpha_blend_factor(vd::BlendFactor::Zero)
+            .alpha_blend_op(vd::BlendOp::Add)
+            .color_write_mask(
+                vd::ColorComponentFlags::R
+                | vd::ColorComponentFlags::G
+                | vd::ColorComponentFlags::B
+                | vd::ColorComponentFlags::A
+            ).build()
+    ];
+
+    let blending = vd::PipelineColorBlendStateCreateInfo::builder()
+        .logic_op_enable(false)
+        .logic_op(vd::LogicOp::Copy)
+        .attachments(attachments)
+        .blend_constants([0f32; 4])
+        .build();
+
+    let layout = vd::PipelineLayout::builder()
+        .build(device);
+
+    let pipeline = vd::GraphicsPipeline::builder()
+        .stages(stages)
+        .vertex_input_state(&vert_info)
+        .input_assembly_state(&assembly)
+        .viewport_state(&viewport_state)
+        .rasterization_state(&rasterizer)
+        .multisample_state(&multisampling)
+        .color_blend_state(&blending)
+        .layout(layout)
+        .build(device);
 
     Ok(instance)
 }

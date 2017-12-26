@@ -430,7 +430,25 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .render_pass(&pass)
         .subpass(0)
         .base_pipeline_index(-1)
-        .build(device)?;
+        .build(device.clone())?;
+
+    /* Framebuffers */
+
+    let mut framebuffers = Vec::with_capacity(views.len());
+
+    for i in 0..framebuffers.len() {
+        let attachments = &[&views[i]];
+
+        let framebuffer = vd::Framebuffer::builder()
+            .render_pass(&pass)
+            .attachments(attachments)
+            .width(swapchain.extent().width())
+            .height(swapchain.extent().height())
+            .layers(1)
+            .build(device.clone())?;
+
+        framebuffers[i] = framebuffer;
+    }
 
     Ok(instance)
 }

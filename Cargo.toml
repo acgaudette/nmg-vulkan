@@ -1,0 +1,8 @@
+[package]
+name = "nmg-vulkan"
+version = "0.1.0"
+authors = ["Aaron C Gaudette <gaudetteaaron@gmail.com>"]
+
+[dependencies]
+voodoo = "0.2"
+voodoo_winit = "0.1"

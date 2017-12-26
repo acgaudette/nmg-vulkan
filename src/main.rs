@@ -1,7 +1,7 @@
 extern crate voodoo as vd;
-extern crate voodoo_winit;
+extern crate voodoo_winit as vdw;
 
-use voodoo_winit as vdw;
+const TITLE: &str = "NMG";
 
 #[cfg(debug_assertions)]
 const ENABLE_VALIDATION_LAYERS: bool = true;
@@ -13,10 +13,10 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
-fn init_vulkan() -> vd::Result<vd::Instance> {
+fn init_vulkan(window: vdw::winit::Window) -> vd::Result<vd::Device> {
     /* Application */
 
-    let app_name = std::ffi::CString::new("NMG")?;
+    let app_name = std::ffi::CString::new(TITLE)?;
     let app_info = vd::ApplicationInfo::builder()
         .application_name(&app_name)
         .application_version((0, 1, 0))
@@ -37,7 +37,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let mut layers: &[&str] = &[];
 
     if ENABLE_VALIDATION_LAYERS {
-        if loader.verify_layer_support(VALIDATION_LAYERS).unwrap() {
+        if loader.verify_layer_support(VALIDATION_LAYERS)? {
             layers = VALIDATION_LAYERS;
             println!("Validation layers successfully loaded");
         } else {
@@ -54,16 +54,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .print_debug_report(ENABLE_VALIDATION_LAYERS)
         .build(loader)?;
 
-    /* Window */
-
-    let events = vdw::winit::EventsLoop::new();
-    let window = vdw::winit::WindowBuilder::new()
-        .with_title("NMG")
-        .build(&events)
-        .unwrap();
-
-    let surface = vdw::create_surface(instance.clone(), &window)?;
-
     /* Physical device */
 
     let physical_devices = instance.physical_devices()?;
@@ -71,6 +61,9 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     if physical_devices.is_empty() {
         return Err("no GPUs with Vulkan support".into())
     }
+
+    // Create surface from window
+    let surface = vdw::create_surface(instance.clone(), &window)?;
 
     let mut physical_device = None;
     let mut formats = None;
@@ -521,7 +514,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         command_buffers[i].end()?;
     }
 
-    Ok(instance)
+    Ok(device)
 }
 
 fn get_q_indices(
@@ -576,12 +569,28 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
-fn main() {
-    let instance = init_vulkan().unwrap();
+fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
+    let events = vdw::winit::EventsLoop::new();
 
-    update(instance);
+    let window = vdw::winit::WindowBuilder::new()
+        .with_title(TITLE)
+        .build(&events);
+
+    if let Err(e) = window {
+        panic!(e);
+    }
+
+    (events, window.unwrap())
 }
 
-fn update(instance: vd::Instance) {
+fn main() {
+    let (events, window) = init_window();
+
+    if let Ok(d) = init_vulkan(window) {
+        update(events);
+    }
+}
+
+fn update(mut events: vdw::winit::EventsLoop) {
     loop { }
 }

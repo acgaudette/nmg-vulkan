@@ -249,9 +249,14 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     /* Image views */
 
     let images = swapchain.images();
+
+    if images.is_empty() {
+        return Err("empty swapchain".into());
+    }
+
     let mut views = Vec::with_capacity(images.len());
 
-    for i in 0..views.len() {
+    for i in 0..images.len() {
         let view = vd::ImageView::builder()
             .image(&images[i])
             .view_type(vd::ImageViewType::Type2d)
@@ -267,7 +272,11 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
                     .build()
             ).build(device.clone(), Some(swapchain.clone()))?;
 
-        views[i] = view;
+        views.push(view);
+    }
+
+    if views.is_empty() {
+        return Err("empty views".into());
     }
 
     /* Shaders */
@@ -436,7 +445,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     let mut framebuffers = Vec::with_capacity(views.len());
 
-    for i in 0..framebuffers.len() {
+    for i in 0..views.len() {
         let attachments = &[&views[i]];
 
         let framebuffer = vd::Framebuffer::builder()
@@ -447,7 +456,11 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
             .layers(1)
             .build(device.clone())?;
 
-        framebuffers[i] = framebuffer;
+        framebuffers.push(framebuffer)
+    }
+
+    if framebuffers.is_empty() {
+        return Err("empty framebuffers vector".into());
     }
 
     /* Command buffers */
@@ -464,6 +477,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     for i in 0..command_buffers.len() {
         command_buffers[i].begin(vd::CommandBufferUsageFlags::SIMULTANEOUS_USE)?;
 
+        // Clear color
         let clear = &[
             vd::ClearValue {
                 color: vd::ClearColorValue {

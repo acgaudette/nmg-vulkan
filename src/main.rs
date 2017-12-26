@@ -450,6 +450,44 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         framebuffers[i] = framebuffer;
     }
 
+    /* Command buffers */
+
+    let pool = vd::CommandPool::builder()
+        .queue_family_index(graphics_family)
+        .build(device.clone())?;
+
+    let command_buffers = pool.allocate_command_buffers(
+        vd::CommandBufferLevel::Primary,
+        framebuffers.len() as u32,
+    )?;
+
+    for i in 0..command_buffers.len() {
+        command_buffers[i].begin(vd::CommandBufferUsageFlags::SIMULTANEOUS_USE)?;
+
+        let clear = &[
+            vd::ClearValue {
+                color: vd::ClearColorValue {
+                    float32: [0f32, 0f32, 0f32, 1f32]
+                }
+            }
+        ];
+
+        let pass_info = vd::RenderPassBeginInfo::builder()
+            .render_pass(&pass)
+            .framebuffer(&framebuffers[i])
+            .render_area(
+                vd::Rect2d::builder()
+                    .offset(
+                        vd::Offset2d::builder()
+                            .x(0)
+                            .y(0)
+                            .build()
+                    ).extent(swapchain.extent().clone())
+                    .build()
+            ).clear_values(clear)
+            .build();
+    }
+
     Ok(instance)
 }
 

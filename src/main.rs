@@ -30,12 +30,13 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     /* Validation layers */
 
+    const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
+
     let mut layers: &[&str] = &[];
 
     if ENABLE_VALIDATION_LAYERS {
-        let layer_names: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
-        if loader.verify_layer_support(layer_names).unwrap() {
-            layers = layer_names;
+        if loader.verify_layer_support(VALIDATION_LAYERS).unwrap() {
+            layers = VALIDATION_LAYERS;
             println!("Validation layers successfully loaded");
         } else {
             eprintln!("Validation layers could not be loaded");
@@ -65,6 +66,8 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     /* Physical device */
 
+    const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
+
     let physical_devices = instance.physical_devices()?;
 
     if physical_devices.is_empty() {
@@ -76,6 +79,16 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let mut present_family = 0;
 
     for device in physical_devices {
+        if device.verify_extension_support(DEVICE_EXTENSIONS)? {
+            let details = vd::SwapchainSupportDetails::new(&surface, &device)?;
+
+            if details.formats.is_empty() || details.present_modes.is_empty() {
+                continue;
+            }
+        } else {
+            continue;
+        }
+
         if let Ok((i, j)) = get_indices(&device, &surface) {
             physical_device = Some(device);
             graphics_family = i;
@@ -107,6 +120,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let device = vd::Device::builder()
         .queue_create_infos(&[graphics_q_create_info, present_q_create_info])
         .enabled_features(&features)
+        .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device)?;
 
     let graphics_q = device.get_device_queue(graphics_family, 0);

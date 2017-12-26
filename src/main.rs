@@ -2,7 +2,7 @@ extern crate voodoo as vd;
 extern crate voodoo_winit;
 
 use std::ffi::CString;
-use voodoo_winit::winit as vdw;
+use voodoo_winit as vdw;
 
 #[cfg(debug_assertions)]
 const ENABLE_VALIDATION_LAYERS: bool = true;
@@ -10,8 +10,9 @@ const ENABLE_VALIDATION_LAYERS: bool = true;
 const ENABLE_VALIDATION_LAYERS: bool = false;
 
 fn init_vulkan() -> vd::Result<vd::Instance> {
-    let app_name = CString::new("NMG")?;
+    /* Application */
 
+    let app_name = CString::new("NMG")?;
     let app_info = vd::ApplicationInfo::builder()
         .application_name(&app_name)
         .application_version((0, 1, 0))
@@ -21,6 +22,8 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let create_info = vd::InstanceCreateInfo::builder()
         .application_info(&app_info)
         .build();
+
+    /* Extensions */
 
     let loader = vd::Loader::new()?;
     let extensions = loader.enumerate_instance_extension_properties()?;
@@ -39,12 +42,26 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         }
     }
 
+    /* Instance */
+
     let instance = vd::Instance::builder()
         .application_info(&app_info)
         .enabled_extensions(&extensions)
         .enabled_layer_names(layers)
         .print_debug_report(ENABLE_VALIDATION_LAYERS)
         .build(loader)?;
+
+    /* Window */
+
+    let events = vdw::winit::EventsLoop::new();
+    let window = vdw::winit::WindowBuilder::new()
+        .with_title("NMG")
+        .build(&events)
+        .unwrap();
+
+    /* Surface */
+
+    let surface = vdw::create_surface(instance.clone(), &window)?;
 
     /* Physical device */
 
@@ -113,24 +130,12 @@ fn get_indices(physical_device: &vd::PhysicalDevice) -> vd::Result<u32> {
     Err("graphics family index not found".into())
 }
 
-fn init_window() -> (vdw::Window, vdw::EventsLoop) {
-    let events = vdw::EventsLoop::new();
-
-    let window = vdw::WindowBuilder::new()
-        .with_title("NMG")
-        .build(&events)
-        .unwrap();
-
-    (window, events)
-}
-
 fn update(instance: vd::Instance) {
     loop { }
 }
 
 fn main() {
     let instance = init_vulkan().unwrap();
-    let (window, events) = init_window();
 
     update(instance);
 }

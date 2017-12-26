@@ -15,7 +15,7 @@ const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
 fn init_vulkan(
     window: &vdw::winit::Window
-) -> vd::Result<(vd::Device, vd::SwapchainKhr, Vec<vd::CommandBuffer>, u32)> {
+) -> vd::Result<(vd::Device, vd::SwapchainKhr, Vec<vd::CommandBuffer>, u32, u32)> {
     /* Application */
 
     let app_name = std::ffi::CString::new(TITLE)?;
@@ -523,7 +523,7 @@ fn init_vulkan(
         command_buffers[i].end()?;
     }
 
-    Ok((device, swapchain, command_buffers.into_vec(), graphics_family))
+    Ok((device, swapchain, command_buffers.into_vec(), graphics_family, present_family))
 }
 
 fn get_q_indices(
@@ -598,7 +598,8 @@ fn render(
     image_available: &vd::Semaphore,
     render_complete: &vd::Semaphore,
     command_buffers: &Vec<vd::CommandBuffer>,
-    graphics_family: u32
+    graphics_family: u32,
+    present_family: u32
 ) -> vd::Result<()> {
     let index = swapchain.acquire_next_image_khr(
         u64::max_value(),
@@ -620,25 +621,30 @@ fn render(
     let graphics_q = device.get_device_queue(graphics_family, 0);
 
     match graphics_q {
-        Some(q) => {
+        Some(gq) => {
             unsafe {
-                device.queue_submit(q, &[info], None)?;
+                device.queue_submit(gq, &[info], None)?;
             }
 
             let swapchains = &[swapchain.handle()];
             let indices = &[index];
 
-            let info = vd::PresentInfoKhr::builder()
-                .wait_semaphores(waits)
-                .swapchains(swapchains)
-                .image_indices(indices)
-                .build();
+            let present_q = device.get_device_queue(present_family, 0);
 
-            unsafe {
-                device.queue_present_khr(q, &info)?;
+            match present_q {
+                Some(pq) => {
+                    let info = vd::PresentInfoKhr::builder()
+                        .wait_semaphores(waits)
+                        .swapchains(swapchains)
+                        .image_indices(indices)
+                        .build();
+
+                    unsafe {
+                        device.queue_present_khr(pq, &info)?;
+                    }
+                },
+                None => panic!("no present queue")
             }
-
-            device.queue_wait_idle(q);
         },
         None => panic!("no graphics queue")
     }
@@ -663,9 +669,18 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
 fn main() {
     let (events, window) = init_window();
 
-    if let Ok((device, swapchain, buffers, index)) = init_vulkan(&window) {
+    if let Ok((device, swapchain, buffers, graphics, present)) = init_vulkan(&window) {
         if let Ok((wait, signal)) = init_drawing(device.clone()) {
-            update(events, &device, &swapchain, &wait, &signal, &buffers, index);
+            update(
+                events,
+                &device,
+                &swapchain,
+                &wait,
+                &signal,
+                &buffers,
+                graphics,
+                present
+            );
         }
     }
 }
@@ -677,11 +692,13 @@ fn update(
     image_available: &vd::Semaphore,
     render_complete: &vd::Semaphore,
     command_buffers: &Vec<vd::CommandBuffer>,
-    graphics_family: u32
+    graphics_family: u32,
+    present_family: u32
 ) {
     let mut running = true;
 
     loop {
+        // Handle window events
         events.poll_events(|event| {
             match event {
                 vdw::winit::Event::WindowEvent {
@@ -698,13 +715,15 @@ fn update(
             break;
         }
 
+        // Render frame
         if let Err(e) = render(
             device,
             swapchain,
             image_available,
             render_complete,
             command_buffers,
-            graphics_family
+            graphics_family,
+            present_family
         ) {
             panic!("{}", e);
         }

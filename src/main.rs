@@ -592,5 +592,24 @@ fn main() {
 }
 
 fn update(mut events: vdw::winit::EventsLoop) {
-    loop { }
+    let mut running = true;
+
+    loop {
+        events.poll_events(|event| {
+            match event {
+                vdw::winit::Event::WindowEvent {
+                    event: vdw::winit::WindowEvent::Closed,
+                    ..
+                } => {
+                    running = false;
+                }
+
+                _ => ()
+            }
+        });
+
+        if !running {
+            break;
+        }
+    }
 }

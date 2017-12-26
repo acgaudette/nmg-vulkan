@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+COMPILER_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
+
+function compile {
+  $COMPILER_PATH/glslangValidator -V $1
+}
+
+compile shader.frag
+compile shader.vert

@@ -1,9 +1,7 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
-use std::error::Error;
-
-const TITLE: &str = "NMG";
+const TITLE: &'static str = env!("CARGO_PKG_NAME");
 
 #[cfg(debug_assertions)]
 const ENABLE_VALIDATION_LAYERS: bool = true;

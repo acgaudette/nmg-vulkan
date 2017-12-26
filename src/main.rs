@@ -500,6 +500,25 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
                     .build()
             ).clear_values(clear)
             .build();
+
+        /* Execute render pass */
+
+        command_buffers[i].begin_render_pass(
+            &pass_info,
+            vd::SubpassContents::Inline
+        );
+
+        command_buffers[i].bind_pipeline(
+            vd::PipelineBindPoint::Graphics,
+            &pipeline.handle()
+        );
+
+        command_buffers[i].draw(
+            3, 1, 0, 0
+        );
+
+        command_buffers[i].end_render_pass();
+        command_buffers[i].end()?;
     }
 
     Ok(instance)

@@ -711,17 +711,17 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
 fn main() {
     let (events, window) = init_window();
 
-    if let Ok((device, swapchain, buffers, graphics, present)) = init_vulkan(&window) {
-        if let Ok((wait, signal)) = init_drawing(device.clone()) {
+    if let Ok(context) = VulkanContext::new(&window) {
+        if let Ok((wait, signal)) = init_drawing(context.device.clone()) {
             update(
                 events,
-                &device,
-                &swapchain,
+                &context.device,
+                &context.swapchain,
                 &wait,
                 &signal,
-                &buffers,
-                graphics,
-                present
+                &context.command_buffers,
+                context.graphics_family,
+                context.present_family
             );
         }
     }

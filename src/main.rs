@@ -18,7 +18,9 @@ struct VulkanContext {
     swapchain:       vd::SwapchainKhr,
     command_buffers: Vec<vd::CommandBuffer>,
     graphics_family: u32,
-    present_family:  u32
+    present_family:  u32,
+    image_available: vd::Semaphore,
+    render_complete: vd::Semaphore
 }
 
 impl VulkanContext {
@@ -31,13 +33,17 @@ impl VulkanContext {
             present_family
         ) = init_vulkan(window)?;
 
+        let (image_available, render_complete) = init_drawing(device.clone())?;
+
         Ok(
             VulkanContext {
                 device,
                 swapchain,
                 command_buffers,
                 graphics_family,
-                present_family
+                present_family,
+                image_available,
+                render_complete
             }
         )
     }
@@ -712,18 +718,16 @@ fn main() {
     let (events, window) = init_window();
 
     if let Ok(context) = VulkanContext::new(&window) {
-        if let Ok((wait, signal)) = init_drawing(context.device.clone()) {
-            update(
-                events,
-                &context.device,
-                &context.swapchain,
-                &wait,
-                &signal,
-                &context.command_buffers,
-                context.graphics_family,
-                context.present_family
-            );
-        }
+        update(
+            events,
+            &context.device,
+            &context.swapchain,
+            &context.image_available,
+            &context.render_complete,
+            &context.command_buffers,
+            context.graphics_family,
+            context.present_family
+        );
     }
 }
 

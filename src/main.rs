@@ -583,6 +583,43 @@ fn init_drawing(device: vd::Device) -> vd::Result<()> {
     Ok(())
 }
 
+fn render(
+    device: vd::Device,
+    swapchain: vd::SwapchainKhr,
+    image_available: vd::Semaphore,
+    render_complete: vd::Semaphore,
+    command_buffers: Vec<vd::CommandBuffer>,
+    graphics_family: u32
+) -> vd::Result<()> {
+    let index = swapchain.acquire_next_image_khr(
+        u64::max_value(),
+        Some(&image_available),
+        None
+    )?;
+
+    let waits = &[image_available.handle()];
+    let signals = &[render_complete.handle()];
+    let command_buffers = &[command_buffers[index as usize].handle()];
+
+    let info = vd::SubmitInfo::builder()
+        .wait_semaphores(waits)
+        .wait_dst_stage_mask(&vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+        .command_buffers(command_buffers)
+        .signal_semaphores(signals)
+        .build();
+
+    let graphics_q = device.get_device_queue(graphics_family, 0);
+
+    match graphics_q {
+        Some(q) => unsafe {
+            device.queue_submit(q, &[info], None)?;
+        },
+        None => panic!("no graphics queue")
+    }
+
+    Ok(())
+}
+
 fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     let events = vdw::winit::EventsLoop::new();
 

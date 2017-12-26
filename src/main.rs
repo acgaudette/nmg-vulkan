@@ -643,8 +643,10 @@ fn render(
                         device.queue_present_khr(pq, &info)?;
                     }
 
+                    // Synchronize with GPU in debug mode
+                    // (prevents memory leaks from the validation layers)
                     if ENABLE_VALIDATION_LAYERS {
-                        device.queue_wait_idle(pq);
+                        device.wait_idle();
                     }
                 },
                 None => panic!("no present queue")

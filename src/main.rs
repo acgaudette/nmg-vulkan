@@ -9,6 +9,9 @@ const ENABLE_VALIDATION_LAYERS: bool = true;
 #[cfg(not(debug_assertions))]
 const ENABLE_VALIDATION_LAYERS: bool = false;
 
+const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
+const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
+
 fn init_vulkan() -> vd::Result<vd::Instance> {
     /* Application */
 
@@ -29,8 +32,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let extensions = loader.enumerate_instance_extension_properties()?;
 
     /* Validation layers */
-
-    const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 
     let mut layers: &[&str] = &[];
 
@@ -66,8 +67,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     /* Physical device */
 
-    const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
-
     let physical_devices = instance.physical_devices()?;
 
     if physical_devices.is_empty() {
@@ -75,20 +74,20 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     }
 
     let mut physical_device = None;
+    let mut formats = None;
+    let mut present_modes = None;
     let mut graphics_family = 0;
     let mut present_family = 0;
 
+    // Find a Vulkan-ready GPU
     for device in physical_devices {
-        if device.verify_extension_support(DEVICE_EXTENSIONS)? {
-            let details = vd::SwapchainSupportDetails::new(&surface, &device)?;
-
-            if details.formats.is_empty() || details.present_modes.is_empty() {
-                continue;
-            }
-        } else {
-            continue;
+        // Check for swapchain support
+        if let Ok((f, p)) = get_swapchain_details(&device, &surface) {
+            formats = Some(f);
+            present_modes = Some(p);
         }
 
+        // Get graphics and presentation queue indices
         if let Ok((i, j)) = get_indices(&device, &surface) {
             physical_device = Some(device);
             graphics_family = i;
@@ -101,6 +100,8 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     }
 
     let physical_device = physical_device.unwrap();
+    let formats = formats.unwrap();
+    let present_modes = present_modes.unwrap();
 
     /* Logical device */
 
@@ -164,6 +165,27 @@ fn get_indices(
     }
 
     Err("queue families for physical device not found".into())
+}
+
+fn get_swapchain_details(
+    physical_device: &vd::PhysicalDevice, surface: &vd::SurfaceKhr
+) -> vd::Result<(Vec<vd::SurfaceFormatKhr>, Vec<vd::PresentModeKhr>)> {
+    if !physical_device.verify_extension_support(DEVICE_EXTENSIONS)? {
+        return Err("required GPU extensions not supported".into())
+    }
+
+    let formats = physical_device.surface_formats_khr(surface)?;
+    let present_modes = physical_device.surface_present_modes_khr(surface)?;
+
+    if formats.is_empty() {
+        return Err("no valid surface format".into())
+    }
+
+    if present_modes.is_empty() {
+        return Err("no valid present mode".into())
+    }
+
+    Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
 fn update(instance: vd::Instance) {

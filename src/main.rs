@@ -25,10 +25,6 @@ fn init_vulkan(
         .api_version((1, 0, 0))
         .build();
 
-    let create_info = vd::InstanceCreateInfo::builder()
-        .application_info(&app_info)
-        .build();
-
     /* Extensions */
 
     let loader = vd::Loader::new()?;

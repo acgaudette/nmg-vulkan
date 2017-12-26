@@ -569,7 +569,7 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
-fn init_drawing(device: vd::Device) -> vd::Result<()> {
+fn init_drawing(device: vd::Device) -> vd::Result<(vd::Semaphore, vd::Semaphore)> {
     let image_available = vd::Semaphore::new(
         device.clone(),
         vd::SemaphoreCreateFlags::empty()
@@ -580,7 +580,7 @@ fn init_drawing(device: vd::Device) -> vd::Result<()> {
         vd::SemaphoreCreateFlags::empty()
     )?;
 
-    Ok(())
+    Ok((image_available, render_complete))
 }
 
 fn render(
@@ -637,8 +637,10 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
 fn main() {
     let (events, window) = init_window();
 
-    if let Ok(d) = init_vulkan(window) {
-        update(events);
+    if let Ok(device) = init_vulkan(window) {
+        if let Ok((wait, signal)) = init_drawing(device) {
+            update(events);
+        }
     }
 }
 

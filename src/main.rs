@@ -1,7 +1,6 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit;
 
-use std::ffi::CString;
 use voodoo_winit as vdw;
 
 #[cfg(debug_assertions)]
@@ -15,7 +14,7 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 fn init_vulkan() -> vd::Result<vd::Instance> {
     /* Application */
 
-    let app_name = CString::new("NMG")?;
+    let app_name = std::ffi::CString::new("NMG")?;
     let app_info = vd::ApplicationInfo::builder()
         .application_name(&app_name)
         .application_version((0, 1, 0))
@@ -146,6 +145,39 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         }
 
         mode
+    };
+
+    let capabilities = physical_device.surface_capabilities_khr(&surface)?;
+
+    let swap_extent = {
+        let mut extent = vd::Extent2d::default();
+
+        // Common case--use the resolution of the current window
+        if capabilities.current_extent().width() != u32::max_value() {
+            extent = capabilities.current_extent().clone();
+        } else {
+            // Handle special case window managers and clamp
+            extent.set_width(
+                std::cmp::max(
+                    capabilities.min_image_extent().width(),
+                    std::cmp::min(
+                        capabilities.max_image_extent().width(),
+                        1280 // Default
+                    )
+                )
+            );
+            extent.set_height(
+                std::cmp::max(
+                    capabilities.min_image_extent().height(),
+                    std::cmp::min(
+                        capabilities.max_image_extent().height(),
+                        720 // Default
+                    )
+                )
+            );
+        }
+
+        extent
     };
 
     /* Logical device */

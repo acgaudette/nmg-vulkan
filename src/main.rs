@@ -642,6 +642,10 @@ fn render(
                     unsafe {
                         device.queue_present_khr(pq, &info)?;
                     }
+
+                    if ENABLE_VALIDATION_LAYERS {
+                        device.queue_wait_idle(pq);
+                    }
                 },
                 None => panic!("no present queue")
             }

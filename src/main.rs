@@ -622,8 +622,25 @@ fn render(
     let graphics_q = device.get_device_queue(graphics_family, 0);
 
     match graphics_q {
-        Some(q) => unsafe {
-            device.queue_submit(q, &[info], None)?;
+        Some(q) => {
+            unsafe {
+                device.queue_submit(q, &[info], None)?;
+            }
+
+            let swapchains = &[swapchain.handle()];
+            let indices = &[index];
+
+            let info = vd::PresentInfoKhr::builder()
+                .wait_semaphores(waits)
+                .swapchains(swapchains)
+                .image_indices(indices)
+                .build();
+
+            unsafe {
+                device.queue_present_khr(q, &info)?;
+            }
+
+            device.queue_wait_idle(q);
         },
         None => panic!("no graphics queue")
     }

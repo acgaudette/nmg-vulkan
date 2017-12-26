@@ -91,8 +91,13 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     /* Logical device */
 
-    let device_q_create_info = vd::DeviceQueueCreateInfo::builder()
+    let graphics_q_create_info = vd::DeviceQueueCreateInfo::builder()
         .queue_family_index(graphics_family)
+        .queue_priorities(&[1.0])
+        .build();
+
+    let present_q_create_info = vd::DeviceQueueCreateInfo::builder()
+        .queue_family_index(present_family)
         .queue_priorities(&[1.0])
         .build();
 
@@ -100,11 +105,12 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build();
 
     let device = vd::Device::builder()
-        .queue_create_infos(&[device_q_create_info])
+        .queue_create_infos(&[graphics_q_create_info, present_q_create_info])
         .enabled_features(&features)
         .build(physical_device)?;
 
     let graphics_q = device.get_device_queue(graphics_family, 0);
+    let present_q = device.get_device_queue(present_family, 0);
 
     Ok(instance)
 }

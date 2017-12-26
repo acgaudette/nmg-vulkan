@@ -732,4 +732,7 @@ fn update(
             panic!("{}", e);
         }
     }
+
+    // Synchronize
+    device.wait_idle();
 }

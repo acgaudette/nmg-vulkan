@@ -285,6 +285,8 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
     let main = std::ffi::CString::new("main")?;
 
+    /* Pipeline */
+
     let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
         .stage(vd::ShaderStageFlags::VERTEX)
         .module(&vert_mod)
@@ -298,6 +300,41 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build();
 
     let stages = [vert_stage, frag_stage];
+
+    let vertex_input_info = vd::PipelineVertexInputStateCreateInfo::builder()
+        .build();
+
+    let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
+        .topology(vd::PrimitiveTopology::TriangleList)
+        .primitive_restart_enable(false)
+        .build();
+
+    let viewports = &[
+        vd::Viewport::builder()
+            .x(0f32)
+            .y(0f32)
+            .width(swapchain.extent().width() as f32)
+            .height(swapchain.extent().height() as f32)
+            .min_depth(0f32)
+            .max_depth(1f32)
+            .build()
+    ];
+
+    let scissors = &[
+        vd::Rect2d::builder()
+            .offset(
+                vd::Offset2d::builder()
+                    .x(0)
+                    .y(0)
+                    .build()
+            ).extent(swapchain.extent().clone())
+            .build()
+    ];
+
+    let state = vd::PipelineViewportStateCreateInfo::builder()
+        .viewports(viewports)
+        .scissors(scissors)
+        .build();
 
     Ok(instance)
 }

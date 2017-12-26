@@ -569,6 +569,20 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
+fn init_drawing(device: vd::Device) -> vd::Result<()> {
+    let image_available = vd::Semaphore::new(
+        device.clone(),
+        vd::SemaphoreCreateFlags::empty()
+    )?;
+
+    let render_complete = vd::Semaphore::new(
+        device.clone(),
+        vd::SemaphoreCreateFlags::empty()
+    )?;
+
+    Ok(())
+}
+
 fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     let events = vdw::winit::EventsLoop::new();
 

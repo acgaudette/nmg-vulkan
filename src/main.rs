@@ -210,6 +210,46 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let graphics_q = device.get_device_queue(graphics_family, 0);
     let present_q = device.get_device_queue(present_family, 0);
 
+    /* Swapchain */
+
+    // Frame queue size
+    let image_count = {
+        let mut count = capabilities.min_image_count() + 1;
+
+        // Check for exceeding the limit
+        if capabilities.max_image_count() > 0
+            && count > capabilities.max_image_count()
+        {
+            count = capabilities.max_image_count();
+        }
+
+        count
+    };
+
+    let mut indices = vec![graphics_family];
+    let mut sharing_mode = vd::SharingMode::Exclusive;
+
+    if graphics_family != present_family {
+        indices.push(present_family);
+        sharing_mode = vd::SharingMode::Concurrent;
+    }
+
+    let swapchain = vd::SwapchainKhr::builder()
+        .surface(&surface)
+        .min_image_count(image_count)
+        .image_format(surface_format.format())
+        .image_color_space(surface_format.color_space())
+        .image_extent(swap_extent)
+        .image_array_layers(1)
+        .image_usage(vd::ImageUsageFlags::COLOR_ATTACHMENT)
+        .image_sharing_mode(sharing_mode)
+        .queue_family_indices(&indices)
+        .pre_transform(capabilities.current_transform()) // No change
+        .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
+        .present_mode(present_mode)
+        .clipped(true)
+        .build(device);
+
     Ok(instance)
 }
 

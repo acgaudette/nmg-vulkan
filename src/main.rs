@@ -13,7 +13,9 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
-fn init_vulkan(window: vdw::winit::Window) -> vd::Result<vd::Device> {
+fn init_vulkan(
+    window: vdw::winit::Window
+) -> vd::Result<(vd::Device, vd::SwapchainKhr, Vec<vd::CommandBuffer>, u32)> {
     /* Application */
 
     let app_name = std::ffi::CString::new(TITLE)?;
@@ -241,19 +243,19 @@ fn init_vulkan(window: vdw::winit::Window) -> vd::Result<vd::Device> {
 
     /* Image views */
 
-    let images = swapchain.images();
+    let chain = swapchain.clone();
 
-    if images.is_empty() {
+    if chain.images().is_empty() {
         return Err("empty swapchain".into());
     }
 
-    let mut views = Vec::with_capacity(images.len());
+    let mut views = Vec::with_capacity(chain.images().len());
 
-    for i in 0..images.len() {
+    for i in 0..chain.images().len() {
         let view = vd::ImageView::builder()
-            .image(&images[i])
+            .image(&chain.images()[i])
             .view_type(vd::ImageViewType::Type2d)
-            .format(swapchain.image_format())
+            .format(chain.image_format())
             .components(vd::ComponentMapping::default())
             .subresource_range(
                 vd::ImageSubresourceRange::builder()
@@ -263,7 +265,7 @@ fn init_vulkan(window: vdw::winit::Window) -> vd::Result<vd::Device> {
                     .base_array_layer(0)
                     .layer_count(1)
                     .build()
-            ).build(device.clone(), Some(swapchain.clone()))?;
+            ).build(device.clone(), Some(chain.clone()))?;
 
         views.push(view);
     }
@@ -525,7 +527,7 @@ fn init_vulkan(window: vdw::winit::Window) -> vd::Result<vd::Device> {
         command_buffers[i].end()?;
     }
 
-    Ok(device)
+    Ok((device, swapchain, command_buffers.into_vec(), graphics_family))
 }
 
 fn get_q_indices(
@@ -587,7 +589,7 @@ fn init_drawing(device: vd::Device) -> vd::Result<(vd::Semaphore, vd::Semaphore)
     )?;
 
     let render_complete = vd::Semaphore::new(
-        device.clone(),
+        device,
         vd::SemaphoreCreateFlags::empty()
     )?;
 
@@ -595,16 +597,16 @@ fn init_drawing(device: vd::Device) -> vd::Result<(vd::Semaphore, vd::Semaphore)
 }
 
 fn render(
-    device: vd::Device,
-    swapchain: vd::SwapchainKhr,
-    image_available: vd::Semaphore,
-    render_complete: vd::Semaphore,
-    command_buffers: Vec<vd::CommandBuffer>,
+    device: &vd::Device,
+    swapchain: &vd::SwapchainKhr,
+    image_available: &vd::Semaphore,
+    render_complete: &vd::Semaphore,
+    command_buffers: &Vec<vd::CommandBuffer>,
     graphics_family: u32
 ) -> vd::Result<()> {
     let index = swapchain.acquire_next_image_khr(
         u64::max_value(),
-        Some(&image_available),
+        Some(image_available),
         None
     )?;
 
@@ -665,14 +667,22 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
 fn main() {
     let (events, window) = init_window();
 
-    if let Ok(device) = init_vulkan(window) {
-        if let Ok((wait, signal)) = init_drawing(device) {
-            update(events);
+    if let Ok((device, swapchain, buffers, index)) = init_vulkan(window) {
+        if let Ok((wait, signal)) = init_drawing(device.clone()) {
+            update(events, &device, &swapchain, &wait, &signal, &buffers, index);
         }
     }
 }
 
-fn update(mut events: vdw::winit::EventsLoop) {
+fn update(
+    mut events: vdw::winit::EventsLoop,
+    device: &vd::Device,
+    swapchain: &vd::SwapchainKhr,
+    image_available: &vd::Semaphore,
+    render_complete: &vd::Semaphore,
+    command_buffers: &Vec<vd::CommandBuffer>,
+    graphics_family: u32
+) {
     let mut running = true;
 
     loop {
@@ -692,5 +702,14 @@ fn update(mut events: vdw::winit::EventsLoop) {
         if !running {
             break;
         }
+
+        render(
+            device,
+            swapchain,
+            image_available,
+            render_complete,
+            command_buffers,
+            graphics_family
+        );
     }
 }

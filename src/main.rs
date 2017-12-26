@@ -75,6 +75,7 @@ fn init_vulkan(
             layers = VALIDATION_LAYERS;
             println!("Validation layers successfully loaded");
         } else {
+            // Continue without validation layers; handle error here
             eprintln!("Validation layers could not be loaded");
         }
     }
@@ -711,8 +712,9 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
 fn main() {
     let (events, window) = init_window();
 
-    if let Ok(context) = VulkanContext::new(&window) {
-        update(events, &context);
+    match VulkanContext::new(&window) {
+        Ok(context) => update(events, &context),
+        Err(e) => eprintln!("Could not create Vulkan context: {}", e)
     }
 }
 

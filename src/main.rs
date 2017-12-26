@@ -61,8 +61,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .build(&events)
         .unwrap();
 
-    /* Surface */
-
     let surface = vdw::create_surface(instance.clone(), &window)?;
 
     /* Physical device */
@@ -87,8 +85,8 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
             present_modes = Some(p);
         }
 
-        // Get graphics and presentation queue indices
-        if let Ok((i, j)) = get_indices(&device, &surface) {
+        // Check for graphics and presentation queue support
+        if let Ok((i, j)) = get_q_indices(&device, &surface) {
             physical_device = Some(device);
             graphics_family = i;
             present_family = j;
@@ -102,6 +100,35 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     let physical_device = physical_device.unwrap();
     let formats = formats.unwrap();
     let present_modes = present_modes.unwrap();
+
+    /* Surface */
+
+    let surface_format = {
+        // Begin with the initial values
+        let mut format = formats[0].format();
+        let mut color_space = formats[0].color_space();
+
+        // Ideal scenario (card doesn't care)
+        if formats.len() == 1 && formats[0].format() == vd::Format::Undefined {
+            format = vd::Format::B8G8R8A8Unorm;
+            color_space = vd::ColorSpaceKhr::SrgbNonlinearKhr;
+        }
+
+        // Search for what we want directly
+        for option in formats {
+            if option.format() == vd::Format::B8G8R8A8Unorm
+                && option.color_space() == vd::ColorSpaceKhr::SrgbNonlinearKhr
+            {
+                format = vd::Format::B8G8R8A8Unorm;
+                color_space = vd::ColorSpaceKhr::SrgbNonlinearKhr;
+            }
+        }
+
+        vd::SurfaceFormatKhr::builder()
+            .format(format)
+            .color_space(color_space)
+            .build()
+    };
 
     /* Logical device */
 
@@ -136,7 +163,7 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     Ok(instance)
 }
 
-fn get_indices(
+fn get_q_indices(
     physical_device: &vd::PhysicalDevice, surface: &vd::SurfaceKhr
 ) -> vd::Result<(u32, u32)> {
     let q_families = physical_device.queue_family_properties()?;
@@ -188,12 +215,12 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
-fn update(instance: vd::Instance) {
-    loop { }
-}
-
 fn main() {
     let instance = init_vulkan().unwrap();
 
     update(instance);
+}
+
+fn update(instance: vd::Instance) {
+    loop { }
 }

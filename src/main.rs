@@ -1,6 +1,8 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
+use std::error::Error;
+
 const TITLE: &str = "NMG";
 
 #[cfg(debug_assertions)]
@@ -14,7 +16,7 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
 fn init_vulkan(
-    window: vdw::winit::Window
+    window: &vdw::winit::Window
 ) -> vd::Result<(vd::Device, vd::SwapchainKhr, Vec<vd::CommandBuffer>, u32)> {
     /* Application */
 
@@ -65,7 +67,7 @@ fn init_vulkan(
     }
 
     // Create surface from window
-    let surface = vdw::create_surface(instance.clone(), &window)?;
+    let surface = vdw::create_surface(instance.clone(), window)?;
 
     let mut physical_device = None;
     let mut formats = None;
@@ -658,7 +660,7 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
         .build(&events);
 
     if let Err(e) = window {
-        panic!(e);
+        panic!("{}", e);
     }
 
     (events, window.unwrap())
@@ -667,7 +669,7 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
 fn main() {
     let (events, window) = init_window();
 
-    if let Ok((device, swapchain, buffers, index)) = init_vulkan(window) {
+    if let Ok((device, swapchain, buffers, index)) = init_vulkan(&window) {
         if let Ok((wait, signal)) = init_drawing(device.clone()) {
             update(events, &device, &swapchain, &wait, &signal, &buffers, index);
         }
@@ -693,8 +695,7 @@ fn update(
                     ..
                 } => {
                     running = false;
-                }
-
+                },
                 _ => ()
             }
         });
@@ -703,13 +704,15 @@ fn update(
             break;
         }
 
-        render(
+        if let Err(e) = render(
             device,
             swapchain,
             image_available,
             render_complete,
             command_buffers,
             graphics_family
-        );
+        ) {
+            panic!("{}", e);
+        }
     }
 }

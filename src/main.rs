@@ -130,6 +130,24 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
             .build()
     };
 
+    let present_mode = {
+        // Fall back on FIFO (guaranteed to be supported)
+        let mut mode = vd::PresentModeKhr::FifoKhr;
+
+        for option in present_modes {
+            // Prefer triple buffering
+            if option == vd::PresentModeKhr::MailboxKhr {
+                mode = vd::PresentModeKhr::MailboxKhr;
+                break;
+            // Otherwise, prefer immediate
+            } else if option == vd::PresentModeKhr::ImmediateKhr {
+                mode = vd::PresentModeKhr::ImmediateKhr;
+            }
+        }
+
+        mode
+    };
+
     /* Logical device */
 
     let graphics_q_create_info = vd::DeviceQueueCreateInfo::builder()

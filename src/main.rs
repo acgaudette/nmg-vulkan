@@ -114,11 +114,17 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
         .queue_priorities(&[1.0])
         .build();
 
+    let mut infos = vec![graphics_q_create_info];
+
+    if graphics_family != present_family {
+        infos.push(present_q_create_info);
+    }
+
     let features = vd::PhysicalDeviceFeatures::builder()
         .build();
 
     let device = vd::Device::builder()
-        .queue_create_infos(&[graphics_q_create_info, present_q_create_info])
+        .queue_create_infos(&infos)
         .enabled_features(&features)
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device)?;

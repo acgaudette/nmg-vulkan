@@ -13,6 +13,42 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
+struct VulkanContext {
+    device:          vd::Device,
+    swapchain:       vd::SwapchainKhr,
+    command_buffers: Vec<vd::CommandBuffer>,
+    graphics_family: u32,
+    present_family:  u32
+}
+
+impl VulkanContext {
+    pub fn new(window: &vdw::winit::Window) -> vd::Result<VulkanContext> {
+        let (
+            device,
+            swapchain,
+            command_buffers,
+            graphics_family,
+            present_family
+        ) = init_vulkan(window)?;
+
+        Ok(
+            VulkanContext {
+                device,
+                swapchain,
+                command_buffers,
+                graphics_family,
+                present_family
+            }
+        )
+    }
+
+    pub fn render() -> vd::Result<()> {
+        // TODO
+
+        Ok(())
+    }
+}
+
 fn init_vulkan(
     window: &vdw::winit::Window
 ) -> vd::Result<(vd::Device, vd::SwapchainKhr, Vec<vd::CommandBuffer>, u32, u32)> {

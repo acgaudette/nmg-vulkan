@@ -47,12 +47,6 @@ impl VulkanContext {
             }
         )
     }
-
-    pub fn render() -> vd::Result<()> {
-        // TODO
-
-        Ok(())
-    }
 }
 
 fn init_vulkan(
@@ -691,10 +685,10 @@ fn render(
                         device.wait_idle();
                     }
                 },
-                None => panic!("no present queue")
+                None => return Err("no present queue".into())
             }
         },
-        None => panic!("no graphics queue")
+        None => return Err("no graphics queue".into())
     }
 
     Ok(())

@@ -72,16 +72,14 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     }
 
     let mut physical_device = None;
-    let mut graphics_family = None;
+    let mut graphics_family = 0;
+    let mut present_family = 0;
 
     for device in physical_devices {
-        match get_indices(&device) {
-            Ok(i) => {
-                physical_device = Some(device);
-                graphics_family = Some(i);
-                break;
-            }
-            _ => {}
+        if let Ok((i, j)) = get_indices(&device, &surface) {
+            physical_device = Some(device);
+            graphics_family = i;
+            present_family = j;
         }
     }
 
@@ -90,7 +88,6 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     }
 
     let physical_device = physical_device.unwrap();
-    let graphics_family = graphics_family.unwrap();
 
     /* Logical device */
 
@@ -112,22 +109,35 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
     Ok(instance)
 }
 
-fn get_indices(physical_device: &vd::PhysicalDevice) -> vd::Result<u32> {
+fn get_indices(
+    physical_device: &vd::PhysicalDevice, surface: &vd::SurfaceKhr
+) -> vd::Result<(u32, u32)> {
     let q_families = physical_device.queue_family_properties()?;
 
-    let mut i = 0;
+    let mut graphics_family = None;
+    let mut present_family = None;
 
-    for family in &q_families {
-        if family.queue_count() > 0
-            && family.queue_flags().contains(vd::QueueFlags::GRAPHICS)
-        {
-            return Ok(i)
+    let mut i = 0u32;
+
+    for family in q_families {
+        if family.queue_count() > 0 {
+            if family.queue_flags().contains(vd::QueueFlags::GRAPHICS) {
+                graphics_family = Some(i);
+            }
+
+            if physical_device.surface_support_khr(i, surface)? {
+                present_family = Some(i);
+            }
+        }
+
+        if let (Some(g), Some(p)) = (graphics_family, present_family) {
+            return Ok((g, p))
         }
 
         i += 1;
     }
 
-    Err("graphics family index not found".into())
+    Err("queue families for physical device not found".into())
 }
 
 fn update(instance: vd::Instance) {

@@ -11,6 +11,8 @@ const ENABLE_VALIDATION_LAYERS: bool = false;
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 
+const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
+
 fn init_vulkan() -> vd::Result<vd::Instance> {
     /* Application */
 
@@ -267,6 +269,35 @@ fn init_vulkan() -> vd::Result<vd::Instance> {
 
         views[i] = view;
     }
+
+    /* Shaders */
+
+    let vert_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "vert.spv"].concat()
+    )?;
+
+    let frag_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "frag.spv"].concat()
+    )?;
+
+    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
+    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
+
+    let main = std::ffi::CString::new("main")?;
+
+    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::VERTEX)
+        .module(&vert_mod)
+        .name(&main)
+        .build();
+
+    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::FRAGMENT)
+        .module(&frag_mod)
+        .name(&main)
+        .build();
+
+    let stages = [vert_stage, frag_stage];
 
     Ok(instance)
 }

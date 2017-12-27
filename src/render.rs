@@ -156,6 +156,56 @@ impl<'a> Context<'a> {
             }
         )
     }
+
+    pub fn refresh_swapchain(mut self) -> vd::Result<()> {
+        // Synchronize
+        self.device.wait_idle();
+
+        let (swapchain, _views) = init_swapchain(
+            &self.surface,
+            self.image_count,
+            &self.surface_format,
+            self.swap_extent.clone(),
+            self.sharing_mode,
+            &self.indices,
+            self.transform,
+            self.present_mode,
+            &self.device
+        )?;
+
+        let _render_pass = init_render_pass(&swapchain, &self.device)?;
+
+        let _pipeline = init_pipeline(
+            &swapchain,
+            &self.stages,
+            &self.vert_info,
+            &self.assembly,
+            &self.rasterizer,
+            &self.multisampling,
+            &self.layout,
+            &_render_pass,
+            &self.device,
+        )?;
+
+        let (_framebuffers, command_buffers, _, _) = init_drawing(
+            &_views,
+            &_render_pass,
+            &self.device,
+            self.graphics_family,
+            &swapchain,
+            &_pipeline
+        )?;
+
+        self.swapchain = swapchain;
+        self.command_buffers = command_buffers;
+
+        self._framebuffers = _framebuffers;
+        self._render_pass = _render_pass;
+        self._views = _views;
+        self._pipeline = _pipeline;
+
+        Ok(())
+    }
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(

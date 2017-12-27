@@ -17,14 +17,28 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
 pub struct Context {
+    /* Drawing fields */
+
     pub device:          vd::Device,
     pub swapchain:       vd::SwapchainKhr,
     pub command_buffers: Vec<vd::CommandBuffer>,
     pub graphics_family: u32,
     pub present_family:  u32,
-
     pub image_available: vd::Semaphore,
     pub render_complete: vd::Semaphore,
+
+    /* Swapchain recreation data */
+
+    surface:        vd::SurfaceKhr,
+    image_count:    u32,
+    surface_format: vd::SurfaceFormatKhr,
+    swap_extent:    vd::Extent2d,
+    sharing_mode:   vd::SharingMode,
+    indices:        Vec<u32>,
+    transform:      vd::SurfaceTransformFlagsKhr,
+    present_mode:   vd::PresentModeKhr,
+
+    /* Persistent data */
 
     _framebuffers: Vec<vd::Framebuffer>,
     _render_pass:  vd::RenderPass,
@@ -35,16 +49,46 @@ pub struct Context {
 impl Context {
     pub fn new(window: &vdw::winit::Window) -> vd::Result<Context> {
         let (
-            device,
-            swapchain,
-            command_buffers,
+            surface,
             graphics_family,
             present_family,
-            _framebuffers,
-            _render_pass,
-            _views,
-            _pipeline
+            surface_format,
+            present_mode,
+            transform,
+            image_count,
+            swap_extent,
+            device,
+            indices,
+            sharing_mode,
+            layout
         ) = init_vulkan(window)?;
+
+        let (swapchain, _views) = init_swapchain(
+            &surface,
+            image_count,
+            &surface_format,
+            swap_extent.clone(),
+            sharing_mode,
+            &indices,
+            transform,
+            present_mode,
+            device.clone()
+        )?;
+
+        let _render_pass = init_render_pass(&swapchain, device.clone())?;
+
+        let (
+            _pipeline,
+            _framebuffers,
+            command_buffers,
+        ) = init_pipeline(
+            &swapchain,
+            &layout,
+            &_render_pass,
+            &device,
+            &_views,
+            graphics_family
+        )?;
 
         let (image_available, render_complete) = init_drawing(device.clone())?;
 
@@ -57,6 +101,14 @@ impl Context {
                 present_family,
                 image_available,
                 render_complete,
+                surface,
+                image_count,
+                surface_format,
+                swap_extent,
+                sharing_mode,
+                indices,
+                transform,
+                present_mode,
                 _framebuffers,
                 _render_pass,
                 _views,
@@ -67,15 +119,18 @@ impl Context {
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
+    vd::SurfaceKhr,
+    u32,
+    u32,
+    vd::SurfaceFormatKhr,
+    vd::PresentModeKhr,
+    vd::SurfaceTransformFlagsKhr,
+    u32,
+    vd::Extent2d,
     vd::Device,
-    vd::SwapchainKhr,
-    Vec<vd::CommandBuffer>,
-    u32,
-    u32,
-    Vec<vd::Framebuffer>,
-    vd::RenderPass,
-    Vec<vd::ImageView>,
-    vd::GraphicsPipeline
+    Vec<u32>,
+    vd::SharingMode,
+    vd::PipelineLayout
 )> {
     /* Application */
 
@@ -204,6 +259,20 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     let capabilities = physical_device.surface_capabilities_khr(&surface)?;
 
+    // Frame queue size
+    let image_count = {
+        let mut count = capabilities.min_image_count() + 1;
+
+        // Check for exceeding the limit
+        if capabilities.max_image_count() > 0
+            && count > capabilities.max_image_count()
+        {
+            count = capabilities.max_image_count();
+        }
+
+        count
+    };
+
     let swap_extent = {
         let mut extent = vd::Extent2d::default();
 
@@ -267,334 +336,22 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device)?;
 
-    /* Swapchain */
-
-    // Frame queue size
-    let image_count = {
-        let mut count = capabilities.min_image_count() + 1;
-
-        // Check for exceeding the limit
-        if capabilities.max_image_count() > 0
-            && count > capabilities.max_image_count()
-        {
-            count = capabilities.max_image_count();
-        }
-
-        count
-    };
-
-    let swapchain = vd::SwapchainKhr::builder()
-        .surface(&surface)
-        .min_image_count(image_count)
-        .image_format(surface_format.format())
-        .image_color_space(surface_format.color_space())
-        .image_extent(swap_extent)
-        .image_array_layers(1)
-        .image_usage(vd::ImageUsageFlags::COLOR_ATTACHMENT)
-        .image_sharing_mode(sharing_mode)
-        .queue_family_indices(&indices)
-        .pre_transform(capabilities.current_transform()) // No change
-        .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
-        .present_mode(present_mode)
-        .clipped(true)
-        .build(device.clone())?;
-
-    /* Image views */
-
-    let chain = swapchain.clone();
-
-    if chain.images().is_empty() {
-        return Err("empty swapchain".into());
-    }
-
-    let mut views = Vec::with_capacity(chain.images().len());
-
-    for i in 0..chain.images().len() {
-        let view = vd::ImageView::builder()
-            .image(&chain.images()[i])
-            .view_type(vd::ImageViewType::Type2d)
-            .format(chain.image_format())
-            .components(vd::ComponentMapping::default())
-            .subresource_range(
-                vd::ImageSubresourceRange::builder()
-                    .aspect_mask(vd::ImageAspectFlags::COLOR)
-                    .base_mip_level(0)
-                    .level_count(1)
-                    .base_array_layer(0)
-                    .layer_count(1)
-                    .build()
-            ).build(device.clone(), Some(chain.clone()))?;
-
-        views.push(view);
-    }
-
-    if views.is_empty() {
-        return Err("empty views".into());
-    }
-
-    /* Shaders */
-
-    let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "vert.spv"].concat()
-    )?;
-
-    let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "frag.spv"].concat()
-    )?;
-
-    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
-    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
-
-    let main = ffi::CString::new("main")?;
-
-    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
-        .stage(vd::ShaderStageFlags::VERTEX)
-        .module(&vert_mod)
-        .name(&main)
-        .build();
-
-    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
-        .stage(vd::ShaderStageFlags::FRAGMENT)
-        .module(&frag_mod)
-        .name(&main)
-        .build();
-
-    let stages = &[vert_stage, frag_stage];
-
-    /* Fixed-functions */
-
-    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
-        .build();
-
-    let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
-        .topology(vd::PrimitiveTopology::TriangleList)
-        .primitive_restart_enable(false)
-        .build();
-
-    let viewports = &[
-        vd::Viewport::builder()
-            .x(0f32)
-            .y(0f32)
-            .width(swapchain.extent().width() as f32)
-            .height(swapchain.extent().height() as f32)
-            .min_depth(0f32)
-            .max_depth(1f32)
-            .build()
-    ];
-
-    let scissors = &[
-        vd::Rect2d::builder()
-            .offset(
-                vd::Offset2d::builder()
-                    .x(0)
-                    .y(0)
-                    .build()
-            ).extent(swapchain.extent().clone())
-            .build()
-    ];
-
-    let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
-        .viewports(viewports)
-        .scissors(scissors)
-        .build();
-
-    let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
-        .depth_clamp_enable(false)
-        .rasterizer_discard_enable(false)
-        .polygon_mode(vd::PolygonMode::Fill)
-        .cull_mode(vd::CullModeFlags::NONE)
-        .front_face(vd::FrontFace::CounterClockwise)
-        .depth_bias_enable(false)
-        .depth_bias_constant_factor(0f32)
-        .depth_bias_clamp(0f32)
-        .depth_bias_slope_factor(0f32)
-        .line_width(1f32)
-        .build();
-
-    let multisampling = vd::PipelineMultisampleStateCreateInfo::builder()
-        .rasterization_samples(vd::SampleCountFlags::COUNT_1)
-        .sample_shading_enable(false)
-        .min_sample_shading(1f32)
-        .alpha_to_coverage_enable(false)
-        .alpha_to_one_enable(false)
-        .build();
-
-    // Alpha blending
-    let attachments = &[
-        vd::PipelineColorBlendAttachmentState::builder()
-            .blend_enable(true)
-            .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
-            .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
-            .color_blend_op(vd::BlendOp::Add)
-            .src_alpha_blend_factor(vd::BlendFactor::One)
-            .src_alpha_blend_factor(vd::BlendFactor::Zero)
-            .alpha_blend_op(vd::BlendOp::Add)
-            .color_write_mask(
-                vd::ColorComponentFlags::R
-                | vd::ColorComponentFlags::G
-                | vd::ColorComponentFlags::B
-                | vd::ColorComponentFlags::A
-            ).build()
-    ];
-
-    let blending = vd::PipelineColorBlendStateCreateInfo::builder()
-        .logic_op_enable(false)
-        .logic_op(vd::LogicOp::Copy)
-        .attachments(attachments)
-        .blend_constants([0f32; 4])
-        .build();
-
     let layout = vd::PipelineLayout::builder()
         .build(device.clone())?;
 
-    /* Render passes */
-
-    // Clear framebuffer
-    let color_attachment = vd::AttachmentDescription::builder()
-        .format(swapchain.image_format())
-        .samples(vd::SampleCountFlags::COUNT_1)
-        .load_op(vd::AttachmentLoadOp::Clear)
-        .store_op(vd::AttachmentStoreOp::Store)
-        .stencil_load_op(vd::AttachmentLoadOp::DontCare)
-        .stencil_store_op(vd::AttachmentStoreOp::DontCare)
-        .initial_layout(vd::ImageLayout::Undefined)
-        .final_layout(vd::ImageLayout::PresentSrcKhr)
-        .build();
-
-    let color_attachment_ref = vd::AttachmentReference::builder()
-        .attachment(0)
-        .layout(vd::ImageLayout::ColorAttachmentOptimal)
-        .build();
-
-    let color_attachments = &[color_attachment_ref];
-
-    let subpass = vd::SubpassDescription::builder()
-        .pipeline_bind_point(vd::PipelineBindPoint::Graphics)
-        .color_attachments(color_attachments)
-        .build();
-
-    let dependency = vd::SubpassDependency::builder()
-        .src_subpass(vd::SUBPASS_EXTERNAL)
-        .dst_subpass(0)
-        .src_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
-        .dst_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
-        .dst_access_mask(
-            vd::AccessFlags::COLOR_ATTACHMENT_READ
-            | vd::AccessFlags::COLOR_ATTACHMENT_WRITE
-        ).build();
-
-    let pass = vd::RenderPass::builder()
-        .attachments(&[color_attachment])
-        .subpasses(&[subpass])
-        .dependencies(&[dependency])
-        .build(device.clone())?;
-
-    /* Pipeline */
-
-    let pipeline = vd::GraphicsPipeline::builder()
-        .stages(stages)
-        .vertex_input_state(&vert_info)
-        .input_assembly_state(&assembly)
-        .viewport_state(&viewport_state)
-        .rasterization_state(&rasterizer)
-        .multisample_state(&multisampling)
-        .color_blend_state(&blending)
-        .layout(&layout)
-        .render_pass(&pass)
-        .subpass(0)
-        .base_pipeline_index(-1)
-        .build(device.clone())?;
-
-    /* Framebuffers */
-
-    let mut framebuffers = Vec::with_capacity(views.len());
-
-    for i in 0..views.len() {
-        let attachments = &[&views[i]];
-
-        let framebuffer = vd::Framebuffer::builder()
-            .render_pass(&pass)
-            .attachments(attachments)
-            .width(swapchain.extent().width())
-            .height(swapchain.extent().height())
-            .layers(1)
-            .build(device.clone())?;
-
-        framebuffers.push(framebuffer)
-    }
-
-    if framebuffers.is_empty() {
-        return Err("empty framebuffers vector".into());
-    }
-
-    /* Command buffers */
-
-    let pool = vd::CommandPool::builder()
-        .queue_family_index(graphics_family)
-        .build(device.clone())?;
-
-    let command_buffers = pool.allocate_command_buffers(
-        vd::CommandBufferLevel::Primary,
-        framebuffers.len() as u32,
-    )?;
-
-    for i in 0..command_buffers.len() {
-        command_buffers[i].begin(vd::CommandBufferUsageFlags::SIMULTANEOUS_USE)?;
-
-        // Clear color
-        let clear = &[
-            vd::ClearValue {
-                color: vd::ClearColorValue {
-                    float32: [0f32, 0f32, 0f32, 1f32]
-                }
-            }
-        ];
-
-        let pass_info = vd::RenderPassBeginInfo::builder()
-            .render_pass(&pass)
-            .framebuffer(&framebuffers[i])
-            .render_area(
-                vd::Rect2d::builder()
-                    .offset(
-                        vd::Offset2d::builder()
-                            .x(0)
-                            .y(0)
-                            .build()
-                    ).extent(swapchain.extent().clone())
-                    .build()
-            ).clear_values(clear)
-            .build();
-
-        /* Execute render pass */
-
-        command_buffers[i].begin_render_pass(
-            &pass_info,
-            vd::SubpassContents::Inline
-        );
-
-        command_buffers[i].bind_pipeline(
-            vd::PipelineBindPoint::Graphics,
-            &pipeline.handle()
-        );
-
-        command_buffers[i].draw(
-            3, 1, 0, 0
-        );
-
-        command_buffers[i].end_render_pass();
-        command_buffers[i].end()?;
-    }
-
     Ok((
-        device,
-        swapchain,
-        command_buffers.into_vec(),
+        surface,
         graphics_family,
         present_family,
-        framebuffers,
-        pass,
-        views,
-        pipeline
+        surface_format,
+        present_mode,
+        capabilities.current_transform(), // No change
+        image_count,
+        swap_extent,
+        device,
+        indices,
+        sharing_mode,
+        layout
     ))
 }
 
@@ -648,6 +405,346 @@ fn get_swapchain_details(
     }
 
     Ok((formats.into_vec(), present_modes.into_vec()))
+}
+
+fn init_swapchain(
+    surface:        &vd::SurfaceKhr,
+    image_count:    u32,
+    surface_format: &vd::SurfaceFormatKhr,
+    swap_extent:    vd::Extent2d,
+    sharing_mode:   vd::SharingMode,
+    indices:        &[u32],
+    transform:      vd::SurfaceTransformFlagsKhr,
+    present_mode:   vd::PresentModeKhr,
+    device:         vd::Device,
+) -> vd::Result<(
+    vd::SwapchainKhr,
+    Vec<vd::ImageView>
+)> {
+    let swapchain = vd::SwapchainKhr::builder()
+        .surface(&surface)
+        .min_image_count(image_count)
+        .image_format(surface_format.format())
+        .image_color_space(surface_format.color_space())
+        .image_extent(swap_extent)
+        .image_array_layers(1)
+        .image_usage(vd::ImageUsageFlags::COLOR_ATTACHMENT)
+        .image_sharing_mode(sharing_mode)
+        .queue_family_indices(indices)
+        .pre_transform(transform)
+        .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
+        .present_mode(present_mode)
+        .clipped(true)
+        .build(device.clone())?;
+
+    /* Image views */
+
+    let chain = swapchain.clone();
+
+    if chain.images().is_empty() {
+        return Err("empty swapchain".into());
+    }
+
+    let mut views = Vec::with_capacity(chain.images().len());
+
+    for i in 0..chain.images().len() {
+        let view = vd::ImageView::builder()
+            .image(&chain.images()[i])
+            .view_type(vd::ImageViewType::Type2d)
+            .format(chain.image_format())
+            .components(vd::ComponentMapping::default())
+            .subresource_range(
+                vd::ImageSubresourceRange::builder()
+                    .aspect_mask(vd::ImageAspectFlags::COLOR)
+                    .base_mip_level(0)
+                    .level_count(1)
+                    .base_array_layer(0)
+                    .layer_count(1)
+                    .build()
+            ).build(device.clone(), Some(chain.clone()))?;
+
+        views.push(view);
+    }
+
+    if views.is_empty() {
+        return Err("empty views".into());
+    }
+
+    Ok((swapchain, views))
+}
+
+fn init_render_pass(
+    swapchain: &vd::SwapchainKhr,
+    device:    vd::Device
+) -> vd::Result<(vd::RenderPass)> {
+    // Clear framebuffer
+    let color_attachment = vd::AttachmentDescription::builder()
+        .format(swapchain.image_format())
+        .samples(vd::SampleCountFlags::COUNT_1)
+        .load_op(vd::AttachmentLoadOp::Clear)
+        .store_op(vd::AttachmentStoreOp::Store)
+        .stencil_load_op(vd::AttachmentLoadOp::DontCare)
+        .stencil_store_op(vd::AttachmentStoreOp::DontCare)
+        .initial_layout(vd::ImageLayout::Undefined)
+        .final_layout(vd::ImageLayout::PresentSrcKhr)
+        .build();
+
+    let color_attachment_ref = vd::AttachmentReference::builder()
+        .attachment(0)
+        .layout(vd::ImageLayout::ColorAttachmentOptimal)
+        .build();
+
+    let color_attachments = &[color_attachment_ref];
+
+    let subpass = vd::SubpassDescription::builder()
+        .pipeline_bind_point(vd::PipelineBindPoint::Graphics)
+        .color_attachments(color_attachments)
+        .build();
+
+    let dependency = vd::SubpassDependency::builder()
+        .src_subpass(vd::SUBPASS_EXTERNAL)
+        .dst_subpass(0)
+        .src_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+        .dst_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+        .dst_access_mask(
+            vd::AccessFlags::COLOR_ATTACHMENT_READ
+            | vd::AccessFlags::COLOR_ATTACHMENT_WRITE
+        ).build();
+
+    Ok(
+        vd::RenderPass::builder()
+            .attachments(&[color_attachment])
+            .subpasses(&[subpass])
+            .dependencies(&[dependency])
+            .build(device)?
+    )
+}
+
+fn init_pipeline(
+    swapchain:       &vd::SwapchainKhr,
+    layout:          &vd::PipelineLayout,
+    render_pass:     &vd::RenderPass,
+    device:          &vd::Device,
+    views:           &[vd::ImageView],
+    graphics_family: u32
+) -> vd::Result<(
+    vd::GraphicsPipeline,
+    Vec<vd::Framebuffer>,
+    Vec<vd::CommandBuffer>
+)> {
+    /* Shaders */
+
+    let vert_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "vert.spv"].concat()
+    )?;
+
+    let frag_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "frag.spv"].concat()
+    )?;
+
+    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
+    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
+
+    let main = ffi::CString::new("main")?;
+
+    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::VERTEX)
+        .module(&vert_mod)
+        .name(&main)
+        .build();
+
+    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::FRAGMENT)
+        .module(&frag_mod)
+        .name(&main)
+        .build();
+
+    let stages = [vert_stage, frag_stage];
+
+    /* Fixed-functions */
+
+    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
+        .build();
+
+    let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
+        .topology(vd::PrimitiveTopology::TriangleList)
+        .primitive_restart_enable(false)
+        .build();
+
+    let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
+        .depth_clamp_enable(false)
+        .rasterizer_discard_enable(false)
+        .polygon_mode(vd::PolygonMode::Fill)
+        .cull_mode(vd::CullModeFlags::NONE)
+        .front_face(vd::FrontFace::CounterClockwise)
+        .depth_bias_enable(false)
+        .depth_bias_constant_factor(0f32)
+        .depth_bias_clamp(0f32)
+        .depth_bias_slope_factor(0f32)
+        .line_width(1f32)
+        .build();
+
+    let multisampling = vd::PipelineMultisampleStateCreateInfo::builder()
+        .rasterization_samples(vd::SampleCountFlags::COUNT_1)
+        .sample_shading_enable(false)
+        .min_sample_shading(1f32)
+        .alpha_to_coverage_enable(false)
+        .alpha_to_one_enable(false)
+        .build();
+
+    // Alpha blending
+    let attachments = [
+        vd::PipelineColorBlendAttachmentState::builder()
+            .blend_enable(true)
+            .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
+            .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
+            .color_blend_op(vd::BlendOp::Add)
+            .src_alpha_blend_factor(vd::BlendFactor::One)
+            .src_alpha_blend_factor(vd::BlendFactor::Zero)
+            .alpha_blend_op(vd::BlendOp::Add)
+            .color_write_mask(
+                vd::ColorComponentFlags::R
+                | vd::ColorComponentFlags::G
+                | vd::ColorComponentFlags::B
+                | vd::ColorComponentFlags::A
+            ).build()
+    ];
+
+    let blending = vd::PipelineColorBlendStateCreateInfo::builder()
+        .logic_op_enable(false)
+        .logic_op(vd::LogicOp::Copy)
+        .attachments(&attachments)
+        .blend_constants([0f32; 4])
+        .build();
+
+    let viewports = &[
+        vd::Viewport::builder()
+            .x(0f32)
+            .y(0f32)
+            .width(swapchain.extent().width() as f32)
+            .height(swapchain.extent().height() as f32)
+            .min_depth(0f32)
+            .max_depth(1f32)
+            .build()
+    ];
+
+    let scissors = &[
+        vd::Rect2d::builder()
+            .offset(
+                vd::Offset2d::builder()
+                    .x(0)
+                    .y(0)
+                    .build()
+            ).extent(swapchain.extent().clone())
+            .build()
+    ];
+
+    let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
+        .viewports(viewports)
+        .scissors(scissors)
+        .build();
+
+    /* Pipeline */
+
+    let pipeline = vd::GraphicsPipeline::builder()
+        .stages(&stages)
+        .vertex_input_state(&vert_info)
+        .input_assembly_state(&assembly)
+        .viewport_state(&viewport_state)
+        .rasterization_state(&rasterizer)
+        .multisample_state(&multisampling)
+        .color_blend_state(&blending)
+        .layout(layout)
+        .render_pass(render_pass)
+        .subpass(0)
+        .base_pipeline_index(-1)
+        .build(device.clone())?;
+
+    /* Framebuffers */
+
+    let mut framebuffers = Vec::with_capacity(views.len());
+
+    for i in 0..views.len() {
+        let attachments = &[&views[i]];
+
+        let framebuffer = vd::Framebuffer::builder()
+            .render_pass(render_pass)
+            .attachments(attachments)
+            .width(swapchain.extent().width())
+            .height(swapchain.extent().height())
+            .layers(1)
+            .build(device.clone())?;
+
+        framebuffers.push(framebuffer)
+    }
+
+    if framebuffers.is_empty() {
+        return Err("empty framebuffers vector".into());
+    }
+
+    /* Command buffers */
+
+    let pool = vd::CommandPool::builder()
+        .queue_family_index(graphics_family)
+        .build(device.clone())?;
+
+    let command_buffers = pool.allocate_command_buffers(
+        vd::CommandBufferLevel::Primary,
+        framebuffers.len() as u32,
+    )?;
+
+    for i in 0..command_buffers.len() {
+        command_buffers[i].begin(vd::CommandBufferUsageFlags::SIMULTANEOUS_USE)?;
+
+        // Clear color
+        let clear = &[
+            vd::ClearValue {
+                color: vd::ClearColorValue {
+                    float32: [0f32, 0f32, 0f32, 1f32]
+                }
+            }
+        ];
+
+        let pass_info = vd::RenderPassBeginInfo::builder()
+            .render_pass(render_pass)
+            .framebuffer(&framebuffers[i])
+            .render_area(
+                vd::Rect2d::builder()
+                    .offset(
+                        vd::Offset2d::builder()
+                            .x(0)
+                            .y(0)
+                            .build()
+                    ).extent(swapchain.extent().clone())
+                    .build()
+            ).clear_values(clear)
+            .build();
+
+        /* Execute render pass */
+
+        command_buffers[i].begin_render_pass(
+            &pass_info,
+            vd::SubpassContents::Inline
+        );
+
+        command_buffers[i].bind_pipeline(
+            vd::PipelineBindPoint::Graphics,
+            &pipeline.handle()
+        );
+
+        command_buffers[i].draw(
+            3, 1, 0, 0
+        );
+
+        command_buffers[i].end_render_pass();
+        command_buffers[i].end()?;
+    }
+
+    Ok((
+        pipeline,
+        framebuffers,
+        command_buffers.into_vec(),
+    ))
 }
 
 fn init_drawing(device: vd::Device) -> vd::Result<(vd::Semaphore, vd::Semaphore)> {

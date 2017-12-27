@@ -29,14 +29,12 @@ pub struct Context<'a> {
 
     /* Swapchain recreation data */
 
-    surface:        vd::SurfaceKhr,
-    image_count:    u32,
-    surface_format: vd::SurfaceFormatKhr,
-    swap_extent:    vd::Extent2d,
-    sharing_mode:   vd::SharingMode,
-    indices:        Vec<u32>,
-    transform:      vd::SurfaceTransformFlagsKhr,
-    present_mode:   vd::PresentModeKhr,
+    physical_device: vd::PhysicalDevice,
+    surface:         vd::SurfaceKhr,
+    surface_format:  vd::SurfaceFormatKhr,
+    sharing_mode:    vd::SharingMode,
+    indices:         Vec<u32>,
+    present_mode:    vd::PresentModeKhr,
 
     /* Fixed information */
 
@@ -61,13 +59,11 @@ impl<'a> Context<'a> {
     pub fn new(window: &vdw::winit::Window) -> vd::Result<Context> {
         let (
             surface,
+            physical_device,
             graphics_family,
             present_family,
             surface_format,
             present_mode,
-            transform,
-            image_count,
-            swap_extent,
             indices,
             sharing_mode,
             device,
@@ -85,13 +81,11 @@ impl<'a> Context<'a> {
         ) = init_fixed(device.clone())?;
 
         let (swapchain, _views) = init_swapchain(
+            &physical_device,
             &surface,
-            image_count,
             &surface_format,
-            swap_extent.clone(),
             sharing_mode,
             &indices,
-            transform,
             present_mode,
             &device
         )?;
@@ -133,13 +127,11 @@ impl<'a> Context<'a> {
                 present_family,
                 image_available,
                 render_complete,
+                physical_device,
                 surface,
-                image_count,
                 surface_format,
-                swap_extent,
                 sharing_mode,
                 indices,
-                transform,
                 present_mode,
                 stages,
                 vert_info,
@@ -162,13 +154,11 @@ impl<'a> Context<'a> {
         self.device.wait_idle();
 
         let (swapchain, _views) = init_swapchain(
+            &self.physical_device,
             &self.surface,
-            self.image_count,
             &self.surface_format,
-            self.swap_extent.clone(),
             self.sharing_mode,
             &self.indices,
-            self.transform,
             self.present_mode,
             &self.device
         )?;
@@ -210,13 +200,11 @@ impl<'a> Context<'a> {
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
+    vd::PhysicalDevice,
     u32,
     u32,
     vd::SurfaceFormatKhr,
     vd::PresentModeKhr,
-    vd::SurfaceTransformFlagsKhr,
-    u32,
-    vd::Extent2d,
     Vec<u32>,
     vd::SharingMode,
     vd::Device,
@@ -346,53 +334,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         mode
     };
 
-    let capabilities = physical_device.surface_capabilities_khr(&surface)?;
-
-    // Frame queue size
-    let image_count = {
-        let mut count = capabilities.min_image_count() + 1;
-
-        // Check for exceeding the limit
-        if capabilities.max_image_count() > 0
-            && count > capabilities.max_image_count()
-        {
-            count = capabilities.max_image_count();
-        }
-
-        count
-    };
-
-    let swap_extent = {
-        let mut extent = vd::Extent2d::default();
-
-        // Common case--use the resolution of the current window
-        if capabilities.current_extent().width() != u32::max_value() {
-            extent = capabilities.current_extent().clone();
-        } else {
-            // Handle special case window managers and clamp
-            extent.set_width(
-                cmp::max(
-                    capabilities.min_image_extent().width(),
-                    cmp::min(
-                        capabilities.max_image_extent().width(),
-                        1280 // Default
-                    )
-                )
-            );
-            extent.set_height(
-                cmp::max(
-                    capabilities.min_image_extent().height(),
-                    cmp::min(
-                        capabilities.max_image_extent().height(),
-                        720 // Default
-                    )
-                )
-            );
-        }
-
-        extent
-    };
-
     /* Logical device */
 
     let graphics_q_create_info = vd::DeviceQueueCreateInfo::builder()
@@ -423,17 +364,15 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .queue_create_infos(&infos)
         .enabled_features(&features)
         .enabled_extension_names(DEVICE_EXTENSIONS)
-        .build(physical_device)?;
+        .build(physical_device.clone())?;
 
     Ok((
         surface,
+        physical_device,
         graphics_family,
         present_family,
         surface_format,
         present_mode,
-        capabilities.current_transform(), // No change
-        image_count,
-        swap_extent,
         indices,
         sharing_mode,
         device,
@@ -580,19 +519,68 @@ fn init_fixed<'a>(
 }
 
 fn init_swapchain(
-    surface:        &vd::SurfaceKhr,
-    image_count:    u32,
-    surface_format: &vd::SurfaceFormatKhr,
-    swap_extent:    vd::Extent2d,
-    sharing_mode:   vd::SharingMode,
-    indices:        &[u32],
-    transform:      vd::SurfaceTransformFlagsKhr,
-    present_mode:   vd::PresentModeKhr,
-    device:         &vd::Device,
+    physical_device: &vd::PhysicalDevice,
+    surface:         &vd::SurfaceKhr,
+    surface_format:  &vd::SurfaceFormatKhr,
+    sharing_mode:    vd::SharingMode,
+    indices:         &[u32],
+    present_mode:    vd::PresentModeKhr,
+    device:          &vd::Device,
 ) -> vd::Result<(
     vd::SwapchainKhr,
     Vec<vd::ImageView>
 )> {
+    /* Surface */
+
+    let capabilities = physical_device.surface_capabilities_khr(&surface)?;
+
+    // Frame queue size
+    let image_count = {
+        let mut count = capabilities.min_image_count() + 1;
+
+        // Check for exceeding the limit
+        if capabilities.max_image_count() > 0
+            && count > capabilities.max_image_count()
+        {
+            count = capabilities.max_image_count();
+        }
+
+        count
+    };
+
+    let swap_extent = {
+        let mut extent = vd::Extent2d::default();
+
+        // Common case--use the resolution of the current window
+        if capabilities.current_extent().width() != u32::max_value() {
+            extent = capabilities.current_extent().clone();
+        } else {
+            // Handle special case window managers and clamp
+            extent.set_width(
+                cmp::max(
+                    capabilities.min_image_extent().width(),
+                    cmp::min(
+                        capabilities.max_image_extent().width(),
+                        1280 // Default
+                    )
+                )
+            );
+            extent.set_height(
+                cmp::max(
+                    capabilities.min_image_extent().height(),
+                    cmp::min(
+                        capabilities.max_image_extent().height(),
+                        720 // Default
+                    )
+                )
+            );
+        }
+
+        extent
+    };
+
+    /* Swapchain */
+
     let swapchain = vd::SwapchainKhr::builder()
         .surface(&surface)
         .min_image_count(image_count)
@@ -603,7 +591,7 @@ fn init_swapchain(
         .image_usage(vd::ImageUsageFlags::COLOR_ATTACHMENT)
         .image_sharing_mode(sharing_mode)
         .queue_family_indices(indices)
-        .pre_transform(transform)
+        .pre_transform(capabilities.current_transform()) // No change
         .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
         .present_mode(present_mode)
         .clipped(true)

@@ -21,14 +21,14 @@ fn main() {
     let (events, window) = init_window();
 
     match render::Context::new(&window) {
-        Ok(context) => update(events, &context),
+        Ok(mut context) => update(events, &mut context),
         Err(e) => eprintln!("Could not create Vulkan context: {}", e)
     }
 }
 
 fn update(
     mut events: vdw::winit::EventsLoop,
-    context: &render::Context,
+    context: &mut render::Context,
 ) {
     let mut running = true;
 
@@ -37,11 +37,23 @@ fn update(
         events.poll_events(|event| {
             match event {
                 vdw::winit::Event::WindowEvent {
+                    event: vdw::winit::WindowEvent::Resized(
+                        width, height
+                    ),
+                    ..
+                } => {
+                    if let Err(e) = context.refresh_swapchain() {
+                        panic!("{}", e);
+                    }
+                },
+
+                vdw::winit::Event::WindowEvent {
                     event: vdw::winit::WindowEvent::Closed,
                     ..
                 } => {
                     running = false;
                 },
+
                 _ => ()
             }
         });

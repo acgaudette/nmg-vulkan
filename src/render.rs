@@ -16,7 +16,7 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
-pub struct Context {
+pub struct Context<'a> {
     /* Drawing fields */
 
     pub device:          vd::Device,
@@ -38,15 +38,23 @@ pub struct Context {
     transform:      vd::SurfaceTransformFlagsKhr,
     present_mode:   vd::PresentModeKhr,
 
+    /* Fixed information */
+
+    stages:        [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    vert_info:     vd::PipelineVertexInputStateCreateInfo<'a>,
+    layout:        vd::PipelineLayout,
+
     /* Persistent data */
 
+    _vert_mod:     vd::ShaderModule,
+    _frag_mod:     vd::ShaderModule,
     _framebuffers: Vec<vd::Framebuffer>,
     _render_pass:  vd::RenderPass,
     _views:        Vec<vd::ImageView>,
     _pipeline:     vd::GraphicsPipeline
 }
 
-impl Context {
+impl<'a> Context<'a> {
     pub fn new(window: &vdw::winit::Window) -> vd::Result<Context> {
         let (
             surface,
@@ -60,8 +68,15 @@ impl Context {
             device,
             indices,
             sharing_mode,
-            layout
         ) = init_vulkan(window)?;
+
+        let (
+            _vert_mod,
+            _frag_mod,
+            stages,
+            vert_info,
+            layout
+        ) = init_fixed(device.clone())?;
 
         let (swapchain, _views) = init_swapchain(
             &surface,
@@ -72,13 +87,15 @@ impl Context {
             &indices,
             transform,
             present_mode,
-            device.clone()
+            &device
         )?;
 
-        let _render_pass = init_render_pass(&swapchain, device.clone())?;
+        let _render_pass = init_render_pass(&swapchain, &device)?;
 
         let (_pipeline, _framebuffers, command_buffers) = init_pipeline(
             &swapchain,
+            &stages,
+            &vert_info,
             &layout,
             &_render_pass,
             &device,
@@ -86,7 +103,7 @@ impl Context {
             graphics_family
         )?;
 
-        let (image_available, render_complete) = init_drawing(device.clone())?;
+        let (image_available, render_complete) = init_drawing(&device)?;
 
         Ok(
             Context {
@@ -105,10 +122,15 @@ impl Context {
                 indices,
                 transform,
                 present_mode,
+                stages,
+                vert_info,
+                layout,
+                _vert_mod,
+                _frag_mod,
                 _framebuffers,
                 _render_pass,
                 _views,
-                _pipeline
+                _pipeline,
             }
         )
     }
@@ -126,7 +148,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::Device,
     Vec<u32>,
     vd::SharingMode,
-    vd::PipelineLayout
 )> {
     /* Application */
 
@@ -332,9 +353,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device)?;
 
-    let layout = vd::PipelineLayout::builder()
-        .build(device.clone())?;
-
     Ok((
         surface,
         graphics_family,
@@ -347,7 +365,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         device,
         indices,
         sharing_mode,
-        layout
     ))
 }
 
@@ -403,6 +420,61 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
+fn init_fixed<'a>(
+    device: vd::Device,
+) -> vd::Result<(
+    vd::ShaderModule,
+    vd::ShaderModule,
+    [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    vd::PipelineVertexInputStateCreateInfo<'a>,
+    vd::PipelineLayout
+)> {
+    /* Shaders */
+
+    let vert_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "vert.spv"].concat()
+    )?;
+
+    let frag_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "frag.spv"].concat()
+    )?;
+
+    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
+    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
+
+    let main = ffi::CStr::from_bytes_with_nul(b"main\0").unwrap();
+
+    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::VERTEX)
+        .module(&vert_mod)
+        .name(&main)
+        .build();
+
+    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::FRAGMENT)
+        .module(&frag_mod)
+        .name(&main)
+        .build();
+
+    let stages = [vert_stage, frag_stage];
+
+    /* Fixed-functions */
+
+    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
+        .build();
+
+    let layout = vd::PipelineLayout::builder()
+        .build(device)?;
+
+    Ok((
+        vert_mod,
+        frag_mod,
+        stages,
+        vert_info,
+        layout
+    ))
+}
+
 fn init_swapchain(
     surface:        &vd::SurfaceKhr,
     image_count:    u32,
@@ -412,7 +484,7 @@ fn init_swapchain(
     indices:        &[u32],
     transform:      vd::SurfaceTransformFlagsKhr,
     present_mode:   vd::PresentModeKhr,
-    device:         vd::Device,
+    device:         &vd::Device,
 ) -> vd::Result<(
     vd::SwapchainKhr,
     Vec<vd::ImageView>
@@ -471,8 +543,10 @@ fn init_swapchain(
 
 fn init_render_pass(
     swapchain: &vd::SwapchainKhr,
-    device:    vd::Device
+    device:    &vd::Device
 ) -> vd::Result<(vd::RenderPass)> {
+    /* Render passes */
+
     // Clear framebuffer
     let color_attachment = vd::AttachmentDescription::builder()
         .format(swapchain.image_format())
@@ -512,12 +586,14 @@ fn init_render_pass(
             .attachments(&[color_attachment])
             .subpasses(&[subpass])
             .dependencies(&[dependency])
-            .build(device)?
+            .build(device.clone())?
     )
 }
 
 fn init_pipeline(
     swapchain:       &vd::SwapchainKhr,
+    stages:          &[vd::PipelineShaderStageCreateInfo; 2],
+    vert_info:       &vd::PipelineVertexInputStateCreateInfo,
     layout:          &vd::PipelineLayout,
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
@@ -528,39 +604,7 @@ fn init_pipeline(
     Vec<vd::Framebuffer>,
     Vec<vd::CommandBuffer>
 )> {
-    /* Shaders */
-
-    let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "vert.spv"].concat()
-    )?;
-
-    let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "frag.spv"].concat()
-    )?;
-
-    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
-    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
-
-    let main = ffi::CString::new("main")?;
-
-    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
-        .stage(vd::ShaderStageFlags::VERTEX)
-        .module(&vert_mod)
-        .name(&main)
-        .build();
-
-    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
-        .stage(vd::ShaderStageFlags::FRAGMENT)
-        .module(&frag_mod)
-        .name(&main)
-        .build();
-
-    let stages = [vert_stage, frag_stage];
-
     /* Fixed-functions */
-
-    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
-        .build();
 
     let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
         .topology(vd::PrimitiveTopology::TriangleList)
@@ -643,8 +687,8 @@ fn init_pipeline(
     /* Pipeline */
 
     let pipeline = vd::GraphicsPipeline::builder()
-        .stages(&stages)
-        .vertex_input_state(&vert_info)
+        .stages(stages)
+        .vertex_input_state(vert_info)
         .input_assembly_state(&assembly)
         .viewport_state(&viewport_state)
         .rasterization_state(&rasterizer)
@@ -743,14 +787,17 @@ fn init_pipeline(
     ))
 }
 
-fn init_drawing(device: vd::Device) -> vd::Result<(vd::Semaphore, vd::Semaphore)> {
+fn init_drawing(device: &vd::Device) -> vd::Result<(
+    vd::Semaphore,
+    vd::Semaphore
+)> {
     let image_available = vd::Semaphore::new(
         device.clone(),
         vd::SemaphoreCreateFlags::empty()
     )?;
 
     let render_complete = vd::Semaphore::new(
-        device,
+        device.clone(),
         vd::SemaphoreCreateFlags::empty()
     )?;
 

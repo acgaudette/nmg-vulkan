@@ -77,11 +77,7 @@ impl Context {
 
         let _render_pass = init_render_pass(&swapchain, device.clone())?;
 
-        let (
-            _pipeline,
-            _framebuffers,
-            command_buffers,
-        ) = init_pipeline(
+        let (_pipeline, _framebuffers, command_buffers) = init_pipeline(
             &swapchain,
             &layout,
             &_render_pass,

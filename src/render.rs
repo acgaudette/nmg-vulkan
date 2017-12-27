@@ -98,7 +98,7 @@ impl<'a> Context<'a> {
 
         let _render_pass = init_render_pass(&swapchain, &device)?;
 
-        let (_pipeline, _framebuffers, command_buffers) = init_pipeline(
+        let _pipeline = init_pipeline(
             &swapchain,
             &stages,
             &vert_info,
@@ -108,11 +108,21 @@ impl<'a> Context<'a> {
             &layout,
             &_render_pass,
             &device,
-            &_views,
-            graphics_family
         )?;
 
-        let (image_available, render_complete) = init_drawing(&device)?;
+        let (
+            _framebuffers,
+            command_buffers,
+            image_available,
+            render_complete
+        ) = init_drawing(
+            &_views,
+            &_render_pass,
+            &device,
+            graphics_family,
+            &swapchain,
+            &_pipeline
+        )?;
 
         Ok(
             Context {
@@ -589,8 +599,6 @@ fn init_render_pass(
     swapchain: &vd::SwapchainKhr,
     device:    &vd::Device
 ) -> vd::Result<(vd::RenderPass)> {
-    /* Render passes */
-
     // Clear framebuffer
     let color_attachment = vd::AttachmentDescription::builder()
         .format(swapchain.image_format())
@@ -643,14 +651,37 @@ fn init_pipeline(
     multisampling:   &vd::PipelineMultisampleStateCreateInfo,
     layout:          &vd::PipelineLayout,
     render_pass:     &vd::RenderPass,
-    device:          &vd::Device,
-    views:           &[vd::ImageView],
-    graphics_family: u32
-) -> vd::Result<(
-    vd::GraphicsPipeline,
-    Vec<vd::Framebuffer>,
-    Vec<vd::CommandBuffer>
-)> {
+    device:          &vd::Device
+) -> vd::Result<(vd::GraphicsPipeline)> {
+    /* Fixed functions */
+
+    let attachments = [
+        // Alpha blending
+        vd::PipelineColorBlendAttachmentState::builder()
+            .blend_enable(true)
+            .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
+            .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
+            .color_blend_op(vd::BlendOp::Add)
+            .src_alpha_blend_factor(vd::BlendFactor::One)
+            .src_alpha_blend_factor(vd::BlendFactor::Zero)
+            .alpha_blend_op(vd::BlendOp::Add)
+            .color_write_mask(
+                vd::ColorComponentFlags::R
+                | vd::ColorComponentFlags::G
+                | vd::ColorComponentFlags::B
+                | vd::ColorComponentFlags::A
+            ).build()
+    ];
+
+    let blending = vd::PipelineColorBlendStateCreateInfo::builder()
+        .logic_op_enable(false)
+        .logic_op(vd::LogicOp::Copy)
+        .attachments(&attachments)
+        .blend_constants([0f32; 4])
+        .build();
+
+    /* Fixed functions (dependent on swapchain) */
+
     let viewports = [
         vd::Viewport::builder()
             .x(0f32)
@@ -678,34 +709,10 @@ fn init_pipeline(
         .scissors(&scissors)
         .build();
 
-    let attachments = [
-        // Alpha blending
-        vd::PipelineColorBlendAttachmentState::builder()
-            .blend_enable(true)
-            .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
-            .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
-            .color_blend_op(vd::BlendOp::Add)
-            .src_alpha_blend_factor(vd::BlendFactor::One)
-            .src_alpha_blend_factor(vd::BlendFactor::Zero)
-            .alpha_blend_op(vd::BlendOp::Add)
-            .color_write_mask(
-                vd::ColorComponentFlags::R
-                | vd::ColorComponentFlags::G
-                | vd::ColorComponentFlags::B
-                | vd::ColorComponentFlags::A
-            ).build()
-    ];
-
-    let blending = vd::PipelineColorBlendStateCreateInfo::builder()
-        .logic_op_enable(false)
-        .logic_op(vd::LogicOp::Copy)
-        .attachments(&attachments)
-        .blend_constants([0f32; 4])
-        .build();
-
     /* Pipeline */
 
-    let pipeline = vd::GraphicsPipeline::builder()
+    Ok(
+        vd::GraphicsPipeline::builder()
         .stages(stages)
         .vertex_input_state(vert_info)
         .input_assembly_state(assembly)
@@ -717,8 +724,23 @@ fn init_pipeline(
         .render_pass(render_pass)
         .subpass(0)
         .base_pipeline_index(-1)
-        .build(device.clone())?;
+        .build(device.clone())?
+    )
+}
 
+fn init_drawing(
+    views:           &[vd::ImageView],
+    render_pass:     &vd::RenderPass,
+    device:          &vd::Device,
+    graphics_family: u32,
+    swapchain:       &vd::SwapchainKhr,
+    pipeline:        &vd::GraphicsPipeline
+) -> vd::Result<(
+    Vec<vd::Framebuffer>,
+    Vec<vd::CommandBuffer>,
+    vd::Semaphore,
+    vd::Semaphore
+)> {
     /* Framebuffers */
 
     let mut framebuffers = Vec::with_capacity(views.len());
@@ -799,17 +821,8 @@ fn init_pipeline(
         command_buffers[i].end()?;
     }
 
-    Ok((
-        pipeline,
-        framebuffers,
-        command_buffers.into_vec(),
-    ))
-}
+    /* Synchronization */
 
-fn init_drawing(device: &vd::Device) -> vd::Result<(
-    vd::Semaphore,
-    vd::Semaphore
-)> {
     let image_available = vd::Semaphore::new(
         device.clone(),
         vd::SemaphoreCreateFlags::empty()
@@ -820,7 +833,12 @@ fn init_drawing(device: &vd::Device) -> vd::Result<(
         vd::SemaphoreCreateFlags::empty()
     )?;
 
-    Ok((image_available, render_complete))
+    Ok((
+        framebuffers,
+        command_buffers.into_vec(),
+        image_available,
+        render_complete
+    ))
 }
 
 pub fn draw(

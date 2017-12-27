@@ -724,11 +724,11 @@ fn init_pipeline(
     let mut framebuffers = Vec::with_capacity(views.len());
 
     for i in 0..views.len() {
-        let attachments = &[&views[i]];
+        let attachments = [&views[i]];
 
         let framebuffer = vd::Framebuffer::builder()
             .render_pass(render_pass)
-            .attachments(attachments)
+            .attachments(&attachments)
             .width(swapchain.extent().width())
             .height(swapchain.extent().height())
             .layers(1)
@@ -756,7 +756,7 @@ fn init_pipeline(
         command_buffers[i].begin(vd::CommandBufferUsageFlags::SIMULTANEOUS_USE)?;
 
         // Clear color
-        let clear = &[
+        let clear = [
             vd::ClearValue {
                 color: vd::ClearColorValue {
                     float32: [0f32, 0f32, 0f32, 1f32]
@@ -776,7 +776,7 @@ fn init_pipeline(
                             .build()
                     ).extent(swapchain.extent().clone())
                     .build()
-            ).clear_values(clear)
+            ).clear_values(&clear)
             .build();
 
         /* Execute render pass */
@@ -838,18 +838,18 @@ pub fn draw(
         None
     )?;
 
-    let command_buffers = &[command_buffers[index as usize].handle()];
+    let command_buffers = [command_buffers[index as usize].handle()];
 
     // Synchronization primitives
-    let available_signals = &[image_available.handle()];
-    let complete_signals = &[render_complete.handle()];
+    let available_signals = [image_available.handle()];
+    let complete_signals = [render_complete.handle()];
 
     // Wait for available images to render to
     let info = vd::SubmitInfo::builder()
-        .wait_semaphores(available_signals)
+        .wait_semaphores(&available_signals)
         .wait_dst_stage_mask(&vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
-        .command_buffers(command_buffers)
-        .signal_semaphores(complete_signals)
+        .command_buffers(&command_buffers)
+        .signal_semaphores(&complete_signals)
         .build();
 
     let graphics_q = device.get_device_queue(graphics_family, 0);
@@ -861,8 +861,8 @@ pub fn draw(
                 device.queue_submit(gq, &[info], None)?;
             }
 
-            let swapchains = &[swapchain.handle()];
-            let indices = &[index];
+            let swapchains = [swapchain.handle()];
+            let indices = [index];
 
             let present_q = device.get_device_queue(present_family, 0);
 
@@ -870,9 +870,9 @@ pub fn draw(
                 Some(pq) => {
                     // Wait for complete frames to present
                     let info = vd::PresentInfoKhr::builder()
-                        .wait_semaphores(complete_signals)
-                        .swapchains(swapchains)
-                        .image_indices(indices)
+                        .wait_semaphores(&complete_signals)
+                        .swapchains(&swapchains)
+                        .image_indices(&indices)
                         .build();
 
                     unsafe {

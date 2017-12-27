@@ -157,7 +157,7 @@ impl<'a> Context<'a> {
         )
     }
 
-    pub fn refresh_swapchain(mut self) -> vd::Result<()> {
+    pub fn refresh_swapchain(&mut self) -> vd::Result<()> {
         // Synchronize
         self.device.wait_idle();
 

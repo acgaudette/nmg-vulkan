@@ -42,6 +42,9 @@ pub struct Context<'a> {
 
     stages:        [vd::PipelineShaderStageCreateInfo<'a>; 2],
     vert_info:     vd::PipelineVertexInputStateCreateInfo<'a>,
+    assembly:      vd::PipelineInputAssemblyStateCreateInfo<'a>,
+    rasterizer:    vd::PipelineRasterizationStateCreateInfo<'a>,
+    multisampling: vd::PipelineMultisampleStateCreateInfo<'a>,
     layout:        vd::PipelineLayout,
 
     /* Persistent data */
@@ -65,9 +68,9 @@ impl<'a> Context<'a> {
             transform,
             image_count,
             swap_extent,
-            device,
             indices,
             sharing_mode,
+            device,
         ) = init_vulkan(window)?;
 
         let (
@@ -75,6 +78,9 @@ impl<'a> Context<'a> {
             _frag_mod,
             stages,
             vert_info,
+            assembly,
+            rasterizer,
+            multisampling,
             layout
         ) = init_fixed(device.clone())?;
 
@@ -96,6 +102,9 @@ impl<'a> Context<'a> {
             &swapchain,
             &stages,
             &vert_info,
+            &assembly,
+            &rasterizer,
+            &multisampling,
             &layout,
             &_render_pass,
             &device,
@@ -124,6 +133,9 @@ impl<'a> Context<'a> {
                 present_mode,
                 stages,
                 vert_info,
+                assembly,
+                rasterizer,
+                multisampling,
                 layout,
                 _vert_mod,
                 _frag_mod,
@@ -145,9 +157,9 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceTransformFlagsKhr,
     u32,
     vd::Extent2d,
-    vd::Device,
     Vec<u32>,
     vd::SharingMode,
+    vd::Device,
 )> {
     /* Application */
 
@@ -362,9 +374,9 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         capabilities.current_transform(), // No change
         image_count,
         swap_extent,
-        device,
         indices,
         sharing_mode,
+        device,
     ))
 }
 
@@ -427,6 +439,9 @@ fn init_fixed<'a>(
     vd::ShaderModule,
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
     vd::PipelineVertexInputStateCreateInfo<'a>,
+    vd::PipelineInputAssemblyStateCreateInfo<'a>,
+    vd::PipelineRasterizationStateCreateInfo<'a>,
+    vd::PipelineMultisampleStateCreateInfo<'a>,
     vd::PipelineLayout
 )> {
     /* Shaders */
@@ -463,6 +478,32 @@ fn init_fixed<'a>(
     let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
         .build();
 
+    let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
+        .topology(vd::PrimitiveTopology::TriangleList)
+        .primitive_restart_enable(false)
+        .build();
+
+    let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
+        .depth_clamp_enable(false)
+        .rasterizer_discard_enable(false)
+        .polygon_mode(vd::PolygonMode::Fill)
+        .cull_mode(vd::CullModeFlags::NONE)
+        .front_face(vd::FrontFace::CounterClockwise)
+        .depth_bias_enable(false)
+        .depth_bias_constant_factor(0f32)
+        .depth_bias_clamp(0f32)
+        .depth_bias_slope_factor(0f32)
+        .line_width(1f32)
+        .build();
+
+    let multisampling = vd::PipelineMultisampleStateCreateInfo::builder()
+        .rasterization_samples(vd::SampleCountFlags::COUNT_1)
+        .sample_shading_enable(false)
+        .min_sample_shading(1f32)
+        .alpha_to_coverage_enable(false)
+        .alpha_to_one_enable(false)
+        .build();
+
     let layout = vd::PipelineLayout::builder()
         .build(device)?;
 
@@ -471,6 +512,9 @@ fn init_fixed<'a>(
         frag_mod,
         stages,
         vert_info,
+        assembly,
+        rasterizer,
+        multisampling,
         layout
     ))
 }
@@ -559,16 +603,16 @@ fn init_render_pass(
         .final_layout(vd::ImageLayout::PresentSrcKhr)
         .build();
 
-    let color_attachment_ref = vd::AttachmentReference::builder()
-        .attachment(0)
-        .layout(vd::ImageLayout::ColorAttachmentOptimal)
-        .build();
-
-    let color_attachments = &[color_attachment_ref];
+    let attachment_refs = [
+        vd::AttachmentReference::builder()
+            .attachment(0)
+            .layout(vd::ImageLayout::ColorAttachmentOptimal)
+            .build()
+    ];
 
     let subpass = vd::SubpassDescription::builder()
         .pipeline_bind_point(vd::PipelineBindPoint::Graphics)
-        .color_attachments(color_attachments)
+        .color_attachments(&attachment_refs)
         .build();
 
     let dependency = vd::SubpassDependency::builder()
@@ -594,6 +638,9 @@ fn init_pipeline(
     swapchain:       &vd::SwapchainKhr,
     stages:          &[vd::PipelineShaderStageCreateInfo; 2],
     vert_info:       &vd::PipelineVertexInputStateCreateInfo,
+    assembly:        &vd::PipelineInputAssemblyStateCreateInfo,
+    rasterizer:      &vd::PipelineRasterizationStateCreateInfo,
+    multisampling:   &vd::PipelineMultisampleStateCreateInfo,
     layout:          &vd::PipelineLayout,
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
@@ -604,36 +651,35 @@ fn init_pipeline(
     Vec<vd::Framebuffer>,
     Vec<vd::CommandBuffer>
 )> {
-    /* Fixed-functions */
+    let viewports = [
+        vd::Viewport::builder()
+            .x(0f32)
+            .y(0f32)
+            .width(swapchain.extent().width() as f32)
+            .height(swapchain.extent().height() as f32)
+            .min_depth(0f32)
+            .max_depth(1f32)
+            .build()
+    ];
 
-    let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
-        .topology(vd::PrimitiveTopology::TriangleList)
-        .primitive_restart_enable(false)
+    let scissors = [
+        vd::Rect2d::builder()
+            .offset(
+                vd::Offset2d::builder()
+                    .x(0)
+                    .y(0)
+                    .build()
+            ).extent(swapchain.extent().clone())
+            .build()
+    ];
+
+    let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
+        .viewports(&viewports)
+        .scissors(&scissors)
         .build();
 
-    let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
-        .depth_clamp_enable(false)
-        .rasterizer_discard_enable(false)
-        .polygon_mode(vd::PolygonMode::Fill)
-        .cull_mode(vd::CullModeFlags::NONE)
-        .front_face(vd::FrontFace::CounterClockwise)
-        .depth_bias_enable(false)
-        .depth_bias_constant_factor(0f32)
-        .depth_bias_clamp(0f32)
-        .depth_bias_slope_factor(0f32)
-        .line_width(1f32)
-        .build();
-
-    let multisampling = vd::PipelineMultisampleStateCreateInfo::builder()
-        .rasterization_samples(vd::SampleCountFlags::COUNT_1)
-        .sample_shading_enable(false)
-        .min_sample_shading(1f32)
-        .alpha_to_coverage_enable(false)
-        .alpha_to_one_enable(false)
-        .build();
-
-    // Alpha blending
     let attachments = [
+        // Alpha blending
         vd::PipelineColorBlendAttachmentState::builder()
             .blend_enable(true)
             .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
@@ -657,42 +703,15 @@ fn init_pipeline(
         .blend_constants([0f32; 4])
         .build();
 
-    let viewports = &[
-        vd::Viewport::builder()
-            .x(0f32)
-            .y(0f32)
-            .width(swapchain.extent().width() as f32)
-            .height(swapchain.extent().height() as f32)
-            .min_depth(0f32)
-            .max_depth(1f32)
-            .build()
-    ];
-
-    let scissors = &[
-        vd::Rect2d::builder()
-            .offset(
-                vd::Offset2d::builder()
-                    .x(0)
-                    .y(0)
-                    .build()
-            ).extent(swapchain.extent().clone())
-            .build()
-    ];
-
-    let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
-        .viewports(viewports)
-        .scissors(scissors)
-        .build();
-
     /* Pipeline */
 
     let pipeline = vd::GraphicsPipeline::builder()
         .stages(stages)
         .vertex_input_state(vert_info)
-        .input_assembly_state(&assembly)
+        .input_assembly_state(assembly)
         .viewport_state(&viewport_state)
-        .rasterization_state(&rasterizer)
-        .multisample_state(&multisampling)
+        .rasterization_state(rasterizer)
+        .multisample_state(multisampling)
         .color_blend_state(&blending)
         .layout(layout)
         .render_pass(render_pass)

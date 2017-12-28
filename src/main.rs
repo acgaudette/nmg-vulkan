@@ -78,24 +78,20 @@ fn update(
         ) {
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
-                match result {
-                    // Rebuild the swapchain if it becomes out of date
-                    vd::CallResult::ErrorOutOfDateKhr => {
-                        // Use existing window size
-                        if let Some(size) = window.get_inner_size_pixels() {
-                            match context.refresh_swapchain(size.0, size.1) {
-                                Ok(()) => continue,
-                                Err(e) => eprintln!("{}", e) // Fall through
-                            }
-                        } else {
-                            // Fall through
-                            eprintln!("Failed to acquire window size")
+                // Rebuild the swapchain if it becomes out of date
+                // or suboptimal
+                if result == vd::CallResult::ErrorOutOfDateKhr
+                    || result == vd::CallResult::SuboptimalKhr
+                {
+                    // Use existing window size
+                    if let Some(size) = window.get_inner_size_pixels() {
+                        match context.refresh_swapchain(size.0, size.1) {
+                            Ok(()) => continue,
+                            Err(e) => eprintln!("{}", e) // Fall through
                         }
-                    },
-
-                    vd::CallResult::SuboptimalKhr => {
-                        eprintln!("Swapchain warning: {}", e);
-                        continue;
+                    } else {
+                        // Fall through
+                        eprintln!("Failed to acquire window size")
                     }
                 }
             }

@@ -83,6 +83,7 @@ impl<'a> Context<'a> {
         let (swapchain, _views) = init_swapchain(
             &physical_device,
             &surface,
+            1280, 720, // Default
             &surface_format,
             sharing_mode,
             &indices,
@@ -149,13 +150,16 @@ impl<'a> Context<'a> {
         )
     }
 
-    pub fn refresh_swapchain(&mut self) -> vd::Result<()> {
+    pub fn refresh_swapchain(
+        &mut self, width: u32, height: u32
+    ) -> vd::Result<()> {
         // Synchronize
         self.device.wait_idle();
 
         let (swapchain, _views) = init_swapchain(
             &self.physical_device,
             &self.surface,
+            width, height,
             &self.surface_format,
             self.sharing_mode,
             &self.indices,
@@ -521,6 +525,8 @@ fn init_fixed<'a>(
 fn init_swapchain(
     physical_device: &vd::PhysicalDevice,
     surface:         &vd::SurfaceKhr,
+    window_width:    u32,
+    window_height:   u32,
     surface_format:  &vd::SurfaceFormatKhr,
     sharing_mode:    vd::SharingMode,
     indices:         &[u32],
@@ -561,7 +567,7 @@ fn init_swapchain(
                     capabilities.min_image_extent().width(),
                     cmp::min(
                         capabilities.max_image_extent().width(),
-                        1280 // Default
+                        window_width
                     )
                 )
             );
@@ -570,7 +576,7 @@ fn init_swapchain(
                     capabilities.min_image_extent().height(),
                     cmp::min(
                         capabilities.max_image_extent().height(),
-                        720 // Default
+                        window_height
                     )
                 )
             );

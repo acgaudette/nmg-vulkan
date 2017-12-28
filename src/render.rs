@@ -3,8 +3,10 @@ extern crate voodoo_winit as vdw;
 
 use std::ffi;
 use std::cmp;
+use std::mem;
 
 use statics;
+use ops;
 
 #[cfg(debug_assertions)]
 const ENABLE_VALIDATION_LAYERS: bool = true;
@@ -200,6 +202,21 @@ impl<'a> Context<'a> {
         self._pipeline = _pipeline;
 
         Ok(())
+    }
+}
+
+struct Vertex {
+    position: ops::Vec2,
+    color:    ops::Vec2,
+}
+
+impl Vertex {
+    fn binding_description() -> vd::VertexInputBindingDescription {
+        vd::VertexInputBindingDescription::builder()
+            .binding(0)
+            .stride(mem::size_of::<Vertex>() as u32)
+            .input_rate(vd::VertexInputRate::Vertex)
+            .build()
     }
 }
 

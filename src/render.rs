@@ -88,6 +88,7 @@ impl<'a> Context<'a> {
             sharing_mode,
             &indices,
             present_mode,
+            None,
             &device
         )?;
 
@@ -153,9 +154,6 @@ impl<'a> Context<'a> {
     pub fn refresh_swapchain(
         &mut self, width: u32, height: u32
     ) -> vd::Result<()> {
-        // Synchronize
-        self.device.wait_idle();
-
         let (swapchain, _views) = init_swapchain(
             &self.physical_device,
             &self.surface,
@@ -164,6 +162,7 @@ impl<'a> Context<'a> {
             self.sharing_mode,
             &self.indices,
             self.present_mode,
+            Some(&self.swapchain), // Pass in old swapchain
             &self.device
         )?;
 
@@ -189,6 +188,11 @@ impl<'a> Context<'a> {
             &swapchain,
             &_pipeline
         )?;
+
+        // Synchronize
+        self.device.wait_idle();
+
+        /* Coup */
 
         self.swapchain = swapchain;
         self.command_buffers = command_buffers;
@@ -531,6 +535,7 @@ fn init_swapchain(
     sharing_mode:    vd::SharingMode,
     indices:         &[u32],
     present_mode:    vd::PresentModeKhr,
+    old_swapchain:   Option<&vd::SwapchainKhr>,
     device:          &vd::Device,
 ) -> vd::Result<(
     vd::SwapchainKhr,
@@ -587,7 +592,7 @@ fn init_swapchain(
 
     /* Swapchain */
 
-    let swapchain = vd::SwapchainKhr::builder()
+    let mut builder = vd::SwapchainKhr::builder(); builder
         .surface(&surface)
         .min_image_count(image_count)
         .image_format(surface_format.format())
@@ -600,8 +605,13 @@ fn init_swapchain(
         .pre_transform(capabilities.current_transform()) // No change
         .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
         .present_mode(present_mode)
-        .clipped(true)
-        .build(device.clone())?;
+        .clipped(true);
+
+    if let Some(old) = old_swapchain {
+        builder.old_swapchain(old.handle());
+    }
+
+    let swapchain = builder.build(device.clone())?;
 
     /* Image views */
 

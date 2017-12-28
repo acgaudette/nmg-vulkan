@@ -948,6 +948,15 @@ fn init_drawing(
             )?
         ).build();
 
+    // Allocate GPU memory
+    let memory_handle = unsafe {
+        device.allocate_memory(&info, None)?
+    };
+
+    unsafe {
+        device.bind_buffer_memory(vertex_buffer, memory_handle, 0)?;
+    }
+
     /* Command buffers */
 
     let pool = vd::CommandPool::builder()

@@ -56,7 +56,6 @@ pub struct Context<'a> {
     /* Fixed information */
 
     stages:        [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    vert_info:     vd::PipelineVertexInputStateCreateInfo<'a>,
     assembly:      vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:    vd::PipelineRasterizationStateCreateInfo<'a>,
     multisampling: vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -92,7 +91,6 @@ impl<'a> Context<'a> {
             _vert_mod,
             _frag_mod,
             stages,
-            vert_info,
             assembly,
             rasterizer,
             multisampling,
@@ -116,7 +114,6 @@ impl<'a> Context<'a> {
         let _pipeline = init_pipeline(
             &swapchain,
             &stages,
-            &vert_info,
             &assembly,
             &rasterizer,
             &multisampling,
@@ -150,7 +147,6 @@ impl<'a> Context<'a> {
                 indices,
                 present_mode,
                 stages,
-                vert_info,
                 assembly,
                 rasterizer,
                 multisampling,
@@ -185,7 +181,6 @@ impl<'a> Context<'a> {
         let _pipeline = init_pipeline(
             &swapchain,
             &self.stages,
-            &self.vert_info,
             &self.assembly,
             &self.rasterizer,
             &self.multisampling,
@@ -507,7 +502,6 @@ fn init_fixed<'a>(
     vd::ShaderModule,
     vd::ShaderModule,
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    vd::PipelineVertexInputStateCreateInfo<'a>,
     vd::PipelineInputAssemblyStateCreateInfo<'a>,
     vd::PipelineRasterizationStateCreateInfo<'a>,
     vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -544,9 +538,6 @@ fn init_fixed<'a>(
 
     /* Fixed-functions */
 
-    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
-        .build();
-
     let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
         .topology(vd::PrimitiveTopology::TriangleList)
         .primitive_restart_enable(false)
@@ -580,7 +571,6 @@ fn init_fixed<'a>(
         vert_mod,
         frag_mod,
         stages,
-        vert_info,
         assembly,
         rasterizer,
         multisampling,
@@ -765,17 +755,19 @@ fn init_render_pass(
 }
 
 fn init_pipeline(
-    swapchain:       &vd::SwapchainKhr,
-    stages:          &[vd::PipelineShaderStageCreateInfo; 2],
-    vert_info:       &vd::PipelineVertexInputStateCreateInfo,
-    assembly:        &vd::PipelineInputAssemblyStateCreateInfo,
-    rasterizer:      &vd::PipelineRasterizationStateCreateInfo,
-    multisampling:   &vd::PipelineMultisampleStateCreateInfo,
-    layout:          &vd::PipelineLayout,
-    render_pass:     &vd::RenderPass,
-    device:          &vd::Device,
+    swapchain:     &vd::SwapchainKhr,
+    stages:        &[vd::PipelineShaderStageCreateInfo; 2],
+    assembly:      &vd::PipelineInputAssemblyStateCreateInfo,
+    rasterizer:    &vd::PipelineRasterizationStateCreateInfo,
+    multisampling: &vd::PipelineMultisampleStateCreateInfo,
+    layout:        &vd::PipelineLayout,
+    render_pass:   &vd::RenderPass,
+    device:        &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
     /* Fixed functions */
+
+    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
+        .build();
 
     let attachments = [
         // Alpha blending
@@ -836,7 +828,7 @@ fn init_pipeline(
     Ok(
         vd::GraphicsPipeline::builder()
         .stages(stages)
-        .vertex_input_state(vert_info)
+        .vertex_input_state(&vert_info)
         .input_assembly_state(assembly)
         .viewport_state(&viewport_state)
         .rasterization_state(rasterizer)

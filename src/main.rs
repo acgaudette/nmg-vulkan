@@ -76,20 +76,26 @@ fn update(
             context.graphics_family,
             context.present_family
         ) {
-            // Rebuild the swapchain if it becomes out of date
+            // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
-                if result == vd::CallResult::ErrorOutOfDateKhr {
-                    // Use existing window size
-                    match window.get_inner_size_pixels() {
-                        Some(size) => {
+                match result {
+                    // Rebuild the swapchain if it becomes out of date
+                    vd::CallResult::ErrorOutOfDateKhr => {
+                        // Use existing window size
+                        if let Some(size) = window.get_inner_size_pixels() {
                             match context.refresh_swapchain(size.0, size.1) {
                                 Ok(()) => continue,
                                 Err(e) => eprintln!("{}", e) // Fall through
                             }
-                        },
+                        } else {
+                            // Fall through
+                            eprintln!("Failed to acquire window size")
+                        }
+                    },
 
-                        // Fall through
-                        None => eprintln!("Failed to acquire window size")
+                    vd::CallResult::SuboptimalKhr => {
+                        eprintln!("Swapchain warning: {}", e);
+                        continue;
                     }
                 }
             }

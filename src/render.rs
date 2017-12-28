@@ -895,7 +895,7 @@ pub fn draw(
     present_family:  u32
 ) -> vd::Result<()> {
     let index = swapchain.acquire_next_image_khr(
-        u64::max_value(),
+        u64::max_value(), // Disable timeout
         Some(image_available),
         None
     )?;

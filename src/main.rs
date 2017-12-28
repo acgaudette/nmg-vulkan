@@ -3,6 +3,7 @@ extern crate voodoo_winit as vdw;
 
 mod statics;
 mod render;
+mod ops;
 
 fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     let events = vdw::winit::EventsLoop::new();

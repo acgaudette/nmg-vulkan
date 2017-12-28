@@ -9,18 +9,16 @@ use statics;
 use ops;
 
 macro_rules! offset_of {
-    ($struct:ty, $field:tt) => ({
-        let value: $struct = unsafe {
-            $crate::std::mem::uninitialized()
-        };
+    ($struct:ty, $field:tt) => (
+        unsafe {
+            let value: $struct = $crate::std::mem::uninitialized();
+            let base = &value as *const _ as u32;
+            let indent = &value.$field as *const _ as u32;
+            $crate::std::mem::forget(value);
 
-        let base = &value as *const _ as u32;
-        let indent = &value.$field as *const _ as u32;
-
-        $crate::std::mem::forget(value);
-
-        indent - base
-    });
+            indent - base
+        }
+    );
 }
 
 #[cfg(debug_assertions)]
@@ -122,7 +120,10 @@ impl<'a> Context<'a> {
             &device,
         )?;
 
-        let (_framebuffers, command_buffers) = init_drawing(
+        let (
+            _framebuffers,
+            command_buffers
+        ) = init_drawing(
             &_views,
             &_render_pass,
             &device,
@@ -190,7 +191,10 @@ impl<'a> Context<'a> {
             &self.device,
         )?;
 
-        let (_framebuffers, command_buffers) = init_drawing(
+        let (
+            _framebuffers,
+            command_buffers,
+        ) = init_drawing(
             &_views,
             &_render_pass,
             &self.device,
@@ -866,7 +870,10 @@ fn init_drawing(
     graphics_family: u32,
     swapchain:       &vd::SwapchainKhr,
     pipeline:        &vd::GraphicsPipeline,
-) -> vd::Result<(Vec<vd::Framebuffer>, Vec<vd::CommandBuffer>)> {
+) -> vd::Result<(
+    Vec<vd::Framebuffer>,
+    Vec<vd::CommandBuffer>,
+)> {
     /* Framebuffers */
 
     let mut framebuffers = Vec::with_capacity(views.len());
@@ -889,7 +896,7 @@ fn init_drawing(
         return Err("empty framebuffers vector".into());
     }
 
-    /* Vertex buffers */
+    /* Vertex buffer */
 
     let vertices  = [
         Vertex::new(-0.5f32,  0.5f32, 1f32, 0f32, 0f32),
@@ -983,7 +990,10 @@ fn init_drawing(
         command_buffers[i].end()?;
     }
 
-    Ok((framebuffers, command_buffers.into_vec()))
+    Ok((
+        framebuffers,
+        command_buffers.into_vec(),
+    ))
 }
 
 fn get_memory_type(

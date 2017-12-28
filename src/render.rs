@@ -975,6 +975,21 @@ fn init_drawing(
     Ok((framebuffers, command_buffers.into_vec()))
 }
 
+fn get_memory_type(
+    filter: u32,
+    flags:  vd::MemoryPropertyFlags,
+    types:  &[vd::MemoryType],
+) -> vd::Result<&vd::MemoryType> {
+    for i in 0..types.len() {
+        if filter & (1 << i) > 0 && flags == types[i].property_flags()
+        {
+            return Ok(&types[i])
+        }
+    }
+
+    Err("no valid memory type available on GPU".into())
+}
+
 pub fn draw(
     device:          &vd::Device,
     swapchain:       &vd::SwapchainKhr,

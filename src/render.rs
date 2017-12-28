@@ -215,6 +215,8 @@ impl<'a> Context<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+#[repr(C)]
 struct Vertex {
     position: ops::Vec2,
     color:    ops::Vec2,

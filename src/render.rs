@@ -126,6 +126,7 @@ impl<'a> Context<'a> {
             &_views,
             &_render_pass,
             &device,
+            &physical_device,
             graphics_family,
             &swapchain,
             &_pipeline,
@@ -193,6 +194,7 @@ impl<'a> Context<'a> {
             &_views,
             &_render_pass,
             &self.device,
+            &self.physical_device,
             self.graphics_family,
             &swapchain,
             &_pipeline,
@@ -860,6 +862,7 @@ fn init_drawing(
     views:           &[vd::ImageView],
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
+    physical_device: &vd::PhysicalDevice,
     graphics_family: u32,
     swapchain:       &vd::SwapchainKhr,
     pipeline:        &vd::GraphicsPipeline,
@@ -885,6 +888,31 @@ fn init_drawing(
     if framebuffers.is_empty() {
         return Err("empty framebuffers vector".into());
     }
+
+    /* Vertex buffers */
+
+    let vertices  = [
+        Vertex::new(-0.5f32,  0.5f32, 1f32, 0f32, 0f32),
+        Vertex::new( 0.5f32,  0.5f32, 0f32, 1f32, 0f32),
+        Vertex::new(   0f32, -0.5f32, 0f32, 0f32, 1f32),
+    ];
+
+    let info = vd::BufferCreateInfo::builder()
+        .size((mem::size_of::<Vertex>() * vertices.len()) as u64)
+        .usage(vd::BufferUsageFlags::VERTEX_BUFFER)
+        .sharing_mode(vd::SharingMode::Exclusive)
+        .flags(vd::BufferCreateFlags::empty())
+        .build();
+
+    let vertex_buffer = unsafe {
+        device.create_buffer(&info, None)?
+    };
+
+    let requirements = unsafe {
+        device.get_buffer_memory_requirements(vertex_buffer)
+    };
+
+    let properties = physical_device.memory_properties();
 
     /* Command buffers */
 

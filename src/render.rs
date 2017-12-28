@@ -605,55 +605,61 @@ fn init_swapchain(
 
     /* Swapchain */
 
-    let mut builder = vd::SwapchainKhr::builder(); builder
-        .surface(&surface)
-        .min_image_count(image_count)
-        .image_format(surface_format.format())
-        .image_color_space(surface_format.color_space())
-        .image_extent(swap_extent)
-        .image_array_layers(1)
-        .image_usage(vd::ImageUsageFlags::COLOR_ATTACHMENT)
-        .image_sharing_mode(sharing_mode)
-        .queue_family_indices(indices)
-        .pre_transform(capabilities.current_transform()) // No change
-        .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
-        .present_mode(present_mode)
-        .clipped(true);
+    let swapchain = {
+        let mut builder = vd::SwapchainKhr::builder(); builder
+            .surface(&surface)
+            .min_image_count(image_count)
+            .image_format(surface_format.format())
+            .image_color_space(surface_format.color_space())
+            .image_extent(swap_extent)
+            .image_array_layers(1)
+            .image_usage(vd::ImageUsageFlags::COLOR_ATTACHMENT)
+            .image_sharing_mode(sharing_mode)
+            .queue_family_indices(indices)
+            .pre_transform(capabilities.current_transform()) // No change
+            .composite_alpha(vd::CompositeAlphaFlagsKhr::OPAQUE)
+            .present_mode(present_mode)
+            .clipped(true);
 
-    if let Some(old) = old_swapchain {
-        builder.old_swapchain(old.handle());
-    }
+        if let Some(old) = old_swapchain {
+            builder.old_swapchain(old.handle());
+        }
 
-    let swapchain = builder.build(device.clone())?;
+        builder.build(device.clone())?
+    };
 
     /* Image views */
 
-    let chain = swapchain.clone();
-
-    if chain.images().is_empty() {
+    if swapchain.images().is_empty() {
         return Err("empty swapchain".into());
     }
 
-    let mut views = Vec::with_capacity(chain.images().len());
+    let views = {
+        let mut views = Vec::with_capacity(swapchain.images().len());
 
-    for i in 0..chain.images().len() {
-        let view = vd::ImageView::builder()
-            .image(&chain.images()[i])
-            .view_type(vd::ImageViewType::Type2d)
-            .format(chain.image_format())
-            .components(vd::ComponentMapping::default())
-            .subresource_range(
-                vd::ImageSubresourceRange::builder()
-                    .aspect_mask(vd::ImageAspectFlags::COLOR)
-                    .base_mip_level(0)
-                    .level_count(1)
-                    .base_array_layer(0)
-                    .layer_count(1)
-                    .build()
-            ).build(device.clone(), Some(chain.clone()))?;
+        for i in 0..swapchain.images().len() {
+            let chain = swapchain.clone();
 
-        views.push(view);
-    }
+            let view = vd::ImageView::builder()
+                .image(&chain.images()[i])
+                .view_type(vd::ImageViewType::Type2d)
+                .format(chain.image_format())
+                .components(vd::ComponentMapping::default())
+                .subresource_range(
+                    vd::ImageSubresourceRange::builder()
+                        .aspect_mask(vd::ImageAspectFlags::COLOR)
+                        .base_mip_level(0)
+                        .level_count(1)
+                        .base_array_layer(0)
+                        .layer_count(1)
+                        .build()
+                ).build(device.clone(), Some(chain))?;
+
+            views.push(view);
+        }
+
+        views
+    };
 
     if views.is_empty() {
         return Err("empty views".into());

@@ -219,10 +219,17 @@ impl<'a> Context<'a> {
 #[repr(C)]
 struct Vertex {
     position: ops::Vec2,
-    color:    ops::Vec2,
+    color:    ops::Vec3,
 }
 
 impl Vertex {
+    fn new(x: f32, y: f32, r: f32, g: f32, b: f32) -> Vertex {
+        Vertex {
+            position: ops::Vec2::new(x, y),
+            color:    ops::Vec3::new(r, g, b),
+        }
+    }
+
     fn binding_description() -> vd::VertexInputBindingDescription {
         vd::VertexInputBindingDescription::builder()
             .binding(0)

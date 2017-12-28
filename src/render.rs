@@ -52,7 +52,7 @@ pub struct Context<'a> {
     _framebuffers: Vec<vd::Framebuffer>,
     _render_pass:  vd::RenderPass,
     _views:        Vec<vd::ImageView>,
-    _pipeline:     vd::GraphicsPipeline
+    _pipeline:     vd::GraphicsPipeline,
 }
 
 impl<'a> Context<'a> {
@@ -67,6 +67,8 @@ impl<'a> Context<'a> {
             indices,
             sharing_mode,
             device,
+            image_available,
+            render_complete,
         ) = init_vulkan(window)?;
 
         let (
@@ -77,7 +79,7 @@ impl<'a> Context<'a> {
             assembly,
             rasterizer,
             multisampling,
-            layout
+            layout,
         ) = init_fixed(device.clone())?;
 
         let (swapchain, _views) = init_swapchain(
@@ -89,7 +91,7 @@ impl<'a> Context<'a> {
             &indices,
             present_mode,
             None,
-            &device
+            &device,
         )?;
 
         let _render_pass = init_render_pass(&swapchain, &device)?;
@@ -106,18 +108,13 @@ impl<'a> Context<'a> {
             &device,
         )?;
 
-        let (
-            _framebuffers,
-            command_buffers,
-            image_available,
-            render_complete
-        ) = init_drawing(
+        let (_framebuffers, command_buffers) = init_drawing(
             &_views,
             &_render_pass,
             &device,
             graphics_family,
             &swapchain,
-            &_pipeline
+            &_pipeline,
         )?;
 
         Ok(
@@ -163,7 +160,7 @@ impl<'a> Context<'a> {
             &self.indices,
             self.present_mode,
             Some(&self.swapchain), // Pass in old swapchain
-            &self.device
+            &self.device,
         )?;
 
         let _render_pass = init_render_pass(&swapchain, &self.device)?;
@@ -180,13 +177,13 @@ impl<'a> Context<'a> {
             &self.device,
         )?;
 
-        let (_framebuffers, command_buffers, _, _) = init_drawing(
+        let (_framebuffers, command_buffers) = init_drawing(
             &_views,
             &_render_pass,
             &self.device,
             self.graphics_family,
             &swapchain,
-            &_pipeline
+            &_pipeline,
         )?;
 
         // Synchronize
@@ -216,6 +213,8 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     Vec<u32>,
     vd::SharingMode,
     vd::Device,
+    vd::Semaphore,
+    vd::Semaphore,
 )> {
     /* Application */
 
@@ -374,6 +373,18 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device.clone())?;
 
+    /* Synchronization */
+
+    let image_available = vd::Semaphore::new(
+        device.clone(),
+        vd::SemaphoreCreateFlags::empty()
+    )?;
+
+    let render_complete = vd::Semaphore::new(
+        device.clone(),
+        vd::SemaphoreCreateFlags::empty()
+    )?;
+
     Ok((
         surface,
         physical_device,
@@ -384,6 +395,8 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         indices,
         sharing_mode,
         device,
+        image_available,
+        render_complete,
     ))
 }
 
@@ -449,7 +462,7 @@ fn init_fixed<'a>(
     vd::PipelineInputAssemblyStateCreateInfo<'a>,
     vd::PipelineRasterizationStateCreateInfo<'a>,
     vd::PipelineMultisampleStateCreateInfo<'a>,
-    vd::PipelineLayout
+    vd::PipelineLayout,
 )> {
     /* Shaders */
 
@@ -522,7 +535,7 @@ fn init_fixed<'a>(
         assembly,
         rasterizer,
         multisampling,
-        layout
+        layout,
     ))
 }
 
@@ -539,7 +552,7 @@ fn init_swapchain(
     device:          &vd::Device,
 ) -> vd::Result<(
     vd::SwapchainKhr,
-    Vec<vd::ImageView>
+    Vec<vd::ImageView>,
 )> {
     /* Surface */
 
@@ -572,7 +585,7 @@ fn init_swapchain(
                     capabilities.min_image_extent().width(),
                     cmp::min(
                         capabilities.max_image_extent().width(),
-                        window_width
+                        window_width,
                     )
                 )
             );
@@ -581,7 +594,7 @@ fn init_swapchain(
                     capabilities.min_image_extent().height(),
                     cmp::min(
                         capabilities.max_image_extent().height(),
-                        window_height
+                        window_height,
                     )
                 )
             );
@@ -705,7 +718,7 @@ fn init_pipeline(
     multisampling:   &vd::PipelineMultisampleStateCreateInfo,
     layout:          &vd::PipelineLayout,
     render_pass:     &vd::RenderPass,
-    device:          &vd::Device
+    device:          &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
     /* Fixed functions */
 
@@ -788,13 +801,8 @@ fn init_drawing(
     device:          &vd::Device,
     graphics_family: u32,
     swapchain:       &vd::SwapchainKhr,
-    pipeline:        &vd::GraphicsPipeline
-) -> vd::Result<(
-    Vec<vd::Framebuffer>,
-    Vec<vd::CommandBuffer>,
-    vd::Semaphore,
-    vd::Semaphore
-)> {
+    pipeline:        &vd::GraphicsPipeline,
+) -> vd::Result<(Vec<vd::Framebuffer>, Vec<vd::CommandBuffer>)> {
     /* Framebuffers */
 
     let mut framebuffers = Vec::with_capacity(views.len());
@@ -859,12 +867,12 @@ fn init_drawing(
 
         command_buffers[i].begin_render_pass(
             &pass_info,
-            vd::SubpassContents::Inline
+            vd::SubpassContents::Inline,
         );
 
         command_buffers[i].bind_pipeline(
             vd::PipelineBindPoint::Graphics,
-            &pipeline.handle()
+            &pipeline.handle(),
         );
 
         command_buffers[i].draw(
@@ -875,24 +883,7 @@ fn init_drawing(
         command_buffers[i].end()?;
     }
 
-    /* Synchronization */
-
-    let image_available = vd::Semaphore::new(
-        device.clone(),
-        vd::SemaphoreCreateFlags::empty()
-    )?;
-
-    let render_complete = vd::Semaphore::new(
-        device.clone(),
-        vd::SemaphoreCreateFlags::empty()
-    )?;
-
-    Ok((
-        framebuffers,
-        command_buffers.into_vec(),
-        image_available,
-        render_complete
-    ))
+    Ok((framebuffers, command_buffers.into_vec()))
 }
 
 pub fn draw(
@@ -902,12 +893,12 @@ pub fn draw(
     render_complete: &vd::Semaphore,
     command_buffers: &Vec<vd::CommandBuffer>,
     graphics_family: u32,
-    present_family:  u32
+    present_family:  u32,
 ) -> vd::Result<()> {
     let index = swapchain.acquire_next_image_khr(
         u64::max_value(), // Disable timeout
         Some(image_available),
-        None
+        None,
     )?;
 
     let command_buffers = [command_buffers[index as usize].handle()];
@@ -958,9 +949,11 @@ pub fn draw(
                         device.wait_idle();
                     }
                 },
+
                 None => return Err("no present queue".into())
             }
         },
+
         None => return Err("no graphics queue".into())
     }
 

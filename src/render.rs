@@ -8,6 +8,21 @@ use std::mem;
 use statics;
 use ops;
 
+macro_rules! offset_of {
+    ($struct:ty, $field:tt) => ({
+        let value: $struct = unsafe {
+            $crate::std::mem::uninitialized()
+        };
+
+        let base = &value as *const _ as u32;
+        let indent = &value.$field as *const _ as u32;
+
+        $crate::std::mem::forget(value);
+
+        indent - base
+    });
+}
+
 #[cfg(debug_assertions)]
 const ENABLE_VALIDATION_LAYERS: bool = true;
 #[cfg(not(debug_assertions))]

@@ -59,6 +59,11 @@ pub struct Context<'a> {
     multisampling: vd::PipelineMultisampleStateCreateInfo<'a>,
     layout:        vd::PipelineLayout,
 
+    /* Unsafe data */
+
+    vertex_buffer: vd::BufferHandle,
+    gpu_memory:    vd::DeviceMemoryHandle,
+
     /* Persistent data */
 
     _vert_mod:     vd::ShaderModule,
@@ -122,6 +127,8 @@ impl<'a> Context<'a> {
 
         let (
             _framebuffers,
+            vertex_buffer,
+            gpu_memory,
             command_buffers
         ) = init_drawing(
             &_views,
@@ -153,6 +160,8 @@ impl<'a> Context<'a> {
                 rasterizer,
                 multisampling,
                 layout,
+                vertex_buffer,
+                gpu_memory,
                 _vert_mod,
                 _frag_mod,
                 _framebuffers,
@@ -193,6 +202,8 @@ impl<'a> Context<'a> {
 
         let (
             _framebuffers,
+            vertex_buffer,
+            gpu_memory,
             command_buffers,
         ) = init_drawing(
             &_views,
@@ -211,6 +222,9 @@ impl<'a> Context<'a> {
 
         self.swapchain = swapchain;
         self.command_buffers = command_buffers;
+
+        self.vertex_buffer = vertex_buffer;
+        self.gpu_memory = gpu_memory;
 
         self._framebuffers = _framebuffers;
         self._render_pass = _render_pass;
@@ -872,6 +886,8 @@ fn init_drawing(
     pipeline:        &vd::GraphicsPipeline,
 ) -> vd::Result<(
     Vec<vd::Framebuffer>,
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
     Vec<vd::CommandBuffer>,
 )> {
     /* Framebuffers */
@@ -992,6 +1008,8 @@ fn init_drawing(
 
     Ok((
         framebuffers,
+        vertex_buffer,
+        memory_handle,
         command_buffers.into_vec(),
     ))
 }

@@ -914,6 +914,17 @@ fn init_drawing(
 
     let properties = physical_device.memory_properties();
 
+    let info = vd::MemoryAllocateInfo::builder()
+        .allocation_size(requirements.size())
+        .memory_type_index(
+            get_memory_type(
+                requirements.memory_type_bits(),
+                vd::MemoryPropertyFlags::HOST_VISIBLE
+                | vd::MemoryPropertyFlags::HOST_COHERENT,
+                properties.memory_types(),
+            )?
+        ).build();
+
     /* Command buffers */
 
     let pool = vd::CommandPool::builder()
@@ -979,11 +990,12 @@ fn get_memory_type(
     filter: u32,
     flags:  vd::MemoryPropertyFlags,
     types:  &[vd::MemoryType],
-) -> vd::Result<&vd::MemoryType> {
+) -> vd::Result<u32> {
     for i in 0..types.len() {
-        if filter & (1 << i) > 0 && flags == types[i].property_flags()
+        if filter & (1 << i) > 0
+            && flags == types[i].property_flags()
         {
-            return Ok(&types[i])
+            return Ok(i as u32)
         }
     }
 

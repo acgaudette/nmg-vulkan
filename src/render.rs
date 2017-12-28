@@ -233,6 +233,23 @@ impl Vertex {
             .input_rate(vd::VertexInputRate::Vertex)
             .build()
     }
+
+    fn attribute_descriptions() -> [vd::VertexInputAttributeDescription; 2] {
+        [
+            vd::VertexInputAttributeDescription::builder()
+                .binding(0)
+                .location(0)
+                .format(vd::Format::R32G32Sfloat)
+                .offset(offset_of!(Vertex, position))
+                .build(),
+            vd::VertexInputAttributeDescription::builder()
+                .binding(0)
+                .location(1)
+                .format(vd::Format::R32G32Sfloat)
+                .offset(offset_of!(Vertex, color))
+                .build(),
+        ]
+    }
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(

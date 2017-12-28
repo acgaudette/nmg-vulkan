@@ -22,12 +22,13 @@ fn main() {
     let (events, window) = init_window();
 
     match render::Context::new(&window) {
-        Ok(mut context) => update(events, &mut context),
+        Ok(mut context) => update(&window, events, &mut context),
         Err(e) => eprintln!("Could not create Vulkan context: {}", e)
     }
 }
 
 fn update(
+    window: &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
     context: &mut render::Context,
 ) {
@@ -78,9 +79,17 @@ fn update(
             // Rebuild the swapchain if it becomes out of date
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
                 if result == vd::CallResult::ErrorOutOfDateKhr {
-                    match context.refresh_swapchain(1280, 720) {
-                        Ok(()) => continue,
-                        Err(e) => eprintln!("{}", e)
+                    // Use existing window size
+                    match window.get_inner_size_pixels() {
+                        Some(size) => {
+                            match context.refresh_swapchain(size.0, size.1) {
+                                Ok(()) => continue,
+                                Err(e) => eprintln!("{}", e) // Fall through
+                            }
+                        },
+
+                        // Fall through
+                        None => eprintln!("Failed to acquire window size")
                     }
                 }
             }

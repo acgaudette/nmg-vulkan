@@ -1,3 +1,4 @@
+extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
 mod statics;
@@ -36,6 +37,7 @@ fn update(
         // Handle window events
         events.poll_events(|event| {
             match event {
+                // Rebuild the swapchain if the window changes size
                 vdw::winit::Event::WindowEvent {
                     event: vdw::winit::WindowEvent::Resized(
                         width, height
@@ -49,6 +51,7 @@ fn update(
                     }
                 },
 
+                // Stop the application if the window was closed
                 vdw::winit::Event::WindowEvent {
                     event: vdw::winit::WindowEvent::Closed,
                     ..
@@ -60,9 +63,7 @@ fn update(
             }
         });
 
-        if !running {
-            break;
-        }
+        if !running { break; }
 
         // Render frame
         if let Err(e) = render::draw(
@@ -74,10 +75,21 @@ fn update(
             context.graphics_family,
             context.present_family
         ) {
+            // Rebuild the swapchain if it becomes out of date
+            if let vd::ErrorKind::ApiCall(result, _) = e.kind {
+                if result == vd::CallResult::ErrorOutOfDateKhr {
+                    match context.refresh_swapchain(1280, 720) {
+                        Ok(()) => continue,
+                        Err(e) => eprintln!("{}", e)
+                    }
+                }
+            }
+
+            // Irrecoverable error
             panic!("{}", e);
         }
     }
 
-    // Synchronize
+    // Synchronize before exit
     context.device.wait_idle();
 }

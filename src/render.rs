@@ -766,7 +766,12 @@ fn init_pipeline(
 ) -> vd::Result<(vd::GraphicsPipeline)> {
     /* Fixed functions */
 
+    let binding_description = [Vertex::binding_description()];
+    let attribute_descriptions = Vertex::attribute_descriptions();
+
     let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
+        .vertex_binding_descriptions(&binding_description)
+        .vertex_attribute_descriptions(&attribute_descriptions)
         .build();
 
     let attachments = [

@@ -42,7 +42,9 @@ fn update(
                     ),
                     ..
                 } => {
-                    if let Err(e) = context.refresh_swapchain() {
+                    if width == 0 || height == 0 { return; }
+
+                    if let Err(e) = context.refresh_swapchain(width, height) {
                         panic!("{}", e);
                     }
                 },

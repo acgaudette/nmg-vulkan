@@ -960,8 +960,26 @@ fn init_drawing(
         device.allocate_memory(&memory_info, None)?
     };
 
+    // Memory-mapped IO
     unsafe {
         device.bind_buffer_memory(vertex_buffer, memory_handle, 0)?;
+
+        let ptr = device.map_memory(
+            memory_handle,
+            0,
+            buffer_info.size(),
+            vd::MemoryMapFlags::empty(),
+        )?;
+
+        let size = buffer_info.size() as usize
+            / std::mem::size_of::<Vertex>();
+        debug_assert!(size == vertices.len());
+
+        // Copy vertex buffer
+        let data = std::slice::from_raw_parts_mut(ptr, size);
+        data.copy_from_slice(&vertices);
+
+        device.unmap_memory(memory_handle);
     }
 
     /* Command buffers */

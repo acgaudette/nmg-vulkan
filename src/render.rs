@@ -1,9 +1,7 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
-use std::ffi;
-use std::cmp;
-use std::mem;
+use std;
 
 use statics;
 use ops;
@@ -262,7 +260,7 @@ impl Vertex {
     fn binding_description() -> vd::VertexInputBindingDescription {
         vd::VertexInputBindingDescription::builder()
             .binding(0)
-            .stride(mem::size_of::<Vertex>() as u32)
+            .stride(std::mem::size_of::<Vertex>() as u32)
             .input_rate(vd::VertexInputRate::Vertex)
             .build()
     }
@@ -300,7 +298,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 )> {
     /* Application */
 
-    let app_name = ffi::CString::new(statics::TITLE)?;
+    let app_name = std::ffi::CString::new(statics::TITLE)?;
     let app_info = vd::ApplicationInfo::builder()
         .application_name(&app_name)
         .application_version((0, 1, 0))
@@ -558,7 +556,7 @@ fn init_fixed<'a>(
     let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
     let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
 
-    let main = ffi::CStr::from_bytes_with_nul(b"main\0").unwrap();
+    let main = std::ffi::CStr::from_bytes_with_nul(b"main\0").unwrap();
 
     let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
         .stage(vd::ShaderStageFlags::VERTEX)
@@ -658,18 +656,18 @@ fn init_swapchain(
         } else {
             // Handle special case window managers and clamp
             extent.set_width(
-                cmp::max(
+                std::cmp::max(
                     capabilities.min_image_extent().width(),
-                    cmp::min(
+                    std::cmp::min(
                         capabilities.max_image_extent().width(),
                         window_width,
                     )
                 )
             );
             extent.set_height(
-                cmp::max(
+                std::cmp::max(
                     capabilities.min_image_extent().height(),
-                    cmp::min(
+                    std::cmp::min(
                         capabilities.max_image_extent().height(),
                         window_height,
                     )
@@ -923,21 +921,21 @@ fn init_drawing(
 
     /* Vertex buffer */
 
-    let vertices  = [
+    let vertices = [
         Vertex::new(-0.5f32,  0.5f32, 1f32, 0f32, 0f32),
         Vertex::new( 0.5f32,  0.5f32, 0f32, 1f32, 0f32),
         Vertex::new(   0f32, -0.5f32, 0f32, 0f32, 1f32),
     ];
 
-    let info = vd::BufferCreateInfo::builder()
-        .size((mem::size_of::<Vertex>() * vertices.len()) as u64)
+    let buffer_info = vd::BufferCreateInfo::builder()
+        .size((std::mem::size_of::<Vertex>() * vertices.len()) as u64)
         .usage(vd::BufferUsageFlags::VERTEX_BUFFER)
         .sharing_mode(vd::SharingMode::Exclusive)
         .flags(vd::BufferCreateFlags::empty())
         .build();
 
     let vertex_buffer = unsafe {
-        device.create_buffer(&info, None)?
+        device.create_buffer(&buffer_info, None)?
     };
 
     let requirements = unsafe {
@@ -946,7 +944,7 @@ fn init_drawing(
 
     let properties = physical_device.memory_properties();
 
-    let info = vd::MemoryAllocateInfo::builder()
+    let memory_info = vd::MemoryAllocateInfo::builder()
         .allocation_size(requirements.size())
         .memory_type_index(
             get_memory_type(
@@ -959,7 +957,7 @@ fn init_drawing(
 
     // Allocate GPU memory
     let memory_handle = unsafe {
-        device.allocate_memory(&info, None)?
+        device.allocate_memory(&memory_info, None)?
     };
 
     unsafe {
@@ -978,7 +976,9 @@ fn init_drawing(
     )?;
 
     for i in 0..command_buffers.len() {
-        command_buffers[i].begin(vd::CommandBufferUsageFlags::SIMULTANEOUS_USE)?;
+        command_buffers[i].begin(
+            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE
+        )?;
 
         // Clear color
         let clear = [

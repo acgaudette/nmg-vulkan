@@ -927,56 +927,28 @@ fn init_drawing(
         Vertex::new(   0f32, -0.5f32, 0f32, 0f32, 1f32),
     ];
 
-    let buffer_info = vd::BufferCreateInfo::builder()
-        .size((std::mem::size_of::<Vertex>() * vertices.len()) as u64)
-        .usage(vd::BufferUsageFlags::VERTEX_BUFFER)
-        .sharing_mode(vd::SharingMode::Exclusive)
-        .flags(vd::BufferCreateFlags::empty())
-        .build();
+    let size = std::mem::size_of::<Vertex>() * vertices.len();
 
-    let vertex_buffer = unsafe {
-        device.create_buffer(&buffer_info, None)?
-    };
-
-    let requirements = unsafe {
-        device.get_buffer_memory_requirements(vertex_buffer)
-    };
-
-    let properties = physical_device.memory_properties();
-
-    let memory_info = vd::MemoryAllocateInfo::builder()
-        .allocation_size(requirements.size())
-        .memory_type_index(
-            get_memory_type(
-                requirements.memory_type_bits(),
-                vd::MemoryPropertyFlags::HOST_VISIBLE
-                | vd::MemoryPropertyFlags::HOST_COHERENT,
-                properties.memory_types(),
-            )?
-        ).build();
-
-    // Allocate GPU memory
-    let memory_handle = unsafe {
-        device.allocate_memory(&memory_info, None)?
-    };
+    let (vertex_buffer, memory_handle) = create_buffer(
+        size as u64,
+        vd::BufferUsageFlags::VERTEX_BUFFER,
+        device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE
+        | vd::MemoryPropertyFlags::HOST_COHERENT,
+        &physical_device.memory_properties(),
+    )?;
 
     // Memory-mapped IO
     unsafe {
-        device.bind_buffer_memory(vertex_buffer, memory_handle, 0)?;
-
         let ptr = device.map_memory(
             memory_handle,
             0,
-            buffer_info.size(),
+            size as u64,
             vd::MemoryMapFlags::empty(),
         )?;
 
-        let size = buffer_info.size() as usize
-            / std::mem::size_of::<Vertex>();
-        debug_assert!(size == vertices.len());
-
         // Copy vertex buffer
-        let data = std::slice::from_raw_parts_mut(ptr, size);
+        let data = std::slice::from_raw_parts_mut(ptr, vertices.len());
         data.copy_from_slice(&vertices);
 
         device.unmap_memory(memory_handle);
@@ -1076,6 +1048,50 @@ fn get_memory_type(
     }
 
     Err("no valid memory type available on GPU".into())
+}
+
+fn create_buffer(
+    size:       u64,
+    usage:      vd::BufferUsageFlags,
+    device:     &vd::Device,
+    flags:      vd::MemoryPropertyFlags,
+    properties: &vd::PhysicalDeviceMemoryProperties,
+) -> vd::Result<(vd::BufferHandle, vd::DeviceMemoryHandle)> {
+    let info = vd::BufferCreateInfo::builder()
+        .size(size)
+        .usage(usage)
+        .sharing_mode(vd::SharingMode::Exclusive)
+        .flags(vd::BufferCreateFlags::empty())
+        .build();
+
+    let buffer = unsafe {
+        device.create_buffer(&info, None)?
+    };
+
+    let requirements = unsafe {
+        device.get_buffer_memory_requirements(buffer)
+    };
+
+    let info = vd::MemoryAllocateInfo::builder()
+        .allocation_size(requirements.size())
+        .memory_type_index(
+            get_memory_type(
+                requirements.memory_type_bits(),
+                flags,
+                properties.memory_types(),
+            )?
+        ).build();
+
+    // Allocate GPU memory
+    let handle = unsafe {
+        device.allocate_memory(&info, None)?
+    };
+
+    unsafe {
+        device.bind_buffer_memory(buffer, handle, 0)?;
+    }
+
+    Ok((buffer, handle))
 }
 
 pub fn draw(

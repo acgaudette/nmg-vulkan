@@ -61,8 +61,8 @@ pub struct Context<'a> {
 
     /* Unsafe data */
 
-    vertex_buffer: vd::BufferHandle,
-    gpu_memory:    vd::DeviceMemoryHandle,
+    host_buffer: vd::BufferHandle,
+    host_memory: vd::DeviceMemoryHandle,
 
     /* Persistent data */
 
@@ -129,17 +129,18 @@ impl<'a> Context<'a> {
 
         let (
             _framebuffers,
-            vertex_buffer,
-            gpu_memory,
+            host_buffer,
+            host_memory,
             command_buffers
         ) = init_drawing(
+            &swapchain,
             &_views,
             &_render_pass,
             &device,
             &physical_device,
-            &drawing_pool,
             &transient_pool,
-            &swapchain,
+            graphics_family,
+            &drawing_pool,
             &_pipeline,
         )?;
 
@@ -165,8 +166,8 @@ impl<'a> Context<'a> {
                 layout,
                 drawing_pool,
                 transient_pool,
-                vertex_buffer,
-                gpu_memory,
+                host_buffer,
+                host_memory,
                 _vert_mod,
                 _frag_mod,
                 _framebuffers,
@@ -207,17 +208,18 @@ impl<'a> Context<'a> {
 
         let (
             _framebuffers,
-            vertex_buffer,
-            gpu_memory,
+            host_buffer,
+            host_memory,
             command_buffers,
         ) = init_drawing(
+            &swapchain,
             &_views,
             &_render_pass,
             &self.device,
             &self.physical_device,
-            &self.drawing_pool,
             &self.transient_pool,
-            &swapchain,
+            self.graphics_family,
+            &self.drawing_pool,
             &_pipeline,
         )?;
 
@@ -229,8 +231,8 @@ impl<'a> Context<'a> {
         self.swapchain = swapchain;
         self.command_buffers = command_buffers;
 
-        self.vertex_buffer = vertex_buffer;
-        self.gpu_memory = gpu_memory;
+        self.host_buffer = host_buffer;
+        self.host_memory = host_memory;
 
         self._framebuffers = _framebuffers;
         self._render_pass = _render_pass;
@@ -244,8 +246,8 @@ impl<'a> Context<'a> {
 impl<'a> Drop for Context<'a> {
     fn drop(&mut self) {
         unsafe {
-            self.device.destroy_buffer(self.vertex_buffer, None);
-            self.device.free_memory(self.gpu_memory, None);
+            self.device.destroy_buffer(self.host_buffer, None);
+            self.device.free_memory(self.host_memory, None);
         }
     }
 }
@@ -909,13 +911,14 @@ fn init_pipeline(
 }
 
 fn init_drawing(
+    swapchain:       &vd::SwapchainKhr,
     views:           &[vd::ImageView],
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
     physical_device: &vd::PhysicalDevice,
-    drawing_pool:    &vd::CommandPool,
     transient_pool:  &vd::CommandPool,
-    swapchain:       &vd::SwapchainKhr,
+    graphics_family: u32,
+    drawing_pool:    &vd::CommandPool,
     pipeline:        &vd::GraphicsPipeline,
 ) -> vd::Result<(
     Vec<vd::Framebuffer>,
@@ -956,9 +959,10 @@ fn init_drawing(
     let size = (std::mem::size_of::<Vertex>() * vertices.len()) as u64;
     let properties = physical_device.memory_properties();
 
-    let (vertex_buffer, memory_handle) = create_buffer(
+    // Local buffer (source)
+    let (host_buffer, host_handle) = create_buffer(
         size,
-        vd::BufferUsageFlags::VERTEX_BUFFER,
+        vd::BufferUsageFlags::TRANSFER_SRC,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
         | vd::MemoryPropertyFlags::HOST_COHERENT,
@@ -968,7 +972,7 @@ fn init_drawing(
     // Memory-mapped IO
     unsafe {
         let ptr = device.map_memory(
-            memory_handle,
+            host_handle,
             0,
             size,
             vd::MemoryMapFlags::empty(),
@@ -978,8 +982,18 @@ fn init_drawing(
         let data = std::slice::from_raw_parts_mut(ptr, vertices.len());
         data.copy_from_slice(&vertices);
 
-        device.unmap_memory(memory_handle);
+        device.unmap_memory(host_handle);
     }
+
+    // GPU buffer (destination)
+    let (vertex_buffer, device_memory) = create_buffer(
+        size,
+        vd::BufferUsageFlags::TRANSFER_DST
+        | vd::BufferUsageFlags::VERTEX_BUFFER,
+        device,
+        vd::MemoryPropertyFlags::DEVICE_LOCAL,
+        &properties,
+    )?;
 
     /* Command buffers */
 
@@ -990,7 +1004,7 @@ fn init_drawing(
 
     for i in 0..command_buffers.len() {
         command_buffers[i].begin(
-            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE
+            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
         )?;
 
         // Clear color
@@ -1033,7 +1047,7 @@ fn init_drawing(
             device.cmd_bind_vertex_buffers(
                 command_buffers[i].handle(),
                 0,
-                &[vertex_buffer],
+                &[host_buffer],
                 &[0],
             );
         }
@@ -1051,8 +1065,8 @@ fn init_drawing(
 
     Ok((
         framebuffers,
-        vertex_buffer,
-        memory_handle,
+        host_buffer,
+        host_handle,
         command_buffers.into_vec(),
     ))
 }
@@ -1146,9 +1160,7 @@ pub fn draw(
         .signal_semaphores(&complete_signals)
         .build();
 
-    let graphics_q = device.get_device_queue(graphics_family, 0);
-
-    match graphics_q {
+    match device.get_device_queue(graphics_family, 0) {
         Some(gq) => {
             unsafe {
                 // Render

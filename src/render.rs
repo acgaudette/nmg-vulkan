@@ -974,10 +974,10 @@ fn init_drawing(
     /* Vertex data */
 
     let vertices = [
-        Vertex::new(-0.5f32,  0.5f32, 1f32, 0f32, 0f32),
-        Vertex::new( 0.0f32, -0.5f32, 0f32, 1f32, 0f32),
-        Vertex::new( 0.5f32,  0.5f32, 0f32, 0f32, 1f32),
-        Vertex::new( 0.0f32,  0.5f32, 1f32, 1f32, 0f32),
+        Vertex::new(-0.25f32, -0.5f32, 1f32, 0f32, 0f32),
+        Vertex::new(-0.50f32,  0.5f32, 0f32, 1f32, 0f32),
+        Vertex::new( 0.25f32,  0.5f32, 0f32, 0f32, 1f32),
+        Vertex::new( 0.50f32, -0.5f32, 1f32, 1f32, 0f32),
     ];
 
     let indices = [

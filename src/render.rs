@@ -927,15 +927,16 @@ fn init_drawing(
         Vertex::new(   0f32, -0.5f32, 0f32, 0f32, 1f32),
     ];
 
-    let size = std::mem::size_of::<Vertex>() * vertices.len();
+    let size = (std::mem::size_of::<Vertex>() * vertices.len()) as u64;
+    let properties = physical_device.memory_properties();
 
     let (vertex_buffer, memory_handle) = create_buffer(
-        size as u64,
+        size,
         vd::BufferUsageFlags::VERTEX_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
         | vd::MemoryPropertyFlags::HOST_COHERENT,
-        &physical_device.memory_properties(),
+        &properties,
     )?;
 
     // Memory-mapped IO
@@ -943,7 +944,7 @@ fn init_drawing(
         let ptr = device.map_memory(
             memory_handle,
             0,
-            size as u64,
+            size,
             vd::MemoryMapFlags::empty(),
         )?;
 

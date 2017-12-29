@@ -276,7 +276,7 @@ impl Vertex {
             vd::VertexInputAttributeDescription::builder()
                 .binding(0)
                 .location(1)
-                .format(vd::Format::R32G32Sfloat)
+                .format(vd::Format::R32G32B32Sfloat)
                 .offset(offset_of!(Vertex, color))
                 .build(),
         ]

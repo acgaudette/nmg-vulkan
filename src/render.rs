@@ -1039,7 +1039,7 @@ fn get_memory_type(
 ) -> vd::Result<u32> {
     for i in 0..types.len() {
         if filter & (1 << i) > 0
-            && flags == types[i].property_flags()
+            && flags.intersects(types[i].property_flags())
         {
             return Ok(i as u32)
         }

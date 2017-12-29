@@ -235,6 +235,15 @@ impl<'a> Context<'a> {
     }
 }
 
+impl<'a> Drop for Context<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            self.device.destroy_buffer(self.vertex_buffer, None);
+            self.device.free_memory(self.gpu_memory, None);
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct Vertex {

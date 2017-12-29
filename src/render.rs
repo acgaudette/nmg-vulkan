@@ -57,6 +57,7 @@ pub struct Context<'a> {
     multisampling:  vd::PipelineMultisampleStateCreateInfo<'a>,
     layout:         vd::PipelineLayout,
     drawing_pool:   vd::CommandPool,
+    transient_pool: vd::CommandPool,
 
     /* Unsafe data */
 
@@ -86,6 +87,7 @@ impl<'a> Context<'a> {
             sharing_mode,
             device,
             drawing_pool,
+            transient_pool,
             image_available,
             render_complete,
         ) = init_vulkan(window)?;
@@ -136,6 +138,7 @@ impl<'a> Context<'a> {
             &device,
             &physical_device,
             &drawing_pool,
+            &transient_pool,
             &swapchain,
             &_pipeline,
         )?;
@@ -161,6 +164,7 @@ impl<'a> Context<'a> {
                 multisampling,
                 layout,
                 drawing_pool,
+                transient_pool,
                 vertex_buffer,
                 gpu_memory,
                 _vert_mod,
@@ -212,6 +216,7 @@ impl<'a> Context<'a> {
             &self.device,
             &self.physical_device,
             &self.drawing_pool,
+            &self.transient_pool,
             &swapchain,
             &_pipeline,
         )?;
@@ -465,6 +470,12 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .flags(vd::CommandPoolCreateFlags::empty())
         .build(device.clone())?;
 
+    // For buffers with short lifetimes
+    let transient_pool = vd::CommandPool::builder()
+        .queue_family_index(graphics_family)
+        .flags(vd::CommandPoolCreateFlags::TRANSIENT)
+        .build(device.clone())?;
+
     /* Synchronization */
 
     let image_available = vd::Semaphore::new(
@@ -488,6 +499,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         sharing_mode,
         device,
         drawing_pool,
+        transient_pool,
         image_available,
         render_complete,
     ))
@@ -902,6 +914,7 @@ fn init_drawing(
     device:          &vd::Device,
     physical_device: &vd::PhysicalDevice,
     drawing_pool:    &vd::CommandPool,
+    transient_pool:  &vd::CommandPool,
     swapchain:       &vd::SwapchainKhr,
     pipeline:        &vd::GraphicsPipeline,
 ) -> vd::Result<(

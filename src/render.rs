@@ -2,7 +2,6 @@ extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
 use std;
-
 use statics;
 use ops;
 
@@ -231,6 +230,10 @@ impl<'a> Context<'a> {
         self.swapchain = swapchain;
         self.command_buffers = command_buffers;
 
+        unsafe {
+            self.free_host();
+        }
+
         self.host_buffer = host_buffer;
         self.host_memory = host_memory;
 
@@ -241,13 +244,18 @@ impl<'a> Context<'a> {
 
         Ok(())
     }
+
+    unsafe fn free_host(&mut self) {
+        // Free host vertex buffer allocations
+        self.device.destroy_buffer(self.host_buffer, None);
+        self.device.free_memory(self.host_memory, None);
+    }
 }
 
 impl<'a> Drop for Context<'a> {
     fn drop(&mut self) {
         unsafe {
-            self.device.destroy_buffer(self.host_buffer, None);
-            self.device.free_memory(self.host_memory, None);
+            self.free_host();
         }
     }
 }

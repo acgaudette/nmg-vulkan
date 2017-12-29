@@ -51,11 +51,12 @@ pub struct Context<'a> {
 
     /* Fixed information */
 
-    stages:        [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    assembly:      vd::PipelineInputAssemblyStateCreateInfo<'a>,
-    rasterizer:    vd::PipelineRasterizationStateCreateInfo<'a>,
-    multisampling: vd::PipelineMultisampleStateCreateInfo<'a>,
-    layout:        vd::PipelineLayout,
+    stages:         [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    assembly:       vd::PipelineInputAssemblyStateCreateInfo<'a>,
+    rasterizer:     vd::PipelineRasterizationStateCreateInfo<'a>,
+    multisampling:  vd::PipelineMultisampleStateCreateInfo<'a>,
+    layout:         vd::PipelineLayout,
+    drawing_pool:   vd::CommandPool,
 
     /* Unsafe data */
 
@@ -84,6 +85,7 @@ impl<'a> Context<'a> {
             indices,
             sharing_mode,
             device,
+            drawing_pool,
             image_available,
             render_complete,
         ) = init_vulkan(window)?;
@@ -133,7 +135,7 @@ impl<'a> Context<'a> {
             &_render_pass,
             &device,
             &physical_device,
-            graphics_family,
+            &drawing_pool,
             &swapchain,
             &_pipeline,
         )?;
@@ -158,6 +160,7 @@ impl<'a> Context<'a> {
                 rasterizer,
                 multisampling,
                 layout,
+                drawing_pool,
                 vertex_buffer,
                 gpu_memory,
                 _vert_mod,
@@ -208,7 +211,7 @@ impl<'a> Context<'a> {
             &_render_pass,
             &self.device,
             &self.physical_device,
-            self.graphics_family,
+            &self.drawing_pool,
             &swapchain,
             &_pipeline,
         )?;
@@ -293,6 +296,8 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     Vec<u32>,
     vd::SharingMode,
     vd::Device,
+    vd::CommandPool,
+    vd::CommandPool,
     vd::Semaphore,
     vd::Semaphore,
 )> {
@@ -453,6 +458,13 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device.clone())?;
 
+    /* Command buffers */
+
+    let drawing_pool = vd::CommandPool::builder()
+        .queue_family_index(graphics_family)
+        .flags(vd::CommandPoolCreateFlags::empty())
+        .build(device.clone())?;
+
     /* Synchronization */
 
     let image_available = vd::Semaphore::new(
@@ -475,6 +487,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         indices,
         sharing_mode,
         device,
+        drawing_pool,
         image_available,
         render_complete,
     ))
@@ -888,7 +901,7 @@ fn init_drawing(
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
     physical_device: &vd::PhysicalDevice,
-    graphics_family: u32,
+    drawing_pool:    &vd::CommandPool,
     swapchain:       &vd::SwapchainKhr,
     pipeline:        &vd::GraphicsPipeline,
 ) -> vd::Result<(
@@ -957,11 +970,7 @@ fn init_drawing(
 
     /* Command buffers */
 
-    let pool = vd::CommandPool::builder()
-        .queue_family_index(graphics_family)
-        .build(device.clone())?;
-
-    let command_buffers = pool.allocate_command_buffers(
+    let command_buffers = drawing_pool.allocate_command_buffers(
         vd::CommandBufferLevel::Primary,
         framebuffers.len() as u32,
     )?;

@@ -995,6 +995,55 @@ fn init_drawing(
         &properties,
     )?;
 
+    let transfer_buffer = transient_pool.allocate_command_buffer(
+        vd::CommandBufferLevel::Primary,
+    )?;
+
+    transfer_buffer.begin(
+        vd::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
+    )?;
+
+    // Copy buffer to GPU
+    unsafe {
+        let copy = vd::BufferCopy::builder()
+            .src_offset(0)
+            .dst_offset(0)
+            .size(size)
+            .build();
+
+        device.cmd_copy_buffer(
+            transfer_buffer.handle(),
+            host_buffer,
+            vertex_buffer,
+            &[copy],
+        );
+    }
+
+    transfer_buffer.end()?;
+
+    let handles = [transfer_buffer.handle()];
+
+    let submit_info = vd::SubmitInfo::builder()
+        .command_buffers(&handles)
+        .build();
+
+    match device.get_device_queue(graphics_family, 0) {
+        Some(gq) => unsafe {
+            device.queue_submit(gq, &[submit_info], None)?;
+        },
+
+        None => return Err("no graphics queue".into())
+    }
+
+    // Block until transfer completion
+    device.wait_idle();
+
+    // Clean up vertex buffer
+    unsafe {
+        device.destroy_buffer(vertex_buffer, None);
+        device.free_memory(device_memory, None);
+    }
+
     /* Command buffers */
 
     let command_buffers = drawing_pool.allocate_command_buffers(

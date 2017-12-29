@@ -60,8 +60,10 @@ pub struct Context<'a> {
 
     /* Unsafe data */
 
-    host_buffer: vd::BufferHandle,
-    host_memory: vd::DeviceMemoryHandle,
+    vertex_buffer: vd::BufferHandle,
+    vertex_memory: vd::DeviceMemoryHandle,
+    index_buffer : vd::BufferHandle,
+    index_memory:  vd::DeviceMemoryHandle,
 
     /* Persistent data */
 
@@ -128,8 +130,10 @@ impl<'a> Context<'a> {
 
         let (
             _framebuffers,
-            host_buffer,
-            host_memory,
+            vertex_buffer,
+            vertex_memory,
+            index_buffer,
+            index_memory,
             command_buffers
         ) = init_drawing(
             &swapchain,
@@ -165,8 +169,10 @@ impl<'a> Context<'a> {
                 layout,
                 drawing_pool,
                 transient_pool,
-                host_buffer,
-                host_memory,
+                vertex_buffer,
+                vertex_memory,
+                index_buffer,
+                index_memory,
                 _vert_mod,
                 _frag_mod,
                 _framebuffers,
@@ -207,8 +213,10 @@ impl<'a> Context<'a> {
 
         let (
             _framebuffers,
-            host_buffer,
-            host_memory,
+            vertex_buffer,
+            vertex_memory,
+            index_buffer,
+            index_memory,
             command_buffers,
         ) = init_drawing(
             &swapchain,
@@ -234,8 +242,11 @@ impl<'a> Context<'a> {
             self.free_host();
         }
 
-        self.host_buffer = host_buffer;
-        self.host_memory = host_memory;
+        self.vertex_buffer = vertex_buffer;
+        self.vertex_memory = vertex_memory;
+
+        self.index_buffer = index_buffer;
+        self.index_memory = index_memory;
 
         self._framebuffers = _framebuffers;
         self._render_pass = _render_pass;
@@ -246,9 +257,11 @@ impl<'a> Context<'a> {
     }
 
     unsafe fn free_host(&mut self) {
-        // Free host vertex buffer allocations
-        self.device.destroy_buffer(self.host_buffer, None);
-        self.device.free_memory(self.host_memory, None);
+        // Free host vertex and index buffer allocations
+        self.device.destroy_buffer(self.vertex_buffer, None);
+        self.device.free_memory(self.vertex_memory, None);
+        self.device.destroy_buffer(self.index_buffer, None);
+        self.device.free_memory(self.index_memory, None);
     }
 }
 
@@ -932,6 +945,8 @@ fn init_drawing(
     Vec<vd::Framebuffer>,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
     Vec<vd::CommandBuffer>,
 )> {
     /* Framebuffers */
@@ -962,17 +977,34 @@ fn init_drawing(
         Vertex::new(-0.5f32,  0.5f32, 1f32, 0f32, 0f32),
         Vertex::new( 0.0f32, -0.5f32, 0f32, 1f32, 0f32),
         Vertex::new( 0.5f32,  0.5f32, 0f32, 0f32, 1f32),
-        Vertex::new(-0.9f32,  0.5f32, 1f32, 1f32, 0f32),
+        Vertex::new( 0.0f32,  0.5f32, 1f32, 1f32, 0f32),
+    ];
+
+    let indices = [
+        0u16, 1u16, 2u16,
+        2u16, 3u16, 0u16,
     ];
 
     /* Vertex buffer */
 
     let properties = physical_device.memory_properties();
 
-    let (host_buffer, host_memory) = create_buffers(
+    let (vertex_buffer, vertex_memory) = create_buffers(
         &vertices,
         &properties,
         device,
+        vd::BufferUsageFlags::VERTEX_BUFFER,
+        transient_pool,
+        graphics_family,
+    )?;
+
+    /* Index buffer */
+
+    let (index_buffer, index_memory) = create_buffers(
+        &indices,
+        &properties,
+        device,
+        vd::BufferUsageFlags::INDEX_BUFFER,
         transient_pool,
         graphics_family,
     )?;
@@ -1026,17 +1058,27 @@ fn init_drawing(
         );
 
         unsafe {
+            let handle = command_buffers[i].handle();
+
             device.cmd_bind_vertex_buffers(
-                command_buffers[i].handle(),
+                handle,
                 0,
-                &[host_buffer],
+                &[vertex_buffer],
                 &[0],
+            );
+
+            device.cmd_bind_index_buffer(
+                handle,
+                index_buffer,
+                0,
+                vd::IndexType::Uint16,
             );
         }
 
-        command_buffers[i].draw(
-            vertices.len() as u32,
+        command_buffers[i].draw_indexed(
+            indices.len() as u32,
             1,
+            0,
             0,
             0,
         );
@@ -1047,8 +1089,10 @@ fn init_drawing(
 
     Ok((
         framebuffers,
-        host_buffer,
-        host_memory,
+        vertex_buffer,
+        vertex_memory,
+        index_buffer,
+        index_memory,
         command_buffers.into_vec(),
     ))
 }
@@ -1057,6 +1101,7 @@ fn create_buffers<T: std::marker::Copy>(
     data:            &[T],
     properties:      &vd::PhysicalDeviceMemoryProperties,
     device:          &vd::Device,
+    usage:           vd::BufferUsageFlags,
     transient_pool:  &vd::CommandPool,
     graphics_family: u32,
 ) -> vd::Result<(
@@ -1098,8 +1143,7 @@ fn create_buffers<T: std::marker::Copy>(
     // GPU buffer (destination)
     let (device_buffer, device_memory) = create_buffer(
         size,
-        vd::BufferUsageFlags::TRANSFER_DST
-        | vd::BufferUsageFlags::VERTEX_BUFFER,
+        usage | vd::BufferUsageFlags::TRANSFER_DST,
         device,
         vd::MemoryPropertyFlags::DEVICE_LOCAL,
         properties,

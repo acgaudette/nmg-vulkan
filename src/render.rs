@@ -956,101 +956,26 @@ fn init_drawing(
         return Err("empty framebuffers vector".into());
     }
 
-    /* Vertex buffer */
+    /* Vertex data */
 
     let vertices = [
         Vertex::new(-0.5f32,  0.5f32, 1f32, 0f32, 0f32),
-        Vertex::new( 0.5f32,  0.5f32, 0f32, 1f32, 0f32),
-        Vertex::new(   0f32, -0.5f32, 0f32, 0f32, 1f32),
+        Vertex::new( 0.0f32, -0.5f32, 0f32, 1f32, 0f32),
+        Vertex::new( 0.5f32,  0.5f32, 0f32, 0f32, 1f32),
+        Vertex::new(-0.9f32,  0.5f32, 1f32, 1f32, 0f32),
     ];
 
-    let size = (std::mem::size_of::<Vertex>() * vertices.len()) as u64;
+    /* Vertex buffer */
+
     let properties = physical_device.memory_properties();
 
-    // Local buffer (source)
-    let (host_buffer, host_handle) = create_buffer(
-        size,
-        vd::BufferUsageFlags::TRANSFER_SRC,
-        device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE
-        | vd::MemoryPropertyFlags::HOST_COHERENT,
+    let (host_buffer, host_memory) = create_buffers(
+        &vertices,
         &properties,
-    )?;
-
-    // Memory-mapped IO
-    unsafe {
-        let ptr = device.map_memory(
-            host_handle,
-            0,
-            size,
-            vd::MemoryMapFlags::empty(),
-        )?;
-
-        // Copy vertex buffer
-        let data = std::slice::from_raw_parts_mut(ptr, vertices.len());
-        data.copy_from_slice(&vertices);
-
-        device.unmap_memory(host_handle);
-    }
-
-    // GPU buffer (destination)
-    let (vertex_buffer, device_memory) = create_buffer(
-        size,
-        vd::BufferUsageFlags::TRANSFER_DST
-        | vd::BufferUsageFlags::VERTEX_BUFFER,
         device,
-        vd::MemoryPropertyFlags::DEVICE_LOCAL,
-        &properties,
+        transient_pool,
+        graphics_family,
     )?;
-
-    let transfer_buffer = transient_pool.allocate_command_buffer(
-        vd::CommandBufferLevel::Primary,
-    )?;
-
-    transfer_buffer.begin(
-        vd::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
-    )?;
-
-    // Copy buffer to GPU
-    unsafe {
-        let copy = vd::BufferCopy::builder()
-            .src_offset(0)
-            .dst_offset(0)
-            .size(size)
-            .build();
-
-        device.cmd_copy_buffer(
-            transfer_buffer.handle(),
-            host_buffer,
-            vertex_buffer,
-            &[copy],
-        );
-    }
-
-    transfer_buffer.end()?;
-
-    let handles = [transfer_buffer.handle()];
-
-    let submit_info = vd::SubmitInfo::builder()
-        .command_buffers(&handles)
-        .build();
-
-    match device.get_device_queue(graphics_family, 0) {
-        Some(gq) => unsafe {
-            device.queue_submit(gq, &[submit_info], None)?;
-        },
-
-        None => return Err("no graphics queue".into())
-    }
-
-    // Block until transfer completion
-    device.wait_idle();
-
-    // Clean up vertex buffer
-    unsafe {
-        device.destroy_buffer(vertex_buffer, None);
-        device.free_memory(device_memory, None);
-    }
 
     /* Command buffers */
 
@@ -1123,25 +1048,113 @@ fn init_drawing(
     Ok((
         framebuffers,
         host_buffer,
-        host_handle,
+        host_memory,
         command_buffers.into_vec(),
     ))
 }
 
-fn get_memory_type(
-    filter: u32,
-    flags:  vd::MemoryPropertyFlags,
-    types:  &[vd::MemoryType],
-) -> vd::Result<u32> {
-    for i in 0..types.len() {
-        if filter & (1 << i) > 0
-            && flags.intersects(types[i].property_flags())
-        {
-            return Ok(i as u32)
-        }
+fn create_buffers<T: std::marker::Copy>(
+    data:            &[T],
+    properties:      &vd::PhysicalDeviceMemoryProperties,
+    device:          &vd::Device,
+    transient_pool:  &vd::CommandPool,
+    graphics_family: u32,
+) -> vd::Result<(
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
+)> {
+    let size = std::mem::size_of_val(data) as u64;
+
+    // Local buffer (source)
+    let (host_buffer, host_memory) = create_buffer(
+        size,
+        vd::BufferUsageFlags::TRANSFER_SRC,
+        device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE
+        | vd::MemoryPropertyFlags::HOST_COHERENT,
+        properties,
+    )?;
+
+    // Memory-mapped IO
+    unsafe {
+        let ptr = device.map_memory(
+            host_memory,
+            0,
+            size,
+            vd::MemoryMapFlags::empty(),
+        )?;
+
+        let destination = std::slice::from_raw_parts_mut(
+            ptr,
+            data.len()
+        );
+
+        // Copy data
+        destination.copy_from_slice(&data);
+
+        device.unmap_memory(host_memory);
     }
 
-    Err("no valid memory type available on GPU".into())
+    // GPU buffer (destination)
+    let (device_buffer, device_memory) = create_buffer(
+        size,
+        vd::BufferUsageFlags::TRANSFER_DST
+        | vd::BufferUsageFlags::VERTEX_BUFFER,
+        device,
+        vd::MemoryPropertyFlags::DEVICE_LOCAL,
+        properties,
+    )?;
+
+    let transfer_buffer = transient_pool.allocate_command_buffer(
+        vd::CommandBufferLevel::Primary,
+    )?;
+
+    transfer_buffer.begin(
+        vd::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
+    )?;
+
+    // Copy buffer to GPU
+    unsafe {
+        let copy = vd::BufferCopy::builder()
+            .src_offset(0)
+            .dst_offset(0)
+            .size(size)
+            .build();
+
+        device.cmd_copy_buffer(
+            transfer_buffer.handle(),
+            host_buffer,
+            device_buffer,
+            &[copy],
+        );
+    }
+
+    transfer_buffer.end()?;
+
+    let handles = [transfer_buffer.handle()];
+
+    let submit_info = vd::SubmitInfo::builder()
+        .command_buffers(&handles)
+        .build();
+
+    match device.get_device_queue(graphics_family, 0) {
+        Some(gq) => unsafe {
+            device.queue_submit(gq, &[submit_info], None)?;
+        },
+
+        None => return Err("no graphics queue".into())
+    }
+
+    // Block until transfer completion
+    device.wait_idle();
+
+    // Clean up device buffer
+    unsafe {
+        device.destroy_buffer(device_buffer, None);
+        device.free_memory(device_memory, None);
+    }
+
+    Ok((host_buffer, host_memory))
 }
 
 fn create_buffer(
@@ -1186,6 +1199,22 @@ fn create_buffer(
     }
 
     Ok((buffer, handle))
+}
+
+fn get_memory_type(
+    filter: u32,
+    flags:  vd::MemoryPropertyFlags,
+    types:  &[vd::MemoryType],
+) -> vd::Result<u32> {
+    for i in 0..types.len() {
+        if filter & (1 << i) > 0
+            && flags.intersects(types[i].property_flags())
+        {
+            return Ok(i as u32)
+        }
+    }
+
+    Err("no valid memory type available on GPU".into())
 }
 
 pub fn draw(

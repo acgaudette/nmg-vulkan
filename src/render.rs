@@ -1016,8 +1016,20 @@ fn init_drawing(
             &pipeline.handle(),
         );
 
+        unsafe {
+            device.cmd_bind_vertex_buffers(
+                command_buffers[i].handle(),
+                0,
+                &[vertex_buffer],
+                &[0],
+            );
+        }
+
         command_buffers[i].draw(
-            3, 1, 0, 0
+            vertices.len() as u32,
+            1,
+            0,
+            0,
         );
 
         command_buffers[i].end_render_pass();

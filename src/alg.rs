@@ -167,7 +167,7 @@ impl std::fmt::Display for Mat {
 
 #[cfg(test)]
 mod tests {
-    use ops::*;
+    use alg::*;
 
     #[test]
     fn mult_mat() {

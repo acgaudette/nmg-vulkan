@@ -27,13 +27,20 @@ impl Vec3 {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat {
-    pub x0: f32, pub x1: f32, pub x2: f32, pub x3: f32,
-    pub y0: f32, pub y1: f32, pub y2: f32, pub y3: f32,
-    pub z0: f32, pub z1: f32, pub z2: f32, pub z3: f32,
-    pub w0: f32, pub w1: f32, pub w2: f32, pub w3: f32,
+
+    /*
+     * GLSL expects matrices in column-major order
+     * Calculations below are formatted in row-major order
+     * (for readability)
+     */
+
+    pub x0: f32, pub y0: f32, pub z0: f32, pub w0: f32,
+    pub x1: f32, pub y1: f32, pub z1: f32, pub w1: f32,
+    pub x2: f32, pub y2: f32, pub z2: f32, pub w2: f32,
+    pub x3: f32, pub y3: f32, pub z3: f32, pub w3: f32,
 }
 
 impl Mat {

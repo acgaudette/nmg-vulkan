@@ -848,7 +848,10 @@ fn init_pipeline(
     render_pass:   &vd::RenderPass,
     device:        &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
-    /* Fixed functions */
+    /*
+     * Fixed functions (these will be allocated on the heap later,
+     * inside the graphics pipeline)
+     */
 
     let binding_description = [Vertex::binding_description()];
     let attribute_descriptions = Vertex::attribute_descriptions();

@@ -65,7 +65,9 @@ pub struct Context<'a> {
     index_buffer:   vd::BufferHandle,
     index_memory:   vd::DeviceMemoryHandle,
     uniform_buffer: vd::BufferHandle,
-    uniform_memory: vd::DeviceMemoryHandle,
+
+    // Used in update
+    pub uniform_memory: vd::DeviceMemoryHandle,
 
     /* Persistent data */
 
@@ -1047,10 +1049,8 @@ fn init_drawing(
 
     /* Uniform buffer */
 
-    let size = std::mem::size_of::<UBO>() as u64;
-
     let (uniform_buffer, uniform_memory) = create_buffer(
-        size,
+        std::mem::size_of::<UBO>() as u64,
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
@@ -1161,7 +1161,7 @@ fn create_buffers<T: std::marker::Copy>(
 )> {
     let size = std::mem::size_of_val(data) as u64;
 
-    // Local buffer (source)
+    // Local buffer
     let (host_buffer, host_memory) = create_buffer(
         size,
         vd::BufferUsageFlags::TRANSFER_SRC,
@@ -1171,24 +1171,9 @@ fn create_buffers<T: std::marker::Copy>(
         properties,
     )?;
 
-    // Memory-mapped IO
+    // Transfer data to host (source)
     unsafe {
-        let ptr = device.map_memory(
-            host_memory,
-            0,
-            size,
-            vd::MemoryMapFlags::empty(),
-        )?;
-
-        let destination = std::slice::from_raw_parts_mut(
-            ptr,
-            data.len()
-        );
-
-        // Copy data
-        destination.copy_from_slice(&data);
-
-        device.unmap_memory(host_memory);
+        copy_buffer(device, host_memory, size, data)?;
     }
 
     // GPU buffer (destination)
@@ -1310,6 +1295,33 @@ fn get_memory_type(
     }
 
     Err("no valid memory type available on GPU".into())
+}
+
+// Memory-mapped IO
+unsafe fn copy_buffer<T: std::marker::Copy>(
+    device: &vd::Device,
+    memory: vd::DeviceMemoryHandle,
+    size:   u64,
+    data:   &[T],
+) -> vd::Result<()> {
+    let ptr = device.map_memory(
+        memory,
+        0,
+        size,
+        vd::MemoryMapFlags::empty(),
+    )?;
+
+    let destination = std::slice::from_raw_parts_mut(
+        ptr,
+        data.len()
+    );
+
+    // Copy data
+    destination.copy_from_slice(&data);
+
+    device.unmap_memory(memory);
+
+    Ok(())
 }
 
 pub fn draw(

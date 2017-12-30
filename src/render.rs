@@ -60,10 +60,12 @@ pub struct Context<'a> {
 
     /* Unsafe data */
 
-    vertex_buffer: vd::BufferHandle,
-    vertex_memory: vd::DeviceMemoryHandle,
-    index_buffer : vd::BufferHandle,
-    index_memory:  vd::DeviceMemoryHandle,
+    vertex_buffer:  vd::BufferHandle,
+    vertex_memory:  vd::DeviceMemoryHandle,
+    index_buffer:   vd::BufferHandle,
+    index_memory:   vd::DeviceMemoryHandle,
+    uniform_buffer: vd::BufferHandle,
+    uniform_memory: vd::DeviceMemoryHandle,
 
     /* Persistent data */
 
@@ -134,6 +136,8 @@ impl<'a> Context<'a> {
             vertex_memory,
             index_buffer,
             index_memory,
+            uniform_buffer,
+            uniform_memory,
             command_buffers
         ) = init_drawing(
             &swapchain,
@@ -173,6 +177,8 @@ impl<'a> Context<'a> {
                 vertex_memory,
                 index_buffer,
                 index_memory,
+                uniform_buffer,
+                uniform_memory,
                 _vert_mod,
                 _frag_mod,
                 _framebuffers,
@@ -217,6 +223,8 @@ impl<'a> Context<'a> {
             vertex_memory,
             index_buffer,
             index_memory,
+            uniform_buffer,
+            uniform_memory,
             command_buffers,
         ) = init_drawing(
             &swapchain,
@@ -244,9 +252,10 @@ impl<'a> Context<'a> {
 
         self.vertex_buffer = vertex_buffer;
         self.vertex_memory = vertex_memory;
-
         self.index_buffer = index_buffer;
         self.index_memory = index_memory;
+        self.uniform_buffer = uniform_buffer;
+        self.uniform_memory = uniform_memory;
 
         self._framebuffers = _framebuffers;
         self._render_pass = _render_pass;
@@ -262,6 +271,8 @@ impl<'a> Context<'a> {
         self.device.free_memory(self.vertex_memory, None);
         self.device.destroy_buffer(self.index_buffer, None);
         self.device.free_memory(self.index_memory, None);
+        self.device.destroy_buffer(self.uniform_buffer, None);
+        self.device.free_memory(self.uniform_memory, None);
     }
 }
 
@@ -1030,6 +1041,19 @@ fn init_drawing(
         vd::BufferUsageFlags::INDEX_BUFFER,
         transient_pool,
         graphics_family,
+    )?;
+
+    /* Uniform buffer */
+
+    let size = std::mem::size_of::<UBO>();
+
+    let (uniform_buffer, uniform_memory) = create_buffer(
+        size,
+        vd::BufferUsageFlags::UNIFORM_BUFFER
+        device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE
+        | vd::MemoryPropertyFlags::HOST_COHERENT,
+        properties,
     )?;
 
     /* Command buffers */

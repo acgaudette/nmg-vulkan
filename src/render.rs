@@ -3,7 +3,7 @@ extern crate voodoo_winit as vdw;
 
 use std;
 use statics;
-use ops;
+use alg;
 
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
@@ -306,15 +306,15 @@ impl<'a> Drop for Context<'a> {
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct Vertex {
-    position: ops::Vec3,
-    color:    ops::Vec3,
+    position: alg::Vec3,
+    color:    alg::Vec3,
 }
 
 impl Vertex {
     fn new(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
         Vertex {
-            position: ops::Vec3::new(x, y, z),
-            color:    ops::Vec3::new(r, g, b),
+            position: alg::Vec3::new(x, y, z),
+            color:    alg::Vec3::new(r, g, b),
         }
     }
 
@@ -347,9 +347,9 @@ impl Vertex {
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct UBO {
-    model:      ops::Mat,
-    view:       ops::Mat,
-    projection: ops::Mat,
+    model:      alg::Mat,
+    view:       alg::Mat,
+    projection: alg::Mat,
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
@@ -1407,14 +1407,14 @@ pub fn update(
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let translation = ops::Mat::translation(0.5, 0.0, 0.0);
-    let rotation = ops::Mat::rotation(0.0, 0.0, 0.5);
-    let scale = ops::Mat::scale(2.0, 1.0, 1.0);
+    let translation = alg::Mat::translation(0.5, 0.0, 0.0);
+    let rotation = alg::Mat::rotation(0.0, 0.0, 0.5);
+    let scale = alg::Mat::scale(2.0, 1.0, 1.0);
 
     let ubo = UBO {
         model:      translation * rotation * scale,
-        view:       ops::Mat::identity(),
-        projection: ops::Mat::identity(),
+        view:       alg::Mat::identity(),
+        projection: alg::Mat::identity(),
     };
 
     // Copy uniform buffer to GPU

@@ -1,3 +1,5 @@
+use std;
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct Vec2 {
@@ -55,6 +57,40 @@ impl Mat {
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0,
             0.0, 0.0, 0.0, 1.0,
+        )
+    }
+}
+
+impl std::ops::Mul for Mat {
+    type Output = Mat;
+
+    // Naive
+    fn mul(self, other: Mat) -> Mat {
+        let x0 = self.x0 * other.x0 + self.x1 * other.y0 + self.x2 * other.z0 + self.x3 * other.w0;
+        let x1 = self.x0 * other.x1 + self.x1 * other.y1 + self.x2 * other.z1 + self.x3 * other.w1;
+        let x2 = self.x0 * other.x2 + self.x1 * other.y2 + self.x2 * other.z2 + self.x3 * other.w2;
+        let x3 = self.x0 * other.x3 + self.x1 * other.y3 + self.x2 * other.z3 + self.x3 * other.w3;
+
+        let y0 = self.y0 * other.x0 + self.y1 * other.y0 + self.y2 * other.z0 + self.y3 * other.w0;
+        let y1 = self.y0 * other.x1 + self.y1 * other.y1 + self.y2 * other.z1 + self.y3 * other.w1;
+        let y2 = self.y0 * other.x2 + self.y1 * other.y2 + self.y2 * other.z2 + self.y3 * other.w2;
+        let y3 = self.y0 * other.x3 + self.y1 * other.y3 + self.y2 * other.z3 + self.y3 * other.w3;
+
+        let z0 = self.z0 * other.x0 + self.z1 * other.y0 + self.z2 * other.z0 + self.z3 * other.w0;
+        let z1 = self.z0 * other.x1 + self.z1 * other.y1 + self.z2 * other.z1 + self.z3 * other.w1;
+        let z2 = self.z0 * other.x2 + self.z1 * other.y2 + self.z2 * other.z2 + self.z3 * other.w2;
+        let z3 = self.z0 * other.x3 + self.z1 * other.y3 + self.z2 * other.z3 + self.z3 * other.w3;
+
+        let w0 = self.w0 * other.x0 + self.w1 * other.y0 + self.w2 * other.z0 + self.w3 * other.w0;
+        let w1 = self.w0 * other.x1 + self.w1 * other.y1 + self.w2 * other.z1 + self.w3 * other.w1;
+        let w2 = self.w0 * other.x2 + self.w1 * other.y2 + self.w2 * other.z2 + self.w3 * other.w2;
+        let w3 = self.w0 * other.x3 + self.w1 * other.y3 + self.w2 * other.z3 + self.w3 * other.w3;
+
+        Mat::new(
+            x0, x1, x2, x3,
+            y0, y1, y2, y3,
+            z0, z1, z2, z3,
+            w0, w1, w2, w3,
         )
     }
 }

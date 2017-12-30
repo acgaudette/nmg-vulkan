@@ -902,6 +902,7 @@ fn init_pipeline(
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
+
     /*
      * Fixed functions (these will be allocated on the heap later,
      * inside the graphics pipeline)
@@ -1037,10 +1038,10 @@ fn init_drawing(
     /* Vertex data */
 
     let vertices = [
-        Vertex::new(-0.25, -0.5, 1., 1., 0., 0.),
-        Vertex::new(-0.50,  0.5, 1., 0., 1., 0.),
-        Vertex::new( 0.25,  0.5, 1., 0., 0., 1.),
-        Vertex::new( 0.50, -0.5, 1., 1., 1., 0.),
+        Vertex::new(-0.25, -0.5, 0., 1., 0., 0.),
+        Vertex::new(-0.50,  0.5, 0., 0., 1., 0.),
+        Vertex::new( 0.25,  0.5, 0., 0., 0., 1.),
+        Vertex::new( 0.50, -0.5, 0., 1., 1., 0.),
     ];
 
     let indices = [

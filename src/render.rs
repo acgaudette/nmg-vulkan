@@ -50,13 +50,13 @@ pub struct Context<'a> {
 
     /* Fixed information */
 
-    stages:         [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    assembly:       vd::PipelineInputAssemblyStateCreateInfo<'a>,
-    rasterizer:     vd::PipelineRasterizationStateCreateInfo<'a>,
-    multisampling:  vd::PipelineMultisampleStateCreateInfo<'a>,
-    layout:         vd::PipelineLayout,
-    drawing_pool:   vd::CommandPool,
-    transient_pool: vd::CommandPool,
+    stages:          [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    assembly:        vd::PipelineInputAssemblyStateCreateInfo<'a>,
+    rasterizer:      vd::PipelineRasterizationStateCreateInfo<'a>,
+    multisampling:   vd::PipelineMultisampleStateCreateInfo<'a>,
+    pipeline_layout: vd::PipelineLayout,
+    drawing_pool:    vd::CommandPool,
+    transient_pool:  vd::CommandPool,
 
     /* Unsafe data */
 
@@ -100,7 +100,7 @@ impl<'a> Context<'a> {
             assembly,
             rasterizer,
             multisampling,
-            layout,
+            pipeline_layout,
         ) = init_fixed(device.clone())?;
 
         let (swapchain, _views) = init_swapchain(
@@ -123,7 +123,7 @@ impl<'a> Context<'a> {
             &assembly,
             &rasterizer,
             &multisampling,
-            &layout,
+            &pipeline_layout,
             &_render_pass,
             &device,
         )?;
@@ -166,7 +166,7 @@ impl<'a> Context<'a> {
                 assembly,
                 rasterizer,
                 multisampling,
-                layout,
+                pipeline_layout,
                 drawing_pool,
                 transient_pool,
                 vertex_buffer,
@@ -206,7 +206,7 @@ impl<'a> Context<'a> {
             &self.assembly,
             &self.rasterizer,
             &self.multisampling,
-            &self.layout,
+            &self.pipeline_layout,
             &_render_pass,
             &self.device,
         )?;
@@ -620,6 +620,19 @@ fn init_fixed<'a>(
 
     let stages = [vert_stage, frag_stage];
 
+    /* Uniform buffer objects */
+
+    let binding = vd::DescriptorSetLayoutBinding::builder()
+        .binding(0)
+        .descriptor_type(vd::DescriptorType::UniformBuffer)
+        .descriptor_count(1)
+        .stage_flags(vd::ShaderStageFlags::VERTEX)
+        .build();
+
+    let descriptor_layout = vd::DescriptorSetLayout::builder()
+        .bindings(&[binding])
+        .build(device.clone())?;
+
     /* Fixed-functions */
 
     let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
@@ -648,7 +661,8 @@ fn init_fixed<'a>(
         .alpha_to_one_enable(false)
         .build();
 
-    let layout = vd::PipelineLayout::builder()
+    let pipeline_layout = vd::PipelineLayout::builder()
+        .set_layouts(&[descriptor_layout.handle()])
         .build(device)?;
 
     Ok((
@@ -658,7 +672,7 @@ fn init_fixed<'a>(
         assembly,
         rasterizer,
         multisampling,
-        layout,
+        pipeline_layout,
     ))
 }
 
@@ -839,14 +853,14 @@ fn init_render_pass(
 }
 
 fn init_pipeline(
-    swapchain:     &vd::SwapchainKhr,
-    stages:        &[vd::PipelineShaderStageCreateInfo; 2],
-    assembly:      &vd::PipelineInputAssemblyStateCreateInfo,
-    rasterizer:    &vd::PipelineRasterizationStateCreateInfo,
-    multisampling: &vd::PipelineMultisampleStateCreateInfo,
-    layout:        &vd::PipelineLayout,
-    render_pass:   &vd::RenderPass,
-    device:        &vd::Device,
+    swapchain:       &vd::SwapchainKhr,
+    stages:          &[vd::PipelineShaderStageCreateInfo; 2],
+    assembly:        &vd::PipelineInputAssemblyStateCreateInfo,
+    rasterizer:      &vd::PipelineRasterizationStateCreateInfo,
+    multisampling:   &vd::PipelineMultisampleStateCreateInfo,
+    pipeline_layout: &vd::PipelineLayout,
+    render_pass:     &vd::RenderPass,
+    device:          &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
     /*
      * Fixed functions (these will be allocated on the heap later,
@@ -926,7 +940,7 @@ fn init_pipeline(
         .rasterization_state(rasterizer)
         .multisample_state(multisampling)
         .color_blend_state(&blending)
-        .layout(layout)
+        .layout(pipeline_layout)
         .render_pass(render_pass)
         .subpass(0)
         .base_pipeline_index(-1)

@@ -134,10 +134,15 @@ impl std::fmt::Display for Mat {
     }
 }
 
-#[test]
-fn test_mat_mult() {
-    let translation = Mat::translation(1.0, 2.0, 3.0);
+#[cfg(test)]
+mod tests {
+    use ops::*;
 
-    assert!(translation * Mat::identity() == translation);
-    assert!(Mat::identity() * translation == translation);
+    #[test]
+    fn mult_mat() {
+        let translation = Mat::translation(1.0, 2.0, 3.0);
+
+        assert!(translation * Mat::identity() == translation);
+        assert!(Mat::identity() * translation == translation);
+    }
 }

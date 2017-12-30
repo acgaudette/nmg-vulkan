@@ -76,6 +76,37 @@ impl Mat {
         )
     }
 
+    pub fn rotation_x(rad: f32) -> Mat {
+        Mat::new(
+            1.0,       0.0,        0.0, 0.0,
+            0.0, rad.cos(), -rad.sin(), 0.0,
+            0.0, rad.sin(),  rad.cos(), 0.0,
+            0.0,       0.0,        0.0, 1.0,
+        )
+    }
+
+    pub fn rotation_y(rad: f32) -> Mat {
+        Mat::new(
+             rad.cos(), 0.0, rad.sin(), 0.0,
+                   0.0, 1.0,       0.0, 0.0,
+            -rad.sin(), 0.0, rad.cos(), 0.0,
+                   0.0, 0.0,       0.0, 1.0,
+        )
+    }
+
+    pub fn rotation_z(rad: f32) -> Mat {
+        Mat::new(
+            rad.cos(), -rad.sin(), 0.0, 0.0,
+            rad.sin(),  rad.cos(), 0.0, 0.0,
+                  0.0,        0.0, 1.0, 0.0,
+                  0.0,        0.0, 0.0, 1.0,
+        )
+    }
+
+    pub fn rotation(x: f32, y: f32, z: f32) -> Mat {
+        Mat::rotation_x(x) * Mat::rotation_y(y) * Mat::rotation_z(z)
+    }
+
     pub fn scale(x: f32, y: f32, z: f32) -> Mat {
         Mat::new(
               x, 0.0, 0.0, 0.0,

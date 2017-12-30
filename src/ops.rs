@@ -110,3 +110,17 @@ impl std::ops::Mul for Mat {
         )
     }
 }
+
+impl std::fmt::Display for Mat {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            out,
+            "[ {}, {}, {}, {} ]\n[ {}, {}, {}, {} ]\n\
+            [ {}, {}, {}, {} ]\n[ {}, {}, {}, {} ]",
+            self.x0, self.x1, self.x2, self.x3,
+            self.y0, self.y1, self.y2, self.y3,
+            self.z0, self.z1, self.z2, self.z3,
+            self.w0, self.w1, self.w2, self.w3,
+        )
+    }
+}

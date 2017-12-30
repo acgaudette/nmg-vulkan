@@ -75,12 +75,21 @@ impl Mat {
             0.0, 0.0, 0.0, 1.0,
         )
     }
+
+    pub fn scale(x: f32, y: f32, z: f32) -> Mat {
+        Mat::new(
+              x, 0.0, 0.0, 0.0,
+            0.0,   y, 0.0, 0.0,
+            0.0, 0.0,   z, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        )
+    }
 }
 
 impl std::ops::Mul for Mat {
     type Output = Mat;
 
-    // Naive
+    // Naive matrix multiply
     fn mul(self, other: Mat) -> Mat {
         let x0 = self.x0 * other.x0 + self.x1 * other.y0 + self.x2 * other.z0 + self.x3 * other.w0;
         let x1 = self.x0 * other.x1 + self.x1 * other.y1 + self.x2 * other.z1 + self.x3 * other.w1;

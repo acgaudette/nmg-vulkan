@@ -981,6 +981,8 @@ fn init_drawing(
     vd::DeviceMemoryHandle,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
     Vec<vd::CommandBuffer>,
 )> {
     /* Framebuffers */
@@ -1045,15 +1047,15 @@ fn init_drawing(
 
     /* Uniform buffer */
 
-    let size = std::mem::size_of::<UBO>();
+    let size = std::mem::size_of::<UBO>() as u64;
 
     let (uniform_buffer, uniform_memory) = create_buffer(
         size,
-        vd::BufferUsageFlags::UNIFORM_BUFFER
+        vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
         | vd::MemoryPropertyFlags::HOST_COHERENT,
-        properties,
+        &properties,
     )?;
 
     /* Command buffers */
@@ -1140,6 +1142,8 @@ fn init_drawing(
         vertex_memory,
         index_buffer,
         index_memory,
+        uniform_buffer,
+        uniform_memory,
         command_buffers.into_vec(),
     ))
 }

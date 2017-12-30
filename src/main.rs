@@ -68,6 +68,15 @@ fn update(
 
         if !running { break; }
 
+        // Update renderer
+        if let Err(e) = render::update(
+            &context.device,
+            context.uniform_memory,
+        ) {
+            // Irrecoverable error
+            panic!("{}", e);
+        }
+
         // Render frame
         if let Err(e) = render::draw(
             &context.device,

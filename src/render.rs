@@ -72,12 +72,14 @@ pub struct Context<'a> {
 
     /* Persistent data */
 
-    _vert_mod:     vd::ShaderModule,
-    _frag_mod:     vd::ShaderModule,
-    _framebuffers: Vec<vd::Framebuffer>,
-    _render_pass:  vd::RenderPass,
-    _views:        Vec<vd::ImageView>,
-    _pipeline:     vd::GraphicsPipeline,
+    _vert_mod:        vd::ShaderModule,
+    _frag_mod:        vd::ShaderModule,
+    _framebuffers:    Vec<vd::Framebuffer>,
+    _render_pass:     vd::RenderPass,
+    _views:           Vec<vd::ImageView>,
+    _pipeline:        vd::GraphicsPipeline,
+    _descriptor_sets: [vd::DescriptorSet; 1],
+    _descriptor_pool: vd::DescriptorPool,
 }
 
 impl<'a> Context<'a> {
@@ -142,7 +144,9 @@ impl<'a> Context<'a> {
             index_memory,
             uniform_buffer,
             uniform_memory,
-            command_buffers
+            command_buffers,
+            _descriptor_sets,
+            _descriptor_pool,
         ) = init_drawing(
             &swapchain,
             &_views,
@@ -192,6 +196,8 @@ impl<'a> Context<'a> {
                 _render_pass,
                 _views,
                 _pipeline,
+                _descriptor_sets,
+                _descriptor_pool,
             }
         )
     }
@@ -233,6 +239,8 @@ impl<'a> Context<'a> {
             uniform_buffer,
             uniform_memory,
             command_buffers,
+            _descriptor_sets,
+            _descriptor_pool,
         ) = init_drawing(
             &swapchain,
             &_views,
@@ -270,6 +278,8 @@ impl<'a> Context<'a> {
         self._render_pass = _render_pass;
         self._views = _views;
         self._pipeline = _pipeline;
+        self._descriptor_sets = _descriptor_sets;
+        self._descriptor_pool = _descriptor_pool;
 
         Ok(())
     }
@@ -999,6 +1009,8 @@ fn init_drawing(
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
     Vec<vd::CommandBuffer>,
+    [vd::DescriptorSet; 1],
+    vd::DescriptorPool,
 )> {
     /* Framebuffers */
 
@@ -1209,6 +1221,8 @@ fn init_drawing(
         uniform_buffer,
         uniform_memory,
         command_buffers.into_vec(),
+        [sets[0]],
+        descriptor_pool,
     ))
 }
 

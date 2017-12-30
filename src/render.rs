@@ -289,14 +289,14 @@ impl<'a> Drop for Context<'a> {
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct Vertex {
-    position: ops::Vec2,
+    position: ops::Vec3,
     color:    ops::Vec3,
 }
 
 impl Vertex {
-    fn new(x: f32, y: f32, r: f32, g: f32, b: f32) -> Vertex {
+    fn new(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
         Vertex {
-            position: ops::Vec2::new(x, y),
+            position: ops::Vec3::new(x, y, z),
             color:    ops::Vec3::new(r, g, b),
         }
     }
@@ -314,7 +314,7 @@ impl Vertex {
             vd::VertexInputAttributeDescription::builder()
                 .binding(0)
                 .location(0)
-                .format(vd::Format::R32G32Sfloat)
+                .format(vd::Format::R32G32B32Sfloat)
                 .offset(offset_of!(Vertex, position))
                 .build(),
             vd::VertexInputAttributeDescription::builder()
@@ -477,12 +477,12 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     let graphics_q_create_info = vd::DeviceQueueCreateInfo::builder()
         .queue_family_index(graphics_family)
-        .queue_priorities(&[1.0])
+        .queue_priorities(&[1.])
         .build();
 
     let present_q_create_info = vd::DeviceQueueCreateInfo::builder()
         .queue_family_index(present_family)
-        .queue_priorities(&[1.0])
+        .queue_priorities(&[1.])
         .build();
 
     // Combine queues if they share the same index
@@ -1012,10 +1012,10 @@ fn init_drawing(
     /* Vertex data */
 
     let vertices = [
-        Vertex::new(-0.25f32, -0.5f32, 1f32, 0f32, 0f32),
-        Vertex::new(-0.50f32,  0.5f32, 0f32, 1f32, 0f32),
-        Vertex::new( 0.25f32,  0.5f32, 0f32, 0f32, 1f32),
-        Vertex::new( 0.50f32, -0.5f32, 1f32, 1f32, 0f32),
+        Vertex::new(-0.25, -0.5, 1., 1., 0., 0.),
+        Vertex::new(-0.50,  0.5, 1., 0., 1., 0.),
+        Vertex::new( 0.25,  0.5, 1., 0., 0., 1.),
+        Vertex::new( 0.50, -0.5, 1., 1., 1., 0.),
     ];
 
     let indices = [

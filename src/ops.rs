@@ -33,3 +33,19 @@ pub struct Mat {
     pub z0: f32, pub z1: f32, pub z2: f32, pub z3: f32,
     pub w0: f32, pub w1: f32, pub w2: f32, pub w3: f32,
 }
+
+impl Mat {
+    pub fn new(
+        x0: f32, x1: f32, x2: f32, x3: f32,
+        y0: f32, y1: f32, y2: f32, y3: f32,
+        z0: f32, z1: f32, z2: f32, z3: f32,
+        w0: f32, w1: f32, w2: f32, w3: f32,
+    ) -> Mat {
+        Mat {
+            x0, x1, x2, x3,
+            y0, y1, y2, y3,
+            z0, z1, z2, z3,
+            w0, w1, w2, w3,
+        }
+    }
+}

@@ -1171,6 +1171,21 @@ fn init_drawing(
             );
         }
 
+        // Rebuild sets slice
+        let set_refs = {
+            let mut refs = Vec::with_capacity(sets.len());
+            for set in &sets { refs.push(set); }
+            refs
+        };
+
+        command_buffers[i].bind_descriptor_sets(
+            vd::PipelineBindPoint::Graphics,
+            pipeline_layout,
+            0,
+            &set_refs,
+            &[],
+        );
+
         command_buffers[i].draw_indexed(
             indices.len() as u32,
             1,

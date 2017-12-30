@@ -1324,6 +1324,27 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
     Ok(())
 }
 
+pub fn update(
+    device:         &vd::Device,
+    uniform_memory: vd::DeviceMemoryHandle,
+) -> vd::Result<()> {
+    let ubo = UBO {
+        projection: ops::Mat::identity(),
+    };
+
+    // Copy uniform buffer to GPU
+    unsafe {
+        copy_buffer(
+            device,
+            uniform_memory,
+            std::mem::size_of::<UBO>() as u64,
+            &[ubo]
+        )?;
+    }
+
+    Ok(())
+}
+
 pub fn draw(
     device:          &vd::Device,
     swapchain:       &vd::SwapchainKhr,

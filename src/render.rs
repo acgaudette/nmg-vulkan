@@ -1392,8 +1392,12 @@ pub fn update(
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
+    let translation = ops::Mat::translation(1.0, 0.0, 0.0);
+    let rotation = ops::Mat::identity();
+    let scale = ops::Mat::identity();
+
     let ubo = UBO {
-        model:      ops::Mat::identity(),
+        model:      translation * rotation * scale,
         view:       ops::Mat::identity(),
         projection: ops::Mat::identity(),
     };

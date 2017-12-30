@@ -1407,9 +1407,9 @@ pub fn update(
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let translation = ops::Mat::translation(1.0, 0.0, 0.0);
-    let rotation = ops::Mat::identity();
-    let scale = ops::Mat::identity();
+    let translation = ops::Mat::translation(0.5, 0.0, 0.0);
+    let rotation = ops::Mat::rotation(0.0, 0.0, 0.5);
+    let scale = ops::Mat::scale(2.0, 1.0, 1.0);
 
     let ubo = UBO {
         model:      translation * rotation * scale,

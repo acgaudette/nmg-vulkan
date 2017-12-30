@@ -337,6 +337,8 @@ impl Vertex {
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct UBO {
+    model:      ops::Mat,
+    view:       ops::Mat,
     projection: ops::Mat,
 }
 
@@ -1391,6 +1393,8 @@ pub fn update(
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
     let ubo = UBO {
+        model:      ops::Mat::identity(),
+        view:       ops::Mat::identity(),
         projection: ops::Mat::identity(),
     };
 

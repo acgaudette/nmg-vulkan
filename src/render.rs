@@ -1404,11 +1404,13 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
 }
 
 pub fn update(
+    time:           f64,
+    last_time:      f64,
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
     let translation = alg::Mat::translation(0.5, 0.0, 0.0);
-    let rotation = alg::Mat::rotation(0.0, 0.0, 0.5);
+    let rotation = alg::Mat::rotation(0.0, 0.0, time as f32);
     let scale = alg::Mat::scale(2.0, 1.0, 1.0);
 
     let ubo = UBO {

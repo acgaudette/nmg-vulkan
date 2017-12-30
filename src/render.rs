@@ -50,13 +50,14 @@ pub struct Context<'a> {
 
     /* Fixed information */
 
-    stages:          [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    assembly:        vd::PipelineInputAssemblyStateCreateInfo<'a>,
-    rasterizer:      vd::PipelineRasterizationStateCreateInfo<'a>,
-    multisampling:   vd::PipelineMultisampleStateCreateInfo<'a>,
-    pipeline_layout: vd::PipelineLayout,
-    drawing_pool:    vd::CommandPool,
-    transient_pool:  vd::CommandPool,
+    stages:            [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
+    rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
+    multisampling:     vd::PipelineMultisampleStateCreateInfo<'a>,
+    descriptor_layout: vd::DescriptorSetLayout,
+    pipeline_layout:   vd::PipelineLayout,
+    drawing_pool:      vd::CommandPool,
+    transient_pool:    vd::CommandPool,
 
     /* Unsafe data */
 
@@ -104,6 +105,7 @@ impl<'a> Context<'a> {
             assembly,
             rasterizer,
             multisampling,
+            descriptor_layout,
             pipeline_layout,
         ) = init_fixed(device.clone())?;
 
@@ -149,8 +151,10 @@ impl<'a> Context<'a> {
             &physical_device,
             &transient_pool,
             graphics_family,
+            &descriptor_layout,
             &drawing_pool,
             &_pipeline,
+            &pipeline_layout,
         )?;
 
         Ok(
@@ -172,6 +176,7 @@ impl<'a> Context<'a> {
                 assembly,
                 rasterizer,
                 multisampling,
+                descriptor_layout,
                 pipeline_layout,
                 drawing_pool,
                 transient_pool,
@@ -236,8 +241,10 @@ impl<'a> Context<'a> {
             &self.physical_device,
             &self.transient_pool,
             self.graphics_family,
+            &self.descriptor_layout,
             &self.drawing_pool,
             &_pipeline,
+            &self.pipeline_layout,
         )?;
 
         // Synchronize
@@ -608,6 +615,7 @@ fn init_fixed<'a>(
     vd::PipelineInputAssemblyStateCreateInfo<'a>,
     vd::PipelineRasterizationStateCreateInfo<'a>,
     vd::PipelineMultisampleStateCreateInfo<'a>,
+    vd::DescriptorSetLayout,
     vd::PipelineLayout,
 )> {
     /* Shaders */
@@ -691,6 +699,7 @@ fn init_fixed<'a>(
         assembly,
         rasterizer,
         multisampling,
+        descriptor_layout,
         pipeline_layout,
     ))
 }
@@ -968,15 +977,17 @@ fn init_pipeline(
 }
 
 fn init_drawing(
-    swapchain:       &vd::SwapchainKhr,
-    views:           &[vd::ImageView],
-    render_pass:     &vd::RenderPass,
-    device:          &vd::Device,
-    physical_device: &vd::PhysicalDevice,
-    transient_pool:  &vd::CommandPool,
-    graphics_family: u32,
-    drawing_pool:    &vd::CommandPool,
-    pipeline:        &vd::GraphicsPipeline,
+    swapchain:         &vd::SwapchainKhr,
+    views:             &[vd::ImageView],
+    render_pass:       &vd::RenderPass,
+    device:            &vd::Device,
+    physical_device:   &vd::PhysicalDevice,
+    transient_pool:    &vd::CommandPool,
+    graphics_family:   u32,
+    descriptor_layout: &vd::DescriptorSetLayout,
+    drawing_pool:      &vd::CommandPool,
+    pipeline:          &vd::GraphicsPipeline,
+    pipeline_layout:   &vd::PipelineLayout,
 ) -> vd::Result<(
     Vec<vd::Framebuffer>,
     vd::BufferHandle,
@@ -1049,14 +1060,50 @@ fn init_drawing(
 
     /* Uniform buffer */
 
+    let size = std::mem::size_of::<UBO>() as u64;
+
     let (uniform_buffer, uniform_memory) = create_buffer(
-        std::mem::size_of::<UBO>() as u64,
+        size,
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
         | vd::MemoryPropertyFlags::HOST_COHERENT,
         &properties,
     )?;
+
+    let pool_size = vd::DescriptorPoolSize::builder()
+        .type_of(vd::DescriptorType::UniformBuffer)
+        .descriptor_count(1)
+        .build();
+
+    let descriptor_pool = vd::DescriptorPool::builder()
+        .max_sets(1)
+        .pool_sizes(&[pool_size])
+        .flags(vd::DescriptorPoolCreateFlags::empty())
+        .build(device.clone())?;
+
+    let sets = descriptor_pool.allocate_descriptor_sets(
+        &[descriptor_layout.handle()]
+    )?;
+
+    let uniform_info = vd::DescriptorBufferInfo::builder()
+        .buffer(uniform_buffer)
+        .offset(0)
+        .range(size)
+        .build();
+
+    let writes = [
+        vd::WriteDescriptorSet::builder()
+            .dst_set(sets[0])
+            .dst_binding(0)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .buffer_info(&uniform_info)
+            .build()
+    ];
+
+    descriptor_pool.update_descriptor_sets(&writes, &[]);
 
     /* Command buffers */
 

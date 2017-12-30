@@ -35,6 +35,8 @@ fn update(
     context: &mut render::Context,
 ) {
     let mut running = true;
+    let start = std::time::Instant::now();
+    let mut last_time = 0f64;
 
     loop {
         // Handle window events
@@ -68,14 +70,24 @@ fn update(
 
         if !running { break; }
 
+        let now = std::time::Instant::now();
+        let duration = now.duration_since(start);
+
+        let time = duration.as_secs() as f64
+            + (duration.subsec_nanos() as f64 / 1000000000.);
+
         // Update renderer
         if let Err(e) = render::update(
+            time,
+            last_time,
             &context.device,
             context.uniform_memory,
         ) {
             // Irrecoverable error
             panic!("{}", e);
         }
+
+        last_time = time;
 
         // Render frame
         if let Err(e) = render::draw(

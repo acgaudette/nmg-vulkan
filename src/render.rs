@@ -314,6 +314,12 @@ impl Vertex {
     }
 }
 
+#[derive(Clone, Copy)]
+#[repr(C)]
+struct UBO {
+    projection: ops::Mat,
+}
+
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
     vd::PhysicalDevice,

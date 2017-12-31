@@ -38,6 +38,18 @@ impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 { x, y, z }
     }
+
+    pub fn normalize(self) -> Vec3 {
+        let factor = inverse_sqrt(
+            self.x * self.x + self.y * self.y + self.z * self.z
+        );
+
+        Vec3::new(
+            self.x * factor,
+            self.y * factor,
+            self.z * factor,
+        )
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

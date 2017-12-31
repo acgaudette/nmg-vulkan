@@ -1156,6 +1156,50 @@ fn init_drawing(
                 .build()
         ).build(device.clone(), None)?;
 
+    /* Transition depth image layout */
+
+    let transfer_buffer = get_transfer_buffer(transient_pool)?;
+
+    let mut flags = vd::ImageAspectFlags::DEPTH;
+
+    if depth_format == vd::Format::D32SfloatS8Uint
+        || depth_format == vd::Format::D24UnormS8Uint
+    {
+        flags |= vd::ImageAspectFlags::STENCIL;
+    }
+
+    let subresource_range = vd::ImageSubresourceRange::builder()
+        .aspect_mask(flags)
+        .base_mip_level(0)
+        .level_count(1)
+        .base_array_layer(0)
+        .layer_count(1)
+        .build();
+
+    let barrier = vd::ImageMemoryBarrier::builder()
+        .src_access_mask(vd::AccessFlags::empty())
+        .dst_access_mask(
+            vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ
+            | vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE
+        ).old_layout(vd::ImageLayout::Undefined)
+        .new_layout(vd::ImageLayout::DepthStencilAttachmentOptimal)
+        .src_queue_family_index(vd::QUEUE_FAMILY_IGNORED)
+        .dst_queue_family_index(vd::QUEUE_FAMILY_IGNORED)
+        .image(&depth_image)
+        .subresource_range(subresource_range)
+        .build();
+
+    transfer_buffer.pipeline_barrier(
+        vd::PipelineStageFlags::TOP_OF_PIPE,
+        vd::PipelineStageFlags::EARLY_FRAGMENT_TESTS,
+        vd::DependencyFlags::empty(),
+        &[],
+        &[],
+        &[barrier],
+    );
+
+    end_transfer_buffer(&transfer_buffer, device, graphics_family)?;
+
     /* Framebuffers */
 
     let mut framebuffers = Vec::with_capacity(views.len());

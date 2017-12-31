@@ -1256,12 +1256,12 @@ fn init_drawing(
     ];
 
     let indices = [
-        0u16, 1u16, 2u16,
-        0u16, 4u16, 1u16,
-        0u16, 7u16, 4u16,
-        0u16, 2u16, 7u16,
-        1u16, 2u16, 7u16,
-        7u16, 4u16, 1u16,
+        0u32, 1u32, 2u32,
+        0u32, 4u32, 1u32,
+        0u32, 7u32, 4u32,
+        0u32, 2u32, 7u32,
+        1u32, 2u32, 7u32,
+        7u32, 4u32, 1u32,
     ];
 
     /* Vertex buffer */
@@ -1402,7 +1402,7 @@ fn init_drawing(
                 handle,
                 index_buffer,
                 0,
-                vd::IndexType::Uint16,
+                vd::IndexType::Uint32,
             );
         }
 

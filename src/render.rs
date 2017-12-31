@@ -1409,14 +1409,16 @@ pub fn update(
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let translation = alg::Mat::translation(0.5, 0.0, 0.0);
-    let rotation = alg::Mat::rotation(0.0, 0.0, time as f32);
-    let scale = alg::Mat::scale(2.0, 1.0, 1.0);
+    let angle = time as f32;
+
+    let translation = alg::Mat::translation(0., 0., 2.);
+    let rotation = alg::Mat::rotation(angle, angle, angle);
+    let scale = alg::Mat::scale(0.75, 1.5, 1.);
 
     let ubo = UBO {
         model:      translation * rotation * scale,
         view:       alg::Mat::identity(),
-        projection: alg::Mat::identity(),
+        projection: alg::Mat::perspective(),
     };
 
     // Copy uniform buffer to GPU

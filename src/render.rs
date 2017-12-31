@@ -996,6 +996,14 @@ fn init_pipeline(
         .blend_constants([0f32; 4])
         .build();
 
+    let stencil = vd::PipelineDepthStencilStateCreateInfo::builder()
+        .depth_test_enable(true)
+        .depth_write_enable(true)
+        .depth_compare_op(vd::CompareOp::Less) // Closer fragments, lower depth
+        .depth_bounds_test_enable(false)
+        .stencil_test_enable(false)
+        .build();
+
     /* Fixed functions (dependent on swapchain) */
 
     let viewports = [
@@ -1036,6 +1044,7 @@ fn init_pipeline(
         .rasterization_state(rasterizer)
         .multisample_state(multisampling)
         .color_blend_state(&blending)
+        .depth_stencil_state(&stencil)
         .layout(pipeline_layout)
         .render_pass(render_pass)
         .subpass(0)

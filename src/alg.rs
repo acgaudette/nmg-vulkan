@@ -39,7 +39,7 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
-    pub fn normalize(self) -> Vec3 {
+    pub fn norm(self) -> Vec3 {
         let inverse_len = inverse_sqrt(
             self.x * self.x + self.y * self.y + self.z * self.z
         );

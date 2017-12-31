@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Library
+
 use std;
 
 fn inverse_sqrt(x: f32) -> f32 {

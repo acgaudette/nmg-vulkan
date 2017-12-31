@@ -899,6 +899,17 @@ fn init_render_pass(
         .final_layout(vd::ImageLayout::PresentSrcKhr)
         .build();
 
+    let depth_attachment = vd::AttachmentDescription::builder()
+        .format(depth_format)
+        .samples(vd::SampleCountFlags::COUNT_1)
+        .load_op(vd::AttachmentLoadOp::Clear)
+        .store_op(vd::AttachmentStoreOp::DontCare)
+        .stencil_load_op(vd::AttachmentLoadOp::DontCare)
+        .stencil_store_op(vd::AttachmentStoreOp::DontCare)
+        .initial_layout(vd::ImageLayout::Undefined)
+        .final_layout(vd::ImageLayout::DepthStencilAttachmentOptimal)
+        .build();
+
     let color_refs = [
         vd::AttachmentReference::builder()
             .attachment(0)
@@ -906,9 +917,15 @@ fn init_render_pass(
             .build(),
     ];
 
+    let depth_ref = vd::AttachmentReference::builder()
+        .attachment(1)
+        .layout(vd::ImageLayout::DepthStencilAttachmentOptimal)
+        .build();
+
     let subpass = vd::SubpassDescription::builder()
         .pipeline_bind_point(vd::PipelineBindPoint::Graphics)
         .color_attachments(&color_refs)
+        .depth_stencil_attachment(&depth_ref)
         .build();
 
     let dependency = vd::SubpassDependency::builder()
@@ -923,7 +940,7 @@ fn init_render_pass(
 
     Ok(
         vd::RenderPass::builder()
-            .attachments(&[color_attachment])
+            .attachments(&[color_attachment, depth_attachment])
             .subpasses(&[subpass])
             .dependencies(&[dependency])
             .build(device.clone())?

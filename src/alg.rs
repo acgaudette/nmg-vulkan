@@ -40,14 +40,22 @@ impl Vec3 {
     }
 
     pub fn normalize(self) -> Vec3 {
-        let factor = inverse_sqrt(
+        let inverse_len = inverse_sqrt(
             self.x * self.x + self.y * self.y + self.z * self.z
         );
 
         Vec3::new(
-            self.x * factor,
-            self.y * factor,
-            self.z * factor,
+            self.x * inverse_len,
+            self.y * inverse_len,
+            self.z * inverse_len,
+        )
+    }
+
+    pub fn cross(self, other: Vec3) -> Vec3 {
+        Vec3::new(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
         )
     }
 }

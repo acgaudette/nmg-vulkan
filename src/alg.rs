@@ -1,6 +1,8 @@
 use std;
 
 fn inverse_sqrt(x: f32) -> f32 {
+    let half = x * 0.5;
+
     let cast: u32 = unsafe {
         std::mem::transmute(x)
     };
@@ -10,7 +12,8 @@ fn inverse_sqrt(x: f32) -> f32 {
         std::mem::transmute(guess)
     };
 
-    guess * (1.5 - (x * 0.5) * guess * guess)
+    let iteration = guess * (1.5 - half * guess * guess);
+    iteration * (1.5 - half * iteration * iteration)
 }
 
 #[derive(Clone, Copy)]
@@ -256,5 +259,29 @@ mod tests {
 
         assert!(translation * Mat::identity() == translation);
         assert!(Mat::identity() * translation == translation);
+    }
+
+    #[test]
+    fn norm_vec() {
+        let up = Vec3::new(0., 1., 0.);
+        let error = (up.norm().mag() - up.mag()).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+
+        let vec = Vec3::new(-1., 3., 5.);
+        let error = (vec.norm().mag() - 1.).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
+    fn cross_vec() {
+        let right = Vec3::new(1., 0., 0.);
+        let up = Vec3::new(0., 1., 0.);
+        let forward = Vec3::new(0., 0., 1.);
+
+        assert!(right.cross(up) == forward);
     }
 }

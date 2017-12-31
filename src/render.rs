@@ -1038,15 +1038,38 @@ fn init_drawing(
     /* Vertex data */
 
     let vertices = [
-        Vertex::new(-0.25, -0.5, 0., 1., 0., 0.),
-        Vertex::new(-0.50,  0.5, 0., 0., 1., 0.),
-        Vertex::new( 0.25,  0.5, 0., 0., 0., 1.),
-        Vertex::new( 0.50, -0.5, 0., 1., 1., 0.),
+        Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
+        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
+
+        Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
+        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
+        Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
+
+        Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
+        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+        Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
+
+        Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
+        Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
+        Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
+
+        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
+        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+
+        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
+        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
     ];
 
     let indices = [
         0u16, 1u16, 2u16,
-        2u16, 3u16, 0u16,
+        0u16, 4u16, 1u16,
+        0u16, 7u16, 4u16,
+        0u16, 2u16, 7u16,
+        1u16, 2u16, 7u16,
+        7u16, 4u16, 1u16,
     ];
 
     /* Vertex buffer */
@@ -1415,7 +1438,7 @@ pub fn update(
 
         let translation = alg::Mat::translation(0., 0., 2.);
         let rotation = alg::Mat::rotation(angle, angle, angle);
-        let scale = alg::Mat::scale(0.75, 1.5, 1.);
+        let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
         translation * rotation * scale
     };

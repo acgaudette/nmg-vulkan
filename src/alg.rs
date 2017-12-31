@@ -26,7 +26,7 @@ impl Vec2 {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Vec3 {
     pub x: f32,
@@ -40,15 +40,17 @@ impl Vec3 {
     }
 
     pub fn norm(self) -> Vec3 {
-        let inverse_len = inverse_sqrt(
-            self.x * self.x + self.y * self.y + self.z * self.z
-        );
+        let inverse_len = inverse_sqrt(self.mag_squared());
 
         Vec3::new(
             self.x * inverse_len,
             self.y * inverse_len,
             self.z * inverse_len,
         )
+    }
+
+    pub fn mag_squared(self) -> f32 {
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     pub fn cross(self, other: Vec3) -> Vec3 {

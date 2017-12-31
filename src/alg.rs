@@ -119,7 +119,7 @@ impl Mat {
     pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> Mat {
         // Perspective scaling (rectilinear)
         let y_scale = 1. / (0.5 * fov).to_radians().tan();
-        let x_scale = y / aspect;
+        let x_scale = y_scale / aspect;
 
         // Fit into Vulkan clip space (0-1)
         let z_scale = 1. / (far - near);

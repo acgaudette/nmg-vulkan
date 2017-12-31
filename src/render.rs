@@ -1406,6 +1406,7 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
 pub fn update(
     time:           f64,
     last_time:      f64,
+    swapchain:      &vd::SwapchainKhr,
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
@@ -1415,10 +1416,13 @@ pub fn update(
     let rotation = alg::Mat::rotation(angle, angle, angle);
     let scale = alg::Mat::scale(0.75, 1.5, 1.);
 
+    let aspect = swapchain.extent().width() as f32
+        / swapchain.extent().height() as f32;
+
     let ubo = UBO {
         model:      translation * rotation * scale,
         view:       alg::Mat::identity(),
-        projection: alg::Mat::perspective(),
+        projection: alg::Mat::perspective(60., aspect, 0.01, 4.),
     };
 
     // Copy uniform buffer to GPU

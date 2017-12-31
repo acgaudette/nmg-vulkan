@@ -1420,6 +1420,12 @@ pub fn update(
         translation * rotation * scale
     };
 
+    let view = alg::Mat::look_at_view(
+        alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
+        alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
+        alg::Vec3::new( 0.0, 1.0,  0.0), // World up
+    );
+
     let projection = {
         let w = swapchain.extent().width() as f32;
         let h = swapchain.extent().height() as f32;
@@ -1434,7 +1440,7 @@ pub fn update(
 
     let ubo = UBO {
         model:      model,
-        view:       alg::Mat::identity(),
+        view:       view,
         projection: projection,
     };
 

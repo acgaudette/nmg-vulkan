@@ -58,6 +58,7 @@ pub struct Context<'a> {
     pipeline_layout:   vd::PipelineLayout,
     drawing_pool:      vd::CommandPool,
     transient_pool:    vd::CommandPool,
+    depth_format:      vd::Format,
 
     /* Unsafe data */
 
@@ -96,6 +97,7 @@ impl<'a> Context<'a> {
             device,
             drawing_pool,
             transient_pool,
+            depth_format,
             image_available,
             render_complete,
         ) = init_vulkan(window)?;
@@ -127,6 +129,7 @@ impl<'a> Context<'a> {
 
         let _pipeline = init_pipeline(
             &swapchain,
+            depth_format,
             &stages,
             &assembly,
             &rasterizer,
@@ -184,6 +187,7 @@ impl<'a> Context<'a> {
                 pipeline_layout,
                 drawing_pool,
                 transient_pool,
+                depth_format,
                 vertex_buffer,
                 vertex_memory,
                 index_buffer,
@@ -221,6 +225,7 @@ impl<'a> Context<'a> {
 
         let _pipeline = init_pipeline(
             &swapchain,
+            self.depth_format,
             &self.stages,
             &self.assembly,
             &self.rasterizer,
@@ -364,6 +369,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::Device,
     vd::CommandPool,
     vd::CommandPool,
+    vd::Format,
     vd::Semaphore,
     vd::Semaphore,
 )> {
@@ -539,7 +545,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     /* Depth buffer */
 
-    let format = {
+    let depth_format = {
         let formats = [
             vd::Format::D32Sfloat,
             vd::Format::D32SfloatS8Uint,
@@ -551,6 +557,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         for &option in &formats {
             let properties = physical_device.format_properties(option);
 
+            // Optimal tiling
             if properties.optimal_tiling_features().contains(
                 vd::FormatFeatureFlags::DEPTH_STENCIL_ATTACHMENT
             ) {
@@ -590,6 +597,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         device,
         drawing_pool,
         transient_pool,
+        depth_format,
         image_available,
         render_complete,
     ))
@@ -923,6 +931,7 @@ fn init_render_pass(
 
 fn init_pipeline(
     swapchain:       &vd::SwapchainKhr,
+    depth_format:    vd::Format,
     stages:          &[vd::PipelineShaderStageCreateInfo; 2],
     assembly:        &vd::PipelineInputAssemblyStateCreateInfo,
     rasterizer:      &vd::PipelineRasterizationStateCreateInfo,
@@ -931,6 +940,24 @@ fn init_pipeline(
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
+    let extent = vd::Extent3d::builder()
+        .width(swapchain.extent().width())
+        .height(swapchain.extent().height())
+        .depth(1)
+        .build();
+
+    let depth_image = vd::Image::builder()
+        .image_type(vd::ImageType::Type2d)
+        .format(depth_format)
+        .extent(extent)
+        .mip_levels(1)
+        .array_layers(1)
+        .samples(vd::SampleCountFlags::COUNT_1)
+        .tiling(vd::ImageTiling::Optimal)
+        .usage(vd::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT)
+        .sharing_mode(vd::SharingMode::Exclusive)
+        .initial_layout(vd::ImageLayout::Undefined)
+        .build(device.clone())?;
 
     /*
      * Fixed functions (these will be allocated on the heap later,

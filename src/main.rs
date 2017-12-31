@@ -80,6 +80,7 @@ fn update(
         if let Err(e) = render::update(
             time,
             last_time,
+            &context.swapchain,
             &context.device,
             context.uniform_memory,
         ) {

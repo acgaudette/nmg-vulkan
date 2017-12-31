@@ -1141,12 +1141,27 @@ fn init_drawing(
         )?;
     }
 
+    let depth_view = vd::ImageView::builder()
+        .image(depth_image.handle())
+        .view_type(vd::ImageViewType::Type2d)
+        .format(depth_format)
+        .components(vd::ComponentMapping::default())
+        .subresource_range(
+            vd::ImageSubresourceRange::builder()
+                .aspect_mask(vd::ImageAspectFlags::DEPTH)
+                .base_mip_level(0)
+                .level_count(1)
+                .base_array_layer(0)
+                .layer_count(1)
+                .build()
+        ).build(device.clone(), None)?;
+
     /* Framebuffers */
 
     let mut framebuffers = Vec::with_capacity(views.len());
 
     for i in 0..views.len() {
-        let attachments = [&views[i]];
+        let attachments = [&views[i], &depth_view];
 
         let framebuffer = vd::Framebuffer::builder()
             .render_pass(render_pass)
@@ -1286,6 +1301,13 @@ fn init_drawing(
             vd::ClearValue {
                 color: vd::ClearColorValue {
                     float32: [0f32, 0f32, 0f32, 1f32]
+                }
+            },
+
+            vd::ClearValue {
+                depthStencil: vd::vks::VkClearDepthStencilValue {
+                    depth: 1., // Initialized to max depth
+                    stencil: 0,
                 }
             },
         ];

@@ -1,5 +1,18 @@
 use std;
 
+fn inverse_sqrt(x: f32) -> f32 {
+    let cast: u32 = unsafe {
+        std::mem::transmute(x)
+    };
+
+    let guess = 0x5f3759df - (cast >> 1);
+    let guess: f32 = unsafe {
+        std::mem::transmute(guess)
+    };
+
+    guess * (1.5 - (x * 0.5) * guess * guess)
+}
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct Vec2 {

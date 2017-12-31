@@ -53,6 +53,10 @@ impl Vec3 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    pub fn mag(self) -> f32 {
+        self.mag_squared().sqrt()
+    }
+
     pub fn cross(self, other: Vec3) -> Vec3 {
         Vec3::new(
             self.y * other.z - self.z * other.y,

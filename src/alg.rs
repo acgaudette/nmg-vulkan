@@ -220,6 +220,15 @@ impl Mat {
                 0.0,     0.0,     1.0,      0.0, // Left-handed (scaling factor)
         )
     }
+
+    fn transpose(self) -> Mat {
+        Mat::new(
+            self.x0, self.y0, self.z0, self.w0,
+            self.x1, self.y1, self.z1, self.w1,
+            self.x2, self.y2, self.z2, self.w2,
+            self.x3, self.y3, self.z3, self.w3,
+        )
+    }
 }
 
 impl std::ops::Mul for Mat {

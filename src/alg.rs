@@ -42,6 +42,21 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
+    #[inline]
+    pub fn right() -> Vec3 {
+        Vec3::new(1., 0., 0.)
+    }
+
+    #[inline]
+    pub fn up() -> Vec3 {
+        Vec3::new(0., 1., 0.)
+    }
+
+    #[inline]
+    pub fn fwd() -> Vec3 {
+        Vec3::new(0., 0., 1.)
+    }
+
     pub fn norm(self) -> Vec3 {
         let inverse_len = inverse_sqrt(self.mag_squared());
 
@@ -100,7 +115,6 @@ pub struct Mat {
     /*
      * GLSL expects matrices in column-major order
      * Calculations below are formatted in row-major order
-     * (for readability)
      */
 
     pub x0: f32, pub y0: f32, pub z0: f32, pub w0: f32,
@@ -124,6 +138,7 @@ impl Mat {
         }
     }
 
+    #[inline]
     pub fn identity() -> Mat {
         Mat::new(
             1.0, 0.0, 0.0, 0.0,
@@ -293,14 +308,13 @@ mod tests {
 
     #[test]
     fn norm_vec() {
-        let up = Vec3::new(0., 1., 0.);
-        let error = (up.norm().mag() - up.mag()).abs();
+        let error = (Vec3::up().norm().mag() - Vec3::up().mag()).abs();
 
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
 
-        let vec = Vec3::new(-1., 3., 5.);
-        let error = (vec.norm().mag() - 1.).abs();
+        let vec3 = Vec3::new(-1., 3., 5.);
+        let error = (vec3.norm().mag() - 1.).abs();
 
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
@@ -308,10 +322,6 @@ mod tests {
 
     #[test]
     fn cross_vec() {
-        let right = Vec3::new(1., 0., 0.);
-        let up = Vec3::new(0., 1., 0.);
-        let forward = Vec3::new(0., 0., 1.);
-
-        assert!(right.cross(up) == forward);
+        assert!(Vec3::right().cross(Vec3::up()) == Vec3::fwd());
     }
 }

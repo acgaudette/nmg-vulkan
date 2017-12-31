@@ -278,7 +278,7 @@ impl<'a> Context<'a> {
         self.command_buffers = command_buffers;
 
         unsafe {
-            self.free_host();
+            self.free_device();
         }
 
         self.depth_memory = depth_memory;
@@ -300,15 +300,20 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    unsafe fn free_host(&mut self) {
-        // Free depth image
+    // Free memory allocated on the GPU
+    unsafe fn free_device(&mut self) {
+        // Depth image
         self.device.free_memory(self.depth_memory, None);
 
-        // Free host vertex, index, and uniform buffer allocations
+        // Vertex buffer
         self.device.destroy_buffer(self.vertex_buffer, None);
         self.device.free_memory(self.vertex_memory, None);
+
+        // Index buffer
         self.device.destroy_buffer(self.index_buffer, None);
         self.device.free_memory(self.index_memory, None);
+
+        // Uniform buffer
         self.device.destroy_buffer(self.uniform_buffer, None);
         self.device.free_memory(self.uniform_memory, None);
     }
@@ -317,7 +322,7 @@ impl<'a> Context<'a> {
 impl<'a> Drop for Context<'a> {
     fn drop(&mut self) {
         unsafe {
-            self.free_host();
+            self.free_device();
         }
     }
 }
@@ -1542,13 +1547,13 @@ fn create_buffers<T: std::marker::Copy>(
     // Block until transfer completion
     device.wait_idle();
 
-    // Clean up device buffer
+    // Clean up host buffer
     unsafe {
-        device.destroy_buffer(device_buffer, None);
-        device.free_memory(device_memory, None);
+        device.destroy_buffer(host_buffer, None);
+        device.free_memory(host_memory, None);
     }
 
-    Ok((host_buffer, host_memory))
+    Ok((device_buffer, device_memory))
 }
 
 fn create_buffer(

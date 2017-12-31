@@ -1423,7 +1423,7 @@ pub fn update(
     let view = alg::Mat::look_at_view(
         alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
         alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
-        alg::Vec3::new( 0.0, 1.0,  0.0), // World up
+        alg::Vec3::up(),
     );
 
     let projection = {

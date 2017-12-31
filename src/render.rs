@@ -301,7 +301,10 @@ impl<'a> Context<'a> {
     }
 
     unsafe fn free_host(&mut self) {
-        // Free host vertex and index buffer allocations
+        // Free depth image
+        self.device.free_memory(self.depth_memory, None);
+
+        // Free host vertex, index, and uniform buffer allocations
         self.device.destroy_buffer(self.vertex_buffer, None);
         self.device.free_memory(self.vertex_memory, None);
         self.device.destroy_buffer(self.index_buffer, None);

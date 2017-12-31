@@ -70,7 +70,7 @@ impl Mat {
     pub fn translation(x: f32, y: f32, z: f32) -> Mat {
         Mat::new(
             1.0, 0.0, 0.0,   x,
-            0.0, 1.0, 0.0,   y,
+            0.0, 1.0, 0.0,  -y, // Left-handed (correct Vulkan axis)
             0.0, 0.0, 1.0,   z,
             0.0, 0.0, 0.0, 1.0,
         )
@@ -116,13 +116,12 @@ impl Mat {
         )
     }
 
-    // Left-handed
     pub fn perspective() -> Mat {
         Mat::new(
             1.0, 0.0, 0.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0, 0.0, // Left-handed
         )
     }
 }

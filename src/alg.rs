@@ -182,6 +182,27 @@ impl Mat {
         )
     }
 
+    pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
+        let forward = (target - position).norm();
+        let right = forward.cross(up).norm();
+        let up = right.cross(forward);
+
+        // Transpose orthogonal matrix to get inverse
+        let inverse_rotation = Mat::new(
+            right.x, up.x, forward.x, 0.0,
+            right.y, up.y, forward.y, 0.0,
+            right.z, up.z, forward.z, 0.0,
+                0.0,  0.0,       0.0, 1.0,
+        );
+
+        // Reverse position input
+        let inverse_position = Mat::translation(
+            -position.x, -position.y, -position.z,
+        );
+
+        inverse_rotation * inverse_position
+    }
+
     // Input: vertical field of view, screen aspect ratio, near and far planes
     pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> Mat {
         // Perspective scaling (rectilinear)

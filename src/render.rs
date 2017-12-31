@@ -537,6 +537,35 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .flags(vd::CommandPoolCreateFlags::TRANSIENT)
         .build(device.clone())?;
 
+    /* Depth buffer */
+
+    let format = {
+        let formats = [
+            vd::Format::D32Sfloat,
+            vd::Format::D32SfloatS8Uint,
+            vd::Format::D24UnormS8Uint,
+        ];
+
+        let mut format = None;
+
+        for &option in &formats {
+            let properties = physical_device.format_properties(option);
+
+            if properties.optimal_tiling_features().contains(
+                vd::FormatFeatureFlags::DEPTH_STENCIL_ATTACHMENT
+            ) {
+                format = Some(option);
+                break;
+            }
+        }
+
+        if let None = format {
+            return Err("GPU does not support required depth format".into());
+        }
+
+        format.unwrap()
+    };
+
     /* Synchronization */
 
     let image_available = vd::Semaphore::new(

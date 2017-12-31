@@ -41,7 +41,6 @@ pub struct Context<'a> {
 
     /* Swapchain recreation data */
 
-    physical_device: vd::PhysicalDevice,
     surface:         vd::SurfaceKhr,
     surface_format:  vd::SurfaceFormatKhr,
     sharing_mode:    vd::SharingMode,
@@ -87,7 +86,6 @@ impl<'a> Context<'a> {
     pub fn new(window: &vdw::winit::Window) -> vd::Result<Context> {
         let (
             surface,
-            physical_device,
             graphics_family,
             present_family,
             surface_format,
@@ -114,7 +112,7 @@ impl<'a> Context<'a> {
         ) = init_fixed(device.clone())?;
 
         let (swapchain, _views) = init_swapchain(
-            &physical_device,
+            &device,
             &surface,
             1280, 720, // Default
             &surface_format,
@@ -122,14 +120,15 @@ impl<'a> Context<'a> {
             &indices,
             present_mode,
             None,
+        )?;
+
+        let _render_pass = init_render_pass(
+            &swapchain,
             &device,
         )?;
 
-        let _render_pass = init_render_pass(&swapchain, &device)?;
-
         let _pipeline = init_pipeline(
             &swapchain,
-            depth_format,
             &stages,
             &assembly,
             &rasterizer,
@@ -152,10 +151,10 @@ impl<'a> Context<'a> {
             _descriptor_pool,
         ) = init_drawing(
             &swapchain,
+            depth_format,
             &_views,
             &_render_pass,
             &device,
-            &physical_device,
             &transient_pool,
             graphics_family,
             &descriptor_layout,
@@ -173,7 +172,6 @@ impl<'a> Context<'a> {
                 present_family,
                 image_available,
                 render_complete,
-                physical_device,
                 surface,
                 surface_format,
                 sharing_mode,
@@ -210,7 +208,7 @@ impl<'a> Context<'a> {
         &mut self, width: u32, height: u32
     ) -> vd::Result<()> {
         let (swapchain, _views) = init_swapchain(
-            &self.physical_device,
+            &self.device,
             &self.surface,
             width, height,
             &self.surface_format,
@@ -218,14 +216,15 @@ impl<'a> Context<'a> {
             &self.indices,
             self.present_mode,
             Some(&self.swapchain), // Pass in old swapchain
+        )?;
+
+        let _render_pass = init_render_pass(
+            &swapchain,
             &self.device,
         )?;
 
-        let _render_pass = init_render_pass(&swapchain, &self.device)?;
-
         let _pipeline = init_pipeline(
             &swapchain,
-            self.depth_format,
             &self.stages,
             &self.assembly,
             &self.rasterizer,
@@ -248,10 +247,10 @@ impl<'a> Context<'a> {
             _descriptor_pool,
         ) = init_drawing(
             &swapchain,
+            self.depth_format,
             &_views,
             &_render_pass,
             &self.device,
-            &self.physical_device,
             &self.transient_pool,
             self.graphics_family,
             &self.descriptor_layout,
@@ -359,7 +358,6 @@ struct UBO {
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
-    vd::PhysicalDevice,
     u32,
     u32,
     vd::SurfaceFormatKhr,
@@ -587,7 +585,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     Ok((
         surface,
-        physical_device,
         graphics_family,
         present_family,
         surface_format,
@@ -754,7 +751,7 @@ fn init_fixed<'a>(
 }
 
 fn init_swapchain(
-    physical_device: &vd::PhysicalDevice,
+    device:          &vd::Device,
     surface:         &vd::SurfaceKhr,
     window_width:    u32,
     window_height:   u32,
@@ -763,14 +760,15 @@ fn init_swapchain(
     indices:         &[u32],
     present_mode:    vd::PresentModeKhr,
     old_swapchain:   Option<&vd::SwapchainKhr>,
-    device:          &vd::Device,
 ) -> vd::Result<(
     vd::SwapchainKhr,
     Vec<vd::ImageView>,
 )> {
     /* Surface */
 
-    let capabilities = physical_device.surface_capabilities_khr(&surface)?;
+    let capabilities = device.physical_device().surface_capabilities_khr(
+        &surface
+    )?;
 
     // Frame queue size
     let image_count = {
@@ -883,8 +881,8 @@ fn init_swapchain(
 }
 
 fn init_render_pass(
-    swapchain: &vd::SwapchainKhr,
-    device:    &vd::Device
+    swapchain:    &vd::SwapchainKhr,
+    device:       &vd::Device
 ) -> vd::Result<(vd::RenderPass)> {
     // Clear framebuffer
     let color_attachment = vd::AttachmentDescription::builder()
@@ -898,16 +896,16 @@ fn init_render_pass(
         .final_layout(vd::ImageLayout::PresentSrcKhr)
         .build();
 
-    let attachment_refs = [
+    let color_refs = [
         vd::AttachmentReference::builder()
             .attachment(0)
             .layout(vd::ImageLayout::ColorAttachmentOptimal)
-            .build()
+            .build(),
     ];
 
     let subpass = vd::SubpassDescription::builder()
         .pipeline_bind_point(vd::PipelineBindPoint::Graphics)
-        .color_attachments(&attachment_refs)
+        .color_attachments(&color_refs)
         .build();
 
     let dependency = vd::SubpassDependency::builder()
@@ -931,7 +929,6 @@ fn init_render_pass(
 
 fn init_pipeline(
     swapchain:       &vd::SwapchainKhr,
-    depth_format:    vd::Format,
     stages:          &[vd::PipelineShaderStageCreateInfo; 2],
     assembly:        &vd::PipelineInputAssemblyStateCreateInfo,
     rasterizer:      &vd::PipelineRasterizationStateCreateInfo,
@@ -940,24 +937,6 @@ fn init_pipeline(
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
-    let extent = vd::Extent3d::builder()
-        .width(swapchain.extent().width())
-        .height(swapchain.extent().height())
-        .depth(1)
-        .build();
-
-    let depth_image = vd::Image::builder()
-        .image_type(vd::ImageType::Type2d)
-        .format(depth_format)
-        .extent(extent)
-        .mip_levels(1)
-        .array_layers(1)
-        .samples(vd::SampleCountFlags::COUNT_1)
-        .tiling(vd::ImageTiling::Optimal)
-        .usage(vd::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT)
-        .sharing_mode(vd::SharingMode::Exclusive)
-        .initial_layout(vd::ImageLayout::Undefined)
-        .build(device.clone())?;
 
     /*
      * Fixed functions (these will be allocated on the heap later,
@@ -1047,10 +1026,10 @@ fn init_pipeline(
 
 fn init_drawing(
     swapchain:         &vd::SwapchainKhr,
+    depth_format:      vd::Format,
     views:             &[vd::ImageView],
     render_pass:       &vd::RenderPass,
-    device:            &vd::Device,
-    physical_device:   &vd::PhysicalDevice,
+    device:            &vd::Device, // move up?
     transient_pool:    &vd::CommandPool,
     graphics_family:   u32,
     descriptor_layout: &vd::DescriptorSetLayout,
@@ -1069,6 +1048,25 @@ fn init_drawing(
     [vd::DescriptorSet; 1],
     vd::DescriptorPool,
 )> {
+    let extent = vd::Extent3d::builder()
+        .width(swapchain.extent().width())
+        .height(swapchain.extent().height())
+        .depth(1)
+        .build();
+
+    let depth_image = vd::Image::builder()
+        .image_type(vd::ImageType::Type2d)
+        .format(depth_format)
+        .extent(extent)
+        .mip_levels(1)
+        .array_layers(1)
+        .samples(vd::SampleCountFlags::COUNT_1)
+        .tiling(vd::ImageTiling::Optimal)
+        .usage(vd::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT)
+        .sharing_mode(vd::SharingMode::Exclusive)
+        .initial_layout(vd::ImageLayout::Undefined)
+        .build(device.clone())?;
+
     /* Framebuffers */
 
     let mut framebuffers = Vec::with_capacity(views.len());
@@ -1130,7 +1128,7 @@ fn init_drawing(
 
     /* Vertex buffer */
 
-    let properties = physical_device.memory_properties();
+    let properties = device.physical_device().memory_properties();
 
     let (vertex_buffer, vertex_memory) = create_buffers(
         &vertices,
@@ -1211,13 +1209,13 @@ fn init_drawing(
             vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
         )?;
 
-        // Clear color
-        let clear = [
+        let clears = [
+            // Clear color
             vd::ClearValue {
                 color: vd::ClearColorValue {
                     float32: [0f32, 0f32, 0f32, 1f32]
                 }
-            }
+            },
         ];
 
         let pass_info = vd::RenderPassBeginInfo::builder()
@@ -1232,7 +1230,7 @@ fn init_drawing(
                             .build()
                     ).extent(swapchain.extent().clone())
                     .build()
-            ).clear_values(&clear)
+            ).clear_values(&clears)
             .build();
 
         /* Execute render pass */
@@ -1371,17 +1369,18 @@ fn create_buffers<T: std::marker::Copy>(
 
     let handles = [transfer_buffer.handle()];
 
-    let submit_info = vd::SubmitInfo::builder()
+    let info = vd::SubmitInfo::builder()
         .command_buffers(&handles)
         .build();
 
     match device.get_device_queue(graphics_family, 0) {
         Some(gq) => unsafe {
-            device.queue_submit(gq, &[submit_info], None)?;
+            device.queue_submit(gq, &[info], None)?;
         },
 
         None => return Err("no graphics queue".into())
     }
+
 
     // Block until transfer completion
     device.wait_idle();

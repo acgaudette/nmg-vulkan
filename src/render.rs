@@ -61,6 +61,7 @@ pub struct Context<'a> {
 
     /* Unsafe data */
 
+    depth_memory:   vd::DeviceMemoryHandle,
     vertex_buffer:  vd::BufferHandle,
     vertex_memory:  vd::DeviceMemoryHandle,
     index_buffer:   vd::BufferHandle,
@@ -74,6 +75,7 @@ pub struct Context<'a> {
 
     _vert_mod:        vd::ShaderModule,
     _frag_mod:        vd::ShaderModule,
+    _depth_image:     vd::Image,
     _framebuffers:    Vec<vd::Framebuffer>,
     _render_pass:     vd::RenderPass,
     _views:           Vec<vd::ImageView>,
@@ -140,6 +142,8 @@ impl<'a> Context<'a> {
         )?;
 
         let (
+            _depth_image,
+            depth_memory,
             _framebuffers,
             vertex_buffer,
             vertex_memory,
@@ -187,6 +191,7 @@ impl<'a> Context<'a> {
                 drawing_pool,
                 transient_pool,
                 depth_format,
+                depth_memory,
                 vertex_buffer,
                 vertex_memory,
                 index_buffer,
@@ -195,6 +200,7 @@ impl<'a> Context<'a> {
                 uniform_memory,
                 _vert_mod,
                 _frag_mod,
+                _depth_image,
                 _framebuffers,
                 _render_pass,
                 _views,
@@ -237,6 +243,8 @@ impl<'a> Context<'a> {
         )?;
 
         let (
+            _depth_image,
+            depth_memory,
             _framebuffers,
             vertex_buffer,
             vertex_memory,
@@ -273,6 +281,7 @@ impl<'a> Context<'a> {
             self.free_host();
         }
 
+        self.depth_memory = depth_memory;
         self.vertex_buffer = vertex_buffer;
         self.vertex_memory = vertex_memory;
         self.index_buffer = index_buffer;
@@ -280,6 +289,7 @@ impl<'a> Context<'a> {
         self.uniform_buffer = uniform_buffer;
         self.uniform_memory = uniform_memory;
 
+        self._depth_image = _depth_image;
         self._framebuffers = _framebuffers;
         self._render_pass = _render_pass;
         self._views = _views;
@@ -1066,6 +1076,8 @@ fn init_drawing(
     pipeline:          &vd::GraphicsPipeline,
     pipeline_layout:   &vd::PipelineLayout,
 ) -> vd::Result<(
+    vd::Image,
+    vd::DeviceMemoryHandle,
     Vec<vd::Framebuffer>,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
@@ -1095,6 +1107,36 @@ fn init_drawing(
         .sharing_mode(vd::SharingMode::Exclusive)
         .initial_layout(vd::ImageLayout::Undefined)
         .build(device.clone())?;
+
+    let requirements = unsafe {
+        device.get_image_memory_requirements(depth_image.handle())
+    };
+
+    let properties = device.physical_device().memory_properties();
+
+    // Allocate space for depth image on GPU
+    let depth_info = vd::MemoryAllocateInfo::builder()
+        .allocation_size(requirements.size())
+        .memory_type_index(
+            get_memory_type(
+                requirements.memory_type_bits(),
+                vd::MemoryPropertyFlags::DEVICE_LOCAL,
+                properties.memory_types(),
+            )?
+        ).build();
+
+    let depth_memory_handle = unsafe {
+        device.allocate_memory(&depth_info, None)?
+    };
+
+    // Bind depth image to GPU
+    unsafe {
+        device.bind_image_memory(
+            depth_image.handle(),
+            depth_memory_handle,
+            0,
+        )?;
+    }
 
     /* Framebuffers */
 
@@ -1156,8 +1198,6 @@ fn init_drawing(
     ];
 
     /* Vertex buffer */
-
-    let properties = device.physical_device().memory_properties();
 
     let (vertex_buffer, vertex_memory) = create_buffers(
         &vertices,
@@ -1320,6 +1360,8 @@ fn init_drawing(
     }
 
     Ok((
+        depth_image,
+        depth_memory_handle,
         framebuffers,
         vertex_buffer,
         vertex_memory,

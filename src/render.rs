@@ -124,6 +124,7 @@ impl<'a> Context<'a> {
 
         let _render_pass = init_render_pass(
             &swapchain,
+            depth_format,
             &device,
         )?;
 
@@ -220,6 +221,7 @@ impl<'a> Context<'a> {
 
         let _render_pass = init_render_pass(
             &swapchain,
+            self.depth_format,
             &self.device,
         )?;
 
@@ -882,6 +884,7 @@ fn init_swapchain(
 
 fn init_render_pass(
     swapchain:    &vd::SwapchainKhr,
+    depth_format: vd::Format,
     device:       &vd::Device
 ) -> vd::Result<(vd::RenderPass)> {
     // Clear framebuffer
@@ -1304,6 +1307,44 @@ fn init_drawing(
     ))
 }
 
+fn get_transfer_buffer(
+    transient_pool: &vd::CommandPool,
+) -> vd::Result<vd::CommandBuffer> {
+    let buffer = transient_pool.allocate_command_buffer(
+        vd::CommandBufferLevel::Primary,
+    )?;
+
+    buffer.begin(
+        vd::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
+    )?;
+
+    Ok(buffer)
+}
+
+fn end_transfer_buffer(
+    buffer:          &vd::CommandBuffer,
+    device:          &vd::Device,
+    graphics_family: u32,
+) -> vd::Result<()> {
+    buffer.end()?;
+
+    let handles = [buffer.handle()];
+
+    let info = vd::SubmitInfo::builder()
+        .command_buffers(&handles)
+        .build();
+
+    match device.get_device_queue(graphics_family, 0) {
+        Some(gq) => unsafe {
+            device.queue_submit(gq, &[info], None)?;
+        },
+
+        None => return Err("no graphics queue".into())
+    }
+
+    Ok(())
+}
+
 fn create_buffers<T: std::marker::Copy>(
     data:            &[T],
     properties:      &vd::PhysicalDeviceMemoryProperties,
@@ -1341,13 +1382,7 @@ fn create_buffers<T: std::marker::Copy>(
         properties,
     )?;
 
-    let transfer_buffer = transient_pool.allocate_command_buffer(
-        vd::CommandBufferLevel::Primary,
-    )?;
-
-    transfer_buffer.begin(
-        vd::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
-    )?;
+    let transfer_buffer = get_transfer_buffer(transient_pool)?;
 
     // Copy buffer to GPU
     unsafe {
@@ -1365,22 +1400,7 @@ fn create_buffers<T: std::marker::Copy>(
         );
     }
 
-    transfer_buffer.end()?;
-
-    let handles = [transfer_buffer.handle()];
-
-    let info = vd::SubmitInfo::builder()
-        .command_buffers(&handles)
-        .build();
-
-    match device.get_device_queue(graphics_family, 0) {
-        Some(gq) => unsafe {
-            device.queue_submit(gq, &[info], None)?;
-        },
-
-        None => return Err("no graphics queue".into())
-    }
-
+    end_transfer_buffer(&transfer_buffer, device, graphics_family)?;
 
     // Block until transfer completion
     device.wait_idle();

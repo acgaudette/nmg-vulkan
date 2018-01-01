@@ -2,12 +2,14 @@ extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
 mod statics;
-mod render;
 mod alg;
+mod render;
+mod logic;
 
 fn main() {
     let (events, window) = init_window();
-    let context = render::Context::new(&window);
+    let model_data = logic::init();
+    let context = render::Context::new(&window, model_data);
 
     match context {
         Ok(mut context) => update(&window, events, &mut context),

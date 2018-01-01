@@ -342,6 +342,7 @@ impl<'a> Drop for Context<'a> {
     }
 }
 
+#[derive(Clone)]
 struct ModelData {
     vertices: Vec<Vertex>,
     indices:  Vec<u32>,
@@ -1391,8 +1392,8 @@ fn init_drawing(
 
     let mut framebuffers = Vec::with_capacity(views.len());
 
-    for i in 0..views.len() {
-        let attachments = [&views[i], &depth_view];
+    for view in views {
+        let attachments = [&view, &depth_view];
 
         let framebuffer = vd::Framebuffer::builder()
             .render_pass(render_pass)
@@ -1411,22 +1412,33 @@ fn init_drawing(
 
     /* Uniform buffer */
 
+    let models_len = models.len() as u32;
+
     let ubo_size = vd::DescriptorPoolSize::builder()
         .type_of(vd::DescriptorType::UniformBuffer)
-        .descriptor_count(1) // Single descriptor (UBO)
+        .descriptor_count(models_len)
         .build();
 
     let descriptor_pool = vd::DescriptorPool::builder()
         .pool_sizes(&[ubo_size])
         .flags(vd::DescriptorPoolCreateFlags::empty())
-        .max_sets(models.len() as u32) // One set per model
+        .max_sets(models_len) // One set per model
         .build(device.clone())?;
 
-    let sets = descriptor_pool.allocate_descriptor_sets(
-        &[descriptor_layout.handle()] // Single layout
-    )?;
+    // Build descriptor sets (with a repeated layout)
+    let sets = {
+        let handle = descriptor_layout.handle();
+        let mut layouts = Vec::with_capacity(models.len());
 
-    let sets_size = (sets.len() * std::mem::size_of::<UBO>()) as u64;
+        for _ in 0..models_len { layouts.push(handle); }
+
+        descriptor_pool.allocate_descriptor_sets(&layouts)?
+    };
+
+    debug_assert!(sets.len() == models.len());
+
+    let sets_len = sets.len();
+    let sets_size = (sets_len * std::mem::size_of::<UBO>()) as u64;
 
     // Allocate a single buffer for all the UBOs
     let (uniform_buffer, uniform_memory) = create_buffer(
@@ -1438,30 +1450,47 @@ fn init_drawing(
         &properties,
     )?;
 
-    let uniform_info = vd::DescriptorBufferInfo::builder()
-        .buffer(uniform_buffer)
-        .offset(0)
-        .range(sets_size)
-        .build();
+    let ubo_size = std::mem::size_of::<UBO>() as u64;
+
+    // Segment buffer for each UBO
+    let uniform_info = {
+        let mut info = Vec::with_capacity(sets_len);
+
+        for i in 0..sets_len {
+            info.push(
+                vd::DescriptorBufferInfo::builder()
+                    .buffer(uniform_buffer)
+                    .offset(i as u64 * ubo_size)
+                    .range(ubo_size)
+                    .build(),
+            );
+        }
+
+        info
+    };
+
+    debug_assert!(uniform_info.len() == sets.len());
 
     let writes = {
-        let mut writes = Vec::with_capacity(sets.len());
+        let mut writes = Vec::with_capacity(sets_len);
 
-        for set in &sets {
+        for i in 0..sets.len() {
             writes.push(
                 vd::WriteDescriptorSet::builder()
-                    .dst_set(set)
+                    .dst_set(sets[i])
                     .dst_binding(0)
                     .dst_array_element(0)
-                    .descriptor_count(1)
+                    .descriptor_count(1) // Single descriptor (UBO)
                     .descriptor_type(vd::DescriptorType::UniformBuffer)
-                    .buffer_info(&uniform_info)
+                    .buffer_info(&uniform_info[i])
                     .build()
             );
         }
 
         writes
     };
+
+    debug_assert!(writes.len() == sets.len());
 
     descriptor_pool.update_descriptor_sets(&writes, &[]); // No copies
 
@@ -1487,6 +1516,8 @@ fn init_drawing(
             }
         },
     ];
+
+    debug_assert!(command_buffers.len() == framebuffers.len());
 
     for i in 0..command_buffers.len() {
         command_buffers[i].begin(
@@ -1538,22 +1569,16 @@ fn init_drawing(
             );
         }
 
-        // Rebuild sets slice
-        let set_refs = {
-            let mut refs = Vec::with_capacity(sets.len());
-            for set in &sets { refs.push(set); }
-            refs
-        };
-
         for j in 0..models.len() {
             command_buffers[i].bind_descriptor_sets(
                 vd::PipelineBindPoint::Graphics,
                 pipeline_layout,
                 0,
-                &[set_refs[j]], // the jth UBO
+                &[&sets[j]], // the jth UBO
                 &[],
             );
 
+            // Draw call
             command_buffers[i].draw_indexed(
                 models[j].index_count,
                 1,
@@ -1631,6 +1656,7 @@ fn create_buffers<T: std::marker::Copy>(
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
 )> {
+    // Length of slice * length of data type
     let size = std::mem::size_of_val(data) as u64;
 
     // Local buffer
@@ -1780,16 +1806,6 @@ pub fn update(
     device:         &vd::Device,
     uniform_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let model = {
-        let angle = time as f32;
-
-        let translation = alg::Mat::translation(0., 0., 2.);
-        let rotation = alg::Mat::rotation(angle, angle, angle);
-        let scale = alg::Mat::scale(0.8, 1.2, 1.);
-
-        translation * rotation * scale
-    };
-
     let view = alg::Mat::look_at_view(
         alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
         alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
@@ -1808,10 +1824,22 @@ pub fn update(
         )
     };
 
-    let ubo = UBO {
-        model:      model,
-        view:       view,
-        projection: projection,
+    let angle = time as f32;
+
+    let ubo_0 = {
+        let model = {
+            let translation = alg::Mat::translation(0., 0., 2.);
+            let rotation = alg::Mat::rotation(angle, angle, angle);
+            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+
+            translation * rotation * scale
+        };
+
+        UBO {
+            model,
+            view,
+            projection,
+        }
     };
 
     // Copy uniform buffer to GPU
@@ -1820,7 +1848,7 @@ pub fn update(
             device,
             uniform_memory,
             std::mem::size_of::<UBO>() as u64,
-            &[ubo]
+            &[ubo_0],
         )?;
     }
 

@@ -39,6 +39,10 @@ pub struct Context<'a> {
     pub image_available: vd::Semaphore,
     pub render_complete: vd::Semaphore,
 
+    /* Lookup table */
+
+    models:            Vec<Model>,
+
     /* Swapchain recreation data */
 
     surface:         vd::SurfaceKhr,
@@ -50,7 +54,6 @@ pub struct Context<'a> {
     /* Fixed information */
 
     shader_stages:     [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    models:            Vec<Model>,
     assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
     multisampling:     vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -205,6 +208,8 @@ impl<'a> Context<'a> {
                 present_family,
                 image_available,
                 render_complete,
+                models,
+
                 surface,
                 surface_format,
                 sharing_mode,
@@ -212,7 +217,6 @@ impl<'a> Context<'a> {
                 present_mode,
 
                 shader_stages,
-                models,
                 assembly,
                 rasterizer,
                 multisampling,

@@ -44,12 +44,13 @@ pub struct Context<'a> {
     surface:         vd::SurfaceKhr,
     surface_format:  vd::SurfaceFormatKhr,
     sharing_mode:    vd::SharingMode,
-    indices:         Vec<u32>,
+    q_indices:       Vec<u32>,
     present_mode:    vd::PresentModeKhr,
 
     /* Fixed information */
 
     shader_stages:     [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    index_count:       u32,
     assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
     multisampling:     vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -61,11 +62,11 @@ pub struct Context<'a> {
 
     /* Unsafe data */
 
-    depth_memory:   vd::DeviceMemoryHandle,
     vertex_buffer:  vd::BufferHandle,
     vertex_memory:  vd::DeviceMemoryHandle,
     index_buffer:   vd::BufferHandle,
     index_memory:   vd::DeviceMemoryHandle,
+    depth_memory:   vd::DeviceMemoryHandle,
     uniform_buffer: vd::BufferHandle,
 
     // Used in update
@@ -92,7 +93,7 @@ impl<'a> Context<'a> {
             present_family,
             surface_format,
             present_mode,
-            indices,
+            q_indices,
             sharing_mode,
             device,
             drawing_pool,
@@ -106,6 +107,14 @@ impl<'a> Context<'a> {
             _frag_mod,
             shader_stages,
         ) = load_shaders(device.clone())?;
+
+        let (
+            vertex_buffer,
+            vertex_memory,
+            index_buffer,
+            index_memory,
+            index_count,
+        ) = load_models(&device, &transient_pool, graphics_family)?;
 
         let (
             depth_format,
@@ -122,7 +131,7 @@ impl<'a> Context<'a> {
             1280, 720, // Default
             &surface_format,
             sharing_mode,
-            &indices,
+            &q_indices,
             present_mode,
             None,
         )?;
@@ -148,10 +157,6 @@ impl<'a> Context<'a> {
             _depth_image,
             depth_memory,
             _framebuffers,
-            vertex_buffer,
-            vertex_memory,
-            index_buffer,
-            index_memory,
             uniform_buffer,
             uniform_memory,
             command_buffers,
@@ -168,7 +173,10 @@ impl<'a> Context<'a> {
             &descriptor_layout,
             &drawing_pool,
             &_pipeline,
+            vertex_buffer,
+            index_buffer,
             &pipeline_layout,
+            index_count,
         )?;
 
         // Return newly-built context structure
@@ -184,10 +192,11 @@ impl<'a> Context<'a> {
                 surface,
                 surface_format,
                 sharing_mode,
-                indices,
+                q_indices,
                 present_mode,
 
                 shader_stages,
+                index_count,
                 assembly,
                 rasterizer,
                 multisampling,
@@ -197,11 +206,11 @@ impl<'a> Context<'a> {
                 transient_pool,
                 depth_format,
 
-                depth_memory,
                 vertex_buffer,
                 vertex_memory,
                 index_buffer,
                 index_memory,
+                depth_memory,
                 uniform_buffer,
                 uniform_memory,
 
@@ -227,7 +236,7 @@ impl<'a> Context<'a> {
             width, height,
             &self.surface_format,
             self.sharing_mode,
-            &self.indices,
+            &self.q_indices,
             self.present_mode,
             Some(&self.swapchain), // Pass in old swapchain
         )?;
@@ -253,10 +262,6 @@ impl<'a> Context<'a> {
             _depth_image,
             depth_memory,
             _framebuffers,
-            vertex_buffer,
-            vertex_memory,
-            index_buffer,
-            index_memory,
             uniform_buffer,
             uniform_memory,
             command_buffers,
@@ -273,7 +278,10 @@ impl<'a> Context<'a> {
             &self.descriptor_layout,
             &self.drawing_pool,
             &_pipeline,
+            self.vertex_buffer,
+            self.index_buffer,
             &self.pipeline_layout,
+            self.index_count,
         )?;
 
         // Synchronize
@@ -289,10 +297,6 @@ impl<'a> Context<'a> {
         }
 
         self.depth_memory = depth_memory;
-        self.vertex_buffer = vertex_buffer;
-        self.vertex_memory = vertex_memory;
-        self.index_buffer = index_buffer;
-        self.index_memory = index_memory;
         self.uniform_buffer = uniform_buffer;
         self.uniform_memory = uniform_memory;
 
@@ -312,6 +316,10 @@ impl<'a> Context<'a> {
         // Depth image
         self.device.free_memory(self.depth_memory, None);
 
+        // Uniform buffer
+        self.device.destroy_buffer(self.uniform_buffer, None);
+        self.device.free_memory(self.uniform_memory, None);
+
         // Vertex buffer
         self.device.destroy_buffer(self.vertex_buffer, None);
         self.device.free_memory(self.vertex_memory, None);
@@ -319,10 +327,6 @@ impl<'a> Context<'a> {
         // Index buffer
         self.device.destroy_buffer(self.index_buffer, None);
         self.device.free_memory(self.index_memory, None);
-
-        // Uniform buffer
-        self.device.destroy_buffer(self.uniform_buffer, None);
-        self.device.free_memory(self.uniform_memory, None);
     }
 }
 
@@ -565,12 +569,12 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     // Combine queues if they share the same index
     let mut infos = vec![graphics_q_create_info];
-    let mut indices = vec![graphics_family];
+    let mut q_indices = vec![graphics_family];
     let mut sharing_mode = vd::SharingMode::Exclusive;
 
     if graphics_family != present_family {
         infos.push(present_q_create_info);
-        indices.push(present_family);
+        q_indices.push(present_family);
         sharing_mode = vd::SharingMode::Concurrent;
     }
 
@@ -614,7 +618,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         present_family,
         surface_format,
         present_mode,
-        indices,
+        q_indices,
         sharing_mode,
         device,
         drawing_pool,
@@ -710,6 +714,87 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
         vert_mod,
         frag_mod,
         [vert_stage, frag_stage],
+    ))
+}
+
+fn load_models(
+    device:          &vd::Device,
+    transient_pool:  &vd::CommandPool,
+    graphics_family: u32,
+) -> vd::Result<(
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
+    u32,
+)> {
+    /* Vertex data (temporary) */
+
+    let vertices = [
+        Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
+        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
+
+        Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
+        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
+        Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
+
+        Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
+        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+        Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
+
+        Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
+        Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
+        Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
+
+        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
+        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+
+        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
+        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+    ];
+
+    let indices = [
+        0u32, 1u32, 2u32,
+        0u32, 4u32, 1u32,
+        0u32, 7u32, 4u32,
+        0u32, 2u32, 7u32,
+        1u32, 2u32, 7u32,
+        7u32, 4u32, 1u32,
+    ];
+
+    /* Vertex buffer */
+
+    let properties = device.physical_device().memory_properties();
+
+    let (vertex_buffer, vertex_memory) = create_buffers(
+        &vertices,
+        &properties,
+        device,
+        vd::BufferUsageFlags::VERTEX_BUFFER,
+        transient_pool,
+        graphics_family,
+    )?;
+
+    /* Index buffer */
+
+    let (index_buffer, index_memory) = create_buffers(
+        &indices,
+        &properties,
+        device,
+        vd::BufferUsageFlags::INDEX_BUFFER,
+        transient_pool,
+        graphics_family,
+    )?;
+
+    Ok((
+        vertex_buffer,
+        vertex_memory,
+        index_buffer,
+        index_memory,
+        indices.len() as u32,
     ))
 }
 
@@ -1119,21 +1204,22 @@ fn init_drawing(
     descriptor_layout: &vd::DescriptorSetLayout,
     drawing_pool:      &vd::CommandPool,
     pipeline:          &vd::GraphicsPipeline,
+    vertex_buffer:     vd::BufferHandle,
+    index_buffer:      vd::BufferHandle,
     pipeline_layout:   &vd::PipelineLayout,
+    index_count:       u32,
 ) -> vd::Result<(
     vd::Image,
     vd::DeviceMemoryHandle,
     Vec<vd::Framebuffer>,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
-    vd::BufferHandle,
-    vd::DeviceMemoryHandle,
-    vd::BufferHandle,
-    vd::DeviceMemoryHandle,
     Vec<vd::CommandBuffer>,
     [vd::DescriptorSet; 1],
     vd::DescriptorPool,
 )> {
+    /* Depth buffer */
+
     let extent = vd::Extent3d::builder()
         .width(swapchain.extent().width())
         .height(swapchain.extent().height())
@@ -1264,65 +1350,6 @@ fn init_drawing(
         return Err("empty framebuffers vector".into());
     }
 
-    /* Vertex data */
-
-    let vertices = [
-        Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
-        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-
-        Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
-        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-        Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
-
-        Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
-        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-        Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
-
-        Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
-        Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
-        Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
-
-        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-
-        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-    ];
-
-    let indices = [
-        0u32, 1u32, 2u32,
-        0u32, 4u32, 1u32,
-        0u32, 7u32, 4u32,
-        0u32, 2u32, 7u32,
-        1u32, 2u32, 7u32,
-        7u32, 4u32, 1u32,
-    ];
-
-    /* Vertex buffer */
-
-    let (vertex_buffer, vertex_memory) = create_buffers(
-        &vertices,
-        &properties,
-        device,
-        vd::BufferUsageFlags::VERTEX_BUFFER,
-        transient_pool,
-        graphics_family,
-    )?;
-
-    /* Index buffer */
-
-    let (index_buffer, index_memory) = create_buffers(
-        &indices,
-        &properties,
-        device,
-        vd::BufferUsageFlags::INDEX_BUFFER,
-        transient_pool,
-        graphics_family,
-    )?;
-
     /* Uniform buffer */
 
     let size = std::mem::size_of::<UBO>() as u64;
@@ -1377,26 +1404,26 @@ fn init_drawing(
         framebuffers.len() as u32,
     )?;
 
+    let clears = [
+        // Clear color
+        vd::ClearValue {
+            color: vd::ClearColorValue {
+                float32: [0f32, 0f32, 0f32, 1f32]
+            }
+        },
+
+        vd::ClearValue {
+            depthStencil: vd::vks::VkClearDepthStencilValue {
+                depth: 1., // Initialized to max depth
+                stencil: 0,
+            }
+        },
+    ];
+
     for i in 0..command_buffers.len() {
         command_buffers[i].begin(
             vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
         )?;
-
-        let clears = [
-            // Clear color
-            vd::ClearValue {
-                color: vd::ClearColorValue {
-                    float32: [0f32, 0f32, 0f32, 1f32]
-                }
-            },
-
-            vd::ClearValue {
-                depthStencil: vd::vks::VkClearDepthStencilValue {
-                    depth: 1., // Initialized to max depth
-                    stencil: 0,
-                }
-            },
-        ];
 
         let pass_info = vd::RenderPassBeginInfo::builder()
             .render_pass(render_pass)
@@ -1459,7 +1486,7 @@ fn init_drawing(
         );
 
         command_buffers[i].draw_indexed(
-            indices.len() as u32,
+            index_count,
             1,
             0,
             0,
@@ -1474,10 +1501,6 @@ fn init_drawing(
         depth_image,
         depth_memory_handle,
         framebuffers,
-        vertex_buffer,
-        vertex_memory,
-        index_buffer,
-        index_memory,
         uniform_buffer,
         uniform_memory,
         command_buffers.into_vec(),

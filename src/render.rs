@@ -49,7 +49,7 @@ pub struct Context<'a> {
 
     /* Fixed information */
 
-    stages:            [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    shader_stages:     [vd::PipelineShaderStageCreateInfo<'a>; 2],
     assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
     multisampling:     vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -102,10 +102,13 @@ impl<'a> Context<'a> {
         ) = init_vulkan(window)?;
 
         let (
-            depth_format,
             _vert_mod,
             _frag_mod,
-            stages,
+            shader_stages,
+        ) = load_shaders(device.clone())?;
+
+        let (
+            depth_format,
             assembly,
             rasterizer,
             multisampling,
@@ -132,7 +135,7 @@ impl<'a> Context<'a> {
 
         let _pipeline = init_pipeline(
             &swapchain,
-            &stages,
+            &shader_stages,
             &assembly,
             &rasterizer,
             &multisampling,
@@ -184,7 +187,7 @@ impl<'a> Context<'a> {
                 indices,
                 present_mode,
 
-                stages,
+                shader_stages,
                 assembly,
                 rasterizer,
                 multisampling,
@@ -237,7 +240,7 @@ impl<'a> Context<'a> {
 
         let _pipeline = init_pipeline(
             &swapchain,
-            &self.stages,
+            &self.shader_stages,
             &self.assembly,
             &self.rasterizer,
             &self.multisampling,
@@ -673,13 +676,45 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
-fn init_fixed<'a>(
-    device: vd::Device,
-) -> vd::Result<(
-    vd::Format,
+fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     vd::ShaderModule,
     vd::ShaderModule,
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
+)> {
+    let vert_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "vert.spv"].concat()
+    )?;
+
+    let frag_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "frag.spv"].concat()
+    )?;
+
+    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
+    let frag_mod = vd::ShaderModule::new(device, &frag_buffer)?;
+
+    let main = std::ffi::CStr::from_bytes_with_nul(b"main\0").unwrap();
+
+    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::VERTEX)
+        .module(&vert_mod)
+        .name(&main)
+        .build();
+
+    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::FRAGMENT)
+        .module(&frag_mod)
+        .name(&main)
+        .build();
+
+    Ok((
+        vert_mod,
+        frag_mod,
+        [vert_stage, frag_stage],
+    ))
+}
+
+fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
+    vd::Format,
     vd::PipelineInputAssemblyStateCreateInfo<'a>,
     vd::PipelineRasterizationStateCreateInfo<'a>,
     vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -716,35 +751,6 @@ fn init_fixed<'a>(
 
         format.unwrap()
     };
-
-    /* Shaders */
-
-    let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "vert.spv"].concat()
-    )?;
-
-    let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "frag.spv"].concat()
-    )?;
-
-    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
-    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
-
-    let main = std::ffi::CStr::from_bytes_with_nul(b"main\0").unwrap();
-
-    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
-        .stage(vd::ShaderStageFlags::VERTEX)
-        .module(&vert_mod)
-        .name(&main)
-        .build();
-
-    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
-        .stage(vd::ShaderStageFlags::FRAGMENT)
-        .module(&frag_mod)
-        .name(&main)
-        .build();
-
-    let stages = [vert_stage, frag_stage];
 
     /* Uniform buffer objects */
 
@@ -793,9 +799,6 @@ fn init_fixed<'a>(
 
     Ok((
         depth_format,
-        vert_mod,
-        frag_mod,
-        stages,
         assembly,
         rasterizer,
         multisampling,

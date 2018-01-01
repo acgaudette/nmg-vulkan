@@ -732,42 +732,71 @@ fn load_models(
     vd::DeviceMemoryHandle,
     u32,
 )> {
-    /* Vertex data (temporary) */
+    /* Demo model data (temporary) */
 
-    let vertices = [
-        Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
-        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
+    let pyramid = Model::new(
+        vec![
+            Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
+            Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+            Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
 
-        Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
-        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-        Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
+            Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
+            Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
+            Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
 
-        Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
-        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-        Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
+            Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
+            Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+            Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
 
-        Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
-        Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
-        Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
+            Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
+            Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
+            Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
 
-        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-        Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+            Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+            Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
+            Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
 
-        Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-        Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-        Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-    ];
+            Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
+            Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
+            Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+        ], vec![
+            0u32, 1u32, 2u32,
+            0u32, 4u32, 1u32,
+            0u32, 7u32, 4u32,
+            0u32, 2u32, 7u32,
+            1u32, 2u32, 7u32,
+            7u32, 4u32, 1u32,
+        ],
+    );
 
-    let indices = [
-        0u32, 1u32, 2u32,
-        0u32, 4u32, 1u32,
-        0u32, 7u32, 4u32,
-        0u32, 2u32, 7u32,
-        1u32, 2u32, 7u32,
-        7u32, 4u32, 1u32,
-    ];
+    let models = vec![pyramid]; // Stub
+
+    /* Concatenate vectors */
+
+    let (vertices_len, indices_len) = {
+        let mut i = 0usize;
+        let mut j = 0usize;
+
+        for model in &models {
+            i += model.vertices.len();
+            j += model.indices.len();
+        }
+
+        (i, j)
+    };
+
+    let (vertices, indices) = {
+        let mut vertices = Vec::with_capacity(vertices_len);
+        let mut indices = Vec::with_capacity(indices_len);
+
+        for mut model in models {
+            // Destructive
+            vertices.append(&mut model.vertices);
+            indices.append(&mut model.indices);
+        }
+
+        (vertices, indices)
+    };
 
     /* Vertex buffer */
 

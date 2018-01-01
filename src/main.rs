@@ -84,7 +84,8 @@ fn update(
             last_time,
             &context.swapchain,
             &context.device,
-            context.uniform_memory,
+            context.ubo_memory,
+            context.dyn_ubo_memory,
         ) {
             // Irrecoverable error
             panic!("{}", e);

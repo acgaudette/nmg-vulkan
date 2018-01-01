@@ -347,29 +347,42 @@ impl<'a> Drop for Context<'a> {
     }
 }
 
-struct Model {
+struct ModelData {
     vertices: Vec<Vertex>,
     indices:  Vec<u32>,
 }
 
-impl Model {
-    fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> Model {
-        Model {
+impl ModelData {
+    fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> ModelData {
+        ModelData {
             vertices,
             indices,
         }
     }
 }
 
-// Model instance
-struct Object {
+struct Model {
+    index_count:  u32,
+    index_offset: u32,
+}
+
+impl Model {
+    fn new(index_count: u32, index_offset: u32) -> Model {
+        Model {
+            index_count,
+            index_offset,
+        }
+    }
+}
+
+struct ModelInstance {
     model: u32,
     ubo:   UBO,
 }
 
-impl Object {
-    fn new(model_index: u32, ubo: UBO) -> Object {
-        Object {
+impl ModelInstance {
+    fn new(model_index: u32, ubo: UBO) -> ModelInstance {
+        ModelInstance {
             model: model_index,
             ubo: ubo,
         }

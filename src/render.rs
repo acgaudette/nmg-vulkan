@@ -331,6 +331,35 @@ impl<'a> Drop for Context<'a> {
     }
 }
 
+struct Model {
+    vertices: Vec<Vertex>,
+    indices:  Vec<u32>,
+}
+
+impl Model {
+    fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> Model {
+        Model {
+            vertices,
+            indices,
+        }
+    }
+}
+
+// Model instance
+struct Object {
+    model: u32,
+    ubo:   UBO,
+}
+
+impl Object {
+    fn new(model_index: u32, ubo: UBO) -> Object {
+        Object {
+            model: model_index,
+            ubo: ubo,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct Vertex {

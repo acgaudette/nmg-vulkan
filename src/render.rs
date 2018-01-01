@@ -1922,6 +1922,18 @@ pub fn update(
         DynamicUBO { model }
     };
 
+    let ubo_2 = {
+        let model = {
+            let translation = alg::Mat::translation(1.2, 0.8, 4.);
+            let rotation = alg::Mat::rotation(angle, 0., 0.);
+            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+
+            translation * rotation * scale
+        };
+
+        DynamicUBO { model }
+    };
+
     /* Copy UBOs to GPU */
 
     unsafe {
@@ -1936,7 +1948,7 @@ pub fn update(
             device,
             dyn_ubo_memory,
             3 * std::mem::size_of::<DynamicUBO>() as u64,
-            &[ubo_0, ubo_1],
+            &[ubo_0, ubo_1, ubo_2],
         )?;
     }
 

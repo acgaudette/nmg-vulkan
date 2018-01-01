@@ -1255,14 +1255,13 @@ fn init_drawing(
     device:            &vd::Device,
     transient_pool:    &vd::CommandPool,
     graphics_family:   u32,
-    instance_count:    u32,
+    models:            &[Model],
     descriptor_layout: &vd::DescriptorSetLayout,
     drawing_pool:      &vd::CommandPool,
     pipeline:          &vd::GraphicsPipeline,
     vertex_buffer:     vd::BufferHandle,
     index_buffer:      vd::BufferHandle,
     pipeline_layout:   &vd::PipelineLayout,
-    index_count:       u32,
 ) -> vd::Result<(
     vd::Image,
     vd::DeviceMemoryHandle,
@@ -1415,7 +1414,7 @@ fn init_drawing(
     let descriptor_pool = vd::DescriptorPool::builder()
         .pool_sizes(&[ubo_size])
         .flags(vd::DescriptorPoolCreateFlags::empty())
-        .max_sets(instance_count) // One set per model
+        .max_sets(models.len() as u32) // One set per model
         .build(device.clone())?;
 
     let sets = descriptor_pool.allocate_descriptor_sets(
@@ -1541,21 +1540,23 @@ fn init_drawing(
             refs
         };
 
-        command_buffers[i].bind_descriptor_sets(
-            vd::PipelineBindPoint::Graphics,
-            pipeline_layout,
-            0,
-            &set_refs,
-            &[],
-        );
+        for j in 0..models.len() {
+            command_buffers[i].bind_descriptor_sets(
+                vd::PipelineBindPoint::Graphics,
+                pipeline_layout,
+                0,
+                &[set_refs[j]], // the jth UBO
+                &[],
+            );
 
-        command_buffers[i].draw_indexed(
-            index_count,
-            1,
-            0,
-            0,
-            0,
-        );
+            command_buffers[i].draw_indexed(
+                models[j].index_count,
+                1,
+                models[j].index_offset,
+                0, // No vertex offset
+                0,
+            );
+        }
 
         command_buffers[i].end_render_pass();
         command_buffers[i].end()?;

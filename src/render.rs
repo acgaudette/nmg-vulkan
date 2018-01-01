@@ -53,15 +53,15 @@ pub struct Context<'a> {
 
     /* Fixed information */
 
-    shader_stages:     [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
-    rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
-    multisampling:     vd::PipelineMultisampleStateCreateInfo<'a>,
-    descriptor_layout: vd::DescriptorSetLayout,
-    pipeline_layout:   vd::PipelineLayout,
-    drawing_pool:      vd::CommandPool,
-    transient_pool:    vd::CommandPool,
-    depth_format:      vd::Format,
+    shader_stages:   [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    assembly:        vd::PipelineInputAssemblyStateCreateInfo<'a>,
+    rasterizer:      vd::PipelineRasterizationStateCreateInfo<'a>,
+    multisampling:   vd::PipelineMultisampleStateCreateInfo<'a>,
+    ubo_layout:      vd::DescriptorSetLayout,
+    pipeline_layout: vd::PipelineLayout,
+    drawing_pool:    vd::CommandPool,
+    transient_pool:  vd::CommandPool,
+    depth_format:    vd::Format,
 
     /* Unsafe data */
 
@@ -70,10 +70,12 @@ pub struct Context<'a> {
     index_buffer:   vd::BufferHandle,
     index_memory:   vd::DeviceMemoryHandle,
     depth_memory:   vd::DeviceMemoryHandle,
-    uniform_buffer: vd::BufferHandle,
+    ubo_buffer:     vd::BufferHandle,
+    dyn_ubo_buffer: vd::BufferHandle,
 
     // Used in update
-    pub uniform_memory: vd::DeviceMemoryHandle,
+    pub ubo_memory:     vd::DeviceMemoryHandle,
+    pub dyn_ubo_memory: vd::DeviceMemoryHandle,
 
     /* Persistent data */
 
@@ -132,7 +134,7 @@ impl<'a> Context<'a> {
             assembly,
             rasterizer,
             multisampling,
-            descriptor_layout,
+            ubo_layout,
             pipeline_layout,
         ) = init_fixed(device.clone())?;
 
@@ -168,8 +170,10 @@ impl<'a> Context<'a> {
             _depth_image,
             depth_memory,
             _framebuffers,
-            uniform_buffer,
-            uniform_memory,
+            ubo_buffer,
+            ubo_memory,
+            dyn_ubo_buffer,
+            dyn_ubo_memory,
             _descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
@@ -181,7 +185,7 @@ impl<'a> Context<'a> {
             &transient_pool,
             graphics_family,
             &models,
-            &descriptor_layout,
+            ubo_layout.handle(),
         )?;
 
         let command_buffers = init_commands(
@@ -220,7 +224,7 @@ impl<'a> Context<'a> {
                 assembly,
                 rasterizer,
                 multisampling,
-                descriptor_layout,
+                ubo_layout,
                 pipeline_layout,
                 drawing_pool,
                 transient_pool,
@@ -231,8 +235,10 @@ impl<'a> Context<'a> {
                 index_buffer,
                 index_memory,
                 depth_memory,
-                uniform_buffer,
-                uniform_memory,
+                ubo_buffer,
+                dyn_ubo_buffer,
+                ubo_memory,
+                dyn_ubo_memory,
 
                 _vert_mod,
                 _frag_mod,
@@ -283,8 +289,10 @@ impl<'a> Context<'a> {
             _depth_image,
             depth_memory,
             _framebuffers,
-            uniform_buffer,
-            uniform_memory,
+            ubo_buffer,
+            ubo_memory,
+            dyn_ubo_buffer,
+            dyn_ubo_memory,
             _descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
@@ -296,7 +304,7 @@ impl<'a> Context<'a> {
             &self.transient_pool,
             self.graphics_family,
             &self.models,
-            &self.descriptor_layout,
+            self.ubo_layout.handle(),
         )?;
 
         let command_buffers = init_commands(
@@ -326,8 +334,10 @@ impl<'a> Context<'a> {
         }
 
         self.depth_memory = depth_memory;
-        self.uniform_buffer = uniform_buffer;
-        self.uniform_memory = uniform_memory;
+        self.ubo_buffer = ubo_buffer;
+        self.ubo_memory = ubo_memory;
+        self.dyn_ubo_buffer = dyn_ubo_buffer;
+        self.dyn_ubo_memory = dyn_ubo_memory;
 
         self._depth_image = _depth_image;
         self._framebuffers = _framebuffers;
@@ -356,9 +366,11 @@ impl<'a> Context<'a> {
         // Depth image
         self.device.free_memory(self.depth_memory, None);
 
-        // Uniform buffer
-        self.device.destroy_buffer(self.uniform_buffer, None);
-        self.device.free_memory(self.uniform_memory, None);
+        // Uniform buffers
+        self.device.destroy_buffer(self.ubo_buffer, None);
+        self.device.free_memory(self.ubo_memory, None);
+        self.device.destroy_buffer(self.dyn_ubo_buffer, None);
+        self.device.free_memory(self.dyn_ubo_memory, None);
     }
 }
 
@@ -458,7 +470,6 @@ impl Vertex {
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct UBO {
-    model:      alg::Mat,
     view:       alg::Mat,
     projection: alg::Mat,
 }
@@ -888,19 +899,6 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
         format.unwrap()
     };
 
-    /* Descriptor set layout */
-
-    let binding = vd::DescriptorSetLayoutBinding::builder()
-        .binding(0) // First binding
-        .descriptor_type(vd::DescriptorType::UniformBuffer)
-        .descriptor_count(1) // Single descriptor (UBO)
-        .stage_flags(vd::ShaderStageFlags::VERTEX)
-        .build();
-
-    let descriptor_layout = vd::DescriptorSetLayout::builder()
-        .bindings(&[binding])
-        .build(device.clone())?;
-
     /* Fixed-functions */
 
     let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
@@ -929,8 +927,22 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
         .alpha_to_one_enable(false)
         .build();
 
+    /* Descriptor set layout */
+
+    let binding = vd::DescriptorSetLayoutBinding::builder()
+        .binding(0) // First binding
+        .descriptor_type(vd::DescriptorType::UniformBuffer)
+        .descriptor_count(1) // Single descriptor (UBO)
+        .stage_flags(vd::ShaderStageFlags::VERTEX)
+        .build();
+
+    let descriptor_layout = vd::DescriptorSetLayout::builder()
+        .bindings(&[binding, dynamic_binding])
+        .build(device.clone())?
+    };
+
     let pipeline_layout = vd::PipelineLayout::builder()
-        .set_layouts(&[descriptor_layout.handle()])
+        .set_layouts(&[descriptor_layout])
         .build(device)?;
 
     Ok((
@@ -938,7 +950,7 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
         assembly,
         rasterizer,
         multisampling,
-        descriptor_layout,
+        ubo_layout,
         pipeline_layout,
     ))
 }
@@ -1245,19 +1257,21 @@ fn init_pipeline(
 }
 
 fn init_drawing(
-    swapchain:         &vd::SwapchainKhr,
-    depth_format:      vd::Format,
-    views:             &[vd::ImageView],
-    render_pass:       &vd::RenderPass,
-    device:            &vd::Device,
-    transient_pool:    &vd::CommandPool,
-    graphics_family:   u32,
-    models:            &[Model],
-    descriptor_layout: &vd::DescriptorSetLayout,
+    swapchain:       &vd::SwapchainKhr,
+    depth_format:    vd::Format,
+    views:           &[vd::ImageView],
+    render_pass:     &vd::RenderPass,
+    device:          &vd::Device,
+    transient_pool:  &vd::CommandPool,
+    graphics_family: u32,
+    models:          &[Model],
+    ubo_layout:      vd::DescriptorSetLayoutHandle,
 ) -> vd::Result<(
     vd::Image,
     vd::DeviceMemoryHandle,
     Vec<vd::Framebuffer>,
+    vd::BufferHandle,
+    vd::DeviceMemoryHandle,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
     Vec<vd::DescriptorSet>,
@@ -1399,23 +1413,31 @@ fn init_drawing(
 
     let models_len = models.len() as u32;
 
-    let ubo_size = vd::DescriptorPoolSize::builder()
-        .type_of(vd::DescriptorType::UniformBuffer)
-        .descriptor_count(models_len)
-        .build();
+    let pool_sizes = {
+        let size = vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::UniformBuffer)
+            .descriptor_count(models_len)
+            .build();
+
+        let dynamic_size = vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::UniformBuffer)
+            .descriptor_count(models_len)
+            .build();
+
+        [size, dynamic_size]
+    };
 
     let descriptor_pool = vd::DescriptorPool::builder()
-        .pool_sizes(&[ubo_size])
+        .pool_sizes(&pool_sizes)
         .flags(vd::DescriptorPoolCreateFlags::empty())
-        .max_sets(models_len) // One set per model
+        .max_sets(models_len)
         .build(device.clone())?;
 
     // Build descriptor sets (with a repeated layout)
     let sets = {
-        let handle = descriptor_layout.handle();
         let mut layouts = Vec::with_capacity(models.len());
 
-        for _ in 0..models_len { layouts.push(handle); }
+        for _ in 0..models_len { layouts.push(ubo_layout); }
 
         descriptor_pool.allocate_descriptor_sets(&layouts)?
     };
@@ -1423,10 +1445,23 @@ fn init_drawing(
     debug_assert!(sets.len() == models.len());
 
     let sets_len = sets.len();
-    let sets_size = (sets_len * std::mem::size_of::<UBO>()) as u64;
+    let ubo_size = std::mem::size_of::<UBO>() as u64;
+    let dynamic_ubo_size = std::mem::size_of::<DynamicUBO>() as u64;
 
-    // Allocate a single buffer for all the UBOs
-    let (uniform_buffer, uniform_memory) = create_buffer(
+    let sets_size = sets_len as u64 * (dynamic_ubo_size + ubo_size);
+
+    // Allocate a buffer for the shared UBO
+    let (ubo_buffer, ubo_memory) = create_buffer(
+        ubo_size,
+        vd::BufferUsageFlags::UNIFORM_BUFFER,
+        device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE
+        | vd::MemoryPropertyFlags::HOST_COHERENT,
+        &properties,
+    )?;
+
+    // Allocate a single buffer for the remaining UBOs
+    let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(
         sets_size,
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
@@ -1435,7 +1470,11 @@ fn init_drawing(
         &properties,
     )?;
 
-    let ubo_size = std::mem::size_of::<UBO>() as u64;
+    let shared_info = vd::DescriptorBufferInfo::builder()
+        .buffer(ubo_buffer)
+        .offset(0)
+        .range(ubo_size)
+        .build();
 
     // Segment buffer for each UBO
     let uniform_info = {
@@ -1444,9 +1483,9 @@ fn init_drawing(
         for i in 0..sets_len {
             info.push(
                 vd::DescriptorBufferInfo::builder()
-                    .buffer(uniform_buffer)
-                    .offset(i as u64 * ubo_size)
-                    .range(ubo_size)
+                    .buffer(dyn_ubo_buffer)
+                    .offset(i as u64 * dynamic_ubo_size)
+                    .range(dynamic_ubo_size)
                     .build(),
             );
         }
@@ -1457,13 +1496,24 @@ fn init_drawing(
     debug_assert!(uniform_info.len() == sets.len());
 
     let writes = {
-        let mut writes = Vec::with_capacity(sets_len);
+        let mut writes = Vec::with_capacity(sets_len * 2);
 
-        for i in 0..sets.len() {
+        for i in 0..sets_len {
             writes.push(
                 vd::WriteDescriptorSet::builder()
                     .dst_set(sets[i])
-                    .dst_binding(0)
+                    .dst_binding(0) // First binding
+                    .dst_array_element(0)
+                    .descriptor_count(1) // Single descriptor (UBO)
+                    .descriptor_type(vd::DescriptorType::UniformBuffer)
+                    .buffer_info(&shared_info)
+                    .build()
+            );
+
+            writes.push(
+                vd::WriteDescriptorSet::builder()
+                    .dst_set(sets[i])
+                    .dst_binding(1) // Second binding
                     .dst_array_element(0)
                     .descriptor_count(1) // Single descriptor (UBO)
                     .descriptor_type(vd::DescriptorType::UniformBuffer)
@@ -1475,7 +1525,7 @@ fn init_drawing(
         writes
     };
 
-    debug_assert!(writes.len() == sets.len());
+    debug_assert!(writes.len() == sets.len() * 2);
 
     descriptor_pool.update_descriptor_sets(&writes, &[]); // No copies
 
@@ -1483,8 +1533,10 @@ fn init_drawing(
         depth_image,
         depth_memory_handle,
         framebuffers,
-        uniform_buffer,
-        uniform_memory,
+        ubo_buffer,
+        ubo_memory,
+        dyn_ubo_buffer,
+        dyn_ubo_memory,
         sets.into_vec(),
         descriptor_pool,
     ))
@@ -1802,24 +1854,32 @@ pub fn update(
     last_time:      f64,
     swapchain:      &vd::SwapchainKhr,
     device:         &vd::Device,
-    uniform_memory: vd::DeviceMemoryHandle,
+    ubo_memory:     vd::DeviceMemoryHandle,
+    dyn_ubo_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let view = alg::Mat::look_at_view(
-        alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
-        alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
-        alg::Vec3::up(),
-    );
+    let vp = {
+        let view = alg::Mat::look_at_view(
+            alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
+            alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
+            alg::Vec3::up(),
+        );
 
-    let projection = {
-        let w = swapchain.extent().width() as f32;
-        let h = swapchain.extent().height() as f32;
+        let projection = {
+            let w = swapchain.extent().width() as f32;
+            let h = swapchain.extent().height() as f32;
 
-        alg::Mat::perspective(
-            60.,
-            w / h,
-            0.01,
-            4.
-        )
+            alg::Mat::perspective(
+                60.,
+                w / h,
+                0.01,
+                4.
+            )
+        };
+
+        UBO {
+            view,
+            projection,
+        }
     };
 
     let angle = time as f32;
@@ -1833,11 +1893,7 @@ pub fn update(
             translation * rotation * scale
         };
 
-        UBO {
-            model,
-            view,
-            projection,
-        }
+        DynamicUBO { model }
     };
 
     let ubo_1 = {
@@ -1849,19 +1905,23 @@ pub fn update(
             translation * rotation * scale
         };
 
-        UBO {
-            model,
-            view,
-            projection,
-        }
+        DynamicUBO { model }
     };
 
-    // Copy uniform buffer to GPU
+    /* Copy UBOs to GPU */
+
     unsafe {
         copy_buffer(
             device,
-            uniform_memory,
-            2 * std::mem::size_of::<UBO>() as u64,
+            ubo_memory,
+            std::mem::size_of::<UBO>() as u64,
+            &[vp],
+        )?;
+
+        copy_buffer(
+            device,
+            dyn_ubo_memory,
+            3 * std::mem::size_of::<DynamicUBO>() as u64,
             &[ubo_0, ubo_1],
         )?;
     }

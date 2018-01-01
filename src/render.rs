@@ -97,12 +97,12 @@ impl<'a> Context<'a> {
             device,
             drawing_pool,
             transient_pool,
-            depth_format,
             image_available,
             render_complete,
         ) = init_vulkan(window)?;
 
         let (
+            depth_format,
             _vert_mod,
             _frag_mod,
             stages,
@@ -168,6 +168,7 @@ impl<'a> Context<'a> {
             &pipeline_layout,
         )?;
 
+        // Return newly-built context structure
         Ok(
             Context {
                 device,
@@ -182,6 +183,7 @@ impl<'a> Context<'a> {
                 sharing_mode,
                 indices,
                 present_mode,
+
                 stages,
                 assembly,
                 rasterizer,
@@ -191,6 +193,7 @@ impl<'a> Context<'a> {
                 drawing_pool,
                 transient_pool,
                 depth_format,
+
                 depth_memory,
                 vertex_buffer,
                 vertex_memory,
@@ -198,6 +201,7 @@ impl<'a> Context<'a> {
                 index_memory,
                 uniform_buffer,
                 uniform_memory,
+
                 _vert_mod,
                 _frag_mod,
                 _depth_image,
@@ -387,7 +391,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::Device,
     vd::CommandPool,
     vd::CommandPool,
-    vd::Format,
     vd::Semaphore,
     vd::Semaphore,
 )> {
@@ -548,7 +551,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .enabled_extension_names(DEVICE_EXTENSIONS)
         .build(physical_device.clone())?;
 
-    /* Command buffers */
+    /* Command buffer pools */
 
     let drawing_pool = vd::CommandPool::builder()
         .queue_family_index(graphics_family)
@@ -560,36 +563,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .queue_family_index(graphics_family)
         .flags(vd::CommandPoolCreateFlags::TRANSIENT)
         .build(device.clone())?;
-
-    /* Depth buffer */
-
-    let depth_format = {
-        let formats = [
-            vd::Format::D32Sfloat,
-            vd::Format::D32SfloatS8Uint,
-            vd::Format::D24UnormS8Uint,
-        ];
-
-        let mut format = None;
-
-        for &option in &formats {
-            let properties = physical_device.format_properties(option);
-
-            // Optimal tiling
-            if properties.optimal_tiling_features().contains(
-                vd::FormatFeatureFlags::DEPTH_STENCIL_ATTACHMENT
-            ) {
-                format = Some(option);
-                break;
-            }
-        }
-
-        if let None = format {
-            return Err("GPU does not support required depth format".into());
-        }
-
-        format.unwrap()
-    };
 
     /* Synchronization */
 
@@ -614,7 +587,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         device,
         drawing_pool,
         transient_pool,
-        depth_format,
         image_available,
         render_complete,
     ))
@@ -675,6 +647,7 @@ fn get_swapchain_details(
 fn init_fixed<'a>(
     device: vd::Device,
 ) -> vd::Result<(
+    vd::Format,
     vd::ShaderModule,
     vd::ShaderModule,
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
@@ -684,6 +657,37 @@ fn init_fixed<'a>(
     vd::DescriptorSetLayout,
     vd::PipelineLayout,
 )> {
+    /* Depth buffer */
+
+    // Query for depth image format
+    let depth_format = {
+        let formats = [
+            vd::Format::D32Sfloat,
+            vd::Format::D32SfloatS8Uint,
+            vd::Format::D24UnormS8Uint,
+        ];
+
+        let mut format = None;
+
+        for &option in &formats {
+            let properties = device.physical_device().format_properties(option);
+
+            // Optimal tiling
+            if properties.optimal_tiling_features().contains(
+                vd::FormatFeatureFlags::DEPTH_STENCIL_ATTACHMENT
+            ) {
+                format = Some(option);
+                break;
+            }
+        }
+
+        if let None = format {
+            return Err("GPU does not support required depth format".into());
+        }
+
+        format.unwrap()
+    };
+
     /* Shaders */
 
     let vert_buffer = vd::util::read_spir_v_file(
@@ -759,6 +763,7 @@ fn init_fixed<'a>(
         .build(device)?;
 
     Ok((
+        depth_format,
         vert_mod,
         frag_mod,
         stages,
@@ -1076,7 +1081,7 @@ fn init_drawing(
     depth_format:      vd::Format,
     views:             &[vd::ImageView],
     render_pass:       &vd::RenderPass,
-    device:            &vd::Device, // move up?
+    device:            &vd::Device,
     transient_pool:    &vd::CommandPool,
     graphics_family:   u32,
     descriptor_layout: &vd::DescriptorSetLayout,

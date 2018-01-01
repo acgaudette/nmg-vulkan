@@ -1548,6 +1548,9 @@ fn end_transfer_buffer(
         None => return Err("no graphics queue".into())
     }
 
+    // Block until transfer completion
+    device.wait_idle();
+
     Ok(())
 }
 
@@ -1607,9 +1610,6 @@ fn create_buffers<T: std::marker::Copy>(
     }
 
     end_transfer_buffer(&transfer_buffer, device, graphics_family)?;
-
-    // Block until transfer completion
-    device.wait_idle();
 
     // Clean up host buffer
     unsafe {

@@ -626,7 +626,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     let drawing_pool = vd::CommandPool::builder()
         .queue_family_index(graphics_family)
-        .flags(vd::CommandPoolCreateFlags::empty())
+        .flags(vd::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
         .build(device.clone())?;
 
     // For buffers with short lifetimes

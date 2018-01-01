@@ -474,6 +474,12 @@ struct UBO {
     projection: alg::Mat,
 }
 
+#[derive(Clone, Copy)]
+#[repr(C)]
+struct DynamicUBO {
+    model: alg::Mat,
+}
+
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
     u32,
@@ -929,20 +935,28 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
 
     /* Descriptor set layout */
 
-    let binding = vd::DescriptorSetLayoutBinding::builder()
-        .binding(0) // First binding
-        .descriptor_type(vd::DescriptorType::UniformBuffer)
-        .descriptor_count(1) // Single descriptor (UBO)
-        .stage_flags(vd::ShaderStageFlags::VERTEX)
-        .build();
+    let ubo_layout = {
+        let binding = vd::DescriptorSetLayoutBinding::builder()
+            .binding(0) // First binding
+            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .descriptor_count(1) // Single descriptor (UBO)
+            .stage_flags(vd::ShaderStageFlags::VERTEX)
+            .build();
 
-    let descriptor_layout = vd::DescriptorSetLayout::builder()
-        .bindings(&[binding, dynamic_binding])
-        .build(device.clone())?
+        let dynamic_binding = vd::DescriptorSetLayoutBinding::builder()
+            .binding(1) // Second binding
+            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .descriptor_count(1) // Single descriptor (UBO)
+            .stage_flags(vd::ShaderStageFlags::VERTEX)
+            .build();
+
+        vd::DescriptorSetLayout::builder()
+            .bindings(&[binding, dynamic_binding])
+            .build(device.clone())?
     };
 
     let pipeline_layout = vd::PipelineLayout::builder()
-        .set_layouts(&[descriptor_layout])
+        .set_layouts(&[ubo_layout.handle()])
         .build(device)?;
 
     Ok((

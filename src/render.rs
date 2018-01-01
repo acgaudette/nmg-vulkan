@@ -783,7 +783,7 @@ fn load_models(
         ],
     );
 
-    let model_data = vec![pyramid]; // Stub
+    let model_data = vec![pyramid.clone(), pyramid]; // Stub
 
     /* Concatenate vectors */
 
@@ -1842,13 +1842,29 @@ pub fn update(
         }
     };
 
+    let ubo_1 = {
+        let model = {
+            let translation = alg::Mat::translation(-0.5, -1.1, 3.);
+            let rotation = alg::Mat::rotation(0., angle, 0.);
+            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+
+            translation * rotation * scale
+        };
+
+        UBO {
+            model,
+            view,
+            projection,
+        }
+    };
+
     // Copy uniform buffer to GPU
     unsafe {
         copy_buffer(
             device,
             uniform_memory,
-            std::mem::size_of::<UBO>() as u64,
-            &[ubo_0],
+            2 * std::mem::size_of::<UBO>() as u64,
+            &[ubo_0, ubo_1],
         )?;
     }
 

@@ -81,7 +81,7 @@ pub struct Context<'a> {
     _render_pass:     vd::RenderPass,
     _views:           Vec<vd::ImageView>,
     _pipeline:        vd::GraphicsPipeline,
-    _descriptor_sets: [vd::DescriptorSet; 1],
+    _descriptor_sets: Vec<vd::DescriptorSet>,
     _descriptor_pool: vd::DescriptorPool,
 }
 
@@ -159,7 +159,6 @@ impl<'a> Context<'a> {
             _framebuffers,
             uniform_buffer,
             uniform_memory,
-            command_buffers,
             _descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
@@ -172,11 +171,20 @@ impl<'a> Context<'a> {
             graphics_family,
             &models,
             &descriptor_layout,
+        )?;
+
+        let command_buffers = init_commands(
             &drawing_pool,
-            &_pipeline,
+            &_framebuffers,
+            &_render_pass,
+            &swapchain,
+            &device,
+            _pipeline.handle(),
             vertex_buffer,
             index_buffer,
             &pipeline_layout,
+            &_descriptor_sets,
+            &models,
         )?;
 
         // Return newly-built context structure
@@ -230,6 +238,7 @@ impl<'a> Context<'a> {
     pub fn refresh_swapchain(
         &mut self, width: u32, height: u32
     ) -> vd::Result<()> {
+
         let (swapchain, _views) = init_swapchain(
             &self.device,
             &self.surface,
@@ -264,7 +273,6 @@ impl<'a> Context<'a> {
             _framebuffers,
             uniform_buffer,
             uniform_memory,
-            command_buffers,
             _descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
@@ -277,11 +285,20 @@ impl<'a> Context<'a> {
             self.graphics_family,
             &self.models,
             &self.descriptor_layout,
+        )?;
+
+        let command_buffers = init_commands(
             &self.drawing_pool,
-            &_pipeline,
+            &_framebuffers,
+            &_render_pass,
+            &swapchain,
+            &self.device,
+            _pipeline.handle(),
             self.vertex_buffer,
             self.index_buffer,
             &self.pipeline_layout,
+            &_descriptor_sets,
+            &self.models,
         )?;
 
         // Synchronize
@@ -1263,19 +1280,13 @@ fn init_drawing(
     graphics_family:   u32,
     models:            &[Model],
     descriptor_layout: &vd::DescriptorSetLayout,
-    drawing_pool:      &vd::CommandPool,
-    pipeline:          &vd::GraphicsPipeline,
-    vertex_buffer:     vd::BufferHandle,
-    index_buffer:      vd::BufferHandle,
-    pipeline_layout:   &vd::PipelineLayout,
 ) -> vd::Result<(
     vd::Image,
     vd::DeviceMemoryHandle,
     Vec<vd::Framebuffer>,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
-    Vec<vd::CommandBuffer>,
-    [vd::DescriptorSet; 1],
+    Vec<vd::DescriptorSet>,
     vd::DescriptorPool,
 )> {
     /* Depth buffer */
@@ -1494,8 +1505,30 @@ fn init_drawing(
 
     descriptor_pool.update_descriptor_sets(&writes, &[]); // No copies
 
-    /* Command buffers */
+    Ok((
+        depth_image,
+        depth_memory_handle,
+        framebuffers,
+        uniform_buffer,
+        uniform_memory,
+        sets.into_vec(),
+        descriptor_pool,
+    ))
+}
 
+fn init_commands(
+    drawing_pool:    &vd::CommandPool,
+    framebuffers:    &Vec<vd::Framebuffer>,
+    render_pass:     &vd::RenderPass,
+    swapchain:       &vd::SwapchainKhr,
+    device:          &vd::Device,
+    pipeline:        vd::PipelineHandle,
+    vertex_buffer:   vd::BufferHandle,
+    index_buffer:    vd::BufferHandle,
+    pipeline_layout: &vd::PipelineLayout,
+    descriptor_sets: &Vec<vd::DescriptorSet>,
+    models:          &[Model],
+) -> vd::Result<Vec<vd::CommandBuffer>> {
     let command_buffers = drawing_pool.allocate_command_buffers(
         vd::CommandBufferLevel::Primary,
         framebuffers.len() as u32,
@@ -1548,12 +1581,12 @@ fn init_drawing(
 
         command_buffers[i].bind_pipeline(
             vd::PipelineBindPoint::Graphics,
-            &pipeline.handle(),
+            &pipeline,
         );
 
-        unsafe {
-            let handle = command_buffers[i].handle();
+        let handle = command_buffers[i].handle();
 
+        unsafe {
             device.cmd_bind_vertex_buffers(
                 handle,
                 0,
@@ -1574,7 +1607,7 @@ fn init_drawing(
                 vd::PipelineBindPoint::Graphics,
                 pipeline_layout,
                 0,
-                &[&sets[j]], // the jth UBO
+                &[&descriptor_sets[j]], // the jth UBO
                 &[],
             );
 
@@ -1592,16 +1625,7 @@ fn init_drawing(
         command_buffers[i].end()?;
     }
 
-    Ok((
-        depth_image,
-        depth_memory_handle,
-        framebuffers,
-        uniform_buffer,
-        uniform_memory,
-        command_buffers.into_vec(),
-        [sets[0]],
-        descriptor_pool,
-    ))
+    Ok(command_buffers.into_vec())
 }
 
 fn get_transfer_buffer(

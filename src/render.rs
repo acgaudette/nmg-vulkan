@@ -86,7 +86,10 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    pub fn new(window: &vdw::winit::Window) -> vd::Result<Context> {
+    pub fn new(
+        window:     &vdw::winit::Window,
+        model_data: Vec<ModelData>,
+    ) -> vd::Result<Context> {
         let (
             surface,
             graphics_family,
@@ -114,7 +117,12 @@ impl<'a> Context<'a> {
             index_buffer,
             index_memory,
             models,
-        ) = load_models(&device, &transient_pool, graphics_family)?;
+        ) = load_models(
+            model_data,
+            &device,
+            &transient_pool,
+            graphics_family,
+        )?;
 
         let (
             depth_format,
@@ -360,13 +368,13 @@ impl<'a> Drop for Context<'a> {
 }
 
 #[derive(Clone)]
-struct ModelData {
-    vertices: Vec<Vertex>,
-    indices:  Vec<u32>,
+pub struct ModelData {
+    pub vertices: Vec<Vertex>,
+    pub indices:  Vec<u32>,
 }
 
 impl ModelData {
-    fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> ModelData {
+    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> ModelData {
         ModelData {
             vertices,
             indices,
@@ -404,13 +412,13 @@ impl ModelInstance {
 
 #[derive(Clone, Copy)]
 #[repr(C)]
-struct Vertex {
-    position: alg::Vec3,
-    color:    alg::Vec3,
+pub struct Vertex {
+    pub position: alg::Vec3,
+    pub color:    alg::Vec3,
 }
 
 impl Vertex {
-    fn new(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
+    pub fn new(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
         Vertex {
             position: alg::Vec3::new(x, y, z),
             color:    alg::Vec3::new(r, g, b),
@@ -753,6 +761,7 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
 }
 
 fn load_models(
+    model_data:      Vec<ModelData>,
     device:          &vd::Device,
     transient_pool:  &vd::CommandPool,
     graphics_family: u32,
@@ -763,46 +772,7 @@ fn load_models(
     vd::DeviceMemoryHandle,
     Vec<Model>,
 )> {
-    /* Demo model data (temporary) */
-
-    let pyramid = ModelData::new(
-        vec![
-            Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
-            Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-            Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-
-            Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
-            Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-            Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
-
-            Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
-            Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-            Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
-
-            Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
-            Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
-            Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
-
-            Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-            Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-            Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-
-            Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-            Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-            Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-        ], vec![
-            0u32, 1u32, 2u32,
-            0u32, 4u32, 1u32,
-            0u32, 7u32, 4u32,
-            0u32, 2u32, 7u32,
-            1u32, 2u32, 7u32,
-            7u32, 4u32, 1u32,
-        ],
-    );
-
-    let model_data = vec![pyramid.clone(), pyramid]; // Stub
-
-    /* Concatenate vectors */
+    /* Concatenate model data */
 
     let (vertices_len, indices_len) = {
         let mut i = 0usize;

@@ -38,7 +38,7 @@ pub fn init() -> Vec<render::ModelData> {
         ],
     );
 
-    vec![pyramid.clone(), pyramid]
+    vec![pyramid.clone(), pyramid.clone(), pyramid]
 }
 
 pub fn update() {

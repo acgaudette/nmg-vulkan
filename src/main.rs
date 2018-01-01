@@ -5,6 +5,16 @@ mod statics;
 mod render;
 mod alg;
 
+fn main() {
+    let (events, window) = init_window();
+    let context = render::Context::new(&window);
+
+    match context {
+        Ok(mut context) => update(&window, events, &mut context),
+        Err(e) => eprintln!("Could not create Vulkan context: {}", e)
+    }
+}
+
 fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     let events = vdw::winit::EventsLoop::new();
 
@@ -17,16 +27,6 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     }
 
     (events, window.unwrap())
-}
-
-fn main() {
-    let (events, window) = init_window();
-    let context = render::Context::new(&window);
-
-    match context {
-        Ok(mut context) => update(&window, events, &mut context),
-        Err(e) => eprintln!("Could not create Vulkan context: {}", e)
-    }
 }
 
 fn update(

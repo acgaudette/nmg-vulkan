@@ -50,8 +50,7 @@ pub struct Context<'a> {
     /* Fixed information */
 
     shader_stages:     [vd::PipelineShaderStageCreateInfo<'a>; 2],
-    instance_count:    u32,
-    index_count:       u32,
+    models:            Vec<Model>,
     assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
     multisampling:     vd::PipelineMultisampleStateCreateInfo<'a>,
@@ -114,8 +113,7 @@ impl<'a> Context<'a> {
             vertex_memory,
             index_buffer,
             index_memory,
-            instance_count,
-            index_count,
+            models,
         ) = load_models(&device, &transient_pool, graphics_family)?;
 
         let (
@@ -172,14 +170,13 @@ impl<'a> Context<'a> {
             &device,
             &transient_pool,
             graphics_family,
-            instance_count,
+            &models,
             &descriptor_layout,
             &drawing_pool,
             &_pipeline,
             vertex_buffer,
             index_buffer,
             &pipeline_layout,
-            index_count,
         )?;
 
         // Return newly-built context structure
@@ -199,8 +196,7 @@ impl<'a> Context<'a> {
                 present_mode,
 
                 shader_stages,
-                instance_count,
-                index_count,
+                models,
                 assembly,
                 rasterizer,
                 multisampling,
@@ -279,14 +275,13 @@ impl<'a> Context<'a> {
             &self.device,
             &self.transient_pool,
             self.graphics_family,
-            self.instance_count,
+            &self.models,
             &self.descriptor_layout,
             &self.drawing_pool,
             &_pipeline,
             self.vertex_buffer,
             self.index_buffer,
             &self.pipeline_layout,
-            self.index_count,
         )?;
 
         // Synchronize
@@ -748,12 +743,11 @@ fn load_models(
     vd::DeviceMemoryHandle,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
-    u32,
-    u32,
+    Vec<Model>,
 )> {
     /* Demo model data (temporary) */
 
-    let pyramid = Model::new(
+    let pyramid = ModelData::new(
         vec![
             Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
             Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
@@ -788,8 +782,7 @@ fn load_models(
         ],
     );
 
-    let models = vec![pyramid]; // Stub
-    let instance_count = models.len() as u32;
+    let model_data = vec![pyramid]; // Stub
 
     /* Concatenate vectors */
 
@@ -797,25 +790,38 @@ fn load_models(
         let mut i = 0usize;
         let mut j = 0usize;
 
-        for model in &models {
-            i += model.vertices.len();
-            j += model.indices.len();
+        for data in &model_data {
+            let len = data.vertices.len();
+            i += len;
+            j += len / 3;
         }
 
         (i, j)
     };
 
-    let (vertices, indices) = {
+    let (vertices, indices, models) = {
         let mut vertices = Vec::with_capacity(vertices_len);
         let mut indices = Vec::with_capacity(indices_len);
+        let mut models = Vec::with_capacity(model_data.len());
 
-        for mut model in models {
+        let mut offset = 0;
+
+        for mut data in model_data {
             // Destructive
-            vertices.append(&mut model.vertices);
-            indices.append(&mut model.indices);
+            vertices.append(&mut data.vertices);
+
+            let index_count = data.indices.len() as u32;
+
+            for index in &data.indices {
+                indices.push(index + offset);
+            }
+
+            models.push(Model::new(index_count, offset));
+
+            offset += index_count;
         }
 
-        (vertices, indices)
+        (vertices, indices, models)
     };
 
     /* Vertex buffer */
@@ -847,8 +853,7 @@ fn load_models(
         vertex_memory,
         index_buffer,
         index_memory,
-        instance_count,
-        indices.len() as u32,
+        models,
     ))
 }
 

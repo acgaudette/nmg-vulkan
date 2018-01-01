@@ -50,6 +50,7 @@ pub struct Context<'a> {
     /* Fixed information */
 
     shader_stages:     [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    instance_count:    u32,
     index_count:       u32,
     assembly:          vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:        vd::PipelineRasterizationStateCreateInfo<'a>,
@@ -113,6 +114,7 @@ impl<'a> Context<'a> {
             vertex_memory,
             index_buffer,
             index_memory,
+            instance_count,
             index_count,
         ) = load_models(&device, &transient_pool, graphics_family)?;
 
@@ -170,6 +172,7 @@ impl<'a> Context<'a> {
             &device,
             &transient_pool,
             graphics_family,
+            instance_count,
             &descriptor_layout,
             &drawing_pool,
             &_pipeline,
@@ -196,6 +199,7 @@ impl<'a> Context<'a> {
                 present_mode,
 
                 shader_stages,
+                instance_count,
                 index_count,
                 assembly,
                 rasterizer,
@@ -275,6 +279,7 @@ impl<'a> Context<'a> {
             &self.device,
             &self.transient_pool,
             self.graphics_family,
+            self.instance_count,
             &self.descriptor_layout,
             &self.drawing_pool,
             &_pipeline,
@@ -731,6 +736,7 @@ fn load_models(
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
     u32,
+    u32,
 )> {
     /* Demo model data (temporary) */
 
@@ -770,6 +776,7 @@ fn load_models(
     );
 
     let models = vec![pyramid]; // Stub
+    let instance_count = models.len() as u32;
 
     /* Concatenate vectors */
 
@@ -827,6 +834,7 @@ fn load_models(
         vertex_memory,
         index_buffer,
         index_memory,
+        instance_count,
         indices.len() as u32,
     ))
 }
@@ -870,12 +878,12 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
         format.unwrap()
     };
 
-    /* Uniform buffer objects */
+    /* Descriptor set layout */
 
     let binding = vd::DescriptorSetLayoutBinding::builder()
-        .binding(0)
+        .binding(0) // First binding
         .descriptor_type(vd::DescriptorType::UniformBuffer)
-        .descriptor_count(1)
+        .descriptor_count(1) // Single descriptor (UBO)
         .stage_flags(vd::ShaderStageFlags::VERTEX)
         .build();
 
@@ -1234,6 +1242,7 @@ fn init_drawing(
     device:            &vd::Device,
     transient_pool:    &vd::CommandPool,
     graphics_family:   u32,
+    instance_count:    u32,
     descriptor_layout: &vd::DescriptorSetLayout,
     drawing_pool:      &vd::CommandPool,
     pipeline:          &vd::GraphicsPipeline,
@@ -1385,10 +1394,26 @@ fn init_drawing(
 
     /* Uniform buffer */
 
-    let size = std::mem::size_of::<UBO>() as u64;
+    let ubo_size = vd::DescriptorPoolSize::builder()
+        .type_of(vd::DescriptorType::UniformBuffer)
+        .descriptor_count(1) // Single descriptor (UBO)
+        .build();
 
+    let descriptor_pool = vd::DescriptorPool::builder()
+        .pool_sizes(&[ubo_size])
+        .flags(vd::DescriptorPoolCreateFlags::empty())
+        .max_sets(instance_count) // One set per model
+        .build(device.clone())?;
+
+    let sets = descriptor_pool.allocate_descriptor_sets(
+        &[descriptor_layout.handle()] // Single layout
+    )?;
+
+    let sets_size = (sets.len() * std::mem::size_of::<UBO>()) as u64;
+
+    // Allocate a single buffer for all the UBOs
     let (uniform_buffer, uniform_memory) = create_buffer(
-        size,
+        sets_size,
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
@@ -1396,39 +1421,32 @@ fn init_drawing(
         &properties,
     )?;
 
-    let pool_size = vd::DescriptorPoolSize::builder()
-        .type_of(vd::DescriptorType::UniformBuffer)
-        .descriptor_count(1)
-        .build();
-
-    let descriptor_pool = vd::DescriptorPool::builder()
-        .max_sets(1)
-        .pool_sizes(&[pool_size])
-        .flags(vd::DescriptorPoolCreateFlags::empty())
-        .build(device.clone())?;
-
-    let sets = descriptor_pool.allocate_descriptor_sets(
-        &[descriptor_layout.handle()]
-    )?;
-
     let uniform_info = vd::DescriptorBufferInfo::builder()
         .buffer(uniform_buffer)
         .offset(0)
-        .range(size)
+        .range(sets_size)
         .build();
 
-    let writes = [
-        vd::WriteDescriptorSet::builder()
-            .dst_set(sets[0])
-            .dst_binding(0)
-            .dst_array_element(0)
-            .descriptor_count(1)
-            .descriptor_type(vd::DescriptorType::UniformBuffer)
-            .buffer_info(&uniform_info)
-            .build()
-    ];
+    let writes = {
+        let mut writes = Vec::with_capacity(sets.len());
 
-    descriptor_pool.update_descriptor_sets(&writes, &[]);
+        for set in &sets {
+            writes.push(
+                vd::WriteDescriptorSet::builder()
+                    .dst_set(set)
+                    .dst_binding(0)
+                    .dst_array_element(0)
+                    .descriptor_count(1)
+                    .descriptor_type(vd::DescriptorType::UniformBuffer)
+                    .buffer_info(&uniform_info)
+                    .build()
+            );
+        }
+
+        writes
+    };
+
+    descriptor_pool.update_descriptor_sets(&writes, &[]); // No copies
 
     /* Command buffers */
 

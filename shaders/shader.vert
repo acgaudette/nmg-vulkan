@@ -1,10 +1,13 @@
 #version 450
 
-layout(binding = 0) uniform UBO {
-  mat4 model;
+layout(binding = 0) uniform VP {
   mat4 view;
   mat4 projection;
-} ubo;
+} shared;
+
+layout(binding = 1) uniform M {
+  mat4 model;
+} this;
 
 layout(location = 0) in  vec3 inPosition;
 layout(location = 1) in  vec3 inColor;
@@ -15,6 +18,10 @@ out gl_PerVertex {
 };
 
 void main() {
-  gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPosition, 1);
+  gl_Position = shared.projection
+    * shared.view
+    * this.model
+    * vec4(inPosition, 1);
+
   fragColor = inColor;
 }

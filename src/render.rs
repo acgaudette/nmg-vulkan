@@ -293,7 +293,7 @@ impl<'a> Context<'a> {
         self.command_buffers = command_buffers;
 
         unsafe {
-            self.free_device();
+            self.free_device_refresh();
         }
 
         self.depth_memory = depth_memory;
@@ -311,15 +311,8 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    // Free memory allocated on the GPU
-    unsafe fn free_device(&mut self) {
-        // Depth image
-        self.device.free_memory(self.depth_memory, None);
-
-        // Uniform buffer
-        self.device.destroy_buffer(self.uniform_buffer, None);
-        self.device.free_memory(self.uniform_memory, None);
-
+    // Free memory allocated on the GPU at init
+    unsafe fn free_device_init(&mut self) {
         // Vertex buffer
         self.device.destroy_buffer(self.vertex_buffer, None);
         self.device.free_memory(self.vertex_memory, None);
@@ -328,12 +321,23 @@ impl<'a> Context<'a> {
         self.device.destroy_buffer(self.index_buffer, None);
         self.device.free_memory(self.index_memory, None);
     }
+
+    // Free memory allocated on the GPU at refresh
+    unsafe fn free_device_refresh(&mut self) {
+        // Depth image
+        self.device.free_memory(self.depth_memory, None);
+
+        // Uniform buffer
+        self.device.destroy_buffer(self.uniform_buffer, None);
+        self.device.free_memory(self.uniform_memory, None);
+    }
 }
 
 impl<'a> Drop for Context<'a> {
     fn drop(&mut self) {
         unsafe {
-            self.free_device();
+            self.free_device_refresh();
+            self.free_device_init();
         }
     }
 }

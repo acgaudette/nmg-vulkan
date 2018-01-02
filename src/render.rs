@@ -936,7 +936,7 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
     /* Descriptor set layout */
 
     let ubo_layout = {
-        let binding = vd::DescriptorSetLayoutBinding::builder()
+        let shared_binding = vd::DescriptorSetLayoutBinding::builder()
             .binding(0) // First binding
             .descriptor_type(vd::DescriptorType::UniformBuffer)
             .descriptor_count(1) // Single descriptor (UBO)
@@ -951,7 +951,7 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
             .build();
 
         vd::DescriptorSetLayout::builder()
-            .bindings(&[binding, dynamic_binding])
+            .bindings(&[shared_binding, dynamic_binding])
             .build(device.clone())?
     };
 
@@ -1425,17 +1425,17 @@ fn init_drawing(
 
     /* Uniform buffer */
 
-    let models_len = models.len() as u32;
+    let model_count = models.len() as u32;
 
     let pool_sizes = {
         let size = vd::DescriptorPoolSize::builder()
             .type_of(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(models_len)
+            .descriptor_count(model_count) // One for each model
             .build();
 
         let dynamic_size = vd::DescriptorPoolSize::builder()
             .type_of(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(models_len)
+            .descriptor_count(model_count) // One for each model
             .build();
 
         [size, dynamic_size]
@@ -1444,39 +1444,26 @@ fn init_drawing(
     let descriptor_pool = vd::DescriptorPool::builder()
         .pool_sizes(&pool_sizes)
         .flags(vd::DescriptorPoolCreateFlags::empty())
-        .max_sets(models_len)
+        .max_sets(model_count)
         .build(device.clone())?;
 
     // Build descriptor sets (with a repeated layout)
+    // Each set will contain two descriptors
     let sets = {
         let mut layouts = Vec::with_capacity(models.len());
-
-        for _ in 0..models_len { layouts.push(ubo_layout); }
+        for _ in 0..models.len() { layouts.push(ubo_layout); }
 
         descriptor_pool.allocate_descriptor_sets(&layouts)?
     };
 
     debug_assert!(sets.len() == models.len());
 
-    let sets_len = sets.len();
     let ubo_size = std::mem::size_of::<UBO>() as u64;
     let dynamic_ubo_size = std::mem::size_of::<DynamicUBO>() as u64;
 
-    let sets_size = sets_len as u64 * (dynamic_ubo_size + ubo_size);
-
     // Allocate a buffer for the shared UBO
     let (ubo_buffer, ubo_memory) = create_buffer(
-        ubo_size,
-        vd::BufferUsageFlags::UNIFORM_BUFFER,
-        device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE
-        | vd::MemoryPropertyFlags::HOST_COHERENT,
-        &properties,
-    )?;
-
-    // Allocate a single buffer for the remaining UBOs
-    let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(
-        sets_size,
+        ubo_size, // Contains single UBO
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
@@ -1490,11 +1477,21 @@ fn init_drawing(
         .range(ubo_size)
         .build();
 
-    // Segment buffer for each UBO
-    let uniform_info = {
-        let mut info = Vec::with_capacity(sets_len);
+    // Allocate a single buffer for the remaining UBOs
+    let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(
+        sets.len() as u64 * dynamic_ubo_size, // Contains one UBO per model
+        vd::BufferUsageFlags::UNIFORM_BUFFER,
+        device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE
+        | vd::MemoryPropertyFlags::HOST_COHERENT,
+        &properties,
+    )?;
 
-        for i in 0..sets_len {
+    // Segment buffer for each UBO
+    let dynamic_info = {
+        let mut info = Vec::with_capacity(sets.len());
+
+        for i in 0..sets.len() {
             info.push(
                 vd::DescriptorBufferInfo::builder()
                     .buffer(dyn_ubo_buffer)
@@ -1507,18 +1504,19 @@ fn init_drawing(
         info
     };
 
-    debug_assert!(uniform_info.len() == sets.len());
+    debug_assert!(dynamic_info.len() == sets.len());
 
     let writes = {
-        let mut writes = Vec::with_capacity(sets_len * 2);
+        let mut writes = Vec::with_capacity(sets.len() * 2);
 
-        for i in 0..sets_len {
+        // Write shared and dynamic UBOs
+        for i in 0..sets.len() {
             writes.push(
                 vd::WriteDescriptorSet::builder()
                     .dst_set(sets[i])
                     .dst_binding(0) // First binding
                     .dst_array_element(0)
-                    .descriptor_count(1) // Single descriptor (UBO)
+                    .descriptor_count(1)
                     .descriptor_type(vd::DescriptorType::UniformBuffer)
                     .buffer_info(&shared_info)
                     .build()
@@ -1529,9 +1527,9 @@ fn init_drawing(
                     .dst_set(sets[i])
                     .dst_binding(1) // Second binding
                     .dst_array_element(0)
-                    .descriptor_count(1) // Single descriptor (UBO)
+                    .descriptor_count(1)
                     .descriptor_type(vd::DescriptorType::UniformBuffer)
-                    .buffer_info(&uniform_info[i])
+                    .buffer_info(&dynamic_info[i])
                     .build()
             );
         }
@@ -1541,7 +1539,8 @@ fn init_drawing(
 
     debug_assert!(writes.len() == sets.len() * 2);
 
-    descriptor_pool.update_descriptor_sets(&writes, &[]); // No copies
+    // No copies (causes segfault?)
+    descriptor_pool.update_descriptor_sets(&writes, &[]);
 
     Ok((
         depth_image,

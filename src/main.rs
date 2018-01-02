@@ -5,6 +5,7 @@ mod statics;
 mod alg;
 mod render;
 mod logic;
+mod util;
 
 fn main() {
     let (events, window) = init_window();

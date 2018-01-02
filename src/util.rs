@@ -29,25 +29,22 @@ pub unsafe fn aligned_buffer(
 
     // Waiting for std::heap...
     let mut memory = Vec::<usize>::with_capacity(size);
-    let mut ptr = memory.as_mut_ptr();
+    let ptr = memory.as_mut_ptr();
     std::mem::forget(memory);
 
     // Align
-    let mut iterations = 0;
-    loop {
-        let address = ptr as *const usize as usize;
+    let mut ptr = {
+        let current = ptr as usize;
+        let desired = (current + alignment - 1) & !(alignment - 1);
+        let offset = (desired - current) as isize;
 
-        if address % alignment == 0 {
-            eprintln!(
-                "\talignment found in {} iterations", iterations,
-            );
+        eprintln!(
+            "current = @{}, desired = @{}, offset = {}",
+            current, desired, offset,
+        );
 
-            break;
-        }
-
-        ptr = ptr.offset(1);
-        iterations += 1;
-    }
+        ptr.offset(offset)
+    };
 
     let start = ptr.clone();
 

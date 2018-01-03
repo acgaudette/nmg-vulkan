@@ -43,10 +43,31 @@ pub fn init() -> Vec<render::ModelData> {
 }
 
 pub fn update(
-    time:      f64,
-    last_time: f64,
-    instances: &mut render::Instances,
-) {
+    time:          f64,
+    last_time:     f64,
+    instances:     &mut render::Instances,
+    screen_height: u32,
+    screen_width:  u32,
+) -> render::SharedUBO {
+    let shared_ubo = {
+        let view = alg::Mat::look_at_view(
+            alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
+            alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
+            alg::Vec3::up(),
+        );
+
+        let projection = {
+            alg::Mat::perspective(
+                60.,
+                screen_width as f32 / screen_height as f32,
+                0.01,
+                4.
+            )
+        };
+
+        render::SharedUBO::new(view, projection)
+    };
+
     let angle = time as f32;
 
     let instance_ubo_0 = {
@@ -81,4 +102,6 @@ pub fn update(
         instances.add(render::ModelInstance::new(instance_ubo_1), 0);
         instances.add(render::ModelInstance::new(instance_ubo_2), 0);
     }
+
+    shared_ubo
 }

@@ -1461,11 +1461,30 @@ fn init_drawing(
 
     debug_assert!(sets.len() == 1);
 
-    let shared_size = std::mem::size_of::<SharedUBO>() as u64;
+    let minimum_alignment = device
+        .physical_device()
+        .properties()
+        .limits()
+        .min_uniform_buffer_offset_alignment();
+
+    if minimum_alignment == 0 {
+        return Err(
+            "Invalid minimum uniform buffer offset alignment".into()
+        );
+    }
+
+    // Compute maximum possible alignment
+    let ubo_alignment = |preferred| {
+        (preferred + minimum_alignment - 1) & !(minimum_alignment - 1)
+    };
+
+    let shared_alignment = ubo_alignment(
+        std::mem::size_of::<SharedUBO>() as u64
+    );
 
     // Allocate a buffer for the shared UBO
     let (ubo_buffer, ubo_memory) = create_buffer(
-        shared_size, // Contains single UBO
+        shared_alignment, // Contains single UBO
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
@@ -1476,30 +1495,14 @@ fn init_drawing(
     let shared_info = vd::DescriptorBufferInfo::builder()
         .buffer(ubo_buffer)
         .offset(0)
-        .range(shared_size)
+        .range(shared_alignment)
         .build();
 
-    // Compute maximum possible alignment
-    let ubo_alignment = {
-        let minimum = device
-            .physical_device()
-            .properties()
-            .limits()
-            .min_uniform_buffer_offset_alignment();
+    let dynamic_alignment = ubo_alignment(
+         std::mem::size_of::<InstanceUBO>() as u64
+    );
 
-        if minimum == 0 {
-            return Err(
-                "Invalid minimum uniform buffer offset alignment".into()
-            );
-        }
-
-        let preferred = std::mem::size_of::<InstanceUBO>() as u64;
-
-        // Max
-        (preferred + minimum - 1) & !(minimum - 1)
-    };
-
-    let dynamic_size = model_count as u64 * ubo_alignment;
+    let dynamic_size = model_count as u64 * dynamic_alignment;
 
     // Allocate a single buffer for the remaining UBOs
     let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(
@@ -1513,7 +1516,7 @@ fn init_drawing(
     let dynamic_info = vd::DescriptorBufferInfo::builder()
         .buffer(dyn_ubo_buffer)
         .offset(0)
-        .range(ubo_alignment)
+        .range(dynamic_alignment)
         .build();
 
     // Write shared and dynamic UBOs
@@ -1547,7 +1550,7 @@ fn init_drawing(
         ubo_memory,
         dyn_ubo_buffer,
         dyn_ubo_memory,
-        ubo_alignment,
+        dynamic_alignment,
         sets.into_vec(),
         descriptor_pool,
     ))

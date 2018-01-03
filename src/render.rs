@@ -205,6 +205,7 @@ impl<'a> Context<'a> {
             &_descriptor_sets,
             ubo_alignment,
             &models,
+            &instances,
         )?;
 
         // Return newly-built context structure
@@ -327,6 +328,7 @@ impl<'a> Context<'a> {
             &_descriptor_sets,
             ubo_alignment,
             &self.models,
+            &self.instances,
         )?;
 
         // Synchronize
@@ -1600,6 +1602,7 @@ fn init_commands(
     descriptor_sets: &Vec<vd::DescriptorSet>,
     ubo_alignment:   u64,
     models:          &[Model],
+    instances:       &Instances,
 ) -> vd::Result<Vec<vd::CommandBuffer>> {
     let command_buffers = drawing_pool.allocate_command_buffers(
         vd::CommandBufferLevel::Primary,
@@ -1674,26 +1677,33 @@ fn init_commands(
             );
         }
 
-        // Render each model
-        for j in 0..models.len() {
-            // Bind uniform data
-            command_buffers[i].bind_descriptor_sets(
-                vd::PipelineBindPoint::Graphics,
-                pipeline_layout,
-                0,
-                &[&descriptor_sets[0]], // Single descriptor set
-                // Offset dynamic uniform buffer
-                &[ubo_alignment as u32 * j as u32],
-            );
+        debug_assert!(models.len() == instances.data.len());
 
-            // Draw call
-            command_buffers[i].draw_indexed(
-                models[j].index_count,
-                1,
-                models[j].index_offset,
-                0, // No vertex offset
-                0,
-            );
+        let mut instance = 0;
+        for j in 0..models.len() {
+            // Render each instance
+            for k in 0..instances.data[j].len() {
+                // Bind uniform data
+                command_buffers[i].bind_descriptor_sets(
+                    vd::PipelineBindPoint::Graphics,
+                    pipeline_layout,
+                    0,
+                    &[&descriptor_sets[0]], // Single descriptor set
+                    // Offset dynamic uniform buffer
+                    &[ubo_alignment as u32 * instance as u32],
+                );
+
+                // Draw call
+                command_buffers[i].draw_indexed(
+                    models[j].index_count,
+                    1,
+                    models[j].index_offset,
+                    0, // No vertex offset
+                    0,
+                );
+
+                instance += 1;
+            }
         }
 
         command_buffers[i].end_render_pass();

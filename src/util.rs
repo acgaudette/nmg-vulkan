@@ -47,7 +47,7 @@ pub unsafe fn aligned_buffer<T>(
         std::ptr::copy_nonoverlapping(
             entry as *const T,
             ptr as *mut T,
-            std::mem::size_of::<T>(),
+            1,
         );
 
         ptr = ptr.offset(alignment as isize);

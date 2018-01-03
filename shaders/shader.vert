@@ -3,11 +3,11 @@
 layout(binding = 0) uniform VP {
   mat4 view;
   mat4 projection;
-} shared;
+} shared_data;
 
 layout(binding = 1) uniform M {
   mat4 model;
-} this;
+} this_data;
 
 layout(location = 0) in  vec3 inPosition;
 layout(location = 1) in  vec3 inColor;
@@ -18,9 +18,9 @@ out gl_PerVertex {
 };
 
 void main() {
-  gl_Position = shared.projection
-    * shared.view
-    * this.model
+  gl_Position = shared_data.projection
+    * shared_data.view
+    * this_data.model
     * vec4(inPosition, 1);
 
   fragColor = inColor;

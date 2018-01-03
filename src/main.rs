@@ -80,12 +80,18 @@ fn update(
             + (duration.subsec_nanos() as f64 / 1000000000.);
 
         // Update scene data
-        logic::update(time, last_time, &mut context.instances);
+        let shared_ubo = logic::update(
+            time,
+            last_time,
+            &mut context.instances,
+            context.swapchain.extent().height(),
+            context.swapchain.extent().width(),
+        );
 
         // Update renderer
         if let Err(e) = render::update(
+            shared_ubo,
             &context.instances,
-            &context.swapchain,
             &context.device,
             context.ubo_alignment,
             context.ubo_memory,

@@ -363,6 +363,7 @@ impl<'a> Context<'a> {
     pub fn update(&mut self, shared_ubo: SharedUBO) -> vd::Result<()> {
         /* Copy UBOs to GPU */
 
+        // Not optimal: recreates UBO array on host memory
         let mut ubos = Vec::with_capacity(self.instances.count());
 
         for model in &self.instances.data {
@@ -379,6 +380,7 @@ impl<'a> Context<'a> {
                 &[shared_ubo],
             )?;
 
+            // Not optimal: requires yet another heap allocation
             let dynamic_buffer = util::aligned_buffer(
                 self.ubo_alignment as usize,
                 &ubos,

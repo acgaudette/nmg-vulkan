@@ -898,7 +898,7 @@ fn load_models(
     )?;
 
     // Initialize instances structure
-    let instances = Instances::new(models.len(), None);
+    let mut instances = Instances::new(models.len(), None);
 
     Ok((
         vertex_buffer,
@@ -1909,13 +1909,12 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
 }
 
 pub fn update(
-    time:           f64,
-    last_time:      f64,
-    swapchain:      &vd::SwapchainKhr,
-    device:         &vd::Device,
-    ubo_alignment:  u64,
-    ubo_memory:     vd::DeviceMemoryHandle,
-    dyn_ubo_memory: vd::DeviceMemoryHandle,
+    instances:     &Instances,
+    swapchain:     &vd::SwapchainKhr,
+    device:        &vd::Device,
+    ubo_alignment: u64,
+    ubo_memory:    vd::DeviceMemoryHandle,
+    dyn_ubo_memor: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
     let shared_ubo = {
         let view = alg::Mat::look_at_view(
@@ -1940,35 +1939,6 @@ pub fn update(
             view,
             projection,
         }
-    };
-
-    let angle = time as f32;
-
-    let instance_ubo_0 = {
-        let translation = alg::Mat::translation(0., 0., 2.);
-        let rotation = alg::Mat::rotation(angle, angle, angle);
-        let scale = alg::Mat::scale(0.8, 1.2, 1.);
-
-        let model = translation * rotation * scale;
-        InstanceUBO { model }
-    };
-
-    let instance_ubo_1 = {
-        let translation = alg::Mat::translation(-0.5, -1.1, 3.);
-        let rotation = alg::Mat::rotation(0., angle, 0.);
-        let scale = alg::Mat::scale(0.8, 1.2, 1.);
-
-        let model = translation * rotation * scale;
-        InstanceUBO { model }
-    };
-
-    let instance_ubo_2 = {
-        let translation = alg::Mat::translation(1.2, 0.8, 4.);
-        let rotation = alg::Mat::rotation(angle, 0., 0.);
-        let scale = alg::Mat::scale(0.8, 1.2, 1.);
-
-        let model = translation * rotation * scale;
-        InstanceUBO { model }
     };
 
     /* Copy UBOs to GPU */

@@ -361,6 +361,44 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
+    pub fn update(&self, shared_ubo: SharedUBO) -> vd::Result<()> {
+        /* Copy UBOs to GPU */
+
+        let mut ubos = Vec::with_capacity(self.instances.count());
+
+        for model in &self.instances.data {
+            for instance in model {
+                ubos.push(instance.ubo);
+            }
+        }
+
+        unsafe {
+            copy_buffer(
+                &self.device,
+                self.ubo_memory,
+                std::mem::size_of::<SharedUBO>() as u64,
+                &[shared_ubo],
+            )?;
+
+            let dynamic_buffer = util::aligned_buffer(
+                self.ubo_alignment as usize,
+                &ubos,
+            );
+
+            let size = (dynamic_buffer.len()
+                * std::mem::size_of::<usize>()) as u64;
+
+            copy_buffer(
+                &self.device,
+                self.dyn_ubo_memory,
+                size,
+                &dynamic_buffer,
+            )?;
+        }
+
+        Ok(())
+    }
+
     // Free memory allocated on the GPU at init
     unsafe fn free_device_init(&mut self) {
         // Vertex buffer
@@ -1929,51 +1967,6 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
     destination.copy_from_slice(&data);
 
     device.unmap_memory(memory);
-
-    Ok(())
-}
-
-pub fn update(
-    shared_ubo:     SharedUBO,
-    instances:      &Instances,
-    device:         &vd::Device,
-    ubo_alignment:  u64,
-    ubo_memory:     vd::DeviceMemoryHandle,
-    dyn_ubo_memory: vd::DeviceMemoryHandle,
-) -> vd::Result<()> {
-    /* Copy UBOs to GPU */
-
-    let mut ubos = Vec::with_capacity(instances.count());
-
-    for model in &instances.data {
-        for instance in model {
-            ubos.push(instance.ubo);
-        }
-    }
-
-    unsafe {
-        copy_buffer(
-            device,
-            ubo_memory,
-            std::mem::size_of::<SharedUBO>() as u64,
-            &[shared_ubo],
-        )?;
-
-        let dynamic_buffer = util::aligned_buffer(
-            ubo_alignment as usize,
-            &ubos,
-        );
-
-        let size = (dynamic_buffer.len()
-            * std::mem::size_of::<usize>()) as u64;
-
-        copy_buffer(
-            device,
-            dyn_ubo_memory,
-            size,
-            &dynamic_buffer,
-        )?;
-    }
 
     Ok(())
 }

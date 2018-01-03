@@ -85,6 +85,7 @@ fn update(
             last_time,
             &context.swapchain,
             &context.device,
+            context.ubo_alignment,
             context.ubo_memory,
             context.dyn_ubo_memory,
         ) {

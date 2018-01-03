@@ -13,14 +13,6 @@ pub unsafe fn aligned_buffer<T>(
     let alignment = alignment / ptr_len;
     let size = count * alignment;
 
-    eprintln!(
-        "desired size = {} ({}B); expanded to {} ({}B)\n\
-        desired alignment = {} ({}B)",
-        count * alignment, count * alignment * ptr_len,
-        size, size * ptr_len,
-        alignment, alignment * ptr_len,
-    );
-
     // Waiting for std::heap...
     let mut memory = Vec::<usize>::with_capacity(size);
     let mut ptr = memory.as_mut_ptr();

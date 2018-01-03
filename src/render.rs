@@ -1959,6 +1959,14 @@ pub fn update(
 
     /* Copy UBOs to GPU */
 
+    let mut ubos = Vec::with_capacity(instances.count());
+
+    for model in &instances.data {
+        for instance in model {
+            ubos.push(instance.ubo);
+        }
+    }
+
     unsafe {
         copy_buffer(
             device,

@@ -555,7 +555,9 @@ pub struct ModelInstance {
 
 impl ModelInstance {
     pub fn new(ubo: InstanceUBO) -> ModelInstance {
-        ModelInstance { ubo: ubo }
+        ModelInstance {
+            ubo,
+        }
     }
 }
 
@@ -586,8 +588,13 @@ impl Instances {
         Instances { data }
     }
 
-    pub fn add(&mut self, instance: ModelInstance, model: usize) {
+    pub fn add(&mut self, instance: ModelInstance, model: usize) -> usize {
         self.data[model].push(instance);
+        self.data[model].len() - 1 // Return handle to new instance
+    }
+
+    pub fn update(&mut self, model: usize, handle: usize, instance: ModelInstance) {
+        self.data[model][handle] = instance;
     }
 
     pub fn count(&self) -> usize {

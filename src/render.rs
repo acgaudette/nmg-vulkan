@@ -4,6 +4,7 @@ extern crate voodoo_winit as vdw;
 use std;
 use statics;
 use alg;
+use util;
 
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
@@ -76,6 +77,7 @@ pub struct Context<'a> {
     // Used in update
     pub ubo_memory:     vd::DeviceMemoryHandle,
     pub dyn_ubo_memory: vd::DeviceMemoryHandle,
+    pub ubo_alignment:  u64,
 
     /* Persistent data */
 
@@ -174,6 +176,7 @@ impl<'a> Context<'a> {
             ubo_memory,
             dyn_ubo_buffer,
             dyn_ubo_memory,
+            ubo_alignment,
             _descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
@@ -199,6 +202,7 @@ impl<'a> Context<'a> {
             index_buffer,
             &pipeline_layout,
             &_descriptor_sets,
+            ubo_alignment,
             &models,
         )?;
 
@@ -239,6 +243,7 @@ impl<'a> Context<'a> {
                 dyn_ubo_buffer,
                 ubo_memory,
                 dyn_ubo_memory,
+                ubo_alignment,
 
                 _vert_mod,
                 _frag_mod,
@@ -293,6 +298,7 @@ impl<'a> Context<'a> {
             ubo_memory,
             dyn_ubo_buffer,
             dyn_ubo_memory,
+            ubo_alignment,
             _descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
@@ -318,6 +324,7 @@ impl<'a> Context<'a> {
             self.index_buffer,
             &self.pipeline_layout,
             &_descriptor_sets,
+            ubo_alignment,
             &self.models,
         )?;
 
@@ -338,6 +345,7 @@ impl<'a> Context<'a> {
         self.ubo_memory = ubo_memory;
         self.dyn_ubo_buffer = dyn_ubo_buffer;
         self.dyn_ubo_memory = dyn_ubo_memory;
+        self.ubo_alignment = ubo_alignment;
 
         self._depth_image = _depth_image;
         self._framebuffers = _framebuffers;
@@ -939,7 +947,7 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
 
         let dynamic_binding = vd::DescriptorSetLayoutBinding::builder()
             .binding(1) // Second binding
-            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
             .descriptor_count(1) // Single descriptor (UBO)
             .stage_flags(vd::ShaderStageFlags::VERTEX)
             .build();
@@ -1282,6 +1290,7 @@ fn init_drawing(
     vd::DeviceMemoryHandle,
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
+    u64,
     Vec<vd::DescriptorSet>,
     vd::DescriptorPool,
 )> {
@@ -1424,12 +1433,12 @@ fn init_drawing(
     let pool_sizes = {
         let size = vd::DescriptorPoolSize::builder()
             .type_of(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(model_count) // One for each model
+            .descriptor_count(1) // Shared by all models
             .build();
 
         let dynamic_size = vd::DescriptorPoolSize::builder()
-            .type_of(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(model_count) // One for each model
+            .type_of(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1) // Shared by all models
             .build();
 
         [size, dynamic_size]
@@ -1438,22 +1447,15 @@ fn init_drawing(
     let descriptor_pool = vd::DescriptorPool::builder()
         .pool_sizes(&pool_sizes)
         .flags(vd::DescriptorPoolCreateFlags::empty())
-        .max_sets(model_count)
+        .max_sets(1)
         .build(device.clone())?;
 
-    // Build descriptor sets (with a repeated layout)
     // Each set will contain two descriptors
-    let sets = {
-        let mut layouts = Vec::with_capacity(models.len());
-        for _ in 0..models.len() { layouts.push(ubo_layout); }
+    let sets = descriptor_pool.allocate_descriptor_sets(&[ubo_layout])?;
 
-        descriptor_pool.allocate_descriptor_sets(&layouts)?
-    };
-
-    debug_assert!(sets.len() == models.len());
+    debug_assert!(sets.len() == 1);
 
     let ubo_size = std::mem::size_of::<UBO>() as u64;
-    let dynamic_ubo_size = std::mem::size_of::<DynamicUBO>() as u64;
 
     // Allocate a buffer for the shared UBO
     let (ubo_buffer, ubo_memory) = create_buffer(
@@ -1471,67 +1473,62 @@ fn init_drawing(
         .range(ubo_size)
         .build();
 
+    // Compute maximum possible alignment
+    let ubo_alignment = {
+        let minimum = device
+            .physical_device()
+            .properties()
+            .limits()
+            .min_uniform_buffer_offset_alignment();
+
+        if minimum == 0 {
+            return Err(
+                "Invalid minimum uniform buffer offset alignment".into()
+            );
+        }
+
+        let preferred = std::mem::size_of::<alg::Mat>() as u64;
+
+        // Max
+        (preferred + minimum - 1) & !(minimum - 1)
+    };
+
+    let dynamic_size = model_count as u64 * ubo_alignment;
+
     // Allocate a single buffer for the remaining UBOs
     let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(
-        sets.len() as u64 * dynamic_ubo_size, // Contains one UBO per model
+        dynamic_size,
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE
-        | vd::MemoryPropertyFlags::HOST_COHERENT,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
         &properties,
     )?;
 
-    // Segment buffer for each UBO
-    let dynamic_info = {
-        let mut info = Vec::with_capacity(sets.len());
+    let dynamic_info = vd::DescriptorBufferInfo::builder()
+        .buffer(dyn_ubo_buffer)
+        .offset(0)
+        .range(ubo_alignment)
+        .build();
 
-        for i in 0..sets.len() {
-            info.push(
-                vd::DescriptorBufferInfo::builder()
-                    .buffer(dyn_ubo_buffer)
-                    .offset(i as u64 * dynamic_ubo_size)
-                    .range(dynamic_ubo_size)
-                    .build(),
-            );
-        }
-
-        info
-    };
-
-    debug_assert!(dynamic_info.len() == sets.len());
-
-    let writes = {
-        let mut writes = Vec::with_capacity(sets.len() * 2);
-
-        // Write shared and dynamic UBOs
-        for i in 0..sets.len() {
-            writes.push(
-                vd::WriteDescriptorSet::builder()
-                    .dst_set(sets[i])
-                    .dst_binding(0) // First binding
-                    .dst_array_element(0)
-                    .descriptor_count(1)
-                    .descriptor_type(vd::DescriptorType::UniformBuffer)
-                    .buffer_info(&shared_info)
-                    .build()
-            );
-
-            writes.push(
-                vd::WriteDescriptorSet::builder()
-                    .dst_set(sets[i])
-                    .dst_binding(1) // Second binding
-                    .dst_array_element(0)
-                    .descriptor_count(1)
-                    .descriptor_type(vd::DescriptorType::UniformBuffer)
-                    .buffer_info(&dynamic_info[i])
-                    .build()
-            );
-        }
-
-        writes
-    };
-
-    debug_assert!(writes.len() == sets.len() * 2);
+    // Write shared and dynamic UBOs
+    let writes = [
+        vd::WriteDescriptorSet::builder()
+            .dst_set(sets[0])
+            .dst_binding(0) // First binding
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .buffer_info(&shared_info)
+            .build(),
+        vd::WriteDescriptorSet::builder()
+            .dst_set(sets[0])
+            .dst_binding(1) // Second binding
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .buffer_info(&dynamic_info)
+            .build(),
+    ];
 
     // No copies (causes segfault?)
     descriptor_pool.update_descriptor_sets(&writes, &[]);
@@ -1544,6 +1541,7 @@ fn init_drawing(
         ubo_memory,
         dyn_ubo_buffer,
         dyn_ubo_memory,
+        ubo_alignment,
         sets.into_vec(),
         descriptor_pool,
     ))
@@ -1560,6 +1558,7 @@ fn init_commands(
     index_buffer:    vd::BufferHandle,
     pipeline_layout: &vd::PipelineLayout,
     descriptor_sets: &Vec<vd::DescriptorSet>,
+    ubo_alignment:   u64,
     models:          &[Model],
 ) -> vd::Result<Vec<vd::CommandBuffer>> {
     let command_buffers = drawing_pool.allocate_command_buffers(
@@ -1640,8 +1639,9 @@ fn init_commands(
                 vd::PipelineBindPoint::Graphics,
                 pipeline_layout,
                 0,
-                &[&descriptor_sets[j]], // the jth UBO
-                &[],
+                &[&descriptor_sets[0]], // Single descriptor set
+                // Offset dynamic uniform buffer
+                &[ubo_alignment as u32 * j as u32],
             );
 
             // Draw call
@@ -1861,6 +1861,7 @@ pub fn update(
     last_time:      f64,
     swapchain:      &vd::SwapchainKhr,
     device:         &vd::Device,
+    ubo_alignment:  u64,
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
@@ -1891,40 +1892,28 @@ pub fn update(
 
     let angle = time as f32;
 
-    let ubo_0 = {
-        let model = {
-            let translation = alg::Mat::translation(0., 0., 2.);
-            let rotation = alg::Mat::rotation(angle, angle, angle);
-            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+    let model_0 = {
+        let translation = alg::Mat::translation(0., 0., 2.);
+        let rotation = alg::Mat::rotation(angle, angle, angle);
+        let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
-            translation * rotation * scale
-        };
-
-        DynamicUBO { model }
+        translation * rotation * scale
     };
 
-    let ubo_1 = {
-        let model = {
-            let translation = alg::Mat::translation(-0.5, -1.1, 3.);
-            let rotation = alg::Mat::rotation(0., angle, 0.);
-            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+    let model_1 = {
+        let translation = alg::Mat::translation(-0.5, -1.1, 3.);
+        let rotation = alg::Mat::rotation(0., angle, 0.);
+        let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
-            translation * rotation * scale
-        };
-
-        DynamicUBO { model }
+        translation * rotation * scale
     };
 
-    let ubo_2 = {
-        let model = {
-            let translation = alg::Mat::translation(1.2, 0.8, 4.);
-            let rotation = alg::Mat::rotation(angle, 0., 0.);
-            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+    let model_2 = {
+        let translation = alg::Mat::translation(1.2, 0.8, 4.);
+        let rotation = alg::Mat::rotation(angle, 0., 0.);
+        let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
-            translation * rotation * scale
-        };
-
-        DynamicUBO { model }
+        translation * rotation * scale
     };
 
     /* Copy UBOs to GPU */
@@ -1937,11 +1926,18 @@ pub fn update(
             &[vp],
         )?;
 
+        let dynamic_buffer = util::aligned_buffer(
+            ubo_alignment as usize,
+            &[model_0, model_1, model_2],
+        );
+
+        let size = (dynamic_buffer.len() * std::mem::size_of::<usize>()) as u64;
+
         copy_buffer(
             device,
             dyn_ubo_memory,
-            3 * std::mem::size_of::<DynamicUBO>() as u64,
-            &[ubo_0, ubo_1, ubo_2],
+            size,
+            &dynamic_buffer,
         )?;
     }
 
@@ -1997,6 +1993,7 @@ pub fn draw(
                         .swapchains(&swapchains)
                         .image_indices(&indices)
                         .build();
+
 
                     unsafe {
                         // Present

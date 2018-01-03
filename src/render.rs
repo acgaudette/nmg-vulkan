@@ -474,12 +474,6 @@ struct UBO {
     projection: alg::Mat,
 }
 
-#[derive(Clone, Copy)]
-#[repr(C)]
-struct DynamicUBO {
-    model: alg::Mat,
-}
-
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
     u32,

@@ -5,25 +5,20 @@ pub unsafe fn aligned_buffer<T>(
     data:      &[T],
 ) -> Vec<usize> {
     let count = data.len();
-
-    debug_assert!(alignment != 0);
     debug_assert!(count != 0);
 
     let ptr_len = std::mem::size_of::<usize>();
-    let t_len = std::mem::size_of::<T>() / ptr_len;
-    let alignment = alignment / ptr_len;
+    debug_assert!(alignment >= ptr_len);
 
-    let size = count * t_len + alignment; // Over-allocate
+    let alignment = alignment / ptr_len;
+    let size = count * alignment + alignment; // Over-allocate
 
     eprintln!(
         "desired size = {} ({}B); expanded to {} ({}B)\n\
         desired alignment = {} ({}B)",
-        count * t_len,
-        count * t_len * ptr_len,
-        size,
-        size * ptr_len,
-        alignment,
-        alignment * ptr_len,
+        count * alignment, count * alignment * ptr_len,
+        size, size * ptr_len,
+        alignment, alignment * ptr_len,
     );
 
     // Waiting for std::heap...
@@ -52,7 +47,7 @@ pub unsafe fn aligned_buffer<T>(
         std::ptr::copy_nonoverlapping(
             entry as *const T,
             ptr as *mut T,
-            t_len,
+            std::mem::size_of::<T>(),
         );
 
         ptr = ptr.offset(alignment as isize);

@@ -32,13 +32,13 @@ const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 pub struct Context<'a> {
     /* Drawing fields */
 
-    pub device:          vd::Device,
-    pub swapchain:       vd::SwapchainKhr,
-    pub command_buffers: Vec<vd::CommandBuffer>,
-    pub graphics_family: u32,
-    pub present_family:  u32,
-    pub image_available: vd::Semaphore,
-    pub render_complete: vd::Semaphore,
+    pub device:      vd::Device,
+    pub swapchain:   vd::SwapchainKhr,
+    command_buffers: Vec<vd::CommandBuffer>,
+    graphics_family: u32,
+    present_family:  u32,
+    image_available: vd::Semaphore,
+    render_complete: vd::Semaphore,
 
     /* Meshes */
 
@@ -73,12 +73,10 @@ pub struct Context<'a> {
     index_memory:   vd::DeviceMemoryHandle,
     depth_memory:   vd::DeviceMemoryHandle,
     ubo_buffer:     vd::BufferHandle,
+    ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_buffer: vd::BufferHandle,
-
-    // Used in update
-    pub ubo_memory:     vd::DeviceMemoryHandle,
-    pub dyn_ubo_memory: vd::DeviceMemoryHandle,
-    pub ubo_alignment:  u64,
+    dyn_ubo_memory: vd::DeviceMemoryHandle,
+    ubo_alignment:  u64,
 
     /* Persistent data */
 
@@ -218,6 +216,7 @@ impl<'a> Context<'a> {
                 present_family,
                 image_available,
                 render_complete,
+
                 instances,
                 models,
 
@@ -243,8 +242,8 @@ impl<'a> Context<'a> {
                 index_memory,
                 depth_memory,
                 ubo_buffer,
-                dyn_ubo_buffer,
                 ubo_memory,
+                dyn_ubo_buffer,
                 dyn_ubo_memory,
                 ubo_alignment,
 

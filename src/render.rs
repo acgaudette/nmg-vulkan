@@ -189,7 +189,6 @@ impl<'a> Context<'a> {
             &device,
             &transient_pool,
             graphics_family,
-            &models,
             ubo_layout.handle(),
         )?;
 
@@ -312,7 +311,6 @@ impl<'a> Context<'a> {
             &self.device,
             &self.transient_pool,
             self.graphics_family,
-            &self.models,
             self.ubo_layout.handle(),
         )?;
 
@@ -1322,7 +1320,6 @@ fn init_drawing(
     device:          &vd::Device,
     transient_pool:  &vd::CommandPool,
     graphics_family: u32,
-    models:          &[Model],
     ubo_layout:      vd::DescriptorSetLayoutHandle,
 ) -> vd::Result<(
     vd::Image,
@@ -1470,8 +1467,6 @@ fn init_drawing(
 
     /* Uniform buffers */
 
-    let model_count = models.len() as u32;
-
     let pool_sizes = {
         let size = vd::DescriptorPoolSize::builder()
             .type_of(vd::DescriptorType::UniformBuffer)
@@ -1538,7 +1533,7 @@ fn init_drawing(
          std::mem::size_of::<InstanceUBO>() as u64
     );
 
-    let dynamic_size = model_count as u64 * dynamic_alignment;
+    let dynamic_size = statics::MAX_INSTANCES * dynamic_alignment;
 
     // Allocate a single buffer for the remaining UBOs
     let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(

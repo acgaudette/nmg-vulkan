@@ -79,10 +79,12 @@ fn update(
         let time = duration.as_secs() as f64
             + (duration.subsec_nanos() as f64 / 1000000000.);
 
+        // Update scene data
+        logic::update(time, last_time, &mut context.instances);
+
         // Update renderer
         if let Err(e) = render::update(
-            time,
-            last_time,
+            &context.instances,
             &context.swapchain,
             &context.device,
             context.ubo_alignment,

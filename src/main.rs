@@ -88,31 +88,16 @@ fn update(
             context.swapchain.extent().width(),
         );
 
+        last_time = time;
+
         // Update renderer
-        if let Err(e) = render::update(
-            shared_ubo,
-            &context.instances,
-            &context.device,
-            context.ubo_alignment,
-            context.ubo_memory,
-            context.dyn_ubo_memory,
-        ) {
+        if let Err(e) = context.update(shared_ubo) {
             // Irrecoverable error
             panic!("{}", e);
         }
 
-        last_time = time;
-
         // Render frame
-        if let Err(e) = render::draw(
-            &context.device,
-            &context.swapchain,
-            &context.image_available,
-            &context.render_complete,
-            &context.command_buffers,
-            context.graphics_family,
-            context.present_family
-        ) {
+        if let Err(e) = context.draw() {
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
                 // Rebuild the swapchain if it becomes out of date

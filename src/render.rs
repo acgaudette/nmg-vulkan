@@ -360,7 +360,7 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    pub fn update(&self, shared_ubo: SharedUBO) -> vd::Result<()> {
+    pub fn update(&mut self, shared_ubo: SharedUBO) -> vd::Result<()> {
         /* Copy UBOs to GPU */
 
         let mut ubos = Vec::with_capacity(self.instances.count());
@@ -394,6 +394,26 @@ impl<'a> Context<'a> {
                 &dynamic_buffer,
             )?;
         }
+
+        // Rebuild command buffers
+
+        let command_buffers = init_commands(
+            &self.drawing_pool,
+            &self._framebuffers,
+            &self._render_pass,
+            &self.swapchain,
+            &self.device,
+            self._pipeline.handle(),
+            self.vertex_buffer,
+            self.index_buffer,
+            &self.pipeline_layout,
+            &self._descriptor_sets,
+            self.ubo_alignment,
+            &self.models,
+            &self.instances,
+        )?;
+
+        self.command_buffers = command_buffers;
 
         Ok(())
     }

@@ -463,6 +463,16 @@ impl Instances {
     fn add_instance(&mut self, instance: ModelInstance, model: usize) {
         self.data[model].push(instance);
     }
+
+    fn count(&self) -> usize {
+        let mut count = 0;
+
+        for model in data {
+            count += model.len();
+        }
+
+        count
+    }
 }
 
 #[derive(Clone, Copy)]

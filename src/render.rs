@@ -40,9 +40,10 @@ pub struct Context<'a> {
     pub image_available: vd::Semaphore,
     pub render_complete: vd::Semaphore,
 
-    /* Lookup table */
+    /* Meshes */
 
-    models:            Vec<Model>,
+    pub instances: Instances,
+    models:        Vec<Model>, // Lookup table
 
     /* Swapchain recreation data */
 
@@ -124,6 +125,7 @@ impl<'a> Context<'a> {
             index_buffer,
             index_memory,
             models,
+            instances,
         ) = load_models(
             model_data,
             &device,
@@ -216,6 +218,7 @@ impl<'a> Context<'a> {
                 present_family,
                 image_available,
                 render_complete,
+                instances,
                 models,
 
                 surface,
@@ -431,6 +434,34 @@ impl ModelInstance {
             model: model_index,
             ubo: instance_ubo,
         }
+    }
+}
+
+pub struct Instances {
+    data: Vec<Vec<ModelInstance>>,
+}
+
+impl Instances {
+    fn new(model_count: usize, hints: Option<&[usize]>) -> Instances {
+        let mut data = Vec::with_capacity(model_count);
+
+        match hints {
+            Some(hints) => {
+                assert!(model_count == hints.len());
+
+                for i in 0..model_count {
+                    data.push(Vec::with_capacity(hints[i]));
+                }
+            }
+
+            None => {
+                for _ in 0..model_count {
+                    data.push(Vec::new());
+                }
+            }
+        };
+
+        Instances { data }
     }
 }
 
@@ -800,6 +831,7 @@ fn load_models(
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
     Vec<Model>,
+    Instances,
 )> {
     /* Concatenate model data */
 
@@ -865,12 +897,16 @@ fn load_models(
         graphics_family,
     )?;
 
+    // Initialize instances structure
+    let instances = Instances::new(models.len(), None);
+
     Ok((
         vertex_buffer,
         vertex_memory,
         index_buffer,
         index_memory,
         models,
+        instances,
     ))
 }
 
@@ -1432,7 +1468,7 @@ fn init_drawing(
         return Err("empty framebuffers vector".into());
     }
 
-    /* Uniform buffer */
+    /* Uniform buffers */
 
     let model_count = models.len() as u32;
 
@@ -1643,7 +1679,9 @@ fn init_commands(
             );
         }
 
+        // Render each model
         for j in 0..models.len() {
+            // Bind uniform data
             command_buffers[i].bind_descriptor_sets(
                 vd::PipelineBindPoint::Graphics,
                 pipeline_layout,

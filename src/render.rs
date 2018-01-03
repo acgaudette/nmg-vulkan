@@ -518,9 +518,18 @@ impl Vertex {
 
 #[derive(Clone, Copy)]
 #[repr(C)]
-struct SharedUBO {
+pub struct SharedUBO {
     view:       alg::Mat,
     projection: alg::Mat,
+}
+
+impl SharedUBO {
+    pub fn new(view: alg::Mat, projection: alg::Mat) -> SharedUBO {
+        SharedUBO {
+            view,
+            projection,
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -1925,38 +1934,13 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
 }
 
 pub fn update(
+    shared_ubo:     SharedUBO,
     instances:      &Instances,
-    swapchain:      &vd::SwapchainKhr,
     device:         &vd::Device,
     ubo_alignment:  u64,
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let shared_ubo = {
-        let view = alg::Mat::look_at_view(
-            alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
-            alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
-            alg::Vec3::up(),
-        );
-
-        let projection = {
-            let w = swapchain.extent().width() as f32;
-            let h = swapchain.extent().height() as f32;
-
-            alg::Mat::perspective(
-                60.,
-                w / h,
-                0.01,
-                4.
-            )
-        };
-
-        SharedUBO {
-            view,
-            projection,
-        }
-    };
-
     /* Copy UBOs to GPU */
 
     let mut ubos = Vec::with_capacity(instances.count());

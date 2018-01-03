@@ -71,6 +71,7 @@ pub unsafe fn aligned_buffer<T>(
 #[cfg(test)]
 mod tests {
     use util::*;
+    use alg;
 
     #[test]
     fn create_aligned_buffers() {

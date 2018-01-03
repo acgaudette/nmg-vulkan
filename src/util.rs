@@ -1,26 +1,25 @@
 use std;
-use alg;
 
-pub unsafe fn aligned_buffer(
+pub unsafe fn aligned_buffer<T>(
     alignment: usize, // Bytes
-    matrices:  &[alg::Mat],
+    data:      &[T],
 ) -> Vec<usize> {
-    let count = matrices.len();
+    let count = data.len();
 
     debug_assert!(alignment != 0);
     debug_assert!(count != 0);
 
     let ptr_len = std::mem::size_of::<usize>();
-    let mat_len = std::mem::size_of::<alg::Mat>() / ptr_len;
+    let t_len = std::mem::size_of::<T>() / ptr_len;
     let alignment = alignment / ptr_len;
 
-    let size = count * mat_len + alignment; // Over-allocate
+    let size = count * t_len + alignment; // Over-allocate
 
     eprintln!(
         "desired size = {} ({}B); expanded to {} ({}B)\n\
         desired alignment = {} ({}B)",
-        count * mat_len,
-        count * mat_len * ptr_len,
+        count * t_len,
+        count * t_len * ptr_len,
         size,
         size * ptr_len,
         alignment,
@@ -48,12 +47,12 @@ pub unsafe fn aligned_buffer(
 
     let start = ptr.clone();
 
-    // Copy matrices to aligned buffer
-    for matrix in matrices {
+    // Copy data to aligned buffer
+    for entry in data {
         std::ptr::copy_nonoverlapping(
-            matrix as *const alg::Mat,
-            ptr as *mut alg::Mat,
-            mat_len,
+            entry as *const T,
+            ptr as *mut T,
+            t_len,
         );
 
         ptr = ptr.offset(alignment as isize);

@@ -423,12 +423,12 @@ impl Model {
     }
 }
 
-struct ModelInstance {
+pub struct ModelInstance {
     ubo: InstanceUBO,
 }
 
 impl ModelInstance {
-    fn new(ubo: InstanceUBO) -> ModelInstance {
+    pub fn new(ubo: InstanceUBO) -> ModelInstance {
         ModelInstance { ubo: ubo }
     }
 }
@@ -460,14 +460,14 @@ impl Instances {
         Instances { data }
     }
 
-    fn add_instance(&mut self, instance: ModelInstance, model: usize) {
+    pub fn add(&mut self, instance: ModelInstance, model: usize) {
         self.data[model].push(instance);
     }
 
-    fn count(&self) -> usize {
+    pub fn count(&self) -> usize {
         let mut count = 0;
 
-        for model in data {
+        for model in &self.data {
             count += model.len();
         }
 
@@ -525,8 +525,14 @@ struct SharedUBO {
 
 #[derive(Clone, Copy)]
 #[repr(C)]
-struct InstanceUBO {
+pub struct InstanceUBO {
     model: alg::Mat,
+}
+
+impl InstanceUBO {
+    pub fn new(model: alg::Mat) -> InstanceUBO {
+        InstanceUBO { model }
+    }
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
@@ -908,7 +914,7 @@ fn load_models(
     )?;
 
     // Initialize instances structure
-    let mut instances = Instances::new(models.len(), None);
+    let instances = Instances::new(models.len(), None);
 
     Ok((
         vertex_buffer,
@@ -1692,7 +1698,7 @@ fn init_commands(
         let mut instance = 0;
         for j in 0..models.len() {
             // Render each instance
-            for k in 0..instances.data[j].len() {
+            for _ in 0..instances.data[j].len() {
                 // Bind uniform data
                 command_buffers[i].bind_descriptor_sets(
                     vd::PipelineBindPoint::Graphics,
@@ -1919,12 +1925,12 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
 }
 
 pub fn update(
-    instances:     &Instances,
-    swapchain:     &vd::SwapchainKhr,
-    device:        &vd::Device,
-    ubo_alignment: u64,
-    ubo_memory:    vd::DeviceMemoryHandle,
-    dyn_ubo_memor: vd::DeviceMemoryHandle,
+    instances:      &Instances,
+    swapchain:      &vd::SwapchainKhr,
+    device:         &vd::Device,
+    ubo_alignment:  u64,
+    ubo_memory:     vd::DeviceMemoryHandle,
+    dyn_ubo_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
     let shared_ubo = {
         let view = alg::Mat::look_at_view(
@@ -1963,7 +1969,7 @@ pub fn update(
 
         let dynamic_buffer = util::aligned_buffer(
             ubo_alignment as usize,
-            &[instance_ubo_0, instance_ubo_1, instance_ubo_2],
+            &ubos,
         );
 
         let size = (dynamic_buffer.len()

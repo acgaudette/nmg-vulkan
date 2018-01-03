@@ -424,16 +424,12 @@ impl Model {
 }
 
 struct ModelInstance {
-    model: u32,
-    ubo:   InstanceUBO,
+    ubo: InstanceUBO,
 }
 
 impl ModelInstance {
-    fn new(model_index: u32, instance_ubo: InstanceUBO) -> ModelInstance {
-        ModelInstance {
-            model: model_index,
-            ubo: instance_ubo,
-        }
+    fn new(ubo: InstanceUBO) -> ModelInstance {
+        ModelInstance { ubo: ubo }
     }
 }
 
@@ -462,6 +458,10 @@ impl Instances {
         };
 
         Instances { data }
+    }
+
+    fn add_instance(&mut self, instance: ModelInstance, model: usize) {
+        self.data[model].push(instance);
     }
 }
 

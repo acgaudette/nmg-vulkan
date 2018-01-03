@@ -101,6 +101,10 @@ pub fn update(
         instances.add(render::ModelInstance::new(instance_ubo_0), 0);
         instances.add(render::ModelInstance::new(instance_ubo_1), 0);
         instances.add(render::ModelInstance::new(instance_ubo_2), 0);
+    } else {
+        instances.update(0, 0, render::ModelInstance::new(instance_ubo_0));
+        instances.update(0, 1, render::ModelInstance::new(instance_ubo_1));
+        instances.update(0, 2, render::ModelInstance::new(instance_ubo_2));
     }
 
     shared_ubo

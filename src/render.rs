@@ -422,14 +422,14 @@ impl Model {
 
 struct ModelInstance {
     model: u32,
-    ubo:   UBO,
+    ubo:   InstanceUBO,
 }
 
 impl ModelInstance {
-    fn new(model_index: u32, ubo: UBO) -> ModelInstance {
+    fn new(model_index: u32, instance_ubo: InstanceUBO) -> ModelInstance {
         ModelInstance {
             model: model_index,
-            ubo: ubo,
+            ubo: instance_ubo,
         }
     }
 }
@@ -477,9 +477,15 @@ impl Vertex {
 
 #[derive(Clone, Copy)]
 #[repr(C)]
-struct UBO {
+struct SharedUBO {
     view:       alg::Mat,
     projection: alg::Mat,
+}
+
+#[derive(Clone, Copy)]
+#[repr(C)]
+struct InstanceUBO {
+    model: alg::Mat,
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
@@ -1455,11 +1461,11 @@ fn init_drawing(
 
     debug_assert!(sets.len() == 1);
 
-    let ubo_size = std::mem::size_of::<UBO>() as u64;
+    let shared_size = std::mem::size_of::<SharedUBO>() as u64;
 
     // Allocate a buffer for the shared UBO
     let (ubo_buffer, ubo_memory) = create_buffer(
-        ubo_size, // Contains single UBO
+        shared_size, // Contains single UBO
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
@@ -1470,7 +1476,7 @@ fn init_drawing(
     let shared_info = vd::DescriptorBufferInfo::builder()
         .buffer(ubo_buffer)
         .offset(0)
-        .range(ubo_size)
+        .range(shared_size)
         .build();
 
     // Compute maximum possible alignment
@@ -1487,7 +1493,7 @@ fn init_drawing(
             );
         }
 
-        let preferred = std::mem::size_of::<alg::Mat>() as u64;
+        let preferred = std::mem::size_of::<InstanceUBO>() as u64;
 
         // Max
         (preferred + minimum - 1) & !(minimum - 1)
@@ -1865,7 +1871,7 @@ pub fn update(
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
 ) -> vd::Result<()> {
-    let vp = {
+    let shared_ubo = {
         let view = alg::Mat::look_at_view(
             alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
             alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
@@ -1884,7 +1890,7 @@ pub fn update(
             )
         };
 
-        UBO {
+        SharedUBO {
             view,
             projection,
         }
@@ -1892,28 +1898,31 @@ pub fn update(
 
     let angle = time as f32;
 
-    let model_0 = {
+    let instance_ubo_0 = {
         let translation = alg::Mat::translation(0., 0., 2.);
         let rotation = alg::Mat::rotation(angle, angle, angle);
         let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
-        translation * rotation * scale
+        let model = translation * rotation * scale;
+        InstanceUBO { model }
     };
 
-    let model_1 = {
+    let instance_ubo_1 = {
         let translation = alg::Mat::translation(-0.5, -1.1, 3.);
         let rotation = alg::Mat::rotation(0., angle, 0.);
         let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
-        translation * rotation * scale
+        let model = translation * rotation * scale;
+        InstanceUBO { model }
     };
 
-    let model_2 = {
+    let instance_ubo_2 = {
         let translation = alg::Mat::translation(1.2, 0.8, 4.);
         let rotation = alg::Mat::rotation(angle, 0., 0.);
         let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
-        translation * rotation * scale
+        let model = translation * rotation * scale;
+        InstanceUBO { model }
     };
 
     /* Copy UBOs to GPU */
@@ -1922,16 +1931,17 @@ pub fn update(
         copy_buffer(
             device,
             ubo_memory,
-            std::mem::size_of::<UBO>() as u64,
-            &[vp],
+            std::mem::size_of::<SharedUBO>() as u64,
+            &[shared_ubo],
         )?;
 
         let dynamic_buffer = util::aligned_buffer(
             ubo_alignment as usize,
-            &[model_0, model_1, model_2],
+            &[instance_ubo_0, instance_ubo_1, instance_ubo_2],
         );
 
-        let size = (dynamic_buffer.len() * std::mem::size_of::<usize>()) as u64;
+        let size = (dynamic_buffer.len()
+            * std::mem::size_of::<usize>()) as u64;
 
         copy_buffer(
             device,

@@ -399,6 +399,75 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
+    pub fn draw(&self) -> vd::Result<()> {
+        let index = self.swapchain.acquire_next_image_khr(
+            u64::max_value(), // Disable timeout
+            Some(&self.image_available),
+            None,
+        )?;
+
+        let command_buffers = [self.command_buffers[index as usize].handle()];
+
+        // Synchronization primitives
+        let available_signals = [self.image_available.handle()];
+        let complete_signals = [self.render_complete.handle()];
+
+        // Wait for available images to render to
+        let info = vd::SubmitInfo::builder()
+            .wait_semaphores(&available_signals)
+            .wait_dst_stage_mask(
+                &vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
+            ).command_buffers(&command_buffers)
+            .signal_semaphores(&complete_signals)
+            .build();
+
+        match self.device.get_device_queue(self.graphics_family, 0) {
+            Some(gq) => {
+                unsafe {
+                    // Render
+                    self.device.queue_submit(gq, &[info], None)?;
+                }
+
+                let swapchains = [self.swapchain.handle()];
+                let indices = [index];
+
+                let present_q = self.device.get_device_queue(
+                    self.present_family,
+                    0,
+                );
+
+                match present_q {
+                    Some(pq) => {
+                        // Wait for complete frames to present
+                        let info = vd::PresentInfoKhr::builder()
+                            .wait_semaphores(&complete_signals)
+                            .swapchains(&swapchains)
+                            .image_indices(&indices)
+                            .build();
+
+
+                        unsafe {
+                            // Present
+                            self.device.queue_present_khr(pq, &info)?;
+                        }
+
+                        // Synchronize with GPU in debug mode
+                        // (prevents memory leaks from the validation layers)
+                        if ENABLE_VALIDATION_LAYERS {
+                            self.device.wait_idle();
+                        }
+                    },
+
+                    None => return Err("no present queue".into())
+                }
+            },
+
+            None => return Err("no graphics queue".into())
+        }
+
+        Ok(())
+    }
+
     // Free memory allocated on the GPU at init
     unsafe fn free_device_init(&mut self) {
         // Vertex buffer
@@ -1967,79 +2036,6 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
     destination.copy_from_slice(&data);
 
     device.unmap_memory(memory);
-
-    Ok(())
-}
-
-pub fn draw(
-    device:          &vd::Device,
-    swapchain:       &vd::SwapchainKhr,
-    image_available: &vd::Semaphore,
-    render_complete: &vd::Semaphore,
-    command_buffers: &Vec<vd::CommandBuffer>,
-    graphics_family: u32,
-    present_family:  u32,
-) -> vd::Result<()> {
-    let index = swapchain.acquire_next_image_khr(
-        u64::max_value(), // Disable timeout
-        Some(image_available),
-        None,
-    )?;
-
-    let command_buffers = [command_buffers[index as usize].handle()];
-
-    // Synchronization primitives
-    let available_signals = [image_available.handle()];
-    let complete_signals = [render_complete.handle()];
-
-    // Wait for available images to render to
-    let info = vd::SubmitInfo::builder()
-        .wait_semaphores(&available_signals)
-        .wait_dst_stage_mask(&vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
-        .command_buffers(&command_buffers)
-        .signal_semaphores(&complete_signals)
-        .build();
-
-    match device.get_device_queue(graphics_family, 0) {
-        Some(gq) => {
-            unsafe {
-                // Render
-                device.queue_submit(gq, &[info], None)?;
-            }
-
-            let swapchains = [swapchain.handle()];
-            let indices = [index];
-
-            let present_q = device.get_device_queue(present_family, 0);
-
-            match present_q {
-                Some(pq) => {
-                    // Wait for complete frames to present
-                    let info = vd::PresentInfoKhr::builder()
-                        .wait_semaphores(&complete_signals)
-                        .swapchains(&swapchains)
-                        .image_indices(&indices)
-                        .build();
-
-
-                    unsafe {
-                        // Present
-                        device.queue_present_khr(pq, &info)?;
-                    }
-
-                    // Synchronize with GPU in debug mode
-                    // (prevents memory leaks from the validation layers)
-                    if ENABLE_VALIDATION_LAYERS {
-                        device.wait_idle();
-                    }
-                },
-
-                None => return Err("no present queue".into())
-            }
-        },
-
-        None => return Err("no graphics queue".into())
-    }
 
     Ok(())
 }

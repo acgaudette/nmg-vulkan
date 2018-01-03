@@ -11,7 +11,7 @@ pub unsafe fn aligned_buffer<T>(
     debug_assert!(alignment >= ptr_len);
 
     let alignment = alignment / ptr_len;
-    let size = count * alignment + alignment; // Over-allocate
+    let size = count * alignment;
 
     eprintln!(
         "desired size = {} ({}B); expanded to {} ({}B)\n\
@@ -23,22 +23,8 @@ pub unsafe fn aligned_buffer<T>(
 
     // Waiting for std::heap...
     let mut memory = Vec::<usize>::with_capacity(size);
-    let ptr = memory.as_mut_ptr();
+    let mut ptr = memory.as_mut_ptr();
     std::mem::forget(memory);
-
-    // Align
-    let mut ptr = {
-        let current = ptr as usize;
-        let desired = (current + alignment - 1) & !(alignment - 1);
-        let offset = (desired - current) as isize;
-
-        eprintln!(
-            "current = @{}, desired = @{}, offset = {}",
-            current, desired, offset,
-        );
-
-        ptr.offset(offset)
-    };
 
     let start = ptr.clone();
 
@@ -53,14 +39,7 @@ pub unsafe fn aligned_buffer<T>(
         ptr = ptr.offset(alignment as isize);
     }
 
-    let shrinked = size - alignment;
-
-    eprintln!(
-        "\tfinal size = {} ({}B)",
-        shrinked, shrinked * ptr_len,
-    );
-
-    Vec::<usize>::from_raw_parts(start, shrinked, shrinked)
+    Vec::<usize>::from_raw_parts(start, size, size)
 }
 
 #[cfg(test)]

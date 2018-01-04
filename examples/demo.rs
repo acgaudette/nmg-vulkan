@@ -57,24 +57,24 @@ impl nmg::Game for Demo {
         let instance_ubo_0 = {
             let translation = alg::Mat::translation(0., 0., 2.);
             let rotation = alg::Mat::rotation(angle, angle, angle);
-            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+            let scale = alg::Mat::scale(1.0, 1.0, 1.0);
 
             let model = translation * rotation * scale;
             render::InstanceUBO::new(model)
         };
 
         let instance_ubo_1 = {
-            let translation = alg::Mat::translation(-0.5, -1.1, 3.);
+            let translation = alg::Mat::translation(-0.8, -1.1, 3.);
             let rotation = alg::Mat::rotation(0., angle, 0.);
-            let scale = alg::Mat::scale(0.8, 1.2, 1.);
+            let scale = alg::Mat::scale(0.9, 0.9, 1.);
 
             let model = translation * rotation * scale;
             render::InstanceUBO::new(model)
         };
 
         let instance_ubo_2 = {
-            let translation = alg::Mat::translation(1.2, 0.8, 4.);
-            let rotation = alg::Mat::rotation(angle, 0., 0.);
+            let translation = alg::Mat::translation(1.6, 0.8, 4.);
+            let rotation = alg::Mat::rotation(0., 0., angle);
             let scale = alg::Mat::scale(0.8, 1.2, 1.);
 
             let model = translation * rotation * scale;
@@ -109,36 +109,18 @@ fn main() {
 fn get_models() -> Vec<render::ModelData> {
     let pyramid = render::ModelData::new(
         vec![
-            render::Vertex::new( 0.0,  0.5, 0.5, 1., 0., 0.),
-            render::Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-            render::Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-
-            render::Vertex::new( 0.0,  0.5, 0.5, 0., 1., 0.),
-            render::Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-            render::Vertex::new( 0.5, -0.5, 0.0, 0., 1., 0.),
-
-            render::Vertex::new( 0.0,  0.5, 0.5, 0., 0., 1.),
-            render::Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-            render::Vertex::new( 0.5, -0.5, 1.0, 0., 0., 1.),
-
-            render::Vertex::new( 0.0,  0.5, 0.5, 1., 1., 0.),
-            render::Vertex::new(-0.5, -0.5, 0.0, 1., 1., 0.),
-            render::Vertex::new(-0.5, -0.5, 1.0, 1., 1., 0.),
-
-            render::Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
-            render::Vertex::new(-0.5, -0.5, 0.0, 1., 0., 0.),
-            render::Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-
-            render::Vertex::new(-0.5, -0.5, 1.0, 0., 0., 1.),
-            render::Vertex::new( 0.5, -0.5, 1.0, 0., 1., 0.),
-            render::Vertex::new( 0.5, -0.5, 0.0, 1., 0., 0.),
+            render::Vertex::new( 0.0,  0.5,  0.0, 1., 1., 0.), // Peak
+            render::Vertex::new( 0.5, -0.5, -0.5, 1., 0., 0.),
+            render::Vertex::new(-0.5, -0.5, -0.5, 1., 0., 1.),
+            render::Vertex::new( 0.5, -0.5,  0.5, 1., 1., 0.),
+            render::Vertex::new(-0.5, -0.5,  0.5, 1., 1., 1.),
         ], vec![
             0u32, 1u32, 2u32,
-            0u32, 4u32, 1u32,
-            0u32, 7u32, 4u32,
-            0u32, 2u32, 7u32,
-            1u32, 2u32, 7u32,
-            7u32, 4u32, 1u32,
+            0u32, 3u32, 1u32,
+            0u32, 4u32, 3u32,
+            0u32, 2u32, 4u32,
+            1u32, 2u32, 4u32,
+            4u32, 3u32, 1u32,
         ],
     );
 

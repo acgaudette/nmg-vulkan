@@ -209,8 +209,8 @@ impl Mat {
 
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
         let forward = (target - position).norm();
-        let right = forward.cross(up).norm();
-        let up = right.cross(forward);
+        let right = up.cross(forward).norm();
+        let up = forward.cross(right);
 
         // Transpose orthogonal matrix to get inverse
         let inverse_rotation = Mat::new(

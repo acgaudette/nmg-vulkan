@@ -817,7 +817,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         }
     }
 
-    if let None = physical_device {
+    if physical_device.is_none() {
         return Err("no suitable GPUs found".into())
     }
 
@@ -1018,13 +1018,13 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
         .stage(vd::ShaderStageFlags::VERTEX)
         .module(&vert_mod)
-        .name(&main)
+        .name(main)
         .build();
 
     let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
         .stage(vd::ShaderStageFlags::FRAGMENT)
         .module(&frag_mod)
-        .name(&main)
+        .name(main)
         .build();
 
     Ok((
@@ -1156,7 +1156,7 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
             }
         }
 
-        if let None = format {
+        if format.is_none() {
             return Err("GPU does not support required depth format".into());
         }
 
@@ -1244,7 +1244,7 @@ fn init_swapchain(
     /* Surface */
 
     let capabilities = device.physical_device().surface_capabilities_khr(
-        &surface
+        surface
     )?;
 
     // Frame queue size
@@ -1296,7 +1296,7 @@ fn init_swapchain(
 
     let swapchain = {
         let mut builder = vd::SwapchainKhr::builder(); builder
-            .surface(&surface)
+            .surface(surface)
             .min_image_count(image_count)
             .image_format(surface_format.format())
             .image_color_space(surface_format.color_space())
@@ -1664,7 +1664,7 @@ fn init_drawing(
     let mut framebuffers = Vec::with_capacity(views.len());
 
     for view in views {
-        let attachments = [&view, &depth_view];
+        let attachments = [view, &depth_view];
 
         let framebuffer = vd::Framebuffer::builder()
             .render_pass(render_pass)
@@ -1805,7 +1805,7 @@ fn init_drawing(
 
 fn init_commands(
     drawing_pool: &vd::CommandPool,
-    framebuffers: &Vec<vd::Framebuffer>,
+    framebuffers: &[vd::Framebuffer],
 ) -> vd::Result<Vec<vd::CommandBuffer>> {
     // Allocate command buffers from pool
     let command_buffers = drawing_pool.allocate_command_buffers(
@@ -2004,7 +2004,7 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
     );
 
     // Copy data
-    destination.copy_from_slice(&data);
+    destination.copy_from_slice(data);
 
     device.unmap_memory(memory);
 

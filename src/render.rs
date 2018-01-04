@@ -195,16 +195,13 @@ impl<'a> Context<'a> {
             Context {
                 device,
                 swapchain,
-
                 instances,
                 models,
-
                 surface,
                 surface_format,
                 sharing_mode,
                 q_indices,
                 present_mode,
-
                 graphics_family,
                 present_family,
                 drawing_pool,
@@ -224,7 +221,6 @@ impl<'a> Context<'a> {
                 ubo_alignment,
                 descriptor_sets,
                 command_buffers,
-
                 vertex_buffer,
                 vertex_memory,
                 index_buffer,
@@ -234,7 +230,6 @@ impl<'a> Context<'a> {
                 ubo_memory,
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
-
                 _vert_mod,
                 _frag_mod,
                 _depth_image,
@@ -247,7 +242,6 @@ impl<'a> Context<'a> {
     pub fn refresh_swapchain(
         &mut self, width: u32, height: u32
     ) -> vd::Result<()> {
-
         let (swapchain, _views) = init_swapchain(
             &self.device,
             &self.surface,
@@ -309,11 +303,12 @@ impl<'a> Context<'a> {
         /* Coup */
 
         self.swapchain = swapchain;
-        self.command_buffers = command_buffers;
-        self.framebuffers = framebuffers;
         self.render_pass = render_pass;
         self.pipeline = pipeline;
+        self.framebuffers = framebuffers;
+        self.ubo_alignment = ubo_alignment;
         self.descriptor_sets = descriptor_sets;
+        self.command_buffers = command_buffers;
 
         unsafe {
             self.free_device_refresh();
@@ -324,7 +319,6 @@ impl<'a> Context<'a> {
         self.ubo_memory = ubo_memory;
         self.dyn_ubo_buffer = dyn_ubo_buffer;
         self.dyn_ubo_memory = dyn_ubo_memory;
-        self.ubo_alignment = ubo_alignment;
 
         self._depth_image = _depth_image;
         self._views = _views;
@@ -354,8 +348,11 @@ impl<'a> Context<'a> {
 
         debug_assert!(self.command_buffers.len() == self.framebuffers.len());
 
-        for i in 0..self.command_buffers.len() {
-            self.command_buffers[i].begin(
+        let mut i = 0;
+        for buffer in &self.command_buffers {
+            buffer.reset(vd::CommandBufferResetFlags::empty())?;
+
+            buffer.begin(
                 vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
             )?;
 
@@ -376,17 +373,17 @@ impl<'a> Context<'a> {
 
             /* Execute render pass */
 
-            self.command_buffers[i].begin_render_pass(
+            buffer.begin_render_pass(
                 &pass_info,
                 vd::SubpassContents::Inline,
             );
 
-            self.command_buffers[i].bind_pipeline(
+            buffer.bind_pipeline(
                 vd::PipelineBindPoint::Graphics,
                 &self.pipeline.handle(),
             );
 
-            let handle = self.command_buffers[i].handle();
+            let handle = buffer.handle();
 
             unsafe {
                 self.device.cmd_bind_vertex_buffers(
@@ -411,7 +408,7 @@ impl<'a> Context<'a> {
                 // Render each instance
                 for _ in 0..self.instances.data[j].len() {
                     // Bind uniform data
-                    self.command_buffers[i].bind_descriptor_sets(
+                    buffer.bind_descriptor_sets(
                         vd::PipelineBindPoint::Graphics,
                         &self.pipeline_layout,
                         0,
@@ -421,7 +418,7 @@ impl<'a> Context<'a> {
                     );
 
                     // Draw call
-                    self.command_buffers[i].draw_indexed(
+                    buffer.draw_indexed(
                         self.models[j].index_count,
                         1,
                         self.models[j].index_offset,
@@ -433,8 +430,10 @@ impl<'a> Context<'a> {
                 }
             }
 
-            self.command_buffers[i].end_render_pass();
-            self.command_buffers[i].end()?;
+            buffer.end_render_pass();
+            buffer.end()?;
+
+            i += i;
         }
 
         /* Copy UBOs to GPU */

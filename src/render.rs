@@ -665,6 +665,30 @@ impl Instances {
 }
 
 #[derive(Clone, Copy)]
+struct InstanceHandle {
+    value: u32,
+}
+
+impl InstanceHandle {
+    fn new(model_index: u32, instance_index: u32) -> InstanceHandle {
+        debug_assert!(model_index >> 16 == 0);
+        debug_assert!(instance_index >> 16 == 0);
+
+        InstanceHandle {
+            value: instance_index | (model_index << 16)
+        }
+    }
+
+    fn model_index(self) -> u16 {
+        (self.value >> 16) as u16
+    }
+
+    fn instance_index(self) -> u16 {
+        self.value as u16
+    }
+}
+
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct Vertex {
     pub position: alg::Vec3,

@@ -669,7 +669,7 @@ impl Instances {
 }
 
 #[derive(Clone, Copy)]
-struct InstanceHandle {
+pub struct InstanceHandle {
     _value: u32,
 }
 

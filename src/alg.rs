@@ -214,15 +214,17 @@ impl Mat {
 
         // Transpose orthogonal matrix to get inverse
         let inverse_rotation = Mat::new(
-            right.x, up.x, forward.x, 0.0,
-            right.y, up.y, forward.y, 0.0,
-            right.z, up.z, forward.z, 0.0,
-                0.0,  0.0,       0.0, 1.0,
+              right.x,   right.y,   right.z, 0.0,
+                 up.x,      up.y,      up.z, 0.0,
+            forward.x, forward.y, forward.z, 0.0,
+                  0.0,       0.0,       0.0, 1.0,
         );
 
         // Reverse position input
         let inverse_position = Mat::translation(
-            -position.x, -position.y, -position.z,
+            -position.x,
+             position.y, // Don't flip Y twice
+            -position.z,
         );
 
         inverse_rotation * inverse_position

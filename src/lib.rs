@@ -6,6 +6,22 @@ pub mod render;
 mod statics;
 mod util;
 
+pub trait Game {
+    fn start(
+        &mut self,
+        instances: &mut render::Instances,
+    );
+
+    fn update(
+        &mut self,
+        time: f64,
+        last_time: f64,
+        screen_height: u32,
+        screen_width: u32,
+        instances: &mut render::Instances,
+    ) -> render::SharedUBO;
+}
+
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
 where
     T: Game,

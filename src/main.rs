@@ -12,8 +12,14 @@ fn main() {
     let model_data = logic::init();
     let context = render::Context::new(&window, model_data);
 
+    let mut demo_data = logic::Demo { instances: Vec::new() };
+
     match context {
-        Ok(mut context) => update(&window, events, &mut context),
+        Ok(mut context) => {
+            logic::start(&mut demo_data, &mut context.instances);
+            update(&window, events, &mut context, &demo_data);
+        }
+
         Err(e) => eprintln!("Could not create Vulkan context: {}", e)
     }
 }
@@ -36,6 +42,7 @@ fn update(
     window: &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
     context: &mut render::Context,
+    demo_data: &logic::Demo,
 ) {
     let mut running = true;
     let start = std::time::Instant::now();

@@ -161,7 +161,7 @@ impl Mat {
     pub fn translation(x: f32, y: f32, z: f32) -> Mat {
         Mat::new(
             1.0, 0.0, 0.0,   x,
-            0.0, 1.0, 0.0,  -y, // Left-handed (correct Vulkan axis)
+            0.0, 1.0, 0.0,   y,
             0.0, 0.0, 1.0,   z,
             0.0, 0.0, 0.0, 1.0,
         )
@@ -170,8 +170,8 @@ impl Mat {
     pub fn rotation_x(rad: f32) -> Mat {
         Mat::new(
             1.0,       0.0,        0.0, 0.0,
-            0.0,  rad.cos(), rad.sin(), 0.0,
-            0.0, -rad.sin(), rad.cos(), 0.0,
+            0.0, rad.cos(), -rad.sin(), 0.0,
+            0.0, rad.sin(),  rad.cos(), 0.0,
             0.0,       0.0,        0.0, 1.0,
         )
     }
@@ -187,8 +187,8 @@ impl Mat {
 
     pub fn rotation_z(rad: f32) -> Mat {
         Mat::new(
-            rad.cos(), -rad.sin(), 0.0, 0.0,
-            rad.sin(),  rad.cos(), 0.0, 0.0,
+             rad.cos(), rad.sin(), 0.0, 0.0,
+            -rad.sin(), rad.cos(), 0.0, 0.0,
                   0.0,        0.0, 1.0, 0.0,
                   0.0,        0.0, 0.0, 1.0,
         )
@@ -223,7 +223,7 @@ impl Mat {
         // Reverse position input
         let inverse_position = Mat::translation(
             -position.x,
-             position.y, // Don't flip Y twice
+            -position.y,
             -position.z,
         );
 
@@ -241,10 +241,10 @@ impl Mat {
         let z_offset = -near / (far - near);
 
         Mat::new(
-            x_scale,     0.0,     0.0,      0.0,
-                0.0, y_scale,     0.0,      0.0,
-                0.0,     0.0, z_scale, z_offset,
-                0.0,     0.0,     1.0,      0.0, // Left-handed (scaling factor)
+            x_scale,      0.0,     0.0,      0.0,
+                0.0, -y_scale,     0.0,      0.0, // Flip for Vulkan
+                0.0,      0.0, z_scale, z_offset,
+                0.0,      0.0,     1.0,      0.0, // Left-handed (scaling factor)
         )
     }
 

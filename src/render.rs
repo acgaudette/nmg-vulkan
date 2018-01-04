@@ -348,11 +348,12 @@ impl<'a> Context<'a> {
 
         debug_assert!(self.command_buffers.len() == self.framebuffers.len());
 
-        let mut i = 0;
-        for buffer in &self.command_buffers {
-            buffer.reset(vd::CommandBufferResetFlags::empty())?;
+        for i in 0..self.command_buffers.len() {
+            self.command_buffers[i].reset(
+                vd::CommandBufferResetFlags::empty(),
+            )?;
 
-            buffer.begin(
+            self.command_buffers[i].begin(
                 vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
             )?;
 
@@ -373,17 +374,17 @@ impl<'a> Context<'a> {
 
             /* Execute render pass */
 
-            buffer.begin_render_pass(
+            self.command_buffers[i].begin_render_pass(
                 &pass_info,
                 vd::SubpassContents::Inline,
             );
 
-            buffer.bind_pipeline(
+            self.command_buffers[i].bind_pipeline(
                 vd::PipelineBindPoint::Graphics,
                 &self.pipeline.handle(),
             );
 
-            let handle = buffer.handle();
+            let handle = self.command_buffers[i].handle();
 
             unsafe {
                 self.device.cmd_bind_vertex_buffers(
@@ -408,7 +409,7 @@ impl<'a> Context<'a> {
                 // Render each instance
                 for _ in 0..self.instances.data[j].len() {
                     // Bind uniform data
-                    buffer.bind_descriptor_sets(
+                    self.command_buffers[i].bind_descriptor_sets(
                         vd::PipelineBindPoint::Graphics,
                         &self.pipeline_layout,
                         0,
@@ -418,7 +419,7 @@ impl<'a> Context<'a> {
                     );
 
                     // Draw call
-                    buffer.draw_indexed(
+                    self.command_buffers[i].draw_indexed(
                         self.models[j].index_count,
                         1,
                         self.models[j].index_offset,
@@ -430,10 +431,8 @@ impl<'a> Context<'a> {
                 }
             }
 
-            buffer.end_render_pass();
-            buffer.end()?;
-
-            i += i;
+            self.command_buffers[i].end_render_pass();
+            self.command_buffers[i].end()?;
         }
 
         /* Copy UBOs to GPU */

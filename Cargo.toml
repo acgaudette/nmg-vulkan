@@ -1,5 +1,5 @@
 [package]
-name = "nmg-vulkan"
+name = "nmg_vulkan"
 version = "0.1.0"
 authors = ["Aaron C Gaudette <gaudetteaaron@gmail.com>"]
 

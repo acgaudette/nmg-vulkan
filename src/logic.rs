@@ -2,7 +2,7 @@ use alg;
 use render;
 
 pub struct Demo {
-    instances: Vec<render::InstanceHandle>,
+    pub instances: Vec<render::InstanceHandle>,
 }
 
 pub fn init() -> Vec<render::ModelData> {
@@ -46,7 +46,7 @@ pub fn init() -> Vec<render::ModelData> {
     vec![pyramid]
 }
 
-pub fn start(data: &mut Demo, instances: &mut render::Instances) {
+pub fn start(instances: &mut render::Instances, data: &mut Demo) {
     data.instances.push(
         instances.add(render::InstanceUBO::default(), 0)
     );
@@ -66,6 +66,7 @@ pub fn update(
     instances:     &mut render::Instances,
     screen_height: u32,
     screen_width:  u32,
+    demo_data:     &mut Demo,
 ) -> render::SharedUBO {
     let shared_ubo = {
         let view = alg::Mat::look_at_view(
@@ -114,6 +115,21 @@ pub fn update(
         let model = translation * rotation * scale;
         render::InstanceUBO::new(model)
     };
+
+    instances.update(
+        demo_data.instances[0],
+        instance_ubo_0,
+    );
+
+    instances.update(
+        demo_data.instances[1],
+        instance_ubo_1,
+    );
+
+    instances.update(
+        demo_data.instances[2],
+        instance_ubo_2,
+    );
 
     shared_ubo
 }

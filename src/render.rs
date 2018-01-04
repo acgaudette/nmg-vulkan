@@ -601,18 +601,6 @@ impl Model {
     }
 }
 
-pub struct ModelInstance {
-    ubo: InstanceUBO,
-}
-
-impl ModelInstance {
-    pub fn new(ubo: InstanceUBO) -> ModelInstance {
-        ModelInstance {
-            ubo,
-        }
-    }
-}
-
 pub struct Instances {
     data: Vec<Vec<InstanceUBO>>,
 }

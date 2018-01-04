@@ -46,6 +46,20 @@ pub fn init() -> Vec<render::ModelData> {
     vec![pyramid]
 }
 
+pub fn start(data: &mut Demo, instances: &mut render::Instances) {
+    data.instances.push(
+        instances.add(render::InstanceUBO::default(), 0)
+    );
+
+    data.instances.push(
+        instances.add(render::InstanceUBO::default(), 0)
+    );
+
+    data.instances.push(
+        instances.add(render::InstanceUBO::default(), 0)
+    );
+}
+
 pub fn update(
     time:          f64,
     last_time:     f64,

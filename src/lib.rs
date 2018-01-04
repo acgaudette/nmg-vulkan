@@ -1,23 +1,22 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
+pub mod alg;
+pub mod render;
 mod statics;
-mod alg;
-mod render;
-mod logic;
 mod util;
 
-fn main() {
+pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
+where
+    T: Game,
+{
     let (events, window) = init_window();
-    let model_data = logic::init();
     let context = render::Context::new(&window, model_data);
-
-    let mut demo_data = logic::Demo { instances: Vec::new() };
 
     match context {
         Ok(mut context) => {
-            logic::start(&mut context.instances, &mut demo_data);
-            update(&window, events, &mut context, &mut demo_data);
+            game.start(&mut context.instances);
+            update(game, &window, events, &mut context);
         }
 
         Err(e) => eprintln!("Could not create Vulkan context: {}", e)
@@ -38,12 +37,14 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     (events, window.unwrap())
 }
 
-fn update(
+fn update<T>(
+    mut game: T,
     window: &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
     context: &mut render::Context,
-    demo_data: &mut logic::Demo,
-) {
+) where
+    T: Game,
+{
     let mut running = true;
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
@@ -87,13 +88,12 @@ fn update(
             + (duration.subsec_nanos() as f64 / 1000000000.);
 
         // Update scene data
-        let shared_ubo = logic::update(
+        let shared_ubo = game.update(
             time,
             last_time,
-            &mut context.instances,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
-            demo_data,
+            &mut context.instances,
         );
 
         last_time = time;

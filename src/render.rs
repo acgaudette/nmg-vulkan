@@ -682,7 +682,7 @@ impl Instances {
 
 #[derive(Clone, Copy)]
 struct InstanceHandle {
-    value: u32,
+    _value: u32,
 }
 
 impl InstanceHandle {
@@ -691,16 +691,16 @@ impl InstanceHandle {
         debug_assert!(instance_index >> 16 == 0);
 
         InstanceHandle {
-            value: instance_index | (model_index << 16)
+            _value: instance_index | (model_index << 16)
         }
     }
 
     fn model_index(self) -> u16 {
-        (self.value >> 16) as u16
+        (self._value >> 16) as u16
     }
 
     fn instance_index(self) -> u16 {
-        self.value as u16
+        self._value as u16
     }
 }
 

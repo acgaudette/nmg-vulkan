@@ -437,15 +437,6 @@ impl<'a> Context<'a> {
 
         /* Copy UBOs to GPU */
 
-        // Not optimal: recreates UBO array on host memory
-        let mut ubos = Vec::with_capacity(self.instances.count());
-
-        for model in &self.instances.data {
-            for instance in model {
-                ubos.push(instance.ubo);
-            }
-        }
-
         unsafe {
             copy_buffer(
                 &self.device,
@@ -453,21 +444,26 @@ impl<'a> Context<'a> {
                 std::mem::size_of::<SharedUBO>() as u64,
                 &[shared_ubo],
             )?;
+        }
 
-            // Not optimal: requires yet another heap allocation
-            let dynamic_buffer = util::aligned_buffer(
-                self.ubo_alignment as usize,
-                &ubos,
-            );
+        // Not optimal: requires copies and a heap allocation
+        let mut dynamic_buffer = util::AlignedBuffer::new(
+            self.ubo_alignment as usize,
+            self.instances.count(),
+        );
 
-            let size = (dynamic_buffer.len()
-                * std::mem::size_of::<usize>()) as u64;
+        for model in &self.instances.data {
+            for ubo in model {
+                dynamic_buffer.push(ubo);
+            }
+        }
 
+        unsafe {
             copy_buffer(
                 &self.device,
                 self.dyn_ubo_memory,
-                size,
-                &dynamic_buffer,
+                dynamic_buffer.size as u64,
+                &dynamic_buffer.finalize(),
             )?;
         }
 

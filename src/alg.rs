@@ -10,9 +10,7 @@ fn inverse_sqrt(x: f32) -> f32 {
     };
 
     let guess = 0x5f3759df - (cast >> 1);
-    let guess: f32 = unsafe {
-        std::mem::transmute(guess)
-    };
+    let guess = f32::from_bits(guess);
 
     let iteration = guess * (1.5 - half * guess * guess);
     iteration * (1.5 - half * iteration * iteration)

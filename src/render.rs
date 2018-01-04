@@ -447,14 +447,14 @@ impl<'a> Context<'a> {
         }
 
         // Not optimal: requires copies and a heap allocation
-        let mut dynamic_buffer = util::AlignedBuffer::new(
+        let mut dynamic_buffer = util::AlignedBuffer::<InstanceUBO>::new(
             self.ubo_alignment as usize,
             self.instances.count(),
         );
 
         for model in &self.instances.data {
             for ubo in model {
-                dynamic_buffer.push(ubo);
+                dynamic_buffer.push(ubo.clone());
             }
         }
 

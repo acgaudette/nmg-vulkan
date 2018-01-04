@@ -160,8 +160,8 @@ impl Mat {
     pub fn rotation_x(rad: f32) -> Mat {
         Mat::new(
             1.0,       0.0,        0.0, 0.0,
-            0.0, rad.cos(), -rad.sin(), 0.0,
-            0.0, rad.sin(),  rad.cos(), 0.0,
+            0.0,  rad.cos(), rad.sin(), 0.0,
+            0.0, -rad.sin(), rad.cos(), 0.0,
             0.0,       0.0,        0.0, 1.0,
         )
     }

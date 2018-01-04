@@ -761,6 +761,14 @@ impl InstanceUBO {
     }
 }
 
+impl Default for InstanceUBO {
+    fn default() -> InstanceUBO {
+        InstanceUBO {
+            model: alg::Mat::identity(),
+        }
+    }
+}
+
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
     u32,

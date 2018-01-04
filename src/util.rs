@@ -18,7 +18,7 @@ pub unsafe fn aligned_buffer<T>(
     let mut ptr = memory.as_mut_ptr();
     std::mem::forget(memory);
 
-    let start = ptr.clone();
+    let start = ptr;
 
     // Copy data to aligned buffer
     for entry in data {

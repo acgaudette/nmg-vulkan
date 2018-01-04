@@ -30,15 +30,8 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
 pub struct Context<'a> {
-    /* Drawing fields */
-
-    pub device:      vd::Device,
-    pub swapchain:   vd::SwapchainKhr,
-    command_buffers: Vec<vd::CommandBuffer>,
-    graphics_family: u32,
-    present_family:  u32,
-    image_available: vd::Semaphore,
-    render_complete: vd::Semaphore,
+    pub device:    vd::Device,
+    pub swapchain: vd::SwapchainKhr,
 
     /* Meshes */
 
@@ -47,23 +40,33 @@ pub struct Context<'a> {
 
     /* Swapchain recreation data */
 
-    surface:         vd::SurfaceKhr,
-    surface_format:  vd::SurfaceFormatKhr,
-    sharing_mode:    vd::SharingMode,
-    q_indices:       Vec<u32>,
-    present_mode:    vd::PresentModeKhr,
+    surface:        vd::SurfaceKhr,
+    surface_format: vd::SurfaceFormatKhr,
+    sharing_mode:   vd::SharingMode,
+    q_indices:      Vec<u32>,
+    present_mode:   vd::PresentModeKhr,
 
     /* Fixed information */
 
+    graphics_family: u32,
+    present_family:  u32,
+    drawing_pool:    vd::CommandPool,
+    transient_pool:  vd::CommandPool,
+    image_available: vd::Semaphore,
+    render_complete: vd::Semaphore,
     shader_stages:   [vd::PipelineShaderStageCreateInfo<'a>; 2],
+    depth_format:    vd::Format,
     assembly:        vd::PipelineInputAssemblyStateCreateInfo<'a>,
     rasterizer:      vd::PipelineRasterizationStateCreateInfo<'a>,
     multisampling:   vd::PipelineMultisampleStateCreateInfo<'a>,
     ubo_layout:      vd::DescriptorSetLayout,
     pipeline_layout: vd::PipelineLayout,
-    drawing_pool:    vd::CommandPool,
-    transient_pool:  vd::CommandPool,
-    depth_format:    vd::Format,
+    render_pass:     vd::RenderPass,
+    pipeline:        vd::GraphicsPipeline,
+    framebuffers:    Vec<vd::Framebuffer>,
+    ubo_alignment:   u64,
+    descriptor_sets: Vec<vd::DescriptorSet>,
+    command_buffers: Vec<vd::CommandBuffer>,
 
     /* Unsafe data */
 
@@ -76,18 +79,13 @@ pub struct Context<'a> {
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_buffer: vd::BufferHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
-    ubo_alignment:  u64,
 
     /* Persistent data */
 
     _vert_mod:        vd::ShaderModule,
     _frag_mod:        vd::ShaderModule,
     _depth_image:     vd::Image,
-    _framebuffers:    Vec<vd::Framebuffer>,
-    _render_pass:     vd::RenderPass,
     _views:           Vec<vd::ImageView>,
-    _pipeline:        vd::GraphicsPipeline,
-    _descriptor_sets: Vec<vd::DescriptorSet>,
     _descriptor_pool: vd::DescriptorPool,
 }
 
@@ -151,71 +149,52 @@ impl<'a> Context<'a> {
             None,
         )?;
 
-        let _render_pass = init_render_pass(
+        let render_pass = init_render_pass(
             &swapchain,
             depth_format,
             &device,
         )?;
 
-        let _pipeline = init_pipeline(
+        let pipeline = init_pipeline(
             &swapchain,
             &shader_stages,
             &assembly,
             &rasterizer,
             &multisampling,
             &pipeline_layout,
-            &_render_pass,
+            &render_pass,
             &device,
         )?;
 
         let (
             _depth_image,
             depth_memory,
-            _framebuffers,
+            framebuffers,
             ubo_buffer,
             ubo_memory,
             dyn_ubo_buffer,
             dyn_ubo_memory,
             ubo_alignment,
-            _descriptor_sets,
+            descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
             &swapchain,
             depth_format,
             &_views,
-            &_render_pass,
+            &render_pass,
             &device,
             &transient_pool,
             graphics_family,
             ubo_layout.handle(),
         )?;
 
-        let command_buffers = init_commands(
-            &drawing_pool,
-            &_framebuffers,
-            &_render_pass,
-            &swapchain,
-            &device,
-            _pipeline.handle(),
-            vertex_buffer,
-            index_buffer,
-            &pipeline_layout,
-            &_descriptor_sets,
-            ubo_alignment,
-            &models,
-            &instances,
-        )?;
+        let command_buffers = init_commands(&drawing_pool, &framebuffers)?;
 
         // Return newly-built context structure
         Ok(
             Context {
                 device,
                 swapchain,
-                command_buffers,
-                graphics_family,
-                present_family,
-                image_available,
-                render_complete,
 
                 instances,
                 models,
@@ -226,15 +205,25 @@ impl<'a> Context<'a> {
                 q_indices,
                 present_mode,
 
+                graphics_family,
+                present_family,
+                drawing_pool,
+                transient_pool,
+                image_available,
+                render_complete,
                 shader_stages,
+                depth_format,
                 assembly,
                 rasterizer,
                 multisampling,
                 ubo_layout,
                 pipeline_layout,
-                drawing_pool,
-                transient_pool,
-                depth_format,
+                render_pass,
+                pipeline,
+                framebuffers,
+                ubo_alignment,
+                descriptor_sets,
+                command_buffers,
 
                 vertex_buffer,
                 vertex_memory,
@@ -245,16 +234,11 @@ impl<'a> Context<'a> {
                 ubo_memory,
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
-                ubo_alignment,
 
                 _vert_mod,
                 _frag_mod,
                 _depth_image,
-                _framebuffers,
-                _render_pass,
                 _views,
-                _pipeline,
-                _descriptor_sets,
                 _descriptor_pool,
             }
         )
@@ -275,39 +259,39 @@ impl<'a> Context<'a> {
             Some(&self.swapchain), // Pass in old swapchain
         )?;
 
-        let _render_pass = init_render_pass(
+        let render_pass = init_render_pass(
             &swapchain,
             self.depth_format,
             &self.device,
         )?;
 
-        let _pipeline = init_pipeline(
+        let pipeline = init_pipeline(
             &swapchain,
             &self.shader_stages,
             &self.assembly,
             &self.rasterizer,
             &self.multisampling,
             &self.pipeline_layout,
-            &_render_pass,
+            &render_pass,
             &self.device,
         )?;
 
         let (
             _depth_image,
             depth_memory,
-            _framebuffers,
+            framebuffers,
             ubo_buffer,
             ubo_memory,
             dyn_ubo_buffer,
             dyn_ubo_memory,
             ubo_alignment,
-            _descriptor_sets,
+            descriptor_sets,
             _descriptor_pool,
         ) = init_drawing(
             &swapchain,
             self.depth_format,
             &_views,
-            &_render_pass,
+            &render_pass,
             &self.device,
             &self.transient_pool,
             self.graphics_family,
@@ -316,18 +300,7 @@ impl<'a> Context<'a> {
 
         let command_buffers = init_commands(
             &self.drawing_pool,
-            &_framebuffers,
-            &_render_pass,
-            &swapchain,
-            &self.device,
-            _pipeline.handle(),
-            self.vertex_buffer,
-            self.index_buffer,
-            &self.pipeline_layout,
-            &_descriptor_sets,
-            ubo_alignment,
-            &self.models,
-            &self.instances,
+            &framebuffers,
         )?;
 
         // Synchronize
@@ -337,6 +310,10 @@ impl<'a> Context<'a> {
 
         self.swapchain = swapchain;
         self.command_buffers = command_buffers;
+        self.framebuffers = framebuffers;
+        self.render_pass = render_pass;
+        self.pipeline = pipeline;
+        self.descriptor_sets = descriptor_sets;
 
         unsafe {
             self.free_device_refresh();
@@ -350,17 +327,116 @@ impl<'a> Context<'a> {
         self.ubo_alignment = ubo_alignment;
 
         self._depth_image = _depth_image;
-        self._framebuffers = _framebuffers;
-        self._render_pass = _render_pass;
         self._views = _views;
-        self._pipeline = _pipeline;
-        self._descriptor_sets = _descriptor_sets;
         self._descriptor_pool = _descriptor_pool;
 
         Ok(())
     }
 
     pub fn update(&mut self, shared_ubo: SharedUBO) -> vd::Result<()> {
+        /* Rebuild command buffers */
+
+        let clears = [
+            // Clear color
+            vd::ClearValue {
+                color: vd::ClearColorValue {
+                    float32: [0f32, 0f32, 0f32, 1f32]
+                }
+            },
+
+            vd::ClearValue {
+                depthStencil: vd::vks::VkClearDepthStencilValue {
+                    depth: 1., // Initialized to max depth
+                    stencil: 0,
+                }
+            },
+        ];
+
+        debug_assert!(self.command_buffers.len() == self.framebuffers.len());
+
+        for i in 0..self.command_buffers.len() {
+            self.command_buffers[i].begin(
+                vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
+            )?;
+
+            let pass_info = vd::RenderPassBeginInfo::builder()
+                .render_pass(self.render_pass.handle())
+                .framebuffer(&self.framebuffers[i])
+                .render_area(
+                    vd::Rect2d::builder()
+                        .offset(
+                            vd::Offset2d::builder()
+                                .x(0)
+                                .y(0)
+                                .build()
+                        ).extent(self.swapchain.extent().clone())
+                        .build()
+                ).clear_values(&clears)
+                .build();
+
+            /* Execute render pass */
+
+            self.command_buffers[i].begin_render_pass(
+                &pass_info,
+                vd::SubpassContents::Inline,
+            );
+
+            self.command_buffers[i].bind_pipeline(
+                vd::PipelineBindPoint::Graphics,
+                &self.pipeline.handle(),
+            );
+
+            let handle = self.command_buffers[i].handle();
+
+            unsafe {
+                self.device.cmd_bind_vertex_buffers(
+                    handle,
+                    0,
+                    &[self.vertex_buffer],
+                    &[0],
+                );
+
+                self.device.cmd_bind_index_buffer(
+                    handle,
+                    self.index_buffer,
+                    0,
+                    vd::IndexType::Uint32,
+                );
+            }
+
+            debug_assert!(self.models.len() == self.instances.data.len());
+
+            let mut instance = 0;
+            for j in 0..self.models.len() {
+                // Render each instance
+                for _ in 0..self.instances.data[j].len() {
+                    // Bind uniform data
+                    self.command_buffers[i].bind_descriptor_sets(
+                        vd::PipelineBindPoint::Graphics,
+                        &self.pipeline_layout,
+                        0,
+                        &[&self.descriptor_sets[0]], // Single descriptor set
+                        // Offset dynamic uniform buffer
+                        &[self.ubo_alignment as u32 * instance as u32],
+                    );
+
+                    // Draw call
+                    self.command_buffers[i].draw_indexed(
+                        self.models[j].index_count,
+                        1,
+                        self.models[j].index_offset,
+                        0, // No vertex offset
+                        0,
+                    );
+
+                    instance += 1;
+                }
+            }
+
+            self.command_buffers[i].end_render_pass();
+            self.command_buffers[i].end()?;
+        }
+
         /* Copy UBOs to GPU */
 
         // Not optimal: recreates UBO array on host memory
@@ -396,26 +472,6 @@ impl<'a> Context<'a> {
                 &dynamic_buffer,
             )?;
         }
-
-        // Rebuild command buffers
-
-        let command_buffers = init_commands(
-            &self.drawing_pool,
-            &self._framebuffers,
-            &self._render_pass,
-            &self.swapchain,
-            &self.device,
-            self._pipeline.handle(),
-            self.vertex_buffer,
-            self.index_buffer,
-            &self.pipeline_layout,
-            &self._descriptor_sets,
-            self.ubo_alignment,
-            &self.models,
-            &self.instances,
-        )?;
-
-        self.command_buffers = command_buffers;
 
         Ok(())
     }
@@ -1750,125 +1806,14 @@ fn init_drawing(
 }
 
 fn init_commands(
-    drawing_pool:    &vd::CommandPool,
-    framebuffers:    &Vec<vd::Framebuffer>,
-    render_pass:     &vd::RenderPass,
-    swapchain:       &vd::SwapchainKhr,
-    device:          &vd::Device,
-    pipeline:        vd::PipelineHandle,
-    vertex_buffer:   vd::BufferHandle,
-    index_buffer:    vd::BufferHandle,
-    pipeline_layout: &vd::PipelineLayout,
-    descriptor_sets: &Vec<vd::DescriptorSet>,
-    ubo_alignment:   u64,
-    models:          &[Model],
-    instances:       &Instances,
+    drawing_pool: &vd::CommandPool,
+    framebuffers: &Vec<vd::Framebuffer>,
 ) -> vd::Result<Vec<vd::CommandBuffer>> {
+    // Allocate command buffers from pool
     let command_buffers = drawing_pool.allocate_command_buffers(
         vd::CommandBufferLevel::Primary,
         framebuffers.len() as u32,
     )?;
-
-    let clears = [
-        // Clear color
-        vd::ClearValue {
-            color: vd::ClearColorValue {
-                float32: [0f32, 0f32, 0f32, 1f32]
-            }
-        },
-
-        vd::ClearValue {
-            depthStencil: vd::vks::VkClearDepthStencilValue {
-                depth: 1., // Initialized to max depth
-                stencil: 0,
-            }
-        },
-    ];
-
-    debug_assert!(command_buffers.len() == framebuffers.len());
-
-    for i in 0..command_buffers.len() {
-        command_buffers[i].begin(
-            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
-        )?;
-
-        let pass_info = vd::RenderPassBeginInfo::builder()
-            .render_pass(render_pass)
-            .framebuffer(&framebuffers[i])
-            .render_area(
-                vd::Rect2d::builder()
-                    .offset(
-                        vd::Offset2d::builder()
-                            .x(0)
-                            .y(0)
-                            .build()
-                    ).extent(swapchain.extent().clone())
-                    .build()
-            ).clear_values(&clears)
-            .build();
-
-        /* Execute render pass */
-
-        command_buffers[i].begin_render_pass(
-            &pass_info,
-            vd::SubpassContents::Inline,
-        );
-
-        command_buffers[i].bind_pipeline(
-            vd::PipelineBindPoint::Graphics,
-            &pipeline,
-        );
-
-        let handle = command_buffers[i].handle();
-
-        unsafe {
-            device.cmd_bind_vertex_buffers(
-                handle,
-                0,
-                &[vertex_buffer],
-                &[0],
-            );
-
-            device.cmd_bind_index_buffer(
-                handle,
-                index_buffer,
-                0,
-                vd::IndexType::Uint32,
-            );
-        }
-
-        debug_assert!(models.len() == instances.data.len());
-
-        let mut instance = 0;
-        for j in 0..models.len() {
-            // Render each instance
-            for _ in 0..instances.data[j].len() {
-                // Bind uniform data
-                command_buffers[i].bind_descriptor_sets(
-                    vd::PipelineBindPoint::Graphics,
-                    pipeline_layout,
-                    0,
-                    &[&descriptor_sets[0]], // Single descriptor set
-                    // Offset dynamic uniform buffer
-                    &[ubo_alignment as u32 * instance as u32],
-                );
-
-                // Draw call
-                command_buffers[i].draw_indexed(
-                    models[j].index_count,
-                    1,
-                    models[j].index_offset,
-                    0, // No vertex offset
-                    0,
-                );
-
-                instance += 1;
-            }
-        }
-
-        command_buffers[i].end_render_pass();
-        command_buffers[i].end()?;
-    }
 
     Ok(command_buffers.into_vec())
 }

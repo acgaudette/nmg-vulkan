@@ -16,8 +16,8 @@ fn main() {
 
     match context {
         Ok(mut context) => {
-            logic::start(&mut demo_data, &mut context.instances);
-            update(&window, events, &mut context, &demo_data);
+            logic::start(&mut context.instances, &mut demo_data);
+            update(&window, events, &mut context, &mut demo_data);
         }
 
         Err(e) => eprintln!("Could not create Vulkan context: {}", e)
@@ -42,7 +42,7 @@ fn update(
     window: &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
     context: &mut render::Context,
-    demo_data: &logic::Demo,
+    demo_data: &mut logic::Demo,
 ) {
     let mut running = true;
     let start = std::time::Instant::now();
@@ -93,6 +93,7 @@ fn update(
             &mut context.instances,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
+            demo_data,
         );
 
         last_time = time;

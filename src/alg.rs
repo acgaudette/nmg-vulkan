@@ -108,6 +108,16 @@ impl std::ops::Sub for Vec3 {
     }
 }
 
+impl std::fmt::Display for Vec3 {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            out,
+            "( {}, {}, {} )",
+            self.x, self.y, self.z,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat {

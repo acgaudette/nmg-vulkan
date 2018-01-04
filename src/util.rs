@@ -22,12 +22,7 @@ pub unsafe fn aligned_buffer<T>(
 
     // Copy data to aligned buffer
     for entry in data {
-        std::ptr::copy_nonoverlapping(
-            entry as *const T,
-            ptr as *mut T,
-            1,
-        );
-
+        std::ptr::copy_nonoverlapping(entry as *const T, ptr as *mut T, 1);
         ptr = ptr.offset(alignment as isize);
     }
 
@@ -36,8 +31,8 @@ pub unsafe fn aligned_buffer<T>(
 
 #[cfg(test)]
 mod tests {
-    use util::*;
     use alg;
+    use util::*;
 
     #[test]
     fn create_aligned_buffers() {
@@ -53,9 +48,7 @@ mod tests {
     }
 
     fn compare_aligned_buffer(alignment: usize, matrices: &[alg::Mat]) {
-        let mut raw = unsafe {
-            aligned_buffer(alignment, matrices)
-        };
+        let mut raw = unsafe { aligned_buffer(alignment, matrices) };
 
         let aligned = {
             let mut result = Vec::<alg::Mat>::with_capacity(matrices.len());

@@ -618,7 +618,7 @@ impl ModelInstance {
 }
 
 pub struct Instances {
-    data: Vec<Vec<ModelInstance>>,
+    data: Vec<Vec<InstanceUBO>>,
 }
 
 impl Instances {
@@ -644,15 +644,35 @@ impl Instances {
         Instances { data }
     }
 
-    pub fn add(&mut self, instance: ModelInstance, model: usize) -> usize {
-        self.data[model].push(instance);
-        self.data[model].len() - 1 // Return handle to new instance
+    // Returns handle to new instance
+    pub fn add(
+        &mut self,
+        instance_data: InstanceUBO,
+        model_index:   usize,
+    ) -> InstanceHandle {
+        self.data[model_index].push(instance_data);
+
+        InstanceHandle::new(
+            model_index as u32,
+            (self.data[model_index].len() - 1) as u32,
+        )
     }
 
-    pub fn update(&mut self, model: usize, handle: usize, instance: ModelInstance) {
-        self.data[model][handle] = instance;
+    // Modify data for an existing instance
+    pub fn update(
+        &mut self,
+        handle: InstanceHandle,
+        data:   InstanceUBO,
+    ) {
+        let (m, i) = (
+            handle.model_index() as usize,
+            handle.instance_index() as usize,
+        );
+
+        self.data[m][i] = data;
     }
 
+    // Count instances (O(model_count))
     pub fn count(&self) -> usize {
         let mut count = 0;
 

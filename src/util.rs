@@ -1,32 +1,66 @@
 use std;
 
-pub unsafe fn aligned_buffer<T>(
-    alignment: usize, // Bytes
-    data:      &[T],
-) -> Vec<usize> {
-    let count = data.len();
-    debug_assert!(count != 0);
+pub struct AlignedBuffer<T> {
+    alignment: usize,
+    pub size:  usize, // Length in usizes
+    start:     *const T,
+    ptr:       *mut usize,
+}
 
-    let ptr_len = std::mem::size_of::<usize>();
-    debug_assert!(alignment >= ptr_len);
+impl<T> AlignedBuffer<T> {
+    pub fn new(
+        alignment: usize, // Bytes
+        count:     usize,
+    ) -> AlignedBuffer<T> {
+        debug_assert!(count != 0);
 
-    let alignment = alignment / ptr_len;
-    let size = count * alignment;
+        let ptr_len = std::mem::size_of::<usize>();
+        debug_assert!(alignment >= ptr_len);
+        debug_assert!(std::mem::size_of::<T>() <= alignment);
 
-    // Waiting for std::heap...
-    let mut memory = Vec::<usize>::with_capacity(size);
-    let mut ptr = memory.as_mut_ptr();
-    std::mem::forget(memory);
+        let alignment = alignment / ptr_len;
+        let size = count * alignment;
 
-    let start = ptr;
+        // Waiting for std::heap...
+        let mut memory = Vec::<usize>::with_capacity(size);
+        let ptr = memory.as_mut_ptr();
+        std::mem::forget(memory);
 
-    // Copy data to aligned buffer
-    for entry in data {
-        std::ptr::copy_nonoverlapping(entry as *const T, ptr as *mut T, 1);
-        ptr = ptr.offset(alignment as isize);
+        let start = ptr as *const T;
+
+        AlignedBuffer {
+            alignment,
+            size,
+            start,
+            ptr,
+        }
     }
 
-    Vec::<usize>::from_raw_parts(start, size, size)
+    pub fn push(&mut self, entry: T) {
+        assert!(
+            (self.ptr as usize - self.start as usize)
+                / std::mem::size_of::<usize>()
+                < self.size
+        );
+
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                &entry as *const T,
+                self.ptr as *mut T,
+                1,
+            );
+
+            self.ptr = self.ptr.offset(self.alignment as isize);
+        }
+    }
+
+    pub unsafe fn finalize(&self) -> Vec<usize> {
+        Vec::from_raw_parts(
+            self.start as *mut usize,
+            self.size,
+            self.size,
+        )
+    }
 }
 
 #[cfg(test)]
@@ -48,7 +82,17 @@ mod tests {
     }
 
     fn compare_aligned_buffer(alignment: usize, matrices: &[alg::Mat]) {
-        let mut raw = unsafe { aligned_buffer(alignment, matrices) };
+        let mut raw = {
+            let mut buffer = AlignedBuffer::new(alignment, matrices.len());
+
+            for &matrix in matrices {
+                buffer.push(matrix);
+            }
+
+            unsafe {
+                buffer.finalize()
+            }
+        };
 
         let aligned = {
             let mut result = Vec::<alg::Mat>::with_capacity(matrices.len());

@@ -53,4 +53,8 @@ impl Draws {
             self.instances.update(*instance, ubo);
         }
     }
+
+    pub fn count(&self) -> usize {
+        self.handles.len()
+    }
 }

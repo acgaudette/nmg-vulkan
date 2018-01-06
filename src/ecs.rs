@@ -12,3 +12,17 @@ impl EntityHandle {
         }
     }
 }
+
+pub struct Entities {
+    data: std::collections::HashSet<EntityHandle>,
+    index: u32,
+}
+
+impl Entities {
+    pub fn new(hint: usize) -> Entities {
+        Entities {
+            data:  std::collections::HashSet::with_capacity(hint),
+            index: 0,
+        }
+    }
+}

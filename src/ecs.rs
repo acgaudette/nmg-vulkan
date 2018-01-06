@@ -40,7 +40,7 @@ impl Entities {
         loop {
             // If an entity already exists, skip
             if self.check(EntityHandle::new(self.index)) {
-                self.index.wrapping_add(1);
+                self.index = self.index.wrapping_add(1);
                 continue;
             }
 
@@ -53,7 +53,7 @@ impl Entities {
         self.count += 1;
 
         // Offset for next time
-        self.index.wrapping_add(1);
+        self.index = self.index.wrapping_add(1);
 
         handle
     }

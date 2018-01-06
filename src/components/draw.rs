@@ -6,7 +6,7 @@ use render;
 use components::transform;
 
 pub struct Draws {
-    instances: render::Instances,
+    pub instances: render::Instances,
     handles: std::collections::HashMap<
         ecs::EntityHandle,
         render::InstanceHandle,

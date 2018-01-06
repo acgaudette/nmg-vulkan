@@ -4,6 +4,6 @@ pub mod draw;
 use entity;
 
 pub trait Component {
-    fn register(&mut self, entity: entity::EntityHandle);
+    fn register(&mut self, entity: entity::Handle);
     fn count(&self) -> usize;
 }

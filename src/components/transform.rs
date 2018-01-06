@@ -10,7 +10,7 @@ pub struct Manager {
 }
 
 impl components::Component for Manager {
-    fn register(&mut self, entity: entity::EntityHandle) {
+    fn register(&mut self, entity: entity::Handle) {
         debug_assert!(self.positions.len() == self.rotations.len());
         debug_assert!(self.rotations.len() == self.scales.len());
 
@@ -46,7 +46,7 @@ impl Manager {
 
     pub fn set(
         &mut self,
-        entity:   entity::EntityHandle,
+        entity:   entity::Handle,
         position: alg::Vec3,
         rotation: alg::Mat,
         scale:    alg::Vec3,
@@ -60,7 +60,7 @@ impl Manager {
         self.scales[i] = scale;
     }
 
-    pub fn get(&self, entity: entity::EntityHandle) -> (
+    pub fn get(&self, entity: entity::Handle) -> (
         alg::Vec3,
         alg::Mat,
         alg::Vec3,

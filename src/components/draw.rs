@@ -8,7 +8,7 @@ use components::transform;
 pub struct Manager {
     pub instances: render::Instances,
     handles: std::collections::HashMap<
-        entity::EntityHandle,
+        entity::Handle,
         render::InstanceHandle,
     >,
 }
@@ -23,7 +23,7 @@ impl Manager {
 
     pub fn register(
         &mut self,
-        entity: entity::EntityHandle,
+        entity: entity::Handle,
         model_index: usize,
     ) {
         let handle = self.instances.add(

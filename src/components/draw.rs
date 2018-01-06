@@ -34,7 +34,7 @@ impl Draws {
     }
 
     // Update
-    pub fn transfer(&mut self, transforms: transform::Transforms) {
+    pub fn transfer(&mut self, transforms: &transform::Transforms) {
         for (entity, instance) in &self.handles {
             // Get transform component data
             let transform = transforms.get(*entity);

@@ -28,20 +28,45 @@ pub trait Game {
     ) -> render::SharedUBO;
 }
 
-pub fn go<T>(model_data: Vec<render::ModelData>, game: T)
+pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
 where
     T: Game,
 {
+    // Initialize window
     let (events, window) = init_window();
-    let context = render::Context::new(&window, model_data);
 
-    match context {
-        Ok(mut context) => {
-            update(game, &window, events, &mut context);
-        }
+    // Initialize rendering engine
+    let mut context = match render::Context::new(&window, model_data) {
+        Ok(mut context) => context,
+        Err(e) => panic!("Could not create Vulkan context: {}", e)
+    };
 
-        Err(e) => eprintln!("Could not create Vulkan context: {}", e)
-    }
+    // Create entities container
+    let mut entities = ecs::Entities::new(1);
+
+    // Initialize core components
+    let mut transforms = components::transform::Transforms::new(1);
+    let mut draws = components::draw::Draws::new(
+        1,
+        render::Instances::new(context.models.len(), None),
+    );
+
+    // Start game
+    game.start(&mut entities, &mut transforms, &mut draws);
+
+    // Initiate update loop
+    begin_update(
+        game,
+        &window,
+        events,
+        &mut context,
+        &mut entities,
+        &mut transforms,
+        &mut draws,
+    );
+
+    // Synchronize before exit
+    context.device.wait_idle();
 }
 
 fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
@@ -58,26 +83,17 @@ fn init_window() -> (vdw::winit::EventsLoop, vdw::winit::Window) {
     (events, window.unwrap())
 }
 
-fn update<T>(
-    mut game: T,
-    window: &vdw::winit::Window,
+fn begin_update<T>(
+    mut game:   T,
+    window:     &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
-    context: &mut render::Context,
+    context:    &mut render::Context,
+    entities:   &mut ecs::Entities,
+    transforms: &mut components::transform::Transforms,
+    draws:      &mut components::draw::Draws,
 ) where
     T: Game,
 {
-    /* Initialize components */
-
-    let mut entities = ecs::Entities::new(1);
-
-    let mut transforms = components::transform::Transforms::new(1);
-    let mut draws = components::draw::Draws::new(
-        1,
-        render::Instances::new(context.models.len(), None),
-    );
-
-    game.start(&mut entities, &mut transforms, &mut draws);
-
     let mut running = true;
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
@@ -131,14 +147,14 @@ fn update<T>(
             delta,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
-            &mut entities,
-            &mut transforms,
-            &mut draws,
+            entities,
+            transforms,
+            draws,
         );
 
         /* Update components */
 
-        draws.transfer(&transforms);
+        draws.transfer(transforms);
 
         // Update renderer
         if let Err(e) = context.update(&draws.instances, shared_ubo) {
@@ -172,7 +188,4 @@ fn update<T>(
             panic!("{}", e);
         }
     }
-
-    // Synchronize before exit
-    context.device.wait_idle();
 }

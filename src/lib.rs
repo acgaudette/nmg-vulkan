@@ -3,8 +3,10 @@ extern crate voodoo_winit as vdw;
 
 pub mod alg;
 pub mod render;
+mod ecs;
 mod statics;
 mod util;
+mod components;
 
 pub trait Game {
     fn start(

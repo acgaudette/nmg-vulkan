@@ -30,6 +30,8 @@ impl components::Component for Manager {
         }
     }
 
+    // TODO: This currently only returns the length of the underlying data
+    // structure, not the count of the registered entities
     fn count(&self) -> usize {
         self.positions.len()
     }
@@ -74,5 +76,15 @@ impl Manager {
             self.rotations[i],
             self.scales[i],
         )
+    }
+
+    /* Tight coupling--beware */
+
+    pub fn set_position_i(&mut self, index: usize, value: alg::Vec3) {
+        self.positions[index] = value;
+    }
+
+    pub fn get_position_i(&self, index: usize) -> alg::Vec3 {
+        self.positions[index]
     }
 }

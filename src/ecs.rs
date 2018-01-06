@@ -17,6 +17,12 @@ impl EntityHandle {
     }
 }
 
+impl std::fmt::Display for EntityHandle {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(out, "{}", self._value)
+    }
+}
+
 pub struct Entities {
     data:  std::collections::HashSet<EntityHandle>,
     index: u32,

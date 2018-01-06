@@ -1,6 +1,6 @@
 use std;
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct EntityHandle {
     _value: u32,
 }

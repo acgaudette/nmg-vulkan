@@ -3,7 +3,7 @@ extern crate voodoo_winit as vdw;
 
 pub mod alg;
 pub mod render;
-pub mod ecs;
+pub mod entity;
 pub mod components;
 mod statics;
 mod util;
@@ -11,9 +11,9 @@ mod util;
 pub trait Game {
     fn start(
         &mut self,
-        entities:   &mut ecs::Entities,
-        transforms: &mut components::transform::Transforms,
-        draws:      &mut components::draw::Draws,
+        entities:   &mut entity::Manager,
+        transforms: &mut components::transform::Manager,
+        draws:      &mut components::draw::Manager,
     );
 
     fn update(
@@ -22,9 +22,9 @@ pub trait Game {
         delta: f64,
         screen_height: u32,
         screen_width:  u32,
-        entities:   &mut ecs::Entities,
-        transforms: &mut components::transform::Transforms,
-        draws:      &mut components::draw::Draws,
+        entities:   &mut entity::Manager,
+        transforms: &mut components::transform::Manager,
+        draws:      &mut components::draw::Manager,
     ) -> render::SharedUBO;
 }
 
@@ -42,11 +42,11 @@ where
     };
 
     // Create entities container
-    let mut entities = ecs::Entities::new(1);
+    let mut entities = entity::Manager::new(1);
 
     // Initialize core components
-    let mut transforms = components::transform::Transforms::new(1);
-    let mut draws = components::draw::Draws::new(
+    let mut transforms = components::transform::Manager::new(1);
+    let mut draws = components::draw::Manager::new(
         1,
         render::Instances::new(context.models.len(), None),
     );
@@ -88,9 +88,9 @@ fn begin_update<T>(
     window:     &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
     context:    &mut render::Context,
-    entities:   &mut ecs::Entities,
-    transforms: &mut components::transform::Transforms,
-    draws:      &mut components::draw::Draws,
+    entities:   &mut entity::Manager,
+    transforms: &mut components::transform::Manager,
+    draws:      &mut components::draw::Manager,
 ) where
     T: Game,
 {

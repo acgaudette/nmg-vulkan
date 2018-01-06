@@ -75,4 +75,8 @@ impl Entities {
             self.count -= 1;
         }
     }
+
+    pub fn count(&self) -> usize {
+        self.data.len()
+    }
 }

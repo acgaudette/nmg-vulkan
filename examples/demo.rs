@@ -1,37 +1,47 @@
 extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
+use nmg::ecs;
 use nmg::render;
+use nmg::components;
 
 struct Demo {
-    instances: Vec<render::InstanceHandle>,
+    objects: Vec<ecs::EntityHandle>,
 }
 
 impl nmg::Game for Demo {
     fn start(
         &mut self,
-        instances: &mut render::Instances,
+        entities:   &mut ecs::Entities,
+        transforms: &mut components::transform::Transforms,
+        draws:      &mut components::draw::Draws,
     ) {
-        self.instances.push(
-            instances.add(render::InstanceUBO::default(), 0)
-        );
+        let object_0 = entities.add();
+        let object_1 = entities.add();
+        let object_2 = entities.add();
 
-        self.instances.push(
-            instances.add(render::InstanceUBO::default(), 0)
-        );
+        transforms.register(object_0);
+        transforms.register(object_1);
+        transforms.register(object_2);
 
-        self.instances.push(
-            instances.add(render::InstanceUBO::default(), 0)
-        );
+        draws.add(object_0, 0);
+        draws.add(object_1, 0);
+        draws.add(object_2, 0);
+
+        self.objects.push(object_0);
+        self.objects.push(object_1);
+        self.objects.push(object_2);
     }
 
     fn update(
         &mut self,
-        time: f64,
-        last_time: f64,
+        time:  f64,
+        delta: f64,
         screen_height: u32,
-        screen_width: u32,
-        instances: &mut render::Instances,
+        screen_width:  u32,
+        entities:   &mut ecs::Entities,
+        transforms: &mut components::transform::Transforms,
+        draws:      &mut components::draw::Draws,
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
@@ -54,46 +64,25 @@ impl nmg::Game for Demo {
 
         let angle = time as f32;
 
-        let instance_ubo_0 = {
-            let translation = alg::Mat::translation(0., 0., 2.);
-            let rotation = alg::Mat::rotation(angle, angle, angle);
-            let scale = alg::Mat::scale(1.0, 1.0, 1.0);
-
-            let model = translation * rotation * scale;
-            render::InstanceUBO::new(model)
-        };
-
-        let instance_ubo_1 = {
-            let translation = alg::Mat::translation(-0.8, -1.1, 3.);
-            let rotation = alg::Mat::rotation(0., angle, 0.);
-            let scale = alg::Mat::scale(0.9, 0.9, 1.);
-
-            let model = translation * rotation * scale;
-            render::InstanceUBO::new(model)
-        };
-
-        let instance_ubo_2 = {
-            let translation = alg::Mat::translation(1.6, 0.8, 4.);
-            let rotation = alg::Mat::rotation(0., 0., angle);
-            let scale = alg::Mat::scale(0.8, 1.2, 1.);
-
-            let model = translation * rotation * scale;
-            render::InstanceUBO::new(model)
-        };
-
-        instances.update(
-            self.instances[0],
-            instance_ubo_0,
+        transforms.set(
+            self.objects[0],
+            alg::Vec3::new(0., 0., 2.),
+            alg::Mat::rotation(angle, angle, angle),
+            alg::Vec3::one(),
         );
 
-        instances.update(
-            self.instances[1],
-            instance_ubo_1,
+        transforms.set(
+            self.objects[1],
+            alg::Vec3::new(-0.8, -1.1, 3.),
+            alg::Mat::rotation(0., angle, 0.),
+            alg::Vec3::new(0.9, 0.9, 1.),
         );
 
-        instances.update(
-            self.instances[2],
-            instance_ubo_2,
+        transforms.set(
+            self.objects[2],
+            alg::Vec3::new(1.6, 0.8, 4.),
+            alg::Mat::rotation(0., 0., angle),
+            alg::Vec3::new(0.8, 1.2, 1.),
         );
 
         shared_ubo
@@ -101,7 +90,7 @@ impl nmg::Game for Demo {
 }
 
 fn main() {
-    let demo = Demo { instances: Vec::new() };
+    let demo = Demo { objects: Vec::new() };
     let model_data = get_models();
     nmg::go(model_data, demo)
 }

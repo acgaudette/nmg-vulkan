@@ -177,6 +177,10 @@ impl Mat {
         )
     }
 
+    pub fn translation_vec(translation: Vec3) -> Mat {
+        Mat::translation(translation.x, translation.y, translation.z)
+    }
+
     pub fn rotation_x(rad: f32) -> Mat {
         Mat::new(
             1.0,       0.0,        0.0, 0.0,
@@ -215,6 +219,10 @@ impl Mat {
             0.0, 0.0,   z, 0.0,
             0.0, 0.0, 0.0, 1.0
         )
+    }
+
+    pub fn scale_vec(scale: Vec3) -> Mat {
+        Mat::scale(scale.x, scale.y, scale.z)
     }
 
     // Returns view matrix (inverted)

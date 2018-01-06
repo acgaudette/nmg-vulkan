@@ -1,13 +1,13 @@
 use std;
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub struct EntityHandle {
+pub struct Handle {
     _value: u32,
 }
 
-impl EntityHandle {
-    fn new(index: u32) -> EntityHandle {
-        EntityHandle {
+impl Handle {
+    fn new(index: u32) -> Handle {
+        Handle {
             _value: index,
         }
     }
@@ -17,14 +17,14 @@ impl EntityHandle {
     }
 }
 
-impl std::fmt::Display for EntityHandle {
+impl std::fmt::Display for Handle {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(out, "{}", self._value)
     }
 }
 
 pub struct Manager {
-    data:  std::collections::HashSet<EntityHandle>,
+    data:  std::collections::HashSet<Handle>,
     index: u32,
     count: u32,
 }
@@ -38,14 +38,14 @@ impl Manager {
         }
     }
 
-    pub fn add(&mut self) -> EntityHandle {
+    pub fn add(&mut self) -> Handle {
         if self.count == u32::max_value() {
             panic!("Out of space for new entities!");
         }
 
         loop {
             // If an entity already exists, skip
-            if self.check(EntityHandle::new(self.index)) {
+            if self.check(Handle::new(self.index)) {
                 self.index = self.index.wrapping_add(1);
                 continue;
             }
@@ -54,7 +54,7 @@ impl Manager {
         }
 
         // Add new entity
-        let handle = EntityHandle::new(self.index);
+        let handle = Handle::new(self.index);
         self.data.insert(handle);
         self.count += 1;
 
@@ -64,12 +64,12 @@ impl Manager {
         handle
     }
 
-    pub fn check(&self, handle: EntityHandle) -> bool {
+    pub fn check(&self, handle: Handle) -> bool {
         self.data.contains(&handle)
     }
 
     // Idempotent--but access a handle after remove() at your own risk!
-    pub fn remove(&mut self, handle: EntityHandle) {
+    pub fn remove(&mut self, handle: Handle) {
         if self.data.remove(&handle) {
             // Decrement counter
             self.count -= 1;

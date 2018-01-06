@@ -5,7 +5,7 @@ use render;
 
 use components::transform;
 
-pub struct Draws {
+pub struct Manager {
     pub instances: render::Instances,
     handles: std::collections::HashMap<
         ecs::EntityHandle,
@@ -13,15 +13,15 @@ pub struct Draws {
     >,
 }
 
-impl Draws {
-    pub fn new(hint: usize, instances: render::Instances) -> Draws {
-        Draws {
+impl Manager {
+    pub fn new(hint: usize, instances: render::Instances) -> Manager {
+        Manager {
             handles: std::collections::HashMap::with_capacity(hint),
             instances: instances,
         }
     }
 
-    pub fn add(&mut self, entity: ecs::EntityHandle, model_index: usize) {
+    pub fn register(&mut self, entity: ecs::EntityHandle, model_index: usize) {
         let handle = self.instances.add(
             render::InstanceUBO::default(),
             model_index,
@@ -34,7 +34,7 @@ impl Draws {
     }
 
     // Update
-    pub fn transfer(&mut self, transforms: &transform::Transforms) {
+    pub fn transfer(&mut self, transforms: &transform::Manager) {
         for (entity, instance) in &self.handles {
             // Get transform component data
             let transform = transforms.get(*entity);

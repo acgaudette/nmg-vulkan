@@ -11,6 +11,10 @@ impl EntityHandle {
             _value: index,
         }
     }
+
+    pub fn get_index(self) -> u32 {
+        self._value
+    }
 }
 
 pub struct Entities {

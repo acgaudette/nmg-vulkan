@@ -11,7 +11,8 @@ mod components;
 pub trait Game {
     fn start(
         &mut self,
-        instances: &mut render::Instances,
+        transforms: &mut components::transform::Transforms,
+        draws: &mut components::draw::Draws,
     );
 
     fn update(
@@ -20,11 +21,12 @@ pub trait Game {
         delta: f64,
         screen_height: u32,
         screen_width: u32,
-        instances: &mut render::Instances,
+        transforms: &mut components::transform::Transforms,
+        draws: &mut components::draw::Draws,
     ) -> render::SharedUBO;
 }
 
-pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
+pub fn go<T>(model_data: Vec<render::ModelData>, game: T)
 where
     T: Game,
 {
@@ -33,7 +35,6 @@ where
 
     match context {
         Ok(mut context) => {
-            game.start(&mut context.instances);
             update(game, &window, events, &mut context);
         }
 
@@ -63,6 +64,16 @@ fn update<T>(
 ) where
     T: Game,
 {
+    /* Initialize components */
+
+    let mut transforms = components::transform::Transforms::new(1);
+    let mut draws = components::draw::Draws::new(
+        1,
+        render::Instances::new(context.models.len(), None),
+    );
+
+    game.start(&mut transforms, &mut draws);
+
     let mut running = true;
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
@@ -116,11 +127,12 @@ fn update<T>(
             delta,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
-            &mut context.instances,
+            &mut transforms,
+            &mut draws,
         );
 
         // Update renderer
-        if let Err(e) = context.update(shared_ubo) {
+        if let Err(e) = context.update(&draws.instances, shared_ubo) {
             // Irrecoverable error
             panic!("{}", e);
         }

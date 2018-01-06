@@ -68,4 +68,8 @@ impl Transforms {
             self.scales[i],
         )
     }
+
+    pub fn count(&self) -> usize {
+        self.positions.len()
+    }
 }

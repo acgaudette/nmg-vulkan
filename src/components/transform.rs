@@ -1,5 +1,6 @@
 use alg;
 use ecs;
+use components;
 
 // Data layout assumes that almost all entities will have this component
 pub struct Transforms {
@@ -8,16 +9,8 @@ pub struct Transforms {
     scales:    Vec<alg::Vec3>,
 }
 
-impl Transforms {
-    pub fn new(hint: usize) -> Transforms {
-        Transforms {
-            positions: Vec::with_capacity(hint),
-            rotations: Vec::with_capacity(hint),
-            scales:    Vec::with_capacity(hint),
-        }
-    }
-
-    pub fn register(&mut self, entity: ecs::EntityHandle) {
+impl components::Component for Transforms {
+    fn register(&mut self, entity: ecs::EntityHandle) {
         debug_assert!(self.positions.len() == self.rotations.len());
         debug_assert!(self.rotations.len() == self.scales.len());
 
@@ -34,6 +27,20 @@ impl Transforms {
             }
 
             break;
+        }
+    }
+
+    fn count(&self) -> usize {
+        self.positions.len()
+    }
+}
+
+impl Transforms {
+    pub fn new(hint: usize) -> Transforms {
+        Transforms {
+            positions: Vec::with_capacity(hint),
+            rotations: Vec::with_capacity(hint),
+            scales:    Vec::with_capacity(hint),
         }
     }
 
@@ -67,9 +74,5 @@ impl Transforms {
             self.rotations[i],
             self.scales[i],
         )
-    }
-
-    pub fn count(&self) -> usize {
-        self.positions.len()
     }
 }

@@ -15,7 +15,7 @@ pub trait Game {
     fn update(
         &mut self,
         time: f64,
-        last_time: f64,
+        delta: f64,
         screen_height: u32,
         screen_width: u32,
         instances: &mut render::Instances,
@@ -97,22 +97,25 @@ fn update<T>(
 
         if !running { break; }
 
+        /* Time calculations */
+
         let now = std::time::Instant::now();
         let duration = now.duration_since(start);
 
         let time = duration.as_secs() as f64
             + (duration.subsec_nanos() as f64 / 1000000000.);
 
+        let delta = time - last_time;
+        last_time = time;
+
         // Update scene data
         let shared_ubo = game.update(
             time,
-            last_time,
+            delta,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
             &mut context.instances,
         );
-
-        last_time = time;
 
         // Update renderer
         if let Err(e) = context.update(shared_ubo) {

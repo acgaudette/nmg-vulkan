@@ -14,8 +14,9 @@ impl EntityHandle {
 }
 
 pub struct Entities {
-    data: std::collections::HashSet<EntityHandle>,
+    data:  std::collections::HashSet<EntityHandle>,
     index: u32,
+    count: u32,
 }
 
 impl Entities {
@@ -23,14 +24,19 @@ impl Entities {
         Entities {
             data:  std::collections::HashSet::with_capacity(hint),
             index: 0,
+            count: 0,
         }
     }
 
     pub fn add(&mut self) -> EntityHandle {
+        if self.count == u32::max_value() {
+            panic!("Out of space for new entities!");
+        }
+
         loop {
             // If an entity already exists, skip
             if self.check(EntityHandle::new(self.index)) {
-                self.index += 1;
+                self.index.wrapping_add(1);
                 continue;
             }
 
@@ -40,9 +46,10 @@ impl Entities {
         // Add new entity
         let handle = EntityHandle::new(self.index);
         self.data.insert(handle);
+        self.count += 1;
 
         // Offset for next time
-        self.index += 1;
+        self.index.wrapping_add(1);
 
         handle
     }
@@ -51,7 +58,11 @@ impl Entities {
         self.data.contains(&handle)
     }
 
+    // Idempotent--but access a handle after remove() at your own risk!
     pub fn remove(&mut self, handle: EntityHandle) {
-        self.data.remove(&handle);
+        if self.data.remove(&handle) {
+            // Decrement counter
+            self.count -= 1;
+        }
     }
 }

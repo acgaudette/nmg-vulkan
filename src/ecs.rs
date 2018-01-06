@@ -25,4 +25,33 @@ impl Entities {
             index: 0,
         }
     }
+
+    pub fn add(&mut self) -> EntityHandle {
+        loop {
+            // If an entity already exists, skip
+            if self.check(EntityHandle::new(self.index)) {
+                self.index += 1;
+                continue;
+            }
+
+            break;
+        }
+
+        // Add new entity
+        let handle = EntityHandle::new(self.index);
+        self.data.insert(handle);
+
+        // Offset for next time
+        self.index += 1;
+
+        handle
+    }
+
+    pub fn check(&self, handle: EntityHandle) -> bool {
+        self.data.contains(&handle)
+    }
+
+    pub fn remove(&mut self, handle: EntityHandle) {
+        self.data.remove(&handle);
+    }
 }

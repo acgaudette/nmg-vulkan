@@ -3,10 +3,10 @@ extern crate voodoo_winit as vdw;
 
 pub mod alg;
 pub mod render;
-mod ecs;
+pub mod ecs;
+pub mod components;
 mod statics;
 mod util;
-mod components;
 
 pub trait Game {
     fn start(
@@ -135,6 +135,10 @@ fn update<T>(
             &mut transforms,
             &mut draws,
         );
+
+        /* Update components */
+
+        draws.transfer(&transforms);
 
         // Update renderer
         if let Err(e) = context.update(&draws.instances, shared_ubo) {

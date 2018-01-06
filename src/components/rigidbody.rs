@@ -40,6 +40,14 @@ impl Manager {
         }
     }
 
+    pub fn set(&mut self, entity: entity::Handle, force: alg::Vec3) {
+        let i = entity.get_index() as usize;
+
+        debug_assert!(i < self.forces.len());
+
+        self.forces[i] = force;
+    }
+
     pub fn simulate(delta: f64, transforms: &transform::Manager) {
         debug_assert!(self.velocities.len() == self.masses.len());
         debug_assert!(self.masses.len() == self.forces.len());

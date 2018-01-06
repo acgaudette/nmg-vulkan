@@ -1,2 +1,2 @@
-mod transform;
-mod draw;
+pub mod transform;
+pub mod draw;

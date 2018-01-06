@@ -17,4 +17,16 @@ impl Draws {
             instances: instances,
         }
     }
+
+    pub fn add(&mut self, entity: ecs::EntityHandle, model_index: usize) {
+        let handle = self.instances.add(
+            render::InstanceUBO::default(),
+            model_index,
+        );
+
+        self.handles.insert(
+            entity,
+            handle,
+        );
+    }
 }

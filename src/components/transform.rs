@@ -29,7 +29,11 @@ impl Transforms {
                 self.positions.push(alg::Vec3::zero());
                 self.rotations.push(alg::Mat::identity());
                 self.scales.push(alg::Vec3::one());
+
+                continue;
             }
+
+            break;
         }
     }
 

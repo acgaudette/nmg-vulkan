@@ -1,6 +1,9 @@
 use std;
+use alg;
 use ecs;
 use render;
+
+use components::transform;
 
 pub struct Draws {
     instances: render::Instances,
@@ -28,5 +31,26 @@ impl Draws {
             entity,
             handle,
         );
+    }
+
+    // Update
+    pub fn transfer(&mut self, transforms: transform::Transforms) {
+        for (entity, instance) in &self.handles {
+            // Get transform component data
+            let transform = transforms.get(*entity);
+
+            // Build uniform buffer object
+            let ubo = {
+                let translation = alg::Mat::translation_vec(transform.0);
+                let rotation = transform.1;
+                let scale = alg::Mat::scale_vec(transform.2);
+
+                let model = translation * rotation * scale;
+                render::InstanceUBO::new(model)
+            };
+
+            // Update renderer
+            self.instances.update(*instance, ubo);
+        }
     }
 }

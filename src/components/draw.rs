@@ -1,6 +1,6 @@
 use std;
 use alg;
-use ecs;
+use entity;
 use render;
 
 use components::transform;
@@ -8,7 +8,7 @@ use components::transform;
 pub struct Manager {
     pub instances: render::Instances,
     handles: std::collections::HashMap<
-        ecs::EntityHandle,
+        entity::EntityHandle,
         render::InstanceHandle,
     >,
 }
@@ -21,7 +21,11 @@ impl Manager {
         }
     }
 
-    pub fn register(&mut self, entity: ecs::EntityHandle, model_index: usize) {
+    pub fn register(
+        &mut self,
+        entity: entity::EntityHandle,
+        model_index: usize,
+    ) {
         let handle = self.instances.add(
             render::InstanceUBO::default(),
             model_index,

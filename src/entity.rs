@@ -23,15 +23,15 @@ impl std::fmt::Display for EntityHandle {
     }
 }
 
-pub struct Entities {
+pub struct Manager {
     data:  std::collections::HashSet<EntityHandle>,
     index: u32,
     count: u32,
 }
 
-impl Entities {
-    pub fn new(hint: usize) -> Entities {
-        Entities {
+impl Manager {
+    pub fn new(hint: usize) -> Manager {
+        Manager {
             data:  std::collections::HashSet::with_capacity(hint),
             index: 0,
             count: 0,

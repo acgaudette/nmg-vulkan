@@ -32,11 +32,7 @@ const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 pub struct Context<'a> {
     pub device:    vd::Device,
     pub swapchain: vd::SwapchainKhr,
-
-    /* Meshes */
-
-    pub instances: Instances,
-    models:        Vec<Model>, // Lookup table
+    pub models:    Vec<Model>, // Lookup table
 
     /* Swapchain recreation data */
 
@@ -121,7 +117,6 @@ impl<'a> Context<'a> {
             index_buffer,
             index_memory,
             models,
-            instances,
         ) = load_models(
             model_data,
             &device,
@@ -195,7 +190,6 @@ impl<'a> Context<'a> {
             Context {
                 device,
                 swapchain,
-                instances,
                 models,
                 surface,
                 surface_format,
@@ -327,7 +321,11 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    pub fn update(&mut self, shared_ubo: SharedUBO) -> vd::Result<()> {
+    pub fn update(
+        &mut self,
+        instances: &Instances,
+        shared_ubo: SharedUBO,
+    ) -> vd::Result<()> {
         /* Rebuild command buffers */
 
         let clears = [
@@ -402,12 +400,12 @@ impl<'a> Context<'a> {
                 );
             }
 
-            debug_assert!(self.models.len() == self.instances.data.len());
+            debug_assert!(self.models.len() == instances.data.len());
 
             let mut instance = 0;
             for j in 0..self.models.len() {
                 // Render each instance
-                for _ in 0..self.instances.data[j].len() {
+                for _ in 0..instances.data[j].len() {
                     // Bind uniform data
                     self.command_buffers[i].bind_descriptor_sets(
                         vd::PipelineBindPoint::Graphics,
@@ -449,10 +447,10 @@ impl<'a> Context<'a> {
         // Not optimal: requires copies and a heap allocation
         let mut dynamic_buffer = util::AlignedBuffer::<InstanceUBO>::new(
             self.ubo_alignment as usize,
-            self.instances.count(),
+            instances.count(),
         );
 
-        for model in &self.instances.data {
+        for model in &instances.data {
             for ubo in model {
                 dynamic_buffer.push(ubo.clone());
             }
@@ -587,7 +585,7 @@ impl ModelData {
     }
 }
 
-struct Model {
+pub struct Model {
     index_count:  u32,
     index_offset: u32,
 }
@@ -606,7 +604,7 @@ pub struct Instances {
 }
 
 impl Instances {
-    fn new(model_count: usize, hints: Option<&[usize]>) -> Instances {
+    pub fn new(model_count: usize, hints: Option<&[usize]>) -> Instances {
         let mut data = Vec::with_capacity(model_count);
 
         match hints {
@@ -1081,7 +1079,6 @@ fn load_models(
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
     Vec<Model>,
-    Instances,
 )> {
     /* Concatenate model data */
 
@@ -1147,16 +1144,12 @@ fn load_models(
         graphics_family,
     )?;
 
-    // Initialize instances structure
-    let instances = Instances::new(models.len(), None);
-
     Ok((
         vertex_buffer,
         vertex_memory,
         index_buffer,
         index_memory,
         models,
-        instances,
     ))
 }
 

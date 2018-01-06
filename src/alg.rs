@@ -57,6 +57,16 @@ impl Vec3 {
         Vec3::new(0., 0., 1.)
     }
 
+    #[inline]
+    pub fn zero() -> Vec3 {
+        Vec3::new(0., 0., 0.,)
+    }
+
+    #[inline]
+    pub fn one() -> Vec3 {
+        Vec3::new(1., 1., 1.)
+    }
+
     pub fn norm(self) -> Vec3 {
         let inverse_len = inverse_sqrt(self.mag_squared());
 
@@ -207,6 +217,7 @@ impl Mat {
         )
     }
 
+    // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
         let forward = (target - position).norm();
         let right = up.cross(forward).norm();

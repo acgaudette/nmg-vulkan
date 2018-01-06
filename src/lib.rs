@@ -11,18 +11,20 @@ mod components;
 pub trait Game {
     fn start(
         &mut self,
+        entities:   &mut ecs::Entities,
         transforms: &mut components::transform::Transforms,
-        draws: &mut components::draw::Draws,
+        draws:      &mut components::draw::Draws,
     );
 
     fn update(
         &mut self,
-        time: f64,
+        time:  f64,
         delta: f64,
         screen_height: u32,
-        screen_width: u32,
+        screen_width:  u32,
+        entities:   &mut ecs::Entities,
         transforms: &mut components::transform::Transforms,
-        draws: &mut components::draw::Draws,
+        draws:      &mut components::draw::Draws,
     ) -> render::SharedUBO;
 }
 
@@ -66,13 +68,15 @@ fn update<T>(
 {
     /* Initialize components */
 
+    let mut entities = ecs::Entities::new(1);
+
     let mut transforms = components::transform::Transforms::new(1);
     let mut draws = components::draw::Draws::new(
         1,
         render::Instances::new(context.models.len(), None),
     );
 
-    game.start(&mut transforms, &mut draws);
+    game.start(&mut entities, &mut transforms, &mut draws);
 
     let mut running = true;
     let start = std::time::Instant::now();
@@ -127,6 +131,7 @@ fn update<T>(
             delta,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
+            &mut entities,
             &mut transforms,
             &mut draws,
         );

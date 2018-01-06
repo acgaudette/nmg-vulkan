@@ -1,33 +1,38 @@
 extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
-use nmg::ecs;
+use nmg::entity;
 use nmg::render;
 use nmg::components;
+use nmg::components::Component;
 
 struct Demo {
-    objects: Vec<ecs::EntityHandle>,
+    objects: Vec<entity::Handle>,
 }
 
 impl nmg::Game for Demo {
     fn start(
         &mut self,
-        entities:   &mut ecs::Entities,
-        transforms: &mut components::transform::Transforms,
-        draws:      &mut components::draw::Draws,
+        entities:   &mut entity::Manager,
+        transforms: &mut components::transform::Manager,
+        draws:      &mut components::draw::Manager,
     ) {
+        // Instantiate three entities
         let object_0 = entities.add();
         let object_1 = entities.add();
         let object_2 = entities.add();
 
+        // Add transform components
         transforms.register(object_0);
         transforms.register(object_1);
         transforms.register(object_2);
 
-        draws.add(object_0, 0);
-        draws.add(object_1, 0);
-        draws.add(object_2, 0);
+        // Add draw components (using first model)
+        draws.register(object_0, 0);
+        draws.register(object_1, 0);
+        draws.register(object_2, 0);
 
+        // Update demo state
         self.objects.push(object_0);
         self.objects.push(object_1);
         self.objects.push(object_2);
@@ -39,9 +44,9 @@ impl nmg::Game for Demo {
         delta: f64,
         screen_height: u32,
         screen_width:  u32,
-        entities:   &mut ecs::Entities,
-        transforms: &mut components::transform::Transforms,
-        draws:      &mut components::draw::Draws,
+        entities:   &mut entity::Manager,
+        transforms: &mut components::transform::Manager,
+        draws:      &mut components::draw::Manager,
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(

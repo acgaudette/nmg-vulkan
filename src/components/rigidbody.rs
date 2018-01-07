@@ -65,13 +65,11 @@ impl Manager {
         for i in 0..self.velocities.len() {
             let acceleration = self.forces[i] / self.masses[i];
 
-            self.velocities[i] += acceleration * delta as f32;
+            self.velocities[i] = self.velocities[i]
+                + acceleration * delta as f32;
 
-            let position = {
-                let mut pos = transforms.get_position_i(i);
-                pos += self.velocities[i] * delta;
-                pos
-            };
+            let position = transforms.get_position_i(i)
+                + self.velocities[i] * delta;
 
             transforms.set_position_i(i, position);
         }

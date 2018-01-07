@@ -98,7 +98,7 @@ impl Manager {
 
             /* Angular motion */
 
-            let ang_momentum = self.torques[i] * delta as f32; // do add here ?
+            let ang_momentum = self.torques[i] * delta as f32;
 
             // TODO: Tensor support
             let inverse_inertia = 6. / self.masses[i];
@@ -106,14 +106,16 @@ impl Manager {
             self.ang_velocities[i] = self.ang_velocities[i]
                 + ang_momentum * inverse_inertia;
 
-            // Slow!
-            let ang_quat = alg::Quat::angle_axis_raw(
-                self.ang_velocities[i].norm(),
-                self.ang_velocities[i].mag(),
+            // 4D derivative vector
+            let derivative = alg::Quat::new(
+                self.ang_velocities[i].x,
+                self.ang_velocities[i].y,
+                self.ang_velocities[i].z,
+                0.,
             );
 
             let last = transforms.get_orientation_i(i).norm(); // Renormalize
-            let orientation = ang_quat * 0.5 * last; // Integrate
+            let orientation = last + last * 0.5 * derivative * delta as f32;
 
             transforms.set_orientation_i(i, orientation);
         }

@@ -390,8 +390,10 @@ impl Quat {
     }
 
     pub fn angle_axis(axis: Vec3, angle: f32) -> Quat {
-        let axis = axis.norm(); // Normalize before creating
+        Quat::angle_axis_raw(axis.norm(), angle) // Normalize first
+    }
 
+    pub fn angle_axis_raw(axis: Vec3, angle: f32) -> Quat {
         let half = 0.5 * angle;
         let half_sin = half.sin();
         let half_cos = half.cos();
@@ -424,19 +426,21 @@ impl Quat {
     }
 
     pub fn to_mat(self) -> Mat {
-        let this = self.norm(); // Normalize before conversion
+        self.norm().to_mat_raw() // Normalize first
+    }
 
-        let x0 = 1. - 2. * this.y * this.y - 2. * this.z * this.z;
-        let y0 = 2. * this.x * this.y - 2. * this.z * this.w;
-        let z0 = 2. * this.x * this.z + 2. * this.y * this.w;
+    pub fn to_mat_raw(self) -> Mat {
+        let x0 = 1. - 2. * self.y * self.y - 2. * self.z * self.z;
+        let y0 = 2. * self.x * self.y - 2. * self.z * self.w;
+        let z0 = 2. * self.x * self.z + 2. * self.y * self.w;
 
-        let x1 = 2. * this.x * this.y + 2. * this.z * this.w;
-        let y1 = 1. - 2. * this.x * this.x - 2. * this.z * this.z;
-        let z1 = 2. * this.y * this.z - 2. * this.x * this.w;
+        let x1 = 2. * self.x * self.y + 2. * self.z * self.w;
+        let y1 = 1. - 2. * self.x * self.x - 2. * self.z * self.z;
+        let z1 = 2. * self.y * self.z - 2. * self.x * self.w;
 
-        let x2 = 2. * this.x * this.z - 2. * this.y * this.w;
-        let y2 = 2. * this.y * this.z + 2. * this.x * this.w;
-        let z2 = 1. - 2. * this.x * this.x - 2. * this.y * this.y;
+        let x2 = 2. * self.x * self.z - 2. * self.y * self.w;
+        let y2 = 2. * self.y * self.z + 2. * self.x * self.w;
+        let z2 = 1. - 2. * self.x * self.x - 2. * self.y * self.y;
 
         Mat::new(
             x0, y0, z0, 0.,

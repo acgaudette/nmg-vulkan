@@ -362,16 +362,16 @@ impl std::fmt::Display for Mat {
 }
 
 #[derive(Clone, Copy)]
-pub struct Quaternion {
+pub struct Quat {
     x: f32,
     y: f32,
     z: f32,
     w: f32,
 }
 
-impl Quaternion {
-    pub fn new(vec: Vec3) -> Quaternion {
-        Quaternion {
+impl Quat {
+    pub fn new(vec: Vec3) -> Quat {
+        Quat {
             x: vec.x,
             y: vec.y,
             z: vec.z,

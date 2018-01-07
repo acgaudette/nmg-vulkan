@@ -1,3 +1,7 @@
+use alg;
+use entity;
+use components;
+
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     velocities: Vec<alg::Vec3>,
@@ -14,7 +18,7 @@ impl components::Component for Manager {
 
         // Resize array to fit new entity
         loop {
-            if i >= self.positions.len() {
+            if i >= self.velocities.len() {
                 self.velocities.push(alg::Vec3::zero());
                 self.masses.push(0.);
 
@@ -37,6 +41,7 @@ impl Manager {
         Manager {
             velocities: Vec::with_capacity(hint),
             masses:     Vec::with_capacity(hint),
+            forces:     Vec::with_capacity(hint),
         }
     }
 
@@ -48,13 +53,19 @@ impl Manager {
         self.forces[i] = force;
     }
 
-    pub fn simulate(delta: f64, transforms: &transform::Manager) {
+    pub fn simulate(
+        &mut self,
+        delta: f64,
+        transforms: &components::transform::Manager,
+    ) {
         debug_assert!(self.velocities.len() == self.masses.len());
         debug_assert!(self.masses.len() == self.forces.len());
 
-        // Explicit Euler
+        // Semi-implicit Euler
         for i in 0..self.velocities.len() {
             let acceleration = self.forces[i] / self.masses[i];
+
+            self.velocities[i] += acceleration * delta as f32;
 
             let position = {
                 let mut pos = transforms.get_position_i(i);
@@ -63,8 +74,6 @@ impl Manager {
             };
 
             transforms.set_position_i(i, position);
-
-            self.velocities[i] += acceleration * delta as f32;
         }
     }
 }

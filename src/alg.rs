@@ -370,13 +370,8 @@ pub struct Quat {
 }
 
 impl Quat {
-    pub fn new(vec: Vec3) -> Quat {
-        Quat {
-            x: vec.x,
-            y: vec.y,
-            z: vec.z,
-            w: 0.,
-        }
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Quat {
+        Quat { x, y, z, w }
     }
 
     #[inline]

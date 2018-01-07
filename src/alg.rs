@@ -349,6 +349,25 @@ impl std::fmt::Display for Mat {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct Quaternion {
+    x: f32,
+    y: f32,
+    z: f32,
+    w: f32,
+}
+
+impl Quaternion {
+    pub fn new(vec: Vec3) -> Quaternion {
+        Quaternion {
+            x: vec.x,
+            y: vec.y,
+            z: vec.z,
+            w: 0.,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alg::*;

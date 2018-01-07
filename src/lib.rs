@@ -12,8 +12,7 @@ pub trait Game {
     fn start(
         &mut self,
         entities:   &mut entity::Manager,
-        transforms: &mut components::transform::Manager,
-        draws:      &mut components::draw::Manager,
+        components: &mut components::Container,
     );
 
     fn update(
@@ -23,8 +22,7 @@ pub trait Game {
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,
-        transforms: &mut components::transform::Manager,
-        draws:      &mut components::draw::Manager,
+        components: &mut components::Container,
     ) -> render::SharedUBO;
 }
 
@@ -41,19 +39,20 @@ where
         Err(e) => panic!("Could not create Vulkan context: {}", e)
     };
 
+    let instances = render::Instances::new(context.models.len(), None);
+
     // Create entities container
     let mut entities = entity::Manager::new(1);
 
     // Initialize core components
-    let mut transforms = components::transform::Manager::new(1);
-    let mut draws = components::draw::Manager::new(
-        1,
-        render::Instances::new(context.models.len(), None),
-    );
-    let mut physics = components::rigidbody::Manager::new(1);
+    let mut components = components::Container {
+        transforms:  components::transform::Manager::new(1),
+        draws:       components::draw::Manager::new(1, instances),
+        rigidbodies: components::rigidbody::Manager::new(1),
+    };
 
     // Start game
-    game.start(&mut entities, &mut transforms, &mut draws);
+    game.start(&mut entities, &mut components);
 
     // Initiate update loop
     begin_update(
@@ -62,9 +61,7 @@ where
         events,
         &mut context,
         &mut entities,
-        &mut transforms,
-        &mut draws,
-        &mut physics,
+        &mut components,
     );
 
     // Synchronize before exit
@@ -91,9 +88,7 @@ fn begin_update<T>(
     mut events: vdw::winit::EventsLoop,
     context:    &mut render::Context,
     entities:   &mut entity::Manager,
-    transforms: &mut components::transform::Manager,
-    draws:      &mut components::draw::Manager,
-    physics:    &mut components::rigidbody::Manager,
+    components: &mut components::Container,
 ) where
     T: Game,
 {
@@ -151,16 +146,18 @@ fn begin_update<T>(
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
             entities,
-            transforms,
-            draws,
+            components,
         );
 
         // Update core components
-        physics.simulate(delta, transforms);
-        draws.transfer(transforms);
+        components.rigidbodies.simulate(delta, &mut components.transforms);
+        components.draws.transfer(&mut components.transforms);
 
         // Update renderer
-        if let Err(e) = context.update(&draws.instances, shared_ubo) {
+        if let Err(e) = context.update(
+            &components.draws.instances,
+            shared_ubo
+        ) {
             // Irrecoverable error
             panic!("{}", e);
         }

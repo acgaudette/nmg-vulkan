@@ -335,6 +335,18 @@ impl std::ops::Mul for Mat {
     }
 }
 
+impl std::ops::Mul<Vec3> for Mat {
+    type Output = Vec3;
+
+    fn mul(self, vec: Vec3) -> Vec3 {
+        Vec3::new(
+            self.x0 * vec.x + self.x1 * vec.y + self.x2 * vec.z,
+            self.y0 * vec.x + self.y1 * vec.y + self.y2 * vec.z,
+            self.z0 * vec.x + self.z1 * vec.y + self.z2 * vec.z,
+        )
+    }
+}
+
 impl std::fmt::Display for Mat {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(

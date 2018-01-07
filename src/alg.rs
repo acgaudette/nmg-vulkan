@@ -390,6 +390,8 @@ impl Quat {
     }
 
     pub fn angle_axis(axis: Vec3, angle: f32) -> Quat {
+        let axis = axis.norm(); // Normalize before creating
+
         let half = 0.5 * angle;
         let half_sin = half.sin();
         let half_cos = half.cos();
@@ -422,7 +424,7 @@ impl Quat {
     }
 
     pub fn to_mat(self) -> Mat {
-        let this = self.norm();
+        let this = self.norm(); // Normalize before conversion
 
         let x0 = 1. - 2. * this.y * this.y - 2. * this.z * this.z;
         let y0 = 2. * this.x * this.y - 2. * this.z * this.w;

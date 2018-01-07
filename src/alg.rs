@@ -390,12 +390,7 @@ impl Quat {
     }
 
     pub fn norm(self) -> Quat {
-        let inverse_len = inverse_sqrt(
-            self.x * self.x
-            + self.y * self.y
-            + self.z * self.z
-            + self.w * self.w,
-        );
+        let inverse_len = inverse_sqrt(self.mag_squared());
 
         Quat {
             x: self.x * inverse_len,
@@ -403,6 +398,14 @@ impl Quat {
             z: self.z * inverse_len,
             w: self.w * inverse_len,
         }
+    }
+
+    pub fn mag_squared(self) -> f32 {
+        self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w
+    }
+
+    pub fn mag(self) -> f32 {
+        self.mag_squared().sqrt()
     }
 
     pub fn to_mat(self) -> Mat {

@@ -14,12 +14,11 @@ impl nmg::Game for Demo {
     fn start(
         &mut self,
         entities:   &mut entity::Manager,
-        transforms: &mut components::transform::Manager,
-        draws:      &mut components::draw::Manager,
+        components: &mut components::Container,
     ) {
         let object = entities.add();
-        transforms.register(object);
-        draws.register(object, 0);
+        components.transforms.register(object);
+        components.draws.register(object, 0);
 
         // Update demo state
         self.objects.push(object);
@@ -32,8 +31,7 @@ impl nmg::Game for Demo {
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,
-        transforms: &mut components::transform::Manager,
-        draws:      &mut components::draw::Manager,
+        components: &mut components::Container,
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
@@ -54,7 +52,7 @@ impl nmg::Game for Demo {
             render::SharedUBO::new(view, projection)
         };
 
-        transforms.set(
+        components.transforms.set(
             self.objects[0],
             alg::Vec3::new(0., 0., 2.),
             alg::Mat::identity(),

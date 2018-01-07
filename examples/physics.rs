@@ -8,6 +8,8 @@ use nmg::components::Component;
 
 struct Demo {
     objects: Vec<entity::Handle>,
+    mass: f32,
+    drag: f32,
 }
 
 impl nmg::Game for Demo {
@@ -32,9 +34,10 @@ impl nmg::Game for Demo {
         // Initial mass, force, torque
         components.rigidbodies.set(
             object,
-            10.,
-            alg::Vec3::up() * 500.,
-            alg::Vec3::right() * -1000.,
+            self.mass,
+            self.drag,
+            alg::Vec3::up() * 1000.,
+            alg::Vec3::right() * -5000.,
         );
 
 
@@ -75,7 +78,8 @@ impl nmg::Game for Demo {
             // Reset forces
             components.rigidbodies.set(
                 self.objects[0],
-                10.,
+                self.mass,
+                self.drag,
                 alg::Vec3::zero(),
                 alg::Vec3::zero(),
             );
@@ -86,7 +90,12 @@ impl nmg::Game for Demo {
 }
 
 fn main() {
-    let demo = Demo { objects: Vec::new() };
+    let demo = Demo {
+        objects: Vec::new(),
+        mass: 10.,
+        drag: 3.
+    };
+
     let model_data = get_models();
     nmg::go(model_data, demo)
 }

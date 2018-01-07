@@ -432,6 +432,19 @@ impl std::ops::Mul<f32> for Quat {
     }
 }
 
+impl std::ops::Add for Quat {
+    type Output = Quat;
+
+    fn add(self, other: Quat) -> Quat {
+        Quat {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.y,
+            w: self.w + other.w,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alg::*;

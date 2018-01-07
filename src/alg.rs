@@ -380,6 +380,34 @@ impl Quat {
     }
 }
 
+impl std::ops::Mul<Vec3> for Quat {
+    type Output = Vec3;
+
+    fn mul(self, vec: Vec3) -> Vec3 {
+        let x0 = 1. - 2. * self.y * self.y - 2. * self.z * self.z;
+        let y0 = 2. * self.x * self.y - 2. * self.z * self.w;
+        let z0 = 2. * self.x * self.z + 2. * self.y * self.w;
+
+        let x1 = 2. * self.x * self.y + 2. * self.z * self.w;
+        let y1 = 1. - 2. * self.x * self.x - 2. * self.z * self.z;
+        let z1 = 2. * self.y * self.z - 2. * self.x * self.w;
+
+        let x2 = 2. * self.x * self.z - 2. * self.y * self.w;
+        let y2 = 2. * self.y * self.z + 2. * self.x * self.w;
+        let z2 = 1. - 2. * self.x * self.x - 2. * self.y * self.y;
+
+        // Unnecessary 4x4 matrix
+        let rotation = Mat::new(
+            x0, y0, z0, 0.,
+            x1, y1, z1, 0.,
+            x2, y2, z2, 0.,
+            0., 0., 0., 0.,
+        );
+
+        rotation * vec
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alg::*;

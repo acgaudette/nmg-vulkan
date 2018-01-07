@@ -63,6 +63,7 @@ impl Manager {
         &mut self,
         entity: entity::Handle,
         mass:   f32,
+        drag:   f32,
         force:  alg::Vec3,
         torque: alg::Vec3,
     ) {
@@ -71,6 +72,7 @@ impl Manager {
 
         self.forces[i] = force;
         self.masses[i] = mass;
+        self.drags[i] = drag;
         self.torques[i] = torque;
     }
 

@@ -29,11 +29,12 @@ impl nmg::Game for Demo {
             alg::Vec3::one(),
         );
 
-        // Initial force (and mass)
+        // Initial mass, force, torque
         components.rigidbodies.set(
             object,
-            alg::Vec3::up() * 1000.,
             10.,
+            alg::Vec3::up() * 500.,
+            alg::Vec3::right() * -1.,
         );
 
 
@@ -71,11 +72,12 @@ impl nmg::Game for Demo {
         };
 
         if metadata.frame > 0 {
-            // Reset force
+            // Reset forces
             components.rigidbodies.set(
                 self.objects[0],
-                alg::Vec3::zero(),
                 10.,
+                alg::Vec3::zero(),
+                alg::Vec3::zero(),
             );
         }
 

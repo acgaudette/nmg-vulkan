@@ -56,7 +56,7 @@ impl Manager {
     pub fn simulate(
         &mut self,
         delta: f64,
-        transforms: &components::transform::Manager,
+        transforms: &mut components::transform::Manager,
     ) {
         debug_assert!(self.velocities.len() == self.masses.len());
         debug_assert!(self.masses.len() == self.forces.len());
@@ -69,7 +69,7 @@ impl Manager {
                 + acceleration * delta as f32;
 
             let position = transforms.get_position_i(i)
-                + self.velocities[i] * delta;
+                + self.velocities[i] * delta as f32;
 
             transforms.set_position_i(i, position);
         }

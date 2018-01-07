@@ -25,7 +25,7 @@ impl nmg::Game for Demo {
         components.transforms.set(
             object,
             alg::Vec3::new(0., 0., 2.),
-            alg::Mat::identity(),
+            alg::Quat::identity(),
             alg::Vec3::one(),
         );
 

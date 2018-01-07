@@ -87,4 +87,12 @@ impl Manager {
     pub fn get_position_i(&self, index: usize) -> alg::Vec3 {
         self.positions[index]
     }
+
+    pub fn set_orientation_i(&mut self, index: usize, value: alg::Quat) {
+        self.rotations[index] = value;
+    }
+
+    pub fn get_orientation_i(&self, index: usize) -> alg::Quat {
+        self.rotations[index]
+    }
 }

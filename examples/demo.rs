@@ -71,21 +71,21 @@ impl nmg::Game for Demo {
         components.transforms.set(
             self.objects[0],
             alg::Vec3::new(0., 0., 2.),
-            alg::Mat::rotation(angle, angle, angle),
+            alg::Quat::angle_axis(alg::Vec3::one(), angle * 2.),
             alg::Vec3::one(),
         );
 
         components.transforms.set(
             self.objects[1],
             alg::Vec3::new(-0.8, -1.1, 3.),
-            alg::Mat::rotation(0., angle, 0.),
+            alg::Quat::angle_axis(alg::Vec3::up(), angle),
             alg::Vec3::new(0.9, 0.9, 1.),
         );
 
         components.transforms.set(
             self.objects[2],
             alg::Vec3::new(1.6, 0.8, 4.),
-            alg::Mat::rotation(0., 0., angle),
+            alg::Quat::angle_axis(alg::Vec3::fwd(), angle),
             alg::Vec3::new(0.8, 1.2, 1.),
         );
 

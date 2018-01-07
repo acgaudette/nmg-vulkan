@@ -393,7 +393,7 @@ impl Quat {
         let inverse_len = inverse_sqrt(
             self.x * self.x
             + self.y * self.y
-            + self.z * self.x
+            + self.z * self.z
             + self.w * self.w,
         );
 
@@ -492,7 +492,35 @@ mod tests {
     }
 
     #[test]
+    fn convert_quat() {
+        //
+    }
+
+    #[test]
+    fn mul_quat() {
+        //
+    }
+
+    #[test]
+    fn norm_quat() {
+        // Baseline
+        let error = (
+            Quat::identity().norm().mag() - Quat::identity().mag()
+        ).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+
+        let quat = Quat::new(Vec3::new(-1., 3., 5.));
+        let error = (quat.norm().mag() - 1.).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
     fn norm_vec() {
+        // Baseline
         let error = (Vec3::up().norm().mag() - Vec3::up().mag()).abs();
 
         eprintln!("Error: {}", error);

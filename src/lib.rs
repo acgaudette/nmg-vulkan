@@ -15,12 +15,11 @@ const DEBUG_MODE: bool = false;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
-	pub frame: usize,
-	pub fps: u32,
+    pub frame: usize,
+    pub fps: u32,
 }
 
 pub trait Game {
-	//type fps;
     fn start(
         &mut self,
         entities:   &mut entity::Manager,
@@ -108,12 +107,12 @@ fn begin_update<T>(
     let mut running = true;
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
-	let mut frames_rendered_since_last:u32 = 0;
-	let mut last_updated = std::time::Instant::now();
-	let mut metadata = Metadata{
-		frame:0,
-		fps:0,
-	};
+    let mut frames_rendered_since_last:u32 = 0;
+    let mut last_updated = std::time::Instant::now();
+    let mut metadata = Metadata{
+        frame:0,
+        fps:0,
+    };
 
     loop {
         // Handle window events
@@ -184,7 +183,6 @@ fn begin_update<T>(
 
         // Render frame
         if let Err(e) = context.draw() {
-		
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
                 // Rebuild the swapchain if it becomes out of date
@@ -209,17 +207,17 @@ fn begin_update<T>(
             panic!("{}", e);
         }
 
-		// Update frame counts and frames per second
+        // Update frame counts and frames per second
         metadata.frame += 1;
-		frames_rendered_since_last += 1;
-		let last_updated_duration = now.duration_since(last_updated);
-		if last_updated_duration.as_secs() > 0 {
-			metadata.fps = frames_rendered_since_last;
-			frames_rendered_since_last = 0;
-			if DEBUG_MODE {
-				println!("Frames per second: {}", metadata.fps);
-			}
-			last_updated = now;
-		}
+        frames_rendered_since_last += 1;
+        let last_updated_duration = now.duration_since(last_updated);
+        if last_updated_duration.as_secs() > 0 {
+            metadata.fps = frames_rendered_since_last;
+            frames_rendered_since_last = 0;
+            if DEBUG_MODE {
+                println!("Frames per second: {}", metadata.fps);
+            }
+            last_updated = now;
+        }
     }
 }

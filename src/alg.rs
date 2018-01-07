@@ -389,6 +389,19 @@ impl Quat {
         }
     }
 
+    pub fn angle_axis(axis: Vec3, angle: f32) -> Quat {
+        let half = 0.5 * angle;
+        let half_sin = half.sin();
+        let half_cos = half.cos();
+
+        Quat {
+            x: axis.x * half_sin,
+            y: axis.y * half_sin,
+            z: axis.z * half_sin,
+            w: half_cos,
+        }
+    }
+
     pub fn norm(self) -> Quat {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

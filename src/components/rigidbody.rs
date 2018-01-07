@@ -7,6 +7,7 @@ use components;
 pub struct Manager {
     forces: Vec<alg::Vec3>,
     masses: Vec<f32>,
+    drags:  Vec<f32>,
     lin_velocities: Vec<alg::Vec3>,
     torques: Vec<alg::Vec3>,
     ang_velocities: Vec<alg::Vec3>,
@@ -15,7 +16,8 @@ pub struct Manager {
 impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
         debug_assert!(self.forces.len() == self.masses.len());
-        debug_assert!(self.masses.len() == self.lin_velocities.len());
+        debug_assert!(self.masses.len() == self.drags.len());
+        debug_assert!(self.drags.len() == self.lin_velocities.len());
         debug_assert!(self.lin_velocities.len() == self.torques.len());
         debug_assert!(self.torques.len() == self.ang_velocities.len());
 
@@ -26,6 +28,7 @@ impl components::Component for Manager {
             if i >= self.forces.len() {
                 self.forces.push(alg::Vec3::zero());
                 self.masses.push(0.);
+                self.drags.push(0.);
                 self.lin_velocities.push(alg::Vec3::zero());
                 self.torques.push(alg::Vec3::zero());
                 self.ang_velocities.push(alg::Vec3::zero());
@@ -49,6 +52,7 @@ impl Manager {
         Manager {
             forces: Vec::with_capacity(hint),
             masses: Vec::with_capacity(hint),
+            drags:  Vec::with_capacity(hint),
             lin_velocities: Vec::with_capacity(hint),
             torques: Vec::with_capacity(hint),
             ang_velocities: Vec::with_capacity(hint),
@@ -76,7 +80,8 @@ impl Manager {
         transforms: &mut components::transform::Manager,
     ) {
         debug_assert!(self.forces.len() == self.masses.len());
-        debug_assert!(self.masses.len() == self.lin_velocities.len());
+        debug_assert!(self.masses.len() == self.drags.len());
+        debug_assert!(self.drags.len() == self.lin_velocities.len());
         debug_assert!(self.lin_velocities.len() == self.torques.len());
         debug_assert!(self.torques.len() == self.ang_velocities.len());
 
@@ -84,7 +89,11 @@ impl Manager {
         for i in 0..self.forces.len() {
             /* Linear motion */
 
-            let lin_momentum = self.forces[i] * delta as f32;
+            // Simple drag
+            let lin_resistance = self.lin_velocities[i] * self.drags[i];
+
+            let lin_momentum = (self.forces[i] - lin_resistance)
+                * delta as f32;
 
             assert!(self.masses[i] > 0.);
 
@@ -98,7 +107,11 @@ impl Manager {
 
             /* Angular motion */
 
-            let ang_momentum = self.torques[i] * delta as f32;
+            // Simple drag
+            let ang_resistance = self.ang_velocities[i] * self.drags[i];
+
+            let ang_momentum = (self.torques[i] - ang_resistance)
+                * delta as f32;
 
             // TODO: Tensor support
             let inverse_inertia = 6. / self.masses[i];

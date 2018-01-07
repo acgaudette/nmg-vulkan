@@ -511,12 +511,49 @@ mod tests {
 
     #[test]
     fn convert_quat() {
-        //
+        assert!(Quat::identity().to_mat() == Mat::identity());
+
+        let quat = Quat::angle_axis(Vec3::right(), -6.3);
+        let mat = Mat::rotation_x(-6.3);
+
+        let error = mat_error(quat.to_mat(), mat);
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
     }
 
     #[test]
     fn mul_quat() {
         //
+    }
+
+    fn mat_error(a: Mat, b: Mat) -> f32 {
+        let mut total = 0f32;
+
+        {
+            let mut error = |x: f32, y: f32| total += (x - y).abs();
+
+            error(a.x0, b.x0);
+            error(a.y0, b.y0);
+            error(a.z0, b.z0);
+            error(a.w0, b.w0);
+
+            error(a.x1, b.x1);
+            error(a.y1, b.y1);
+            error(a.z1, b.z1);
+            error(a.w1, b.w1);
+
+            error(a.x2, b.x2);
+            error(a.y2, b.y2);
+            error(a.z2, b.z2);
+            error(a.w2, b.w2);
+
+            error(a.x3, b.x3);
+            error(a.y3, b.y3);
+            error(a.z3, b.z3);
+            error(a.w3, b.w3);
+        }
+
+        total
     }
 
     #[test]

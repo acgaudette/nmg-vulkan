@@ -175,7 +175,7 @@ fn begin_update<T>(
         // Update renderer
         if let Err(e) = context.update(
             &components.draws.instances,
-            shared_ubo
+            shared_ubo,
         ) {
             // Irrecoverable error
             panic!("{}", e);
@@ -210,13 +210,17 @@ fn begin_update<T>(
         // Update frame counts and frames per second
         metadata.frame += 1;
         frames_rendered_since_last += 1;
+
         let last_updated_duration = now.duration_since(last_updated);
+
         if last_updated_duration.as_secs() > 0 {
             metadata.fps = frames_rendered_since_last;
             frames_rendered_since_last = 0;
+
             if DEBUG_MODE {
                 println!("Frames per second: {}", metadata.fps);
             }
+
             last_updated = now;
         }
     }

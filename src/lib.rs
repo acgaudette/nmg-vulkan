@@ -19,6 +19,7 @@ pub trait Game {
         &mut self,
         time:  f64,
         delta: f64,
+        frame: usize,
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,
@@ -95,6 +96,7 @@ fn begin_update<T>(
     let mut running = true;
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
+    let mut frame = 0usize;
 
     loop {
         // Handle window events
@@ -143,6 +145,7 @@ fn begin_update<T>(
         let shared_ubo = game.update(
             time,
             delta,
+            frame,
             context.swapchain.extent().height(),
             context.swapchain.extent().width(),
             entities,
@@ -187,5 +190,7 @@ fn begin_update<T>(
             // Irrecoverable error
             panic!("{}", e);
         }
+
+        frame += 1;
     }
 }

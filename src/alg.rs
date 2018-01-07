@@ -378,6 +378,16 @@ impl Quat {
             w: 0.,
         }
     }
+
+    #[inline]
+    pub fn identity() -> Quat {
+        Quat {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+            w: 1.,
+        }
+    }
 }
 
 impl std::ops::Mul<Vec3> for Quat {

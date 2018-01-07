@@ -14,4 +14,5 @@ pub struct Container {
     pub transforms:  transform::Manager,
     pub draws:       draw::Manager,
     pub rigidbodies: rigidbody::Manager,
+    pub softbodies:  softbody::Manager,
 }

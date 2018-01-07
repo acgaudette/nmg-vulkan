@@ -72,10 +72,10 @@ impl Manager {
         for i in 0..self.velocities.len() {
             assert!(self.masses[i] > 0.);
 
-            let acceleration = self.forces[i] / self.masses[i];
+            let momentum = self.forces[i] * delta as f32;
 
             self.velocities[i] = self.velocities[i]
-                + acceleration * delta as f32;
+                + momentum / self.masses[i];
 
             let position = transforms.get_position_i(i)
                 + self.velocities[i] * delta as f32;

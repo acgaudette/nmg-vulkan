@@ -21,6 +21,7 @@ impl components::Component for Manager {
             if i >= self.velocities.len() {
                 self.velocities.push(alg::Vec3::zero());
                 self.masses.push(0.);
+                self.forces.push(alg::Vec3::zero());
 
                 continue;
             }
@@ -63,6 +64,8 @@ impl Manager {
 
         // Semi-implicit Euler
         for i in 0..self.velocities.len() {
+            assert!(self.masses[i] > 0);
+
             let acceleration = self.forces[i] / self.masses[i];
 
             self.velocities[i] = self.velocities[i]

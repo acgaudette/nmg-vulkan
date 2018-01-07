@@ -34,7 +34,7 @@ impl nmg::Game for Demo {
             object,
             10.,
             alg::Vec3::up() * 500.,
-            alg::Vec3::right() * -1.,
+            alg::Vec3::right() * -1000.,
         );
 
 

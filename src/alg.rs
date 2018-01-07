@@ -118,6 +118,30 @@ impl std::ops::Sub for Vec3 {
     }
 }
 
+impl std::ops::Mul<f32> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, scalar: f32) -> Vec3 {
+        Vec3::new(
+            self.x * scalar,
+            self.y * scalar,
+            self.z * scalar,
+        )
+    }
+}
+
+impl std::ops::Div<f32> for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, scalar: f32) -> Vec3 {
+        Vec3::new(
+            self.x / scalar,
+            self.y / scalar,
+            self.z / scalar,
+        )
+    }
+}
+
 impl std::fmt::Display for Vec3 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(

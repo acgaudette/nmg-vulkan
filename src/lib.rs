@@ -107,11 +107,11 @@ fn begin_update<T>(
     let mut running = true;
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
-    let mut frames_rendered_since_last:u32 = 0;
+    let mut frames_rendered_since_last = 0u32;
     let mut last_updated = std::time::Instant::now();
     let mut metadata = Metadata{
-        frame:0,
-        fps:0,
+        frame: 0,
+        fps: 0,
     };
 
     loop {

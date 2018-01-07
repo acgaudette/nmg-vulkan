@@ -45,7 +45,7 @@ impl nmg::Game for Demo {
         &mut self,
         time:  f64,
         delta: f64,
-        frame: usize,
+		metadata: nmg::Metadata,
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,
@@ -70,7 +70,7 @@ impl nmg::Game for Demo {
             render::SharedUBO::new(view, projection)
         };
 
-        if frame > 0 {
+        if metadata.frame > 0 {
             // Reset force
             components.rigidbodies.set(
                 self.objects[0],

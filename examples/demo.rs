@@ -41,6 +41,7 @@ impl nmg::Game for Demo {
         &mut self,
         time:  f64,
         delta: f64,
+        frame: usize,
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,

@@ -373,11 +373,29 @@ mod tests {
     use alg::*;
 
     #[test]
-    fn mult_mat() {
+    fn mul_mat() {
         let translation = Mat::translation(1.0, 2.0, 3.0);
 
         assert!(translation * Mat::identity() == translation);
         assert!(Mat::identity() * translation == translation);
+    }
+
+    #[test]
+    fn mul_vec() {
+        let vec = Vec3::new(9., -4., 0.);
+        let scale = Mat::scale(-1., 3., 2.);
+
+        assert!(Mat::identity() * vec == vec);
+        assert!(scale * vec == Vec3::new(-9., -12., 0.));
+
+        let mat = Mat::new(
+            1., 1., 1., 0.,
+            0., 1., 0., 0.,
+            0., 0., 0., 0.,
+            0., 0., 0., 0.,
+        );
+
+        assert!(mat * vec == Vec3::new(5., -4., 0.,));
     }
 
     #[test]
@@ -387,8 +405,8 @@ mod tests {
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
 
-        let vec3 = Vec3::new(-1., 3., 5.);
-        let error = (vec3.norm().mag() - 1.).abs();
+        let vec = Vec3::new(-1., 3., 5.);
+        let error = (vec.norm().mag() - 1.).abs();
 
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);

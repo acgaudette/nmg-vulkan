@@ -523,7 +523,13 @@ mod tests {
 
     #[test]
     fn mul_quat() {
-        //
+        let quat = Quat::angle_axis(Vec3::up(), 7.1);
+        let mat = Mat::rotation_y(7.1);
+        let vec = Vec3::new(1., 2., 3.);
+
+        let error = vec3_error(quat.to_mat() * vec , mat * vec);
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
     }
 
     fn mat_error(a: Mat, b: Mat) -> f32 {
@@ -551,6 +557,20 @@ mod tests {
             error(a.y3, b.y3);
             error(a.z3, b.z3);
             error(a.w3, b.w3);
+        }
+
+        total
+    }
+
+    fn vec3_error(a: Vec3, b: Vec3) -> f32 {
+        let mut total = 0f32;
+
+        {
+            let mut error = |x: f32, y: f32| total += (x - y).abs();
+
+            error(a.x, b.x);
+            error(a.y, b.y);
+            error(a.z, b.z);
         }
 
         total

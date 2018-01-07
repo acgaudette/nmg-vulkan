@@ -19,6 +19,23 @@ impl nmg::Game for Demo {
         let object = entities.add();
         components.transforms.register(object);
         components.draws.register(object, 0);
+        components.rigidbodies.register(object);
+
+        // Initial position
+        components.transforms.set(
+            object,
+            alg::Vec3::new(0., 0., 2.),
+            alg::Mat::identity(),
+            alg::Vec3::one(),
+        );
+
+        // Initial force (and mass)
+        components.rigidbodies.set(
+            object,
+            alg::Vec3::up(),
+            10.,
+        );
+
 
         // Update demo state
         self.objects.push(object);
@@ -51,13 +68,6 @@ impl nmg::Game for Demo {
 
             render::SharedUBO::new(view, projection)
         };
-
-        components.transforms.set(
-            self.objects[0],
-            alg::Vec3::new(0., 0., 2.),
-            alg::Mat::identity(),
-            alg::Vec3::one(),
-        );
 
         shared_ubo
     }

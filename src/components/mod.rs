@@ -1,5 +1,6 @@
 pub mod transform;
 pub mod draw;
+pub mod rigidbody;
 
 use entity;
 

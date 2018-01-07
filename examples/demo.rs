@@ -14,8 +14,7 @@ impl nmg::Game for Demo {
     fn start(
         &mut self,
         entities:   &mut entity::Manager,
-        transforms: &mut components::transform::Manager,
-        draws:      &mut components::draw::Manager,
+        components: &mut components::Container,
     ) {
         // Instantiate three entities
         let object_0 = entities.add();
@@ -23,14 +22,14 @@ impl nmg::Game for Demo {
         let object_2 = entities.add();
 
         // Add transform components
-        transforms.register(object_0);
-        transforms.register(object_1);
-        transforms.register(object_2);
+        components.transforms.register(object_0);
+        components.transforms.register(object_1);
+        components.transforms.register(object_2);
 
         // Add draw components (using first model)
-        draws.register(object_0, 0);
-        draws.register(object_1, 0);
-        draws.register(object_2, 0);
+        components.draws.register(object_0, 0);
+        components.draws.register(object_1, 0);
+        components.draws.register(object_2, 0);
 
         // Update demo state
         self.objects.push(object_0);
@@ -45,8 +44,7 @@ impl nmg::Game for Demo {
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,
-        transforms: &mut components::transform::Manager,
-        draws:      &mut components::draw::Manager,
+        components: &mut components::Container,
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
@@ -69,21 +67,21 @@ impl nmg::Game for Demo {
 
         let angle = time as f32;
 
-        transforms.set(
+        components.transforms.set(
             self.objects[0],
             alg::Vec3::new(0., 0., 2.),
             alg::Mat::rotation(angle, angle, angle),
             alg::Vec3::one(),
         );
 
-        transforms.set(
+        components.transforms.set(
             self.objects[1],
             alg::Vec3::new(-0.8, -1.1, 3.),
             alg::Mat::rotation(0., angle, 0.),
             alg::Vec3::new(0.9, 0.9, 1.),
         );
 
-        transforms.set(
+        components.transforms.set(
             self.objects[2],
             alg::Vec3::new(1.6, 0.8, 4.),
             alg::Mat::rotation(0., 0., angle),

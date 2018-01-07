@@ -75,6 +75,8 @@ pub struct Context<'a> {
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_buffer: vd::BufferHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
+    sbody_buffer:   vd::BufferHandle,
+    sbody_memory:   vd::BufferHandle,
 
     /* Persistent data */
 
@@ -427,6 +429,8 @@ impl<'a> Context<'a> {
 
                     instance += 1;
                 }
+
+                // TODO: bind softbody data
             }
 
             self.command_buffers[i].end_render_pass();
@@ -464,6 +468,8 @@ impl<'a> Context<'a> {
                 &dynamic_buffer.finalize(),
             )?;
         }
+
+        // TODO: copy softbody buffer
 
         Ok(())
     }
@@ -588,13 +594,19 @@ impl ModelData {
 pub struct Model {
     index_count:  u32,
     index_offset: u32,
+    vertex_count: usize,
 }
 
 impl Model {
-    fn new(index_count: u32, index_offset: u32) -> Model {
+    fn new(
+        index_count:  u32,
+        index_offset: u32,
+        vertex_count: usize,
+    ) -> Model {
         Model {
             index_count,
             index_offset,
+            vertex_count,
         }
     }
 }
@@ -630,7 +642,7 @@ impl Instances {
     pub fn add(
         &mut self,
         instance_data: InstanceUBO,
-        model_index:   usize,
+        model_index: usize,
     ) -> InstanceHandle {
         self.data[model_index].push(instance_data);
 
@@ -644,7 +656,7 @@ impl Instances {
     pub fn update(
         &mut self,
         handle: InstanceHandle,
-        data:   InstanceUBO,
+        data: InstanceUBO,
     ) {
         let (m, i) = (
             handle.model_index() as usize,
@@ -1112,7 +1124,7 @@ fn load_models(
                 indices.push(index + offset);
             }
 
-            models.push(Model::new(index_count, offset));
+            models.push(Model::new(index_count, offset, data.vertices.len()));
 
             offset += index_count;
         }
@@ -1245,6 +1257,8 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
     let pipeline_layout = vd::PipelineLayout::builder()
         .set_layouts(&[ubo_layout.handle()])
         .build(device)?;
+
+    // TODO: add softbody descriptor set
 
     Ok((
         depth_format,
@@ -1817,6 +1831,8 @@ fn init_drawing(
 
     // No copies (causes segfault?)
     descriptor_pool.update_descriptor_sets(&writes, &[]);
+
+    // TODO: create softbody buffer
 
     Ok((
         depth_image,

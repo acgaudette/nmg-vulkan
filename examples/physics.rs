@@ -32,7 +32,7 @@ impl nmg::Game for Demo {
         // Initial force (and mass)
         components.rigidbodies.set(
             object,
-            alg::Vec3::up(),
+            alg::Vec3::up() * 1000.,
             10.,
         );
 
@@ -45,6 +45,7 @@ impl nmg::Game for Demo {
         &mut self,
         time:  f64,
         delta: f64,
+        frame: usize,
         screen_height: u32,
         screen_width:  u32,
         entities:   &mut entity::Manager,
@@ -68,6 +69,15 @@ impl nmg::Game for Demo {
 
             render::SharedUBO::new(view, projection)
         };
+
+        if frame > 0 {
+            // Reset force
+            components.rigidbodies.set(
+                self.objects[0],
+                alg::Vec3::zero(),
+                10.,
+            );
+        }
 
         shared_ubo
     }

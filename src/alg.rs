@@ -85,6 +85,14 @@ impl Vec3 {
         self.mag_squared().sqrt()
     }
 
+    pub fn dist_squared(self, other: Vec3) -> f32 {
+        (self - other).mag_squared()
+    }
+
+    pub fn dist(self, other: Vec3) -> f32 {
+        self.dist_squared(other).sqrt()
+    }
+
     pub fn cross(self, other: Vec3) -> Vec3 {
         Vec3::new(
             self.y * other.z - self.z * other.y,

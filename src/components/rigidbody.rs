@@ -46,11 +46,17 @@ impl Manager {
         }
     }
 
-    pub fn set(&mut self, entity: entity::Handle, force: alg::Vec3) {
+    pub fn set(
+        &mut self,
+        entity: entity::Handle,
+        force:  alg::Vec3,
+        mass:   f32,
+    ) {
         let i = entity.get_index() as usize;
 
-        debug_assert!(i < self.forces.len());
+        debug_assert!(i < self.masses.len());
 
+        self.masses[i] = mass;
         self.forces[i] = force;
     }
 
@@ -64,7 +70,7 @@ impl Manager {
 
         // Semi-implicit Euler
         for i in 0..self.velocities.len() {
-            assert!(self.masses[i] > 0);
+            assert!(self.masses[i] > 0.);
 
             let acceleration = self.forces[i] / self.masses[i];
 

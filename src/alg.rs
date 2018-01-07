@@ -389,6 +389,22 @@ impl Quat {
         }
     }
 
+    pub fn norm(self) -> Quat {
+        let inverse_len = inverse_sqrt(
+            self.x * self.x
+            + self.y * self.y
+            + self.z * self.x
+            + self.w * self.w,
+        );
+
+        Quat {
+            x: self.x * inverse_len,
+            y: self.y * inverse_len,
+            z: self.z * inverse_len,
+            w: self.w * inverse_len,
+        }
+    }
+
     pub fn to_mat(self) -> Mat {
         let x0 = 1. - 2. * self.y * self.y - 2. * self.z * self.z;
         let y0 = 2. * self.x * self.y - 2. * self.z * self.w;

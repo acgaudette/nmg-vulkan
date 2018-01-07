@@ -419,6 +419,19 @@ impl std::ops::Mul<Vec3> for Quat {
     }
 }
 
+impl std::ops::Mul<f32> for Quat {
+    type Output = Quat;
+
+    fn mul(self, scalar: f32) -> Quat {
+        Quat {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+            w: self.w * scalar,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alg::*;

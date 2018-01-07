@@ -50,6 +50,7 @@ where
         1,
         render::Instances::new(context.models.len(), None),
     );
+    let mut physics = components::rigidbody::Manager::new(1);
 
     // Start game
     game.start(&mut entities, &mut transforms, &mut draws);
@@ -63,6 +64,7 @@ where
         &mut entities,
         &mut transforms,
         &mut draws,
+        &mut physics,
     );
 
     // Synchronize before exit
@@ -91,6 +93,7 @@ fn begin_update<T>(
     entities:   &mut entity::Manager,
     transforms: &mut components::transform::Manager,
     draws:      &mut components::draw::Manager,
+    physics:    &mut components::rigidbody::Manager,
 ) where
     T: Game,
 {
@@ -152,8 +155,8 @@ fn begin_update<T>(
             draws,
         );
 
-        /* Update components */
-
+        // Update core components
+        physics.simulate(delta, transforms);
         draws.transfer(transforms);
 
         // Update renderer

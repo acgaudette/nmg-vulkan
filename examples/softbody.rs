@@ -50,7 +50,7 @@ impl nmg::Game for Demo {
         // Initial force
         components.softbodies.set(
             object,
-            alg::Vec3::up() * 200.,
+            alg::Vec3::up() * 1200.,
         );
 
         // Update demo state
@@ -86,15 +86,26 @@ impl nmg::Game for Demo {
             render::SharedUBO::new(view, projection)
         };
 
-        if metadata.frame > 0 {
+        shared_ubo
+    }
+
+    fn fixed_update(
+        &mut self,
+        time: f64,
+        fixed_delta: f32,
+        metadata: nmg::Metadata,
+        screen_height: u32,
+        screen_width: u32,
+        entities: &mut entity::Manager,
+        components: &mut components::Container,
+    ) {
+        if metadata.fixed_frame > 0 {
             // Reset forces
             components.softbodies.set(
                 self.objects[0],
                 alg::Vec3::zero(),
             );
         }
-
-        shared_ubo
     }
 }
 

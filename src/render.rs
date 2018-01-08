@@ -770,11 +770,18 @@ impl SharedUBO {
 #[repr(C)]
 pub struct InstanceUBO {
     model: alg::Mat,
+    offsets: [alg::Vec3; MAX_SOFTBODY_VERT],
 }
 
 impl InstanceUBO {
-    pub fn new(model: alg::Mat) -> InstanceUBO {
-        InstanceUBO { model }
+    pub fn new(
+        model: alg::Mat,
+        offsets: [alg::Vec3; MAX_SOFTBODY_VERT],
+    ) -> InstanceUBO {
+        InstanceUBO {
+            model,
+            offsets,
+        }
     }
 }
 
@@ -782,9 +789,11 @@ impl Default for InstanceUBO {
     fn default() -> InstanceUBO {
         InstanceUBO {
             model: alg::Mat::identity(),
+            offsets: [alg::Vec3::zero(); MAX_SOFTBODY_VERT],
         }
     }
 }
+
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,

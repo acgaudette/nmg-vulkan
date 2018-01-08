@@ -3,6 +3,7 @@ use entity;
 use render;
 use components;
 
+use ::FIXED_DT; // Import from lib
 use components::transform;
 
 const ITERATIONS: usize = 10;
@@ -182,13 +183,7 @@ impl Manager {
         self.planes.push(plane);
     }
 
-    pub fn simulate(
-        &mut self,
-        delta: f64,
-        transforms: &mut transform::Manager,
-    ) {
-        let delta = delta as f32;
-
+    pub fn simulate(&mut self, transforms: &mut transform::Manager) {
         // Position Verlet
         for i in 0..self.instances.len() {
             let mut instance = match self.instances[i] {
@@ -198,7 +193,7 @@ impl Manager {
 
             assert!(instance.mass > 0.);
             let acceleration = (instance.force / instance.mass)
-                * delta * delta;
+                * FIXED_DT * FIXED_DT;
 
             // Update particles
             for particle in &mut instance.particles {

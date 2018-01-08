@@ -2,6 +2,7 @@ use alg;
 use entity;
 use components;
 
+use ::FIXED_DT; // Import from lib
 use components::transform;
 
 // Data layout assumes many physics objects (but may still be sparse)
@@ -78,11 +79,7 @@ impl Manager {
         self.torques[i] = torque;
     }
 
-    pub fn simulate(
-        &mut self,
-        delta: f64,
-        transforms: &mut transform::Manager,
-    ) {
+    pub fn simulate(&mut self, transforms: &mut transform::Manager) {
         debug_assert!(self.forces.len() == self.masses.len());
         debug_assert!(self.masses.len() == self.drags.len());
         debug_assert!(self.drags.len() == self.lin_velocities.len());
@@ -97,7 +94,7 @@ impl Manager {
             let lin_resistance = self.lin_velocities[i] * self.drags[i];
 
             let lin_momentum = (self.forces[i] - lin_resistance)
-                * delta as f32;
+                * FIXED_DT as f32;
 
             assert!(self.masses[i] > 0.);
 
@@ -105,7 +102,7 @@ impl Manager {
                 + lin_momentum / self.masses[i];
 
             let position = transforms.get_position_i(i)
-                + self.lin_velocities[i] * delta as f32;
+                + self.lin_velocities[i] * FIXED_DT as f32;
 
             transforms.set_position_i(i, position);
 
@@ -115,7 +112,7 @@ impl Manager {
             let ang_resistance = self.ang_velocities[i] * self.drags[i];
 
             let ang_momentum = (self.torques[i] - ang_resistance)
-                * delta as f32;
+                * FIXED_DT as f32;
 
             // TODO: Tensor support
             let inverse_inertia = 6. / self.masses[i];
@@ -132,7 +129,7 @@ impl Manager {
             );
 
             let last = transforms.get_orientation_i(i).norm(); // Renormalize
-            let orientation = last + last * 0.5 * derivative * delta as f32;
+            let orientation = last + last * 0.5 * derivative * FIXED_DT as f32;
 
             transforms.set_orientation_i(i, orientation);
         }

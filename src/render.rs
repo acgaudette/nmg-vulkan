@@ -41,7 +41,6 @@ pub struct Context<'a> {
     pub swapchain: vd::SwapchainKhr,
     pub models:    Vec<Model>, // Lookup table
 
-
     /* Swapchain recreation data */
 
     surface:        vd::SurfaceKhr,

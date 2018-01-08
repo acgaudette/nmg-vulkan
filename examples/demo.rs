@@ -37,6 +37,7 @@ impl nmg::Game for Demo {
         self.objects.push(object_2);
     }
 
+    #[allow(unused_variables)]
     fn update(
         &mut self,
         time:  f64,
@@ -92,6 +93,7 @@ impl nmg::Game for Demo {
         shared_ubo
     }
 
+    #[allow(unused_variables)]
     fn fixed_update(
         &mut self,
         time: f64,

@@ -100,6 +100,10 @@ impl Vec3 {
             self.x * other.y - self.y * other.x,
         )
     }
+
+    pub fn dot(self, other: Vec3) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
 }
 
 impl std::ops::Add for Vec3 {

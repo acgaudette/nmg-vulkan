@@ -4,6 +4,7 @@ use entity;
 use render;
 
 use components::transform;
+use components::softbody;
 
 pub struct Manager {
     pub instances: render::Instances,
@@ -38,7 +39,11 @@ impl Manager {
     }
 
     // Update
-    pub fn transfer(&mut self, transforms: &transform::Manager) {
+    pub fn transfer(
+        &mut self,
+        transforms: &transform::Manager,
+        softbodies: &softbody::Manager,
+    ) {
         for (entity, instance) in &self.handles {
             // Get transform component data
             let transform = transforms.get(*entity);
@@ -50,7 +55,7 @@ impl Manager {
                 let scale = alg::Mat::scale_vec(transform.2);
 
                 let model = translation * rotation * scale;
-                let offsets = [alg::Vec3::zero(); render::MAX_SOFTBODY_VERT];
+                let offsets = softbodies.get_offsets(*entity);
 
                 render::InstanceUBO::new(model, offsets)
             };

@@ -6,7 +6,7 @@ use components;
 use ::FIXED_DT; // Import from lib
 use components::transform;
 
-const ITERATIONS: usize = 10;
+const ITERATIONS: usize = 1;
 
 struct Particle {
     position: alg::Vec3,

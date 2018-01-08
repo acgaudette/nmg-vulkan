@@ -532,6 +532,12 @@ impl std::ops::Add for Quat {
     }
 }
 
+impl std::fmt::Display for Quat {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(out, "( {}, {}, {}, {} )", self.x, self.y, self.z, self.w)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Plane {
     pub normal: Vec3,

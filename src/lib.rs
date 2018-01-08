@@ -171,7 +171,10 @@ fn begin_update<T>(
 
         // Update core components
         components.rigidbodies.simulate(delta, &mut components.transforms);
-        components.draws.transfer(&mut components.transforms);
+        components.draws.transfer(
+            &mut components.transforms,
+            &mut components.softbodies,
+        );
 
         // Update renderer
         if let Err(e) = context.update(

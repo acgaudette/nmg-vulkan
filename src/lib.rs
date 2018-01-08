@@ -61,6 +61,7 @@ where
         transforms:  components::transform::Manager::new(1),
         draws:       components::draw::Manager::new(1, instances),
         rigidbodies: components::rigidbody::Manager::new(1),
+        softbodies:  components::softbody::Manager::new(1),
     };
 
     // Start game

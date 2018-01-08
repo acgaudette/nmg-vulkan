@@ -658,7 +658,7 @@ mod tests {
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
 
-        let quat = Quat::new(Vec3::new(-1., 3., 5.));
+        let quat = Quat::new(-1., 3., 5., 0.);
         let error = (quat.norm().mag() - 1.).abs();
 
         eprintln!("Error: {}", error);

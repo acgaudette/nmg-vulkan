@@ -15,7 +15,7 @@ const DEBUG_MODE: bool = false;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
-    pub frame: usize,
+    pub frame: u32,
     pub fps: u32,
 }
 
@@ -106,10 +106,13 @@ fn begin_update<T>(
     T: Game,
 {
     let mut running = true;
+
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
-    let mut frames_rendered_since_last = 0u32;
+
     let mut last_updated = std::time::Instant::now();
+    let mut last_frame = 0u32;
+
     let mut metadata = Metadata{
         frame: 0,
         fps: 0,
@@ -212,15 +215,13 @@ fn begin_update<T>(
             panic!("{}", e);
         }
 
-        // Update frame counts and frames per second
+        // Increment frame counter
         metadata.frame += 1;
-        frames_rendered_since_last += 1;
 
-        let last_updated_duration = now.duration_since(last_updated);
-
-        if last_updated_duration.as_secs() > 0 {
-            metadata.fps = frames_rendered_since_last;
-            frames_rendered_since_last = 0;
+        if now.duration_since(last_updated).as_secs() > 0 {
+            // Frames per second
+            metadata.fps = metadata.frame - last_frame;
+            last_frame = metadata.frame;
 
             if DEBUG_MODE {
                 println!("Frames per second: {}", metadata.fps);

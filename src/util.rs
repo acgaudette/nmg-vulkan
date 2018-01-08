@@ -66,7 +66,65 @@ impl<T> AlignedBuffer<T> {
 #[cfg(test)]
 mod tests {
     use alg;
+    use render;
     use util::*;
+
+    #[test]
+    fn pack_ubo() {
+        let mat = alg::Mat::identity();
+
+        let offsets = [
+            alg::Vec3::new(0., 0.5, 0.),
+            alg::Vec3::new(0.5, -0.5, -0.5),
+            alg::Vec3::new(-0.5, -0.5, -0.5),
+            alg::Vec3::new(0.5, -0.5, 0.5),
+            alg::Vec3::new(-0.5, -0.5, 0.5),
+            alg::Vec3::new(0., 0.5, 0.),
+            alg::Vec3::new(0.5, -0.5, -0.5),
+            alg::Vec3::new(-0.5, -0.5, -0.5),
+            alg::Vec3::new(0.5, -0.5, 0.5),
+            alg::Vec3::new(-0.5, -0.5, 0.5),
+            alg::Vec3::new(0., 0.5, 0.),
+            alg::Vec3::new(0.5, -0.5, -0.5),
+            alg::Vec3::new(-0.5, -0.5, -0.5),
+            alg::Vec3::new(0.5, -0.5, 0.5),
+            alg::Vec3::new(-0.5, -0.5, 0.5),
+            alg::Vec3::new(0., 0.5, 0.),
+        ];
+
+        let mut raw = {
+            let mut buffer = AlignedBuffer::new(256, 1);
+
+            buffer.push(render::InstanceUBO::new(mat, offsets));
+
+            unsafe {
+                buffer.finalize()
+            }
+        };
+
+        let (test_mat, test_offsets) = unsafe {
+            let mut ptr = raw.as_mut_ptr() as *const alg::Mat;
+            let test_mat = *ptr;
+
+            ptr = ptr.offset(1);
+            let mut ptr = ptr as *const alg::Vec3;
+            let mut test_offsets = Vec::with_capacity(offsets.len());
+
+            for i in 0..offsets.len() {
+                let offset = *ptr;
+                test_offsets.push(offset);
+                ptr = ptr.offset(1);
+            }
+
+            (test_mat, test_offsets)
+        };
+
+        assert!(test_mat == mat);
+
+        for i in 0..offsets.len() {
+            assert!(test_offsets[i] == offsets[i]);
+        }
+    }
 
     #[test]
     fn create_aligned_buffers() {

@@ -50,7 +50,7 @@ impl nmg::Game for Demo {
         // Initial force
         components.softbodies.set(
             object,
-            alg::Vec3::zero(),
+            alg::Vec3::up() * 200.,
         );
 
         // Update demo state

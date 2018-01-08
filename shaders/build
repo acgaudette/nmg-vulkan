@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
-COMPILER_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
+VK_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
+COMPILER=$VK_PATH/glslangValidator
 
 function compile {
-  $COMPILER_PATH/glslangValidator -V $1
+  $COMPILER -V $1.$2
+  $COMPILER -H $1.$2 > $2.spvasm
 }
 
-compile shader.frag
-compile shader.vert
+./clean
+compile shader vert
+compile shader frag

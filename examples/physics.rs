@@ -87,6 +87,17 @@ impl nmg::Game for Demo {
 
         shared_ubo
     }
+
+    fn fixed_update(
+        &mut self,
+        time: f64,
+        fixed_delta: f32,
+        metadata: nmg::Metadata,
+        screen_height: u32,
+        screen_width: u32,
+        entities: &mut entity::Manager,
+        components: &mut components::Container,
+    ) {}
 }
 
 fn main() {

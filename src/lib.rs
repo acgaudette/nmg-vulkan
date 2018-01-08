@@ -13,6 +13,8 @@ const DEBUG_MODE: bool = true;
 #[cfg(not(debug_assertions))]
 const DEBUG_MODE: bool = false;
 
+const FIXED_DT: f32 = 1. / 100.;
+
 #[derive(Clone, Copy)]
 pub struct Metadata {
     pub frame: u32,
@@ -61,7 +63,7 @@ where
         transforms:  components::transform::Manager::new(1),
         draws:       components::draw::Manager::new(1, instances),
         rigidbodies: components::rigidbody::Manager::new(1),
-        softbodies:  components::softbody::Manager::new(1),
+        softbodies:  components::softbody::Manager::new(1, 1),
     };
 
     // Start game
@@ -109,6 +111,7 @@ fn begin_update<T>(
 
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
+    let mut accumulator = 0f32; // Fixed-framerate accumulator
 
     let mut last_updated = std::time::Instant::now();
     let mut last_frame = 0u32;
@@ -172,9 +175,18 @@ fn begin_update<T>(
             components,
         );
 
-        // Update core components
-        components.rigidbodies.simulate(delta, &mut components.transforms);
-        components.softbodies.simulate(delta, &mut components.transforms);
+        /* Update core components */
+
+        accumulator += delta as f32;
+
+        // Fixed updated loop
+        while accumulator >= FIXED_DT {
+            components.rigidbodies.simulate(&mut components.transforms);
+            components.softbodies.simulate(&mut components.transforms);
+
+            accumulator -= FIXED_DT;
+        }
+
         components.draws.transfer(
             &mut components.transforms,
             &mut components.softbodies,

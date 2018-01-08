@@ -2,6 +2,8 @@ use alg;
 use entity;
 use components;
 
+use components::transform;
+
 const ITERATIONS: usize = 10;
 
 struct Particle {
@@ -173,7 +175,7 @@ impl Manager {
     pub fn simulate(
         &mut self,
         delta: f64,
-        transforms: &mut components::transform::Manager,
+        transforms: &mut transform::Manager,
     ) {
         // Position Verlet
         let mut itr = self.instances.iter_mut();

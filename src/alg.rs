@@ -516,6 +516,25 @@ impl std::ops::Add for Quat {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Plane {
+    pub position: Vec3,
+    pub normal: Vec3,
+}
+
+impl Plane {
+    fn new(position: Vec3, normal: Vec3) -> Plane {
+        Plane {
+            position: position,
+            normal: normal.norm(),
+        }
+    }
+
+    fn new_raw(position: Vec3, normal: Vec3) -> Plane {
+        Plane { position, normal }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alg::*;

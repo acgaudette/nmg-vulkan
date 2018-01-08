@@ -1,5 +1,6 @@
 use alg;
 use entity;
+use render;
 use components;
 
 use components::transform;
@@ -85,6 +86,10 @@ impl Instance {
             model,
         }
     }
+
+    fn offset(&self, index: usize) -> alg::Vec3 {
+        self.particles[index].position - self.center - self.model[index]
+    }
 }
 
 // Data layout assumes many physics objects (but may still be sparse)
@@ -125,8 +130,8 @@ impl Manager {
         &mut self,
         entity: entity::Handle,
         mass: f32,
-        points: Vec<alg::Vec3>,
-        bindings: Vec<(usize, usize)>,
+        points: &[alg::Vec3],
+        bindings: &[(usize, usize)],
     ) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
@@ -170,7 +175,6 @@ impl Manager {
 
         offsets
     }
-
 
     pub fn simulate(
         &mut self,

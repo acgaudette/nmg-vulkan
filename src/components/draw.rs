@@ -50,7 +50,9 @@ impl Manager {
                 let scale = alg::Mat::scale_vec(transform.2);
 
                 let model = translation * rotation * scale;
-                render::InstanceUBO::new(model)
+                let offsets = [alg::Vec3::zero(); render::MAX_SOFTBODY_VERT];
+
+                render::InstanceUBO::new(model, offsets)
             };
 
             // Update renderer

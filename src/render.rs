@@ -82,8 +82,6 @@ pub struct Context<'a> {
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_buffer: vd::BufferHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
-    sbody_buffer:   vd::BufferHandle,
-    sbody_memory:   vd::BufferHandle,
 
     /* Persistent data */
 
@@ -436,8 +434,6 @@ impl<'a> Context<'a> {
 
                     instance += 1;
                 }
-
-                // TODO: bind softbody data
             }
 
             self.command_buffers[i].end_render_pass();
@@ -475,8 +471,6 @@ impl<'a> Context<'a> {
                 &dynamic_buffer.finalize(),
             )?;
         }
-
-        // TODO: copy softbody buffer
 
         Ok(())
     }
@@ -793,7 +787,6 @@ impl Default for InstanceUBO {
         }
     }
 }
-
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
@@ -1274,7 +1267,8 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
         .set_layouts(&[ubo_layout.handle()])
         .build(device)?;
 
-    // TODO: add softbody descriptor set
+    // Dependent on DYNAMIC_UBO_WIDTH
+    println!("Max softbody vertices: {}", MAX_SOFTBODY_VERT);
 
     Ok((
         depth_format,
@@ -1784,6 +1778,8 @@ fn init_drawing(
         (preferred + minimum_alignment - 1) & !(minimum_alignment - 1)
     };
 
+    /* Shared */
+
     let shared_alignment = ubo_alignment(
         std::mem::size_of::<SharedUBO>() as u64
     );
@@ -1804,9 +1800,13 @@ fn init_drawing(
         .range(shared_alignment)
         .build();
 
-    let dynamic_alignment = ubo_alignment(
-         std::mem::size_of::<InstanceUBO>() as u64
-    );
+    /* Dynamic */
+
+    debug_assert!(std::mem::size_of::<InstanceUBO>() == DYNAMIC_UBO_WIDTH);
+
+    // Can't guarantee the minimum alignment will equal DYNAMIC_UBO_WIDTH,
+    // even though it probably will.
+    let dynamic_alignment = ubo_alignment(DYNAMIC_UBO_WIDTH as u64);
 
     let dynamic_size = statics::MAX_INSTANCES * dynamic_alignment;
 
@@ -1847,8 +1847,6 @@ fn init_drawing(
 
     // No copies (causes segfault?)
     descriptor_pool.update_descriptor_sets(&writes, &[]);
-
-    // TODO: create softbody buffer
 
     Ok((
         depth_image,

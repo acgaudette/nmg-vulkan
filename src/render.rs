@@ -745,7 +745,7 @@ impl Vertex {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct PaddedVec3 {
     value: alg::Vec3,

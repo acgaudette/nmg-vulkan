@@ -216,6 +216,22 @@ impl Manager {
 
                 /* Do constraints here */
             }
+
+            // Compute average position
+            let average = {
+                let mut sum = alg::Vec3::zero();
+
+                for particle in &instance.particles {
+                    sum = sum + particle.position;
+                }
+
+                sum / instance.particles.len() as f32
+            };
+
+            // Update instance position
+            instance.center = average;
+
+            transforms.set_position_i(i, average);
         }
     }
 }

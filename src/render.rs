@@ -26,8 +26,15 @@ const ENABLE_VALIDATION_LAYERS: bool = false;
 
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
-
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
+
+// Good GPUs have a minimum alignment of 256, which gives us about 16
+// vertices to work with (adjusting for matrix size).
+const DYNAMIC_UBO_WIDTH: usize = 256;
+
+pub const MAX_SOFTBODY_VERT: usize = (
+    DYNAMIC_UBO_WIDTH - std::mem::size_of::<alg::Mat>()
+) / std::mem::size_of::<alg::Vec3>();
 
 pub struct Context<'a> {
     pub device:    vd::Device,

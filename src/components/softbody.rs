@@ -95,6 +95,7 @@ impl Instance {
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     instances: Vec<Option<Instance>>,
+    planes: Vec<alg::Plane>,
 }
 
 impl components::Component for Manager {
@@ -120,9 +121,10 @@ impl components::Component for Manager {
 }
 
 impl Manager {
-    pub fn new(hint: usize) -> Manager {
+    pub fn new(instance_hint: usize, plane_hint: usize) -> Manager {
         Manager {
-            instances: Vec::with_capacity(hint),
+            instances: Vec::with_capacity(instance_hint),
+            planes: Vec::with_capacity(plane_hint),
         }
     }
 
@@ -176,6 +178,10 @@ impl Manager {
         offsets
     }
 
+    pub fn add_plane(&mut self, plane: alg::Plane) {
+        self.planes.push(plane);
+    }
+
     pub fn simulate(
         &mut self,
         delta: f64,
@@ -195,7 +201,7 @@ impl Manager {
                 * delta * delta;
 
             // Update particles
-            for particle in instance.particles.iter_mut() {
+            for particle in &mut instance.particles {
                 let velocity = particle.position - particle.last;
                 particle.last = particle.position;
 
@@ -203,8 +209,9 @@ impl Manager {
                     + acceleration;
             }
 
+            // Constraints
             for _ in 0..ITERATIONS {
-                // Update rods
+                // Rods
                 for rod in &instance.rods {
                     let left = instance.particles[rod.left].position;
                     let right = instance.particles[rod.right].position;
@@ -218,7 +225,20 @@ impl Manager {
                     instance.particles[rod.right].position = right + offset;
                 }
 
-                /* Do constraints here */
+                // Planes
+                for plane in &self.planes {
+                    for particle in &mut instance.particles {
+                        let distance = plane.normal.dot(particle.position)
+                            + plane.offset;
+
+                        if distance > 0. {
+                            continue;
+                        }
+
+                        particle.position = particle.position
+                            - plane.normal * 2. * distance;
+                    }
+                }
             }
 
             // Compute average position

@@ -539,14 +539,14 @@ pub struct Plane {
 }
 
 impl Plane {
-    fn new(normal: Vec3, offset: f32) -> Plane {
+    pub fn new(normal: Vec3, offset: f32) -> Plane {
         Plane {
             normal: normal.norm(),
             offset: offset,
         }
     }
 
-    fn new_raw(normal: Vec3, offset: f32) -> Plane {
+    pub fn new_raw(normal: Vec3, offset: f32) -> Plane {
         Plane { normal, offset }
     }
 }

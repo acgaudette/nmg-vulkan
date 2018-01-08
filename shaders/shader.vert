@@ -1,13 +1,15 @@
 #version 450
 
+#define MAX_SOFTBODY_VERT 12
+
 layout(binding = 0) uniform shared_ubo {
   mat4 view;
   mat4 projection;
 } shared_data;
 
-layout(binding = 1) uniform instance_ubo {
+layout(binding = 1, std140) uniform instance_ubo {
   mat4 model;
-  vec3 offsets[16];
+  vec3 offsets[MAX_SOFTBODY_VERT];
 } this_data;
 
 layout(location = 0) in  vec3 inPosition;
@@ -19,8 +21,7 @@ out gl_PerVertex {
 };
 
 void main() {
-  gl_Position = shared_data.projection
-    * shared_data.view
+  gl_Position = shared_data.projection * shared_data.view
     * this_data.model
     * vec4(inPosition + this_data.offsets[gl_VertexIndex], 1);
 

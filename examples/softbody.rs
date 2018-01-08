@@ -45,13 +45,15 @@ impl nmg::Game for Demo {
                 (3, 4),
                 (4, 2),
                 (2, 1),
+                (1, 4), // Crosspiece
+                (2, 3), // Crosspiece
             ],
         );
 
         // Initial force
         components.softbodies.set(
             object,
-            alg::Vec3::up() * 1200.,
+            alg::Vec3::up() * 2400.,
         );
 
         /* Add collision planes */

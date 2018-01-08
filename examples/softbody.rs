@@ -53,6 +53,11 @@ impl nmg::Game for Demo {
             alg::Vec3::up() * 1200.,
         );
 
+        // Add collision plane
+        components.softbodies.add_plane(
+            alg::Plane::new(-alg::Vec3::up(), 1.),
+        );
+
         // Update demo state
         self.objects.push(object);
     }

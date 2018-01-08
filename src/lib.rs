@@ -21,6 +21,15 @@ pub struct Metadata {
     pub fps: u32,
 }
 
+impl Metadata {
+    fn new() -> Metadata{
+        Metadata {
+            frame: 0,
+            fps: 0,
+        }
+    }
+}
+
 pub trait Game {
     fn start(
         &mut self,
@@ -35,9 +44,20 @@ pub trait Game {
         metadata: Metadata,
         screen_height: u32,
         screen_width:  u32,
-        entities:   &mut entity::Manager,
+        entities: &mut entity::Manager,
         components: &mut components::Container,
     ) -> render::SharedUBO;
+
+    fn fixed_update(
+        &mut self,
+        time: f64,
+        fixed_delta: f32,
+        metadata: Metadata,
+        screen_heigh: u32,
+        screen_width: u32,
+        entities: &mut entity::Manager,
+        components: &mut components::Container,
+    );
 }
 
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
@@ -112,14 +132,10 @@ fn begin_update<T>(
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
     let mut accumulator = 0f32; // Fixed-framerate accumulator
-
     let mut last_updated = std::time::Instant::now();
     let mut last_frame = 0u32;
 
-    let mut metadata = Metadata{
-        frame: 0,
-        fps: 0,
-    };
+    let mut metadata = Metadata::new();
 
     loop {
         // Handle window events
@@ -175,18 +191,29 @@ fn begin_update<T>(
             components,
         );
 
-        /* Update core components */
+        /* Fixed update loop */
 
         accumulator += delta as f32;
 
-        // Fixed updated loop
         while accumulator >= FIXED_DT {
+            game.fixed_update(
+                time,
+                FIXED_DT,
+                metadata,
+                context.swapchain.extent().height(),
+                context.swapchain.extent().width(),
+                entities,
+                components,
+            );
+
+            // Update core components
             components.rigidbodies.simulate(&mut components.transforms);
             components.softbodies.simulate(&mut components.transforms);
 
             accumulator -= FIXED_DT;
         }
 
+        // Update core component
         components.draws.transfer(
             &mut components.transforms,
             &mut components.softbodies,

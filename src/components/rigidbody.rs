@@ -2,6 +2,8 @@ use alg;
 use entity;
 use components;
 
+use components::transform;
+
 // Data layout assumes many physics objects (but may still be sparse)
 #[repr(C)]
 pub struct Manager {
@@ -79,7 +81,7 @@ impl Manager {
     pub fn simulate(
         &mut self,
         delta: f64,
-        transforms: &mut components::transform::Manager,
+        transforms: &mut transform::Manager,
     ) {
         debug_assert!(self.forces.len() == self.masses.len());
         debug_assert!(self.masses.len() == self.drags.len());

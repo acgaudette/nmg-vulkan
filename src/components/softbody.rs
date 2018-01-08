@@ -47,29 +47,40 @@ struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
     mass: f32,
+    force: alg::Vec3,
+    center: alg::Vec3,
+    model: Vec<alg::Vec3>,
 }
 
 impl Instance {
     fn new(
         mass: f32,
-        points: Vec<alg::Vec3>,
-        bindings: Vec<(usize, usize)>,
+        points: &[alg::Vec3],
+        bindings: &[(usize, usize)],
     ) -> Instance {
         let mut particles = Vec::with_capacity(points.len());
+        let mut model = Vec::with_capacity(points.len());
         let mut rods = Vec::with_capacity(bindings.len());
 
         for point in points {
-            particles.push(Particle::new(point));
+            particles.push(Particle::new(*point));
+            model.push(*point);
         }
 
         for binding in bindings {
             rods.push(Rod::new(binding.0, binding.1, &particles));
         }
 
+        let force = alg::Vec3::zero();
+        let center = alg::Vec3::zero();
+
         Instance {
             particles,
             rods,
             mass,
+            force,
+            center,
+            model,
         }
     }
 }

@@ -177,15 +177,26 @@ impl Manager {
         delta: f64,
         transforms: &mut transform::Manager,
     ) {
+        let delta = delta as f32;
+
         // Position Verlet
-        let mut itr = self.instances.iter_mut();
-        while let Some(&mut Some(ref mut instance)) = itr.next() {
+        for i in 0..self.instances.len() {
+            let mut instance = match self.instances[i] {
+                Some(ref mut instance) => instance,
+                None => continue,
+            };
+
+            assert!(instance.mass > 0.);
+            let acceleration = (instance.force / instance.mass)
+                * delta * delta;
+
             // Update particles
             for particle in instance.particles.iter_mut() {
                 let velocity = particle.position - particle.last;
                 particle.last = particle.position;
 
-                particle.position = particle.position + velocity;
+                particle.position = particle.position + velocity
+                    + acceleration;
             }
 
             for _ in 0..ITERATIONS {

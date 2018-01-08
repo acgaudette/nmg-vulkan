@@ -132,6 +132,19 @@ impl Manager {
         self.instances[i] = Some(Instance::new(mass, points, bindings));
     }
 
+    pub fn set(
+        &mut self,
+        entity: entity::Handle,
+        force: alg::Vec3,
+    ) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.instances.len());
+
+        if let Some(ref mut instance) = self.instances[i] {
+            instance.force = force;
+        }
+    }
+
     pub fn simulate(
         &mut self,
         delta: f64,

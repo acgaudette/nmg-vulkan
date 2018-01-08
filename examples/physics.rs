@@ -37,7 +37,7 @@ impl nmg::Game for Demo {
             self.mass,
             self.drag,
             alg::Vec3::up() * 1000.,
-            alg::Vec3::right() * -5000.,
+            alg::Vec3::right() * -2000.,
         );
 
 
@@ -45,6 +45,7 @@ impl nmg::Game for Demo {
         self.objects.push(object);
     }
 
+    #[allow(unused_variables)]
     fn update(
         &mut self,
         time:  f64,
@@ -74,20 +75,10 @@ impl nmg::Game for Demo {
             render::SharedUBO::new(view, projection)
         };
 
-        if metadata.frame > 0 {
-            // Reset forces
-            components.rigidbodies.set(
-                self.objects[0],
-                self.mass,
-                self.drag,
-                alg::Vec3::zero(),
-                alg::Vec3::zero(),
-            );
-        }
-
         shared_ubo
     }
 
+    #[allow(unused_variables)]
     fn fixed_update(
         &mut self,
         time: f64,
@@ -97,7 +88,18 @@ impl nmg::Game for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-    ) {}
+    ) {
+        if metadata.fixed_frame > 0 {
+            // Reset forces
+            components.rigidbodies.set(
+                self.objects[0],
+                self.mass,
+                self.drag,
+                alg::Vec3::zero(),
+                alg::Vec3::zero(),
+            );
+        }
+    }
 }
 
 fn main() {

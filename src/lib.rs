@@ -18,6 +18,7 @@ const FIXED_DT: f32 = 1. / 100.;
 #[derive(Clone, Copy)]
 pub struct Metadata {
     pub frame: u32,
+    pub fixed_frame: u32,
     pub fps: u32,
 }
 
@@ -25,6 +26,7 @@ impl Metadata {
     fn new() -> Metadata{
         Metadata {
             frame: 0,
+            fixed_frame: 0,
             fps: 0,
         }
     }
@@ -211,6 +213,7 @@ fn begin_update<T>(
             components.softbodies.simulate(&mut components.transforms);
 
             accumulator -= FIXED_DT;
+            metadata.fixed_frame += 1;
         }
 
         // Update core component

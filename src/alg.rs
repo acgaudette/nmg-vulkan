@@ -29,7 +29,7 @@ impl Vec2 {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vec3 {
     pub x: f32,

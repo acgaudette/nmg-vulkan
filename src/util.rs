@@ -73,23 +73,21 @@ mod tests {
     fn pack_ubo() {
         let mat = alg::Mat::identity();
 
+        let make_offset = |vec| render::PaddedVec3::new(vec);
+
         let offsets = [
-            alg::Vec3::new(0., 0.5, 0.),
-            alg::Vec3::new(0.5, -0.5, -0.5),
-            alg::Vec3::new(-0.5, -0.5, -0.5),
-            alg::Vec3::new(0.5, -0.5, 0.5),
-            alg::Vec3::new(-0.5, -0.5, 0.5),
-            alg::Vec3::new(0., 0.5, 0.),
-            alg::Vec3::new(0.5, -0.5, -0.5),
-            alg::Vec3::new(-0.5, -0.5, -0.5),
-            alg::Vec3::new(0.5, -0.5, 0.5),
-            alg::Vec3::new(-0.5, -0.5, 0.5),
-            alg::Vec3::new(0., 0.5, 0.),
-            alg::Vec3::new(0.5, -0.5, -0.5),
-            alg::Vec3::new(-0.5, -0.5, -0.5),
-            alg::Vec3::new(0.5, -0.5, 0.5),
-            alg::Vec3::new(-0.5, -0.5, 0.5),
-            alg::Vec3::new(0., 0.5, 0.),
+            make_offset(alg::Vec3::new(0., 0.5, 0.)),
+            make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(0., 0.5, 0.)),
+            make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(0., 0.5, 0.)),
+            make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
         ];
 
         let mut raw = {
@@ -107,7 +105,7 @@ mod tests {
             let test_mat = *ptr;
 
             ptr = ptr.offset(1);
-            let mut ptr = ptr as *const alg::Vec3;
+            let mut ptr = ptr as *const render::PaddedVec3;
             let mut test_offsets = Vec::with_capacity(offsets.len());
 
             for i in 0..offsets.len() {

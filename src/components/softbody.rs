@@ -7,6 +7,7 @@ use ::FIXED_DT; // Import from lib
 use components::transform;
 
 const ITERATIONS: usize = 1;
+const BOUNCE: f32 = 0.1; // "Realistic" = 2
 
 struct Particle {
     position: alg::Vec3,
@@ -234,7 +235,7 @@ impl Manager {
                         }
 
                         particle.position = particle.position
-                            - plane.normal * 2. * distance;
+                            - plane.normal * BOUNCE * distance;
                     }
                 }
             }

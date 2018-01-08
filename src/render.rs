@@ -34,12 +34,13 @@ const DYNAMIC_UBO_WIDTH: usize = 256;
 
 pub const MAX_SOFTBODY_VERT: usize = (
     DYNAMIC_UBO_WIDTH - std::mem::size_of::<alg::Mat>()
-) / std::mem::size_of::<alg::Vec3>();
+) / std::mem::size_of::<PaddedVec3>();
 
 pub struct Context<'a> {
     pub device:    vd::Device,
     pub swapchain: vd::SwapchainKhr,
     pub models:    Vec<Model>, // Lookup table
+
 
     /* Swapchain recreation data */
 
@@ -703,7 +704,7 @@ impl InstanceHandle {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct Vertex {
     pub position: alg::Vec3,
@@ -744,6 +745,28 @@ impl Vertex {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct PaddedVec3 {
+    value: alg::Vec3,
+    pad: f32,
+}
+
+impl PaddedVec3 {
+    pub fn new(value: alg::Vec3) -> PaddedVec3 {
+        PaddedVec3 {
+            value: value,
+            pad: 0.,
+        }
+    }
+}
+
+impl Default for PaddedVec3 {
+    fn default() -> PaddedVec3 {
+        PaddedVec3::new(alg::Vec3::zero())
+    }
+}
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct SharedUBO {
@@ -764,13 +787,13 @@ impl SharedUBO {
 #[repr(C)]
 pub struct InstanceUBO {
     model: alg::Mat,
-    offsets: [alg::Vec3; MAX_SOFTBODY_VERT],
+    offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
 }
 
 impl InstanceUBO {
     pub fn new(
         model: alg::Mat,
-        offsets: [alg::Vec3; MAX_SOFTBODY_VERT],
+        offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
     ) -> InstanceUBO {
         InstanceUBO {
             model,
@@ -783,7 +806,7 @@ impl Default for InstanceUBO {
     fn default() -> InstanceUBO {
         InstanceUBO {
             model: alg::Mat::identity(),
-            offsets: [alg::Vec3::zero(); MAX_SOFTBODY_VERT],
+            offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
         }
     }
 }

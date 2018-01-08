@@ -13,7 +13,7 @@ impl Particle {
     fn new(position: alg::Vec3) -> Particle {
         Particle {
             position: position,
-            last: alg::Vec3::zero(),
+            last: position,
         }
     }
 }

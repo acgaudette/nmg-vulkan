@@ -145,6 +145,31 @@ impl Manager {
         }
     }
 
+    pub fn get_offsets(
+        &self,
+        entity: entity::Handle,
+    ) -> [alg::Vec3; render::MAX_SOFTBODY_VERT] {
+        let i = entity.get_index() as usize;
+
+        // Default to no offsets (identity)
+        let mut offsets = [alg::Vec3::zero(); render::MAX_SOFTBODY_VERT];
+
+        // Space has not been allocated for this component (does not exist)
+        if i >= self.instances.len() {
+            return offsets;
+        }
+
+        // If the entity has a softbody component, fill the offsets array
+        if let Some(ref instance) = self.instances[i] {
+            for i in 0..instance.particles.len() {
+                offsets[i] = instance.offset(i);
+            }
+        }
+
+        offsets
+    }
+
+
     pub fn simulate(
         &mut self,
         delta: f64,

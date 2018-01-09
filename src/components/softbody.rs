@@ -53,6 +53,7 @@ struct Instance {
     rods: Vec<Rod>,
     mass: f32,
     force: alg::Vec3,
+    accel_dt: alg::Vec3,
     center: alg::Vec3,
     model: Vec<alg::Vec3>,
 }
@@ -63,6 +64,8 @@ impl Instance {
         points: &[alg::Vec3],
         bindings: &[(usize, usize)],
     ) -> Instance {
+        debug_assert!(mass > 0.);
+
         let mut particles = Vec::with_capacity(points.len());
         let mut model = Vec::with_capacity(points.len());
         let mut rods = Vec::with_capacity(bindings.len());
@@ -76,21 +79,25 @@ impl Instance {
             rods.push(Rod::new(binding.0, binding.1, &particles));
         }
 
-        let force = alg::Vec3::zero();
-        let center = alg::Vec3::zero();
-
         Instance {
-            particles,
-            rods,
-            mass,
-            force,
-            center,
+            particles: particles,
+            rods: rods,
+            mass: mass,
+            force: alg::Vec3::zero(),
+            accel_dt: alg::Vec3::zero(),
+            center: alg::Vec3::zero(),
             model,
         }
     }
 
     fn offset(&self, index: usize) -> alg::Vec3 {
         self.particles[index].position - self.center - self.model[index]
+    }
+
+    #[inline]
+    fn set_force(&mut self, force: alg::Vec3) {
+        self.force = force;
+        self.accel_dt = (force / self.mass) * FIXED_DT * FIXED_DT;
     }
 }
 
@@ -152,7 +159,7 @@ impl Manager {
         debug_assert!(i < self.instances.len());
 
         if let Some(ref mut instance) = self.instances[i] {
-            instance.force = force;
+            instance.set_force(force);
         }
     }
 
@@ -195,17 +202,13 @@ impl Manager {
                 None => continue,
             };
 
-            assert!(instance.mass > 0.);
-            let acceleration = (instance.force / instance.mass)
-                * FIXED_DT * FIXED_DT;
-
             // Update particles
             for particle in &mut instance.particles {
                 let velocity = particle.position - particle.last;
                 particle.last = particle.position;
 
                 particle.position = particle.position + velocity
-                    + acceleration;
+                    + instance.accel_dt;
             }
 
             // Constraints

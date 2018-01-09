@@ -227,13 +227,14 @@ impl Manager {
             // Solve constraints
             for _ in 0..ITERATIONS {
                 // Rods
-                for rod in &mut instance.rods {
+                for rod in &instance.rods {
                     let left = instance.particles[rod.left].position;
                     let right = instance.particles[rod.right].position;
-                    let difference = right - left;
 
+                    let difference = right - left;
                     let distance = difference.mag();
-                    let percent = PUSH * (rod.length - distance) / distance;
+
+                    let percent = PUSH * (rod.length / distance - 1.);
                     let offset = difference * percent;
 
                     instance.particles[rod.left].position = left - offset;
@@ -260,10 +261,8 @@ impl Manager {
                     let left = instance.particles[rod.left].position;
                     let right = instance.particles[rod.right].position;
 
-                    let dist = left.dist(right);
-
                     rod.length = f32::min(
-                        f32::max(dist, rod.length * DEFORM),
+                        f32::max(left.dist(right), rod.length * DEFORM),
                         rod.length,
                     );
                 }

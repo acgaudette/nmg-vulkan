@@ -7,7 +7,8 @@ use ::FIXED_DT; // Import from lib
 use components::transform;
 
 const ITERATIONS: usize = 1;
-const BOUNCE: f32 = 0.1; // "Realistic" = 2
+const PUSH:   f32 = 0.01; // "Rigid" = 0.5
+const BOUNCE: f32 = 0.05; // "Realistic" = 2.0
 
 struct Particle {
     position: alg::Vec3,
@@ -219,7 +220,7 @@ impl Manager {
                     let difference = right - left;
 
                     let distance = difference.mag();
-                    let percent = 0.5 * (rod.length - distance) / distance;
+                    let percent = PUSH * (rod.length - distance) / distance;
                     let offset = difference * percent;
 
                     instance.particles[rod.left].position = left - offset;

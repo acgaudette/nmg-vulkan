@@ -1,3 +1,6 @@
+extern crate ini;
+#[macro_use]
+extern crate lazy_static;
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
@@ -5,6 +8,7 @@ pub mod alg;
 pub mod render;
 pub mod entity;
 pub mod components;
+pub mod config;
 mod statics;
 mod util;
 
@@ -138,6 +142,12 @@ fn begin_update<T>(
     let mut last_frame = 0u32;
 
     let mut metadata = Metadata::new();
+
+    let settings = &config::UNIVERSAL_CONFIG;
+    let target_fps = settings.section(Some("settings"))
+        .unwrap().get("fps").unwrap();
+
+    println!("Target fps: {}", target_fps);
 
     loop {
         // Handle window events

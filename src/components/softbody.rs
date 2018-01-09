@@ -6,9 +6,22 @@ use components;
 use ::FIXED_DT; // Import from lib
 use components::transform;
 
+// Constraint solver iterations
 const ITERATIONS: usize = 1;
-const PUSH:   f32 = 0.01; // "Rigid" = 0.5
-const BOUNCE: f32 = 0.05; // "Realistic" = 2.0
+
+// Range 0 - 0.5; "Rigid" = 0.5
+// Lower values produce springier meshes
+// A value of zero nullifies all rods in the instance
+const PUSH: f32 = 0.03;
+
+// Range 0 - inf; "Realistic" = 2.0
+// Values < 2 become force zones, values > 2 add impossible force
+// A value of zero nullifies all collisions
+const BOUNCE: f32 = 0.05;
+
+// Range 0 - 1; 1.0 = cannot be deformed
+// A value of zero nullifies all rods in the instance
+const DEFORM: f32 = 1.000;
 
 struct Particle {
     position: alg::Vec3,
@@ -214,7 +227,7 @@ impl Manager {
             // Solve constraints
             for _ in 0..ITERATIONS {
                 // Rods
-                for rod in &instance.rods {
+                for rod in &mut instance.rods {
                     let left = instance.particles[rod.left].position;
                     let right = instance.particles[rod.right].position;
                     let difference = right - left;
@@ -240,6 +253,19 @@ impl Manager {
                         particle.position = particle.position
                             - plane.normal * BOUNCE * distance;
                     }
+                }
+
+                // Deformity
+                for rod in &mut instance.rods {
+                    let left = instance.particles[rod.left].position;
+                    let right = instance.particles[rod.right].position;
+
+                    let dist = left.dist(right);
+
+                    rod.length = f32::min(
+                        f32::max(dist, rod.length * DEFORM),
+                        rod.length,
+                    );
                 }
             }
 

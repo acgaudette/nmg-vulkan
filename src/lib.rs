@@ -1,8 +1,9 @@
-extern crate ini;
-#[macro_use]
-extern crate lazy_static;
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
+extern crate ini;
+
+#[macro_use]
+extern crate lazy_static;
 
 pub mod alg;
 pub mod render;
@@ -143,7 +144,7 @@ fn begin_update<T>(
 
     let mut metadata = Metadata::new();
 
-    let settings = &config::UNIVERSAL_CONFIG;
+    let settings = &config::ENGINE_CONFIG;
     let target_fps = settings.section(Some("settings"))
         .unwrap().get("fps").unwrap();
 

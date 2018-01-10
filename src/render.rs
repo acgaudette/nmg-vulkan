@@ -908,13 +908,15 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         if let Ok((f, p)) = get_swapchain_details(&device, &surface) {
             formats = Some(f);
             present_modes = Some(p);
-        }
 
-        // Check for graphics and presentation queue support
-        if let Ok((i, j)) = get_q_indices(&device, &surface) {
-            physical_device = Some(device);
-            graphics_family = i;
-            present_family = j;
+            // Check for graphics and presentation queue support
+            if let Ok((i, j)) = get_q_indices(&device, &surface) {
+                physical_device = Some(device);
+                graphics_family = i;
+                present_family = j;
+
+                break;
+            }
         }
     }
 

@@ -26,6 +26,7 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
 const MAX_INSTANCES: u64 = 1024;
+const MAX_DEBUG_LINES: u64 = 512;
 
 // Good GPUs have a minimum alignment of 256, which gives us about 12
 // vertices to work with (adjusting for matrix size and padding).
@@ -82,6 +83,10 @@ pub struct Context<'a> {
     ubo_memory:     vd::DeviceMemoryHandle,
     dyn_ubo_buffer: vd::BufferHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
+
+    /* Debug data */
+
+    debug_data: Option<DebugData>,
 
     /* Persistent data */
 
@@ -168,6 +173,8 @@ impl<'a> Context<'a> {
             &device,
         )?;
 
+        /* Optional debug data */
+
         let (
             _depth_image,
             depth_memory,
@@ -232,6 +239,7 @@ impl<'a> Context<'a> {
                 ubo_memory,
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
+                debug_data,
                 _vert_mod,
                 _frag_mod,
                 _depth_image,
@@ -326,6 +334,8 @@ impl<'a> Context<'a> {
         self._depth_image = _depth_image;
         self._views = _views;
         self._descriptor_pool = _descriptor_pool;
+
+        self.debug_data = debug_data;
 
         Ok(())
     }
@@ -597,6 +607,14 @@ impl<'a> Drop for Context<'a> {
             self.free_device_init();
         }
     }
+}
+
+struct DebugData {
+    buffer:   vd::BufferHandle,
+    memory:   vd::DeviceMemoryHandle,
+    pipeline: vd::GraphicsPipeline,
+    _vert:    vd::ShaderModule,
+    _frag:    vd::ShaderModule,
 }
 
 #[derive(Clone)]
@@ -1112,11 +1130,11 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
     let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "vert.spv"].concat()
+        [SHADER_PATH, "shader_vert.spv"].concat()
     )?;
 
     let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "frag.spv"].concat()
+        [SHADER_PATH, "shader_frag.spv"].concat()
     )?;
 
     let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;

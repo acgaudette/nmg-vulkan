@@ -354,6 +354,26 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
+    pub fn update_debug(&mut self, lines: &[DebugLine]) -> vd::Result<()> {
+        // Early exit
+        if !DEBUG_MODE {
+            return Ok(());
+        }
+
+        /* Copy debug data to GPU */
+
+        unsafe {
+            copy_buffer(
+                &self.device,
+                self.debug_data.as_ref().unwrap().memory,
+                (lines.len() * std::mem::size_of::<DebugLine>()) as u64,
+                &lines,
+            )?;
+        }
+
+        Ok(())
+    }
+
     pub fn update(
         &mut self,
         instances: &Instances,

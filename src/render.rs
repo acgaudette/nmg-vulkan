@@ -336,113 +336,6 @@ impl<'a> Context<'a> {
         instances: &Instances,
         shared_ubo: SharedUBO,
     ) -> vd::Result<()> {
-        /* Rebuild command buffers */
-
-        let clears = [
-            // Clear color
-            vd::ClearValue {
-                color: vd::ClearColorValue {
-                    float32: [0f32, 0f32, 0f32, 1f32]
-                }
-            },
-
-            vd::ClearValue {
-                depthStencil: vd::vks::VkClearDepthStencilValue {
-                    depth: 1., // Initialized to max depth
-                    stencil: 0,
-                }
-            },
-        ];
-
-        debug_assert!(self.command_buffers.len() == self.framebuffers.len());
-
-        for i in 0..self.command_buffers.len() {
-            self.command_buffers[i].reset(
-                vd::CommandBufferResetFlags::empty(),
-            )?;
-
-            self.command_buffers[i].begin(
-                vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
-            )?;
-
-            let pass_info = vd::RenderPassBeginInfo::builder()
-                .render_pass(self.render_pass.handle())
-                .framebuffer(&self.framebuffers[i])
-                .render_area(
-                    vd::Rect2d::builder()
-                        .offset(
-                            vd::Offset2d::builder()
-                                .x(0)
-                                .y(0)
-                                .build()
-                        ).extent(self.swapchain.extent().clone())
-                        .build()
-                ).clear_values(&clears)
-                .build();
-
-            /* Execute render pass */
-
-            self.command_buffers[i].begin_render_pass(
-                &pass_info,
-                vd::SubpassContents::Inline,
-            );
-
-            self.command_buffers[i].bind_pipeline(
-                vd::PipelineBindPoint::Graphics,
-                &self.pipeline.handle(),
-            );
-
-            let handle = self.command_buffers[i].handle();
-
-            unsafe {
-                self.device.cmd_bind_vertex_buffers(
-                    handle,
-                    0,
-                    &[self.vertex_buffer],
-                    &[0],
-                );
-
-                self.device.cmd_bind_index_buffer(
-                    handle,
-                    self.index_buffer,
-                    0,
-                    vd::IndexType::Uint32,
-                );
-            }
-
-            debug_assert!(self.models.len() == instances.data.len());
-
-            let mut instance = 0;
-            for j in 0..self.models.len() {
-                // Render each instance
-                for _ in 0..instances.data[j].len() {
-                    // Bind uniform data
-                    self.command_buffers[i].bind_descriptor_sets(
-                        vd::PipelineBindPoint::Graphics,
-                        &self.pipeline_layout,
-                        0,
-                        &[&self.descriptor_sets[0]], // Single descriptor set
-                        // Offset dynamic uniform buffer
-                        &[self.ubo_alignment as u32 * instance as u32],
-                    );
-
-                    // Draw call
-                    self.command_buffers[i].draw_indexed(
-                        self.models[j].index_count,
-                        1,
-                        self.models[j].index_offset,
-                        0, // No vertex offset
-                        0,
-                    );
-
-                    instance += 1;
-                }
-            }
-
-            self.command_buffers[i].end_render_pass();
-            self.command_buffers[i].end()?;
-        }
-
         /* Copy UBOs to GPU */
 
         unsafe {
@@ -478,33 +371,160 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    pub fn draw(&self) -> vd::Result<()> {
+    pub fn draw(&self, instances: &Instances) -> vd::Result<()> {
+        // Note: will most likely return an image index that is still in use
         let index = self.swapchain.acquire_next_image_khr(
             u64::max_value(), // Disable timeout
             Some(&self.image_available),
             None,
         )?;
 
-        let command_buffers = [self.command_buffers[index as usize].handle()];
+        // Get command buffer to use this frame
+        let cmd_buffer = &self.command_buffers[index as usize];
+
+        let clears = [
+            // Clear color
+            vd::ClearValue {
+                color: vd::ClearColorValue {
+                    float32: [0f32, 0f32, 0f32, 1f32]
+                }
+            },
+
+            vd::ClearValue {
+                depthStencil: vd::vks::VkClearDepthStencilValue {
+                    depth: 1., // Initialized to max depth
+                    stencil: 0,
+                }
+            },
+        ];
+
+        // Get handle to this command buffer's fence
+        let fence = self.command_fences[index as usize].handle();
+
+        unsafe {
+            // Wait for command buffer to become available
+            self.device.wait_for_fences(
+                &[fence],
+                false,
+                u64::max_value(),
+            )?;
+
+            // Unsignal fence
+            self.device.reset_fences(&[fence])?;
+        }
+
+        // Reset command buffer (now that it's no longer in use)
+        cmd_buffer.reset(
+            vd::CommandBufferResetFlags::empty(),
+        )?;
+
+        /* Build command buffer */
+
+        cmd_buffer.begin(
+            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
+        )?;
+
+        debug_assert!(index < self.framebuffers.len() as u32);
+
+        let pass_info = vd::RenderPassBeginInfo::builder()
+            .render_pass(self.render_pass.handle())
+            .framebuffer(&self.framebuffers[index as usize])
+            .render_area(
+                vd::Rect2d::builder()
+                    .offset(
+                        vd::Offset2d::builder()
+                            .x(0)
+                            .y(0)
+                            .build()
+                    ).extent(self.swapchain.extent().clone())
+                    .build()
+            ).clear_values(&clears)
+            .build();
+
+        /* Execute render pass */
+
+        cmd_buffer.begin_render_pass(
+            &pass_info,
+            vd::SubpassContents::Inline,
+        );
+
+        cmd_buffer.bind_pipeline(
+            vd::PipelineBindPoint::Graphics,
+            &self.pipeline.handle(),
+        );
+
+        let handle = cmd_buffer.handle();
+
+        unsafe {
+            self.device.cmd_bind_vertex_buffers(
+                handle,
+                0,
+                &[self.vertex_buffer],
+                &[0],
+            );
+
+            self.device.cmd_bind_index_buffer(
+                handle,
+                self.index_buffer,
+                0,
+                vd::IndexType::Uint32,
+            );
+        }
+
+        debug_assert!(self.models.len() == instances.data.len());
+
+        let mut instance = 0;
+        for j in 0..self.models.len() {
+            // Render each instance
+            for _ in 0..instances.data[j].len() {
+                // Bind uniform data
+                cmd_buffer.bind_descriptor_sets(
+                    vd::PipelineBindPoint::Graphics,
+                    &self.pipeline_layout,
+                    0,
+                    &[&self.descriptor_sets[0]], // Single descriptor set
+                    // Offset dynamic uniform buffer
+                    &[self.ubo_alignment as u32 * instance as u32],
+                );
+
+                // Draw call
+                cmd_buffer.draw_indexed(
+                    self.models[j].index_count,
+                    1,
+                    self.models[j].index_offset,
+                    0, // No vertex offset
+                    0,
+                );
+
+                instance += 1;
+            }
+        }
+
+        cmd_buffer.end_render_pass();
+        cmd_buffer.end()?;
+
+        /* Submit render and presentation queues */
 
         // Synchronization primitives
         let available_signals = [self.image_available.handle()];
         let complete_signals = [self.render_complete.handle()];
+
+        let cmd_buffer_handles = [cmd_buffer.handle()];
 
         // Wait for available images to render to
         let info = vd::SubmitInfo::builder()
             .wait_semaphores(&available_signals)
             .wait_dst_stage_mask(
                 &vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT
-            ).command_buffers(&command_buffers)
+            ).command_buffers(&cmd_buffer_handles)
             .signal_semaphores(&complete_signals)
             .build();
 
         match self.device.get_device_queue(self.graphics_family, 0) {
             Some(gq) => {
                 unsafe {
-                    // Render
-                    self.device.queue_submit(gq, &[info], None)?;
+                    // Render; pass in fence to signal after done
+                    self.device.queue_submit(gq, &[info], Some(fence))?;
                 }
 
                 let swapchains = [self.swapchain.handle()];

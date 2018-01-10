@@ -1,6 +1,8 @@
-# Untitled Rust x Vulkan Engine [![Build Status][1]][2]
+# Untitled Rust x Vulkan Engine
 
 For the upcoming game, NMG ([watch original prototype here!][3])
+
+[![Build Status][1]][2]
 
 ## Goals
 - Specialized

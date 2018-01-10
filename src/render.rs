@@ -924,6 +924,12 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         return Err("no suitable GPUs found".into())
     }
 
+    println!(
+        "Device graphics/present families: {}/{}",
+        graphics_family,
+        present_family,
+    );
+
     let physical_device = physical_device.unwrap();
     let formats = formats.unwrap();
     let present_modes = present_modes.unwrap();
@@ -974,6 +980,8 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
         mode
     };
+
+    println!("Swapchain present mode: {:?}", present_mode);
 
     /* Logical device */
 
@@ -1369,6 +1377,8 @@ fn init_swapchain(
 
         count
     };
+
+    println!("Swapchain image count: {}", image_count);
 
     let swap_extent = {
         let mut extent = vd::Extent2d::default();

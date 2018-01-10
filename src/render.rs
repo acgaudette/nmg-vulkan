@@ -550,6 +550,42 @@ impl<'a> Context<'a> {
             }
         }
 
+        if DEBUG_MODE {
+
+            /* Draw debug data */
+
+            cmd_buffer.bind_pipeline(
+                vd::PipelineBindPoint::Graphics,
+                &self.debug_data.as_ref().unwrap().pipeline.handle(),
+            );
+
+            cmd_buffer.bind_descriptor_sets(
+                vd::PipelineBindPoint::Graphics,
+                &self.pipeline_layout,
+                0,
+                &[&self.descriptor_sets[0]], // Single descriptor set
+                &[0], // Ignore the dynamic uniform buffer
+            );
+
+            unsafe {
+                self.device.cmd_bind_vertex_buffers(
+                    handle,
+                    0,
+                    &[self.debug_data.as_ref().unwrap().buffer],
+                    &[0],
+                );
+            }
+
+            for i in 0..self.debug_line_count {
+                cmd_buffer.draw(
+                    2,
+                    1,
+                    i * 2,
+                    0,
+                );
+            }
+        }
+
         cmd_buffer.end_render_pass();
         cmd_buffer.end()?;
 

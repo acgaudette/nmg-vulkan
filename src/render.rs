@@ -6,6 +6,8 @@ use statics;
 use alg;
 use util;
 
+use ::DEBUG_MODE;
+
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
         unsafe {
@@ -19,17 +21,14 @@ macro_rules! offset_of {
     );
 }
 
-#[cfg(debug_assertions)]
-const ENABLE_VALIDATION_LAYERS: bool = true;
-#[cfg(not(debug_assertions))]
-const ENABLE_VALIDATION_LAYERS: bool = false;
-
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
-// Good GPUs have a minimum alignment of 256, which gives us about 16
-// vertices to work with (adjusting for matrix size).
+const MAX_INSTANCES: u64 = 1024;
+
+// Good GPUs have a minimum alignment of 256, which gives us about 12
+// vertices to work with (adjusting for matrix size and padding).
 const DYNAMIC_UBO_WIDTH: usize = 256;
 
 pub const MAX_SOFTBODY_VERT: usize = (
@@ -424,6 +423,8 @@ impl<'a> Context<'a> {
             vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
         )?;
 
+        let handle = cmd_buffer.handle();
+
         debug_assert!(index < self.framebuffers.len() as u32);
 
         let pass_info = vd::RenderPassBeginInfo::builder()
@@ -452,8 +453,6 @@ impl<'a> Context<'a> {
             vd::PipelineBindPoint::Graphics,
             &self.pipeline.handle(),
         );
-
-        let handle = cmd_buffer.handle();
 
         unsafe {
             self.device.cmd_bind_vertex_buffers(
@@ -552,7 +551,7 @@ impl<'a> Context<'a> {
 
                         // Synchronize with GPU in debug mode
                         // (prevents memory leaks from the validation layers)
-                        if ENABLE_VALIDATION_LAYERS {
+                        if DEBUG_MODE {
                             self.device.wait_idle();
                         }
                     },
@@ -726,7 +725,7 @@ impl InstanceHandle {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vertex {
     pub position: alg::Vec3,
@@ -865,7 +864,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     let mut layers: &[&str] = &[];
 
-    if ENABLE_VALIDATION_LAYERS {
+    if DEBUG_MODE {
         if loader.verify_layer_support(VALIDATION_LAYERS)? {
             layers = VALIDATION_LAYERS;
             println!("Validation layers successfully loaded");
@@ -881,7 +880,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .application_info(&app_info)
         .enabled_extensions(&extensions)
         .enabled_layer_names(layers)
-        .print_debug_report(ENABLE_VALIDATION_LAYERS)
+        .print_debug_report(DEBUG_MODE)
         .build(loader)?;
 
     /* Physical device */
@@ -1875,7 +1874,7 @@ fn init_drawing(
     // even though it probably will.
     let dynamic_alignment = ubo_alignment(DYNAMIC_UBO_WIDTH as u64);
 
-    let dynamic_size = statics::MAX_INSTANCES * dynamic_alignment;
+    let dynamic_size = MAX_INSTANCES * dynamic_alignment;
 
     // Allocate a single buffer for the remaining UBOs
     let (dyn_ubo_buffer, dyn_ubo_memory) = create_buffer(
@@ -2050,6 +2049,7 @@ fn create_buffers<T: std::marker::Copy>(
     Ok((device_buffer, device_memory))
 }
 
+// Allocate (empty) buffer on the GPU
 fn create_buffer(
     size:       u64,
     usage:      vd::BufferUsageFlags,

@@ -243,7 +243,7 @@ fn begin_update<T>(
         }
 
         // Render frame
-        if let Err(e) = context.draw() {
+        if let Err(e) = context.draw(&components.draws.instances) {
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
                 // Rebuild the swapchain if it becomes out of date

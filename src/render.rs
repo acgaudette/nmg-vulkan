@@ -785,6 +785,39 @@ impl Vertex {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
+pub struct DebugLine {
+    start: Vertex,
+    end: Vertex,
+}
+
+impl DebugLine {
+    pub fn new(line: alg::Line, r: f32, g: f32, b: f32) -> DebugLine {
+        let start = Vertex::new(
+            line.start.x,
+            line.start.y,
+            line.start.z,
+            r,
+            g,
+            b,
+        );
+
+        let end = Vertex::new(
+            line.end.x,
+            line.end.y,
+            line.end.z,
+            r,
+            g,
+            b,
+        );
+
+        DebugLine {
+            start,
+            end,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct PaddedVec3 {
     value: alg::Vec3,

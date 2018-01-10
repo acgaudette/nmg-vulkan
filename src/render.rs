@@ -57,7 +57,7 @@ pub struct Context<'a> {
     transient_pool:  vd::CommandPool,
     image_available: vd::Semaphore,
     render_complete: vd::Semaphore,
-    command_fences:  [vd::Fence; 3],
+    command_fences:  Vec<vd::Fence>,
     shader_stages:   [vd::PipelineShaderStageCreateInfo<'a>; 2],
     depth_format:    vd::Format,
     assembly:        vd::PipelineInputAssemblyStateCreateInfo<'a>,
@@ -111,7 +111,6 @@ impl<'a> Context<'a> {
             transient_pool,
             image_available,
             render_complete,
-            command_fences,
         ) = init_vulkan(window)?;
 
         let (
@@ -142,7 +141,7 @@ impl<'a> Context<'a> {
             pipeline_layout,
         ) = init_fixed(device.clone())?;
 
-        let (swapchain, _views) = init_swapchain(
+        let (swapchain, command_fences, _views) = init_swapchain(
             &device,
             &surface,
             1280, 720, // Default
@@ -246,7 +245,7 @@ impl<'a> Context<'a> {
     pub fn refresh_swapchain(
         &mut self, width: u32, height: u32
     ) -> vd::Result<()> {
-        let (swapchain, _views) = init_swapchain(
+        let (swapchain, command_fences, _views) = init_swapchain(
             &self.device,
             &self.surface,
             width, height,
@@ -307,6 +306,7 @@ impl<'a> Context<'a> {
         /* Coup */
 
         self.swapchain = swapchain;
+        self.command_fences = command_fences;
         self.render_pass = render_pass;
         self.pipeline = pipeline;
         self.framebuffers = framebuffers;
@@ -846,7 +846,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::CommandPool,
     vd::Semaphore,
     vd::Semaphore,
-    [vd::Fence; 3],
 )> {
     /* Application */
 
@@ -1040,13 +1039,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         vd::SemaphoreCreateFlags::empty()
     )?;
 
-    // Create command buffer fences
-    let command_fences = [
-        vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
-        vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
-        vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
-    ];
-
     Ok((
         surface,
         graphics_family,
@@ -1060,7 +1052,6 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         transient_pool,
         image_available,
         render_complete,
-        command_fences,
     ))
 }
 
@@ -1356,6 +1347,7 @@ fn init_swapchain(
     old_swapchain:   Option<&vd::SwapchainKhr>,
 ) -> vd::Result<(
     vd::SwapchainKhr,
+    Vec<vd::Fence>,
     Vec<vd::ImageView>,
 )> {
     /* Surface */
@@ -1379,6 +1371,15 @@ fn init_swapchain(
     };
 
     println!("Swapchain image count: {}", image_count);
+
+    // Create command buffer fences, given image count
+    let mut command_fences = Vec::with_capacity(image_count as usize);
+
+    for _ in 0..image_count {
+        command_fences.push(
+            vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
+        );
+    }
 
     let swap_extent = {
         let mut extent = vd::Extent2d::default();
@@ -1473,7 +1474,7 @@ fn init_swapchain(
         return Err("empty views".into());
     }
 
-    Ok((swapchain, views))
+    Ok((swapchain, command_fences, views))
 }
 
 fn init_render_pass(

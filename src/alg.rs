@@ -557,6 +557,21 @@ impl Plane {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Line {
+    pub start: Vec3,
+    pub end: Vec3,
+}
+
+impl Line {
+    pub fn new(start: Vec3, end: Vec3) -> Line {
+        Line {
+            start,
+            end,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alg::*;

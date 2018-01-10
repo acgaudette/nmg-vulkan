@@ -1,0 +1,10 @@
+language: rust
+
+rust:
+  - nightly
+
+script:
+  - cargo test
+  - cargo test --release
+
+cache: cargo

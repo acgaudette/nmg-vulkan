@@ -1,6 +1,6 @@
-# Untitled Rust x Vulkan Engine
+# Untitled Rust x Vulkan Engine [![Build Status][1]][2]
 
-For the upcoming game, NMG ([watch original prototype here!][1])
+For the upcoming game, NMG ([watch original prototype here!][3])
 
 ## Goals
 - Specialized
@@ -15,8 +15,12 @@ For the upcoming game, NMG ([watch original prototype here!][1])
 - Homebrew math module
 - Library crate
 
-## Acknowledgements
-- ![voodoo][2]
+Currently requires Rust nightly.
 
-[1]: https://youtu.be/dD4nkrqb9RY
-[2]: https://github.com/cogciprocate/voodoo
+## Acknowledgements
+- ![voodoo][4]
+
+[1]: https://travis-ci.org/acgaudette/nmg-vulkan.svg?branch=master
+[2]: https://travis-ci.org/acgaudette/nmg-vulkan
+[3]: https://youtu.be/dD4nkrqb9RY
+[4]: https://github.com/cogciprocate/voodoo

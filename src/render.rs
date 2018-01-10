@@ -87,6 +87,7 @@ pub struct Context<'a> {
     /* Debug data */
 
     debug_data: Option<DebugData>,
+    debug_line_count: u32,
 
     /* Persistent data */
 
@@ -182,6 +183,8 @@ impl<'a> Context<'a> {
             &device,
         )?;
 
+        let debug_line_count = 0;
+
         let (
             _depth_image,
             depth_memory,
@@ -247,6 +250,7 @@ impl<'a> Context<'a> {
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
                 debug_data,
+                debug_line_count,
                 _vert_mod,
                 _frag_mod,
                 _depth_image,
@@ -370,6 +374,9 @@ impl<'a> Context<'a> {
                 &lines,
             )?;
         }
+
+        // Update debug line count
+        self.debug_line_count = lines.len() as u32;
 
         Ok(())
     }

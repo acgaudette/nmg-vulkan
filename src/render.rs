@@ -175,6 +175,13 @@ impl<'a> Context<'a> {
 
         /* Optional debug data */
 
+        let debug_data = init_debug(
+            &swapchain,
+            &render_pass,
+            &pipeline_layout,
+            &device,
+        )?;
+
         let (
             _depth_image,
             depth_memory,
@@ -277,6 +284,13 @@ impl<'a> Context<'a> {
             &self.multisampling,
             &self.pipeline_layout,
             &render_pass,
+            &self.device,
+        )?;
+
+        let debug_data = init_debug(
+            &swapchain,
+            &render_pass,
+            &self.pipeline_layout,
             &self.device,
         )?;
 
@@ -597,6 +611,18 @@ impl<'a> Context<'a> {
         self.device.free_memory(self.ubo_memory, None);
         self.device.destroy_buffer(self.dyn_ubo_buffer, None);
         self.device.free_memory(self.dyn_ubo_memory, None);
+
+        if DEBUG_MODE {
+            self.device.destroy_buffer(
+                self.debug_data.as_ref().unwrap().buffer,
+                None,
+            );
+
+            self.device.free_memory(
+                self.debug_data.as_ref().unwrap().memory,
+                None,
+            );
+        }
     }
 }
 
@@ -1277,6 +1303,166 @@ fn load_models(
         index_memory,
         models,
     ))
+}
+
+fn init_debug(
+    swapchain: &vd::SwapchainKhr,
+    render_pass: &vd::RenderPass,
+    pipeline_layout: &vd::PipelineLayout,
+    device: &vd::Device,
+) -> vd::Result<Option<DebugData>> {
+    // Early exit
+    if !DEBUG_MODE {
+        return Ok(None)
+    }
+
+    let properties = device.physical_device().memory_properties();
+
+    // Allocate empty debug vertex buffer
+    let (buffer, memory) = create_buffer(
+        MAX_DEBUG_LINES * 2 * std::mem::size_of::<Vertex>() as u64,
+        vd::BufferUsageFlags::VERTEX_BUFFER,
+        device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
+        &properties,
+    )?;
+
+    /* Load debug shaders */
+
+    let vert_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "debug_vert.spv"].concat()
+    )?;
+
+    let frag_buffer = vd::util::read_spir_v_file(
+        [SHADER_PATH, "debug_frag.spv"].concat()
+    )?;
+
+    let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
+    let frag_mod = vd::ShaderModule::new(device.clone(), &frag_buffer)?;
+
+    let main = std::ffi::CStr::from_bytes_with_nul(b"main\0").unwrap();
+
+    let vert_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::VERTEX)
+        .module(&vert_mod)
+        .name(main)
+        .build();
+
+    let frag_stage = vd::PipelineShaderStageCreateInfo::builder()
+        .stage(vd::ShaderStageFlags::FRAGMENT)
+        .module(&frag_mod)
+        .name(main)
+        .build();
+
+    /* Create debug pipeline */
+
+    let assembly = vd::PipelineInputAssemblyStateCreateInfo::builder()
+        .topology(vd::PrimitiveTopology::LineList) // Render lines
+        .primitive_restart_enable(false)
+        .build();
+
+    let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
+        .depth_clamp_enable(false)
+        .rasterizer_discard_enable(false)
+        .polygon_mode(vd::PolygonMode::Line) // Render lines
+        .cull_mode(vd::CullModeFlags::NONE)
+        .depth_bias_enable(false)
+        .line_width(1f32)
+        .build();
+
+    let multisampling = vd::PipelineMultisampleStateCreateInfo::builder()
+        .rasterization_samples(vd::SampleCountFlags::COUNT_1)
+        .sample_shading_enable(false)
+        .min_sample_shading(1f32)
+        .alpha_to_coverage_enable(false)
+        .alpha_to_one_enable(false)
+        .build();
+
+    let binding_description = [Vertex::binding_description()];
+    let attribute_descriptions = Vertex::attribute_descriptions();
+
+    let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
+        .vertex_binding_descriptions(&binding_description)
+        .vertex_attribute_descriptions(&attribute_descriptions)
+        .build();
+
+    // Don't blend
+    let attachments = [
+        vd::PipelineColorBlendAttachmentState::builder()
+            .blend_enable(false)
+            .color_write_mask(
+                vd::ColorComponentFlags::R
+                | vd::ColorComponentFlags::G
+                | vd::ColorComponentFlags::B
+            ).build()
+    ];
+
+    let blending = vd::PipelineColorBlendStateCreateInfo::builder()
+        .logic_op_enable(false)
+        .attachments(&attachments)
+        .blend_constants([0f32; 4])
+        .build();
+
+    // Always draw on top
+    let stencil = vd::PipelineDepthStencilStateCreateInfo::builder()
+        .depth_test_enable(false)
+        .depth_write_enable(false)
+        .depth_compare_op(vd::CompareOp::Never)
+        .depth_bounds_test_enable(false)
+        .stencil_test_enable(false)
+        .build();
+
+    let viewports = [
+        vd::Viewport::builder()
+            .x(0f32)
+            .y(0f32)
+            .width(swapchain.extent().width() as f32)
+            .height(swapchain.extent().height() as f32)
+            .min_depth(0f32)
+            .max_depth(1f32)
+            .build()
+    ];
+
+    let scissors = [
+        vd::Rect2d::builder()
+            .offset(
+                vd::Offset2d::builder()
+                    .x(0)
+                    .y(0)
+                    .build()
+            ).extent(swapchain.extent().clone())
+            .build()
+    ];
+
+    let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
+        .viewports(&viewports)
+        .scissors(&scissors)
+        .build();
+
+    let pipeline = vd::GraphicsPipeline::builder()
+        .stages(&[vert_stage, frag_stage])
+        .vertex_input_state(&vert_info)
+        .input_assembly_state(&assembly)
+        .viewport_state(&viewport_state)
+        .rasterization_state(&rasterizer)
+        .multisample_state(&multisampling)
+        .color_blend_state(&blending)
+        .depth_stencil_state(&stencil)
+        .layout(pipeline_layout)
+        .render_pass(render_pass)
+        .subpass(0)
+        .base_pipeline_index(-1)
+        .build(device.clone())?;
+
+    let data = DebugData {
+        buffer: buffer,
+        memory: memory,
+        pipeline: pipeline,
+        _vert: vert_mod,
+        _frag: frag_mod,
+    };
+
+    Ok(Some(data))
 }
 
 fn init_fixed<'a>(device: vd::Device) -> vd::Result<(

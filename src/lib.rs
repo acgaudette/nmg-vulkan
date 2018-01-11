@@ -34,13 +34,15 @@ impl Metadata {
     }
 }
 
-pub trait Game {
+pub trait Start {
     fn start(
         &mut self,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
     );
+}
 
+pub trait Update {
     fn update(
         &mut self,
         time:  f64,
@@ -52,7 +54,9 @@ pub trait Game {
         components: &mut components::Container,
         debug: &mut debug::Handler,
     ) -> render::SharedUBO;
+}
 
+pub trait FixedUpdate {
     fn fixed_update(
         &mut self,
         time: f64,
@@ -68,7 +72,7 @@ pub trait Game {
 
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
 where
-    T: Game,
+    T: Start + Update + FixedUpdate
 {
     // Initialize window
     let (events, window) = init_window();
@@ -136,7 +140,7 @@ fn begin_update<T>(
     components: &mut components::Container,
     debug:      &mut debug::Handler,
 ) where
-    T: Game,
+    T: Start + Update + FixedUpdate
 {
     let mut running = true;
 
@@ -149,8 +153,7 @@ fn begin_update<T>(
     let mut metadata = Metadata::new();
 
     let settings = &config::ENGINE_CONFIG;
-    let target_fps = settings.section(Some("settings"))
-        .unwrap().get("fps").unwrap();
+    let target_fps = settings.section(Some("settings")).unwrap().get("fps").unwrap();
 
     println!("Target fps: {}", target_fps);
 

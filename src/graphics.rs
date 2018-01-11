@@ -45,6 +45,11 @@ impl Color {
             b: 1.,
         }
     }
+
+    #[inline]
+    pub fn lerp(a: Color, b: Color, t: f32) -> Color {
+        a * (1. - t) + b * t
+    }
 }
 
 impl std::ops::Add for Color {

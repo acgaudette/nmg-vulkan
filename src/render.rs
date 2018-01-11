@@ -402,10 +402,15 @@ impl<'a> Context<'a> {
             )?;
         }
 
+        let count = instances.count();
+
+        // Early exit
+        if count == 0 { return Ok(()); }
+
         // Not optimal: requires copies and a heap allocation
         let mut dynamic_buffer = util::AlignedBuffer::<InstanceUBO>::new(
             self.ubo_alignment as usize,
-            instances.count(),
+            count,
         );
 
         for model in &instances.data {

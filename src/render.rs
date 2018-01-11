@@ -2,8 +2,9 @@ extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 
 use std;
-use statics;
 use alg;
+use graphics;
+use statics;
 use util;
 
 macro_rules! offset_of {
@@ -839,14 +840,14 @@ impl InstanceHandle {
 #[repr(C)]
 pub struct Vertex {
     pub position: alg::Vec3,
-    pub color:    alg::Vec3,
+    pub color: graphics::Color,
 }
 
 impl Vertex {
-    pub fn new(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
+    pub fn new(position: alg::Vec3, color: graphics::Color) -> Vertex {
         Vertex {
-            position: alg::Vec3::new(x, y, z),
-            color:    alg::Vec3::new(r, g, b),
+            position,
+            color,
         }
     }
 
@@ -885,28 +886,10 @@ pub struct DebugLine {
 
 #[cfg(debug_assertions)]
 impl DebugLine {
-    pub fn new(line: alg::Line, r: f32, g: f32, b: f32) -> DebugLine {
-        let start = Vertex::new(
-            line.start.x,
-            line.start.y,
-            line.start.z,
-            r,
-            g,
-            b,
-        );
-
-        let end = Vertex::new(
-            line.end.x,
-            line.end.y,
-            line.end.z,
-            r,
-            g,
-            b,
-        );
-
+    pub fn new(line: alg::Line, color: graphics::Color) -> DebugLine {
         DebugLine {
-            start,
-            end,
+            start: Vertex::new(line.start, color),
+            end: Vertex::new(line.end, color),
         }
     }
 }

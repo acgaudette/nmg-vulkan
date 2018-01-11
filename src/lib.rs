@@ -7,6 +7,7 @@ extern crate lazy_static;
 
 pub mod alg;
 pub mod render;
+pub mod graphics;
 pub mod entity;
 pub mod components;
 pub mod config;

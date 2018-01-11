@@ -6,8 +6,6 @@ use statics;
 use alg;
 use util;
 
-use ::DEBUG_MODE;
-
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
         unsafe {
@@ -360,7 +358,7 @@ impl<'a> Context<'a> {
 
     pub fn update_debug(&mut self, lines: &[DebugLine]) -> vd::Result<()> {
         // Early exit
-        if !DEBUG_MODE {
+        if !cfg!(debug_assertions) {
             return Ok(());
         }
 
@@ -550,8 +548,7 @@ impl<'a> Context<'a> {
             }
         }
 
-        if DEBUG_MODE {
-
+        #[cfg(debug_assertions)] {
             /* Draw debug data */
 
             cmd_buffer.bind_pipeline(
@@ -638,7 +635,7 @@ impl<'a> Context<'a> {
 
                         // Synchronize with GPU in debug mode
                         // (prevents memory leaks from the validation layers)
-                        if DEBUG_MODE {
+                        #[cfg(debug_assertions)] {
                             self.device.wait_idle();
                         }
                     },
@@ -675,7 +672,9 @@ impl<'a> Context<'a> {
         self.device.destroy_buffer(self.dyn_ubo_buffer, None);
         self.device.free_memory(self.dyn_ubo_memory, None);
 
-        if DEBUG_MODE {
+        #[cfg(debug_assertions)] {
+            /* Debug buffer */
+
             self.device.destroy_buffer(
                 self.debug_data.as_ref().unwrap().buffer,
                 None,
@@ -1004,7 +1003,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     let mut layers: &[&str] = &[];
 
-    if DEBUG_MODE {
+    #[cfg(debug_assertions)] {
         if loader.verify_layer_support(VALIDATION_LAYERS)? {
             layers = VALIDATION_LAYERS;
             println!("Validation layers successfully loaded");
@@ -1020,7 +1019,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         .application_info(&app_info)
         .enabled_extensions(&extensions)
         .enabled_layer_names(layers)
-        .print_debug_report(DEBUG_MODE)
+        .print_debug_report(cfg!(debug_assertions))
         .build(loader)?;
 
     /* Physical device */
@@ -1375,7 +1374,7 @@ fn init_debug(
     device: &vd::Device,
 ) -> vd::Result<Option<DebugData>> {
     // Early exit
-    if !DEBUG_MODE {
+    if !cfg!(debug_assertions) {
         return Ok(None)
     }
 

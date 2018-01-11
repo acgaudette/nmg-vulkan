@@ -20,11 +20,14 @@ macro_rules! offset_of {
     );
 }
 
-const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
+static SHADER_PATH: &'static str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/./shaders/"
+);
 
+const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
-const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
 
 const MAX_INSTANCES: u64 = 1024;
 #[cfg(debug_assertions)]
@@ -1246,6 +1249,8 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     vd::ShaderModule,
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
+    println!("Loading shaders from \"{}\"", SHADER_PATH);
+
     let vert_buffer = vd::util::read_spir_v_file(
         [SHADER_PATH, "vert.spv"].concat()
     )?;

@@ -53,6 +53,7 @@ impl Debug {
         #[cfg(not(debug_assertions))] { Debug { } }
     }
 
+    #[allow(unused_variables)]
     pub fn add_line(&mut self, line: alg::Line) {
         #[cfg(debug_assertions)] {
             self.lines.push(render::DebugLine::new(line, 1., 0., 0.));

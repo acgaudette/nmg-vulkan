@@ -19,14 +19,15 @@ macro_rules! offset_of {
     );
 }
 
-#[cfg(debug_assertions)]
-const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
-#[cfg(debug_assertions)]
-const MAX_DEBUG_LINES: u64 = 512;
+const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 
+const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
+
 const MAX_INSTANCES: u64 = 1024;
+#[cfg(debug_assertions)]
+const MAX_DEBUG_LINES: u64 = 512;
 
 // Good GPUs have a minimum alignment of 256, which gives us about 12
 // vertices to work with (adjusting for matrix size and padding).
@@ -1007,7 +1008,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     let mut layers: &[&str] = &[];
 
-    #[cfg(debug_assertions)] {
+    if ENABLE_VALIDATION_LAYERS {
         if loader.verify_layer_support(VALIDATION_LAYERS)? {
             layers = VALIDATION_LAYERS;
             println!("Validation layers successfully loaded");

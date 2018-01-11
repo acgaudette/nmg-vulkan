@@ -3,6 +3,7 @@ extern crate nmg_vulkan as nmg;
 use nmg::alg;
 use nmg::entity;
 use nmg::render;
+use nmg::graphics;
 use nmg::components;
 use nmg::components::Component;
 use nmg::debug;
@@ -105,8 +106,8 @@ impl nmg::Game for Demo {
         /* Debug data */
 
         debug.clear_lines();
-        debug.add_cross( alg::Vec3::up(), 0.4);
-        debug.add_cross(-alg::Vec3::up(), 0.4);
+        debug.add_cross( alg::Vec3::up(), 0.4, graphics::Color::red());
+        debug.add_cross(-alg::Vec3::up(), 0.4, graphics::Color::red());
 
         shared_ubo
     }
@@ -158,11 +159,11 @@ fn main() {
 fn get_models() -> Vec<render::ModelData> {
     let pyramid = render::ModelData::new(
         vec![
-            render::Vertex::new( 0.0,  0.5,  0.0, 1., 1., 0.), // Peak
-            render::Vertex::new( 0.5, -0.5, -0.5, 1., 0., 0.),
-            render::Vertex::new(-0.5, -0.5, -0.5, 1., 0., 1.),
-            render::Vertex::new( 0.5, -0.5,  0.5, 1., 1., 0.),
-            render::Vertex::new(-0.5, -0.5,  0.5, 1., 1., 1.),
+            render::Vertex::new_raw( 0.0,  0.5,  0.0, 1., 1., 0.), // Peak
+            render::Vertex::new_raw( 0.5, -0.5, -0.5, 1., 0., 0.),
+            render::Vertex::new_raw(-0.5, -0.5, -0.5, 1., 0., 1.),
+            render::Vertex::new_raw( 0.5, -0.5,  0.5, 1., 1., 0.),
+            render::Vertex::new_raw(-0.5, -0.5,  0.5, 1., 1., 1.),
         ], vec![
             0u32, 1u32, 2u32,
             0u32, 3u32, 1u32,

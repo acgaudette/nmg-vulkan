@@ -1,5 +1,6 @@
 use alg;
 use render;
+use graphics;
 
 pub struct Handler {
     #[cfg(debug_assertions)]
@@ -18,9 +19,13 @@ impl Handler {
     }
 
     #[allow(unused_variables)]
-    pub fn add_line(&mut self, line: alg::Line) {
+    pub fn add_line(
+        &mut self,
+        line: alg::Line,
+        color: graphics::Color,
+    ) {
         #[cfg(debug_assertions)] {
-            self.lines.push(render::DebugLine::new(line, 1., 0., 0.));
+            self.lines.push(render::DebugLine::new(line, color));
         }
     }
 
@@ -29,6 +34,7 @@ impl Handler {
         &mut self,
         center: alg::Vec3,
         size: f32,
+        color: graphics::Color,
     ) {
         #[cfg(debug_assertions)] {
             let scale = 0.5 * size;
@@ -43,13 +49,8 @@ impl Handler {
                 center + alg::Vec3::new(-scale, 0.,  scale),
             );
 
-            self.lines.push(
-                render::DebugLine::new(first, 1., 0., 0.),
-            );
-
-            self.lines.push(
-                render::DebugLine::new(second, 1., 0., 0.),
-            );
+            self.lines.push(render::DebugLine::new(first, color));
+            self.lines.push(render::DebugLine::new(second, color));
         }
     }
 

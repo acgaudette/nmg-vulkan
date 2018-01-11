@@ -60,6 +60,35 @@ impl Debug {
         }
     }
 
+    #[allow(unused_variables)]
+    pub fn add_cross(
+        &mut self,
+        center: alg::Vec3,
+        size: f32,
+    ) {
+        #[cfg(debug_assertions)] {
+            let scale = 0.5 * size;
+
+            let first = alg::Line::new(
+                center + alg::Vec3::new( scale, 0.,  scale),
+                center + alg::Vec3::new(-scale, 0., -scale),
+            );
+
+            let second = alg::Line::new(
+                center + alg::Vec3::new( scale, 0., -scale),
+                center + alg::Vec3::new(-scale, 0.,  scale),
+            );
+
+            self.lines.push(
+                render::DebugLine::new(first, 1., 0., 0.),
+            );
+
+            self.lines.push(
+                render::DebugLine::new(second, 1., 0., 0.),
+            );
+        }
+    }
+
     pub fn clear_lines(&mut self) {
         #[cfg(debug_assertions)] {
             self.lines.clear();

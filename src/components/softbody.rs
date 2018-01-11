@@ -88,6 +88,7 @@ struct Instance {
     mass: f32,
     force: alg::Vec3,
     accel_dt: alg::Vec3,
+    magnets: Vec<Magnet>,
     center: alg::Vec3,
     model: Vec<alg::Vec3>,
 }
@@ -97,6 +98,7 @@ impl Instance {
         mass: f32,
         points: &[alg::Vec3],
         bindings: &[(usize, usize)],
+        zones: &[(usize, Falloff)],
         gravity: alg::Vec3,
     ) -> Instance {
         debug_assert!(mass > 0.);
@@ -104,6 +106,7 @@ impl Instance {
         let mut particles = Vec::with_capacity(points.len());
         let mut model = Vec::with_capacity(points.len());
         let mut rods = Vec::with_capacity(bindings.len());
+        let mut magnets = Vec::with_capacity(zones.len());
 
         for point in points {
             particles.push(Particle::new(*point));
@@ -114,12 +117,17 @@ impl Instance {
             rods.push(Rod::new(binding.0, binding.1, &particles));
         }
 
+        for zone in zones {
+            magnets.push(Magnet::new(zone.0, zone.1));
+        }
+
         Instance {
             particles: particles,
             rods: rods,
             mass: mass,
             force: alg::Vec3::zero(),
             accel_dt: gravity * FIXED_DT * FIXED_DT,
+            magnets: magnets,
             center: alg::Vec3::zero(),
             model,
         }
@@ -183,6 +191,7 @@ impl Manager {
         mass: f32,
         points: &[alg::Vec3],
         bindings: &[(usize, usize)],
+        magnets: &[(usize, Falloff)],
     ) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
@@ -192,6 +201,7 @@ impl Manager {
                 mass,
                 points,
                 bindings,
+                magnets,
                 self.gravity,
             )
         );

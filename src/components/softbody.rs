@@ -1,7 +1,9 @@
 use alg;
 use entity;
 use render;
+use graphics;
 use components;
+use debug;
 
 use ::FIXED_DT; // Import from lib
 use components::transform;
@@ -284,6 +286,37 @@ impl Manager {
 
             // Update transform position
             transforms.set_position_i(i, average);
+        }
+    }
+
+    #[allow(unused_variables)]
+    pub fn draw_debug(
+        &self,
+        entity: entity::Handle,
+        debug: &mut debug::Handler,
+    ) {
+        #[cfg(debug_assertions)] {
+            let i = entity.get_index() as usize;
+            debug_assert!(i < self.instances.len());
+
+            if let Some(ref instance) = self.instances[i] {
+                for rod in &instance.rods {
+                    let left = instance.particles[rod.left].position;
+                    let right = instance.particles[rod.right].position;
+
+                    let lerp = (rod.length - left.dist(right)).abs()
+                        / (0.5 * rod.length);
+
+                    debug.add_line(
+                        alg::Line::new(left, right),
+                        graphics::Color::lerp(
+                            graphics::Color::green(),
+                            graphics::Color::red(),
+                            lerp,
+                        )
+                    );
+                }
+            }
         }
     }
 }

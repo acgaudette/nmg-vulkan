@@ -1257,11 +1257,11 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
     let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "shader_vert.spv"].concat()
+        [SHADER_PATH, "vert.spv"].concat()
     )?;
 
     let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "shader_frag.spv"].concat()
+        [SHADER_PATH, "frag.spv"].concat()
     )?;
 
     let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;

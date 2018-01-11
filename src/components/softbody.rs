@@ -305,7 +305,7 @@ impl Manager {
                     let right = instance.particles[rod.right].position;
 
                     let lerp = (rod.length - left.dist(right)).abs()
-                        / (0.5 * rod.length);
+                        / (0.1 * rod.length);
 
                     debug.add_line(
                         alg::Line::new(left, right),

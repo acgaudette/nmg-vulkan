@@ -293,6 +293,7 @@ impl<'a> Context<'a> {
             &self.device,
         )?;
 
+        #[allow(unused_variables)]
         let debug_data = init_debug(
             &swapchain,
             &render_pass,
@@ -1373,6 +1374,7 @@ fn load_models(
 }
 
 #[cfg(not(debug_assertions))]
+#[allow(unused_variables)]
 fn init_debug(
     swapchain: &vd::SwapchainKhr,
     render_pass: &vd::RenderPass,

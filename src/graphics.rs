@@ -1,5 +1,7 @@
 #![allow(dead_code)] // Library
 
+use std;
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Color {
@@ -41,6 +43,42 @@ impl Color {
             r: 0.,
             g: 0.,
             b: 1.,
+        }
+    }
+}
+
+impl std::ops::Add for Color {
+    type Output = Color;
+
+    fn add(self, other: Color) -> Color {
+        Color {
+            r: self.r + other.r,
+            g: self.g + other.g,
+            b: self.b + other.b
+        }
+    }
+}
+
+impl std::ops::Sub for Color {
+    type Output = Color;
+
+    fn sub(self, other: Color) -> Color {
+        Color {
+            r: self.r - other.r,
+            g: self.g - other.g,
+            b: self.b - other.b
+        }
+    }
+}
+
+impl std::ops::Mul<f32> for Color {
+    type Output = Color;
+
+    fn mul(self, scalar: f32) -> Color {
+        Color {
+            r: self.r * scalar,
+            g: self.g * scalar,
+            b: self.b * scalar,
         }
     }
 }

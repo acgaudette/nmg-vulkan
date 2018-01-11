@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Library
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Color {
@@ -12,6 +14,33 @@ impl Color {
             r,
             g,
             b,
+        }
+    }
+
+    #[inline]
+    fn red() -> Color {
+        Color {
+            r: 1.,
+            g: 0.,
+            b: 0.,
+        }
+    }
+
+    #[inline]
+    fn green() -> Color {
+        Color {
+            r: 0.,
+            g: 1.,
+            b: 0.,
+        }
+    }
+
+    #[inline]
+    fn blue() -> Color {
+        Color {
+            r: 0.,
+            g: 0.,
+            b: 1.,
         }
     }
 }

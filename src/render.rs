@@ -4,6 +4,7 @@ extern crate voodoo_winit as vdw;
 use std;
 use alg;
 use graphics;
+use config;
 use statics;
 use util;
 
@@ -19,11 +20,6 @@ macro_rules! offset_of {
         }
     );
 }
-
-static SHADER_PATH: &'static str = concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/./shaders/"
-);
 
 const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
@@ -1249,14 +1245,22 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     vd::ShaderModule,
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
-    println!("Loading shaders from \"{}\"", SHADER_PATH);
+    let path = {
+        let mut path = config::ENGINE_CONFIG
+            .section(Some("settings")).unwrap()
+            .get("shader_path").unwrap();
+
+        [path, "/"].concat()
+    };
+
+    println!("Loading shaders from \"{}\"", path);
 
     let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "vert.spv"].concat()
+        format!("{}{}", path, "vert.spv")
     )?;
 
     let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "frag.spv"].concat()
+        format!("{}{}", path, "frag.spv")
     )?;
 
     let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;
@@ -1397,12 +1401,20 @@ fn init_debug(
 
     /* Load debug shaders */
 
+    let path = {
+        let mut path = config::ENGINE_CONFIG
+            .section(Some("settings")).unwrap()
+            .get("shader_path").unwrap();
+
+        [path, "/"].concat()
+    };
+
     let vert_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "debug_vert.spv"].concat()
+        format!("{}{}", path, "debug_vert.spv")
     )?;
 
     let frag_buffer = vd::util::read_spir_v_file(
-        [SHADER_PATH, "debug_frag.spv"].concat()
+        format!("{}{}", path, "debug_frag.spv")
     )?;
 
     let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;

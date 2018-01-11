@@ -36,6 +36,7 @@ pub const MAX_SOFTBODY_VERT: usize = (
     DYNAMIC_UBO_WIDTH - std::mem::size_of::<alg::Mat>()
 ) / std::mem::size_of::<PaddedVec3>();
 
+#[allow(dead_code)]
 pub struct Context<'a> {
     pub device:    vd::Device,
     pub swapchain: vd::SwapchainKhr,
@@ -697,6 +698,7 @@ impl<'a> Drop for Context<'a> {
     }
 }
 
+#[allow(dead_code)]
 struct DebugData {
     buffer:   vd::BufferHandle,
     memory:   vd::DeviceMemoryHandle,

@@ -303,6 +303,16 @@ impl Manager {
                         rod.length,
                     );
                 }
+
+                // Magnets
+                for magnet in &instance.magnets {
+                    let serf = &mut instance.particles[magnet.serf];
+
+                    serf.position = (magnet.falloff)(
+                        serf.position,
+                        magnet.target,
+                    );
+                }
             }
 
             // Compute average position

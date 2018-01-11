@@ -213,6 +213,10 @@ impl Manager {
         self.planes.push(plane);
     }
 
+    pub fn set_gravity(&mut self, gravity: alg::Vec3) {
+        self.gravity = gravity;
+    }
+
     pub fn simulate(&mut self, transforms: &mut transform::Manager) {
         // Update instances
         for i in 0..self.instances.len() {

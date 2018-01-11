@@ -19,12 +19,14 @@ macro_rules! offset_of {
     );
 }
 
+#[cfg(debug_assertions)]
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
+#[cfg(debug_assertions)]
+const MAX_DEBUG_LINES: u64 = 512;
+
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 const SHADER_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/");
-
 const MAX_INSTANCES: u64 = 1024;
-const MAX_DEBUG_LINES: u64 = 512;
 
 // Good GPUs have a minimum alignment of 256, which gives us about 12
 // vertices to work with (adjusting for matrix size and padding).
@@ -351,17 +353,15 @@ impl<'a> Context<'a> {
         self._views = _views;
         self._descriptor_pool = _descriptor_pool;
 
-        self.debug_data = debug_data;
+        #[cfg(debug_assertions)] {
+            self.debug_data = debug_data;
+        }
 
         Ok(())
     }
 
+    #[cfg(debug_assertions)]
     pub fn update_debug(&mut self, lines: &[DebugLine]) -> vd::Result<()> {
-        // Early exit
-        if !cfg!(debug_assertions) {
-            return Ok(());
-        }
-
         /* Copy debug data to GPU */
 
         unsafe {
@@ -1367,17 +1367,21 @@ fn load_models(
     ))
 }
 
+#[cfg(not(debug_assertions))]
+fn init_debug(
+    swapchain: &vd::SwapchainKhr,
+    render_pass: &vd::RenderPass,
+    pipeline_layout: &vd::PipelineLayout,
+    device: &vd::Device,
+) -> vd::Result<Option<DebugData>> { Ok(None) }
+
+#[cfg(debug_assertions)]
 fn init_debug(
     swapchain: &vd::SwapchainKhr,
     render_pass: &vd::RenderPass,
     pipeline_layout: &vd::PipelineLayout,
     device: &vd::Device,
 ) -> vd::Result<Option<DebugData>> {
-    // Early exit
-    if !cfg!(debug_assertions) {
-        return Ok(None)
-    }
-
     let properties = device.physical_device().memory_properties();
 
     // Allocate empty debug vertex buffer

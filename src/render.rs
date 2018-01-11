@@ -874,12 +874,14 @@ impl Vertex {
     }
 }
 
+#[cfg(debug_assertions)]
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct DebugLine {
     start: Vertex,
     end: Vertex,
 }
 
+#[cfg(debug_assertions)]
 impl DebugLine {
     pub fn new(line: alg::Line, r: f32, g: f32, b: f32) -> DebugLine {
         let start = Vertex::new(

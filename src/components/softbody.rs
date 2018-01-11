@@ -63,6 +63,24 @@ impl Rod {
     }
 }
 
+type Falloff = fn(alg::Vec3, alg::Vec3) -> alg::Vec3;
+
+struct Magnet {
+    target: alg::Vec3,
+    serf: usize,
+    falloff: Falloff,
+}
+
+impl Magnet {
+    fn new(serf: usize, falloff: Falloff) -> Magnet {
+        Magnet {
+            target: alg::Vec3::zero(),
+            serf: serf,
+            falloff: falloff,
+        }
+    }
+}
+
 #[repr(C)]
 struct Instance {
     particles: Vec<Particle>,

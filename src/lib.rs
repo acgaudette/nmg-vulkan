@@ -242,6 +242,13 @@ fn begin_update<T>(
             panic!("{}", e);
         }
 
+        #[cfg(debug_assertions)] {
+            if let Err(e) = context.update_debug(&[]) {
+                // Irrecoverable error
+                panic!("{}", e);
+            }
+        }
+
         // Render frame
         if let Err(e) = context.draw(&components.draws.instances) {
             // Handle render errors

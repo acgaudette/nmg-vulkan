@@ -68,7 +68,6 @@ impl Manager {
         alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
-
         debug_assert!(i < self.positions.len());
 
         (
@@ -76,6 +75,27 @@ impl Manager {
             self.orientations[i],
             self.scales[i],
         )
+    }
+
+    pub fn get_position(&self, entity: entity::Handle) -> alg::Vec3 {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.positions.len());
+
+        self.positions[i]
+    }
+
+    pub fn get_orientation(&self, entity: entity::Handle) -> alg::Quat {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.positions.len());
+
+        self.orientations[i]
+    }
+
+    pub fn get_scale(&self, entity: entity::Handle) -> alg::Vec3 {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.positions.len());
+
+        self.scales[i]
     }
 
     /* Tight coupling--beware */

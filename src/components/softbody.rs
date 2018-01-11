@@ -207,7 +207,7 @@ impl Manager {
         );
     }
 
-    pub fn set(
+    pub fn set_force(
         &mut self,
         entity: entity::Handle,
         force: alg::Vec3,
@@ -217,6 +217,22 @@ impl Manager {
 
         if let Some(ref mut instance) = self.instances[i] {
             instance.set_force(force, self.gravity);
+        }
+    }
+
+    pub fn set_magnet(
+        &mut self,
+        entity: entity::Handle,
+        magnet: usize,
+        target: alg::Vec3,
+    ) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.instances.len());
+
+        if let Some(ref mut instance) = self.instances[i] {
+            debug_assert!(magnet < instance.magnets.len());
+
+            instance.magnets[magnet].target = target;
         }
     }
 

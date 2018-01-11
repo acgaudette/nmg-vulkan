@@ -80,6 +80,7 @@ impl nmg::Game for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        debug: &mut nmg::Debug,
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
@@ -100,6 +101,12 @@ impl nmg::Game for Demo {
             render::SharedUBO::new(view, projection)
         };
 
+        /* Debug data */
+
+        debug.clear_lines();
+        debug.add_cross( alg::Vec3::up(), 0.4);
+        debug.add_cross(-alg::Vec3::up(), 0.4);
+
         shared_ubo
     }
 
@@ -113,6 +120,7 @@ impl nmg::Game for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        debug: &mut nmg::Debug,
     ) {
         if metadata.fixed_frame > 0 {
             // Reset forces

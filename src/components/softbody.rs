@@ -285,7 +285,19 @@ impl Manager {
         self.planes.push(plane);
     }
 
+    // Heavier call, but will force-update all instances
     pub fn set_gravity(&mut self, gravity: alg::Vec3) {
+        self.gravity = gravity;
+
+        for i in 0..self.instances.len() {
+            if let Some(ref mut instance) = self.instances[i] {
+                instance.update_cache(self.gravity);
+            }
+        }
+    }
+
+    // May not immediately affect all instances
+    pub fn set_gravity_raw(&mut self, gravity: alg::Vec3) {
         self.gravity = gravity;
     }
 

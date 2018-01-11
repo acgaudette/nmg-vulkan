@@ -82,6 +82,7 @@ pub trait Game {
         screen_width:  u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        debug: &mut Debug,
     ) -> render::SharedUBO;
 
     fn fixed_update(
@@ -93,6 +94,7 @@ pub trait Game {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        debug: &mut Debug,
     );
 }
 
@@ -122,6 +124,9 @@ where
         softbodies:  components::softbody::Manager::new(1, 1),
     };
 
+    // Initialize debug struct
+    let mut debug = Debug::new();
+
     // Start game
     game.start(&mut entities, &mut components);
 
@@ -133,6 +138,7 @@ where
         &mut context,
         &mut entities,
         &mut components,
+        &mut debug,
     );
 
     // Synchronize before exit
@@ -160,6 +166,7 @@ fn begin_update<T>(
     context:    &mut render::Context,
     entities:   &mut entity::Manager,
     components: &mut components::Container,
+    debug:      &mut Debug,
 ) where
     T: Game,
 {
@@ -231,6 +238,7 @@ fn begin_update<T>(
             context.swapchain.extent().width(),
             entities,
             components,
+            debug,
         );
 
         /* Fixed update loop */
@@ -246,6 +254,7 @@ fn begin_update<T>(
                 context.swapchain.extent().width(),
                 entities,
                 components,
+                debug,
             );
 
             // Update core components
@@ -272,7 +281,7 @@ fn begin_update<T>(
         }
 
         #[cfg(debug_assertions)] {
-            if let Err(e) = context.update_debug(&[]) {
+            if let Err(e) = context.update_debug(&debug.lines) {
                 // Irrecoverable error
                 panic!("{}", e);
             }

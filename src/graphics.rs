@@ -3,9 +3,9 @@
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Color {
-    r: f32,
-    g: f32,
-    b: f32,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
 }
 
 impl Color {
@@ -18,7 +18,7 @@ impl Color {
     }
 
     #[inline]
-    fn red() -> Color {
+    pub fn red() -> Color {
         Color {
             r: 1.,
             g: 0.,
@@ -27,7 +27,7 @@ impl Color {
     }
 
     #[inline]
-    fn green() -> Color {
+    pub fn green() -> Color {
         Color {
             r: 0.,
             g: 1.,
@@ -36,7 +36,7 @@ impl Color {
     }
 
     #[inline]
-    fn blue() -> Color {
+    pub fn blue() -> Color {
         Color {
             r: 0.,
             g: 0.,

@@ -8,6 +8,10 @@ use nmg::components;
 use nmg::components::Component;
 use nmg::debug;
 
+/* In debug mode, this demo will render in wireframe, with physics markers.
+ * In release mode, it will render the solid deformed mesh.
+ */
+
 struct Demo {
     objects: Vec<entity::Handle>,
     mass: f32,
@@ -22,7 +26,7 @@ impl nmg::Start for Demo {
     ) {
         let object = entities.add();
         components.transforms.register(object);
-        components.draws.register(object, 0);
+        #[cfg(not(debug_assertions))] { components.draws.register(object, 0); }
         components.softbodies.register(object);
 
         // Initial position
@@ -110,6 +114,7 @@ impl nmg::Update for Demo {
         debug.clear_lines();
         debug.add_cross( alg::Vec3::up(), 0.4, graphics::Color::red());
         debug.add_cross(-alg::Vec3::up(), 0.4, graphics::Color::red());
+        components.softbodies.draw_debug(self.objects[0], debug);
 
         shared_ubo
     }

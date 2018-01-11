@@ -37,6 +37,35 @@ impl Metadata {
     }
 }
 
+pub struct Debug {
+    #[cfg(debug_assertions)]
+    lines: Vec<render::DebugLine>,
+}
+
+impl Debug {
+    fn new() -> Debug {
+        #[cfg(debug_assertions)] {
+            Debug {
+                lines: Vec::new(),
+            }
+        }
+
+        #[cfg(not(debug_assertions))] { Debug { } }
+    }
+
+    pub fn add_line(&mut self, line: alg::Line) {
+        #[cfg(debug_assertions)] {
+            self.lines.push(render::DebugLine::new(line, 1., 0., 0.));
+        }
+    }
+
+    pub fn clear_lines(&mut self) {
+        #[cfg(debug_assertions)] {
+            self.lines.clear();
+        }
+    }
+}
+
 pub trait Game {
     fn start(
         &mut self,

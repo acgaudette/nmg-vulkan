@@ -75,7 +75,7 @@ impl nmg::Start for Demo {
 
         /* Zero gravity */
 
-        components.softbodies.set_gravity(alg::Vec3::zero());
+        components.softbodies.set_gravity_raw(alg::Vec3::zero());
 
         // Update demo state
         self.objects.push(object);

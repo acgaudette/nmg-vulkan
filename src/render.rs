@@ -365,6 +365,13 @@ impl<'a> Context<'a> {
 
     #[cfg(debug_assertions)]
     pub fn update_debug(&mut self, lines: &[DebugLine]) -> vd::Result<()> {
+        // Update debug line count
+        self.debug_line_count = lines.len() as u32;
+
+        if self.debug_line_count == 0 {
+            return Ok(());
+        }
+
         /* Copy debug data to GPU */
 
         unsafe {
@@ -375,9 +382,6 @@ impl<'a> Context<'a> {
                 &lines,
             )?;
         }
-
-        // Update debug line count
-        self.debug_line_count = lines.len() as u32;
 
         Ok(())
     }
@@ -552,37 +556,36 @@ impl<'a> Context<'a> {
         }
 
         #[cfg(debug_assertions)] {
-            /* Draw debug data */
+            if self.debug_line_count > 0 {
 
-            cmd_buffer.bind_pipeline(
-                vd::PipelineBindPoint::Graphics,
-                &self.debug_data.as_ref().unwrap().pipeline.handle(),
-            );
+                /* Draw debug data */
 
-            cmd_buffer.bind_descriptor_sets(
-                vd::PipelineBindPoint::Graphics,
-                &self.pipeline_layout,
-                0,
-                &[&self.descriptor_sets[0]], // Single descriptor set
-                &[0], // Ignore the dynamic uniform buffer
-            );
-
-            unsafe {
-                self.device.cmd_bind_vertex_buffers(
-                    handle,
-                    0,
-                    &[self.debug_data.as_ref().unwrap().buffer],
-                    &[0],
+                cmd_buffer.bind_pipeline(
+                    vd::PipelineBindPoint::Graphics,
+                    &self.debug_data.as_ref().unwrap().pipeline.handle(),
                 );
-            }
 
-            for i in 0..self.debug_line_count {
-                cmd_buffer.draw(
-                    2,
-                    1,
-                    i * 2,
+                cmd_buffer.bind_descriptor_sets(
+                    vd::PipelineBindPoint::Graphics,
+                    &self.pipeline_layout,
                     0,
+                    &[&self.descriptor_sets[0]], // Single descriptor set
+                    &[0], // Ignore the dynamic uniform buffer
                 );
+
+                unsafe {
+                    self.device.cmd_bind_vertex_buffers(
+                        handle,
+                        0,
+                        &[self.debug_data.as_ref().unwrap().buffer],
+                        &[0],
+                    );
+                }
+
+                for i in 0..self.debug_line_count {
+                    // Draw two vertices at a time
+                    cmd_buffer.draw(2, 1, i * 2, 0);
+                }
             }
         }
 

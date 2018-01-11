@@ -133,16 +133,15 @@ impl Instance {
         }
     }
 
+    // Get offset from center for specific particle
     fn offset(&self, index: usize) -> alg::Vec3 {
         self.particles[index].position - self.center - self.model[index]
     }
 
     #[inline]
-    fn set_force(&mut self, force: alg::Vec3, gravity: alg::Vec3) {
-        self.force = force;
-
-        // Cache calculation
-        self.accel_dt = ((force / self.mass) + gravity)
+    // Must be called when gravity or force changes
+    fn update_cache(&mut self, gravity: alg::Vec3) {
+        self.accel_dt = ((self.force / self.mass) + gravity)
             * FIXED_DT * FIXED_DT;
     }
 }
@@ -216,7 +215,8 @@ impl Manager {
         debug_assert!(i < self.instances.len());
 
         if let Some(ref mut instance) = self.instances[i] {
-            instance.set_force(force, self.gravity);
+            instance.force = force;
+            instance.update_cache(self.gravity);
         }
     }
 

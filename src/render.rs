@@ -851,6 +851,13 @@ impl Vertex {
         }
     }
 
+    pub fn new_raw(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
+        Vertex {
+            position: alg::Vec3::new(x, y, z),
+            color: graphics::Color::new(r, g, b),
+        }
+    }
+
     fn binding_description() -> vd::VertexInputBindingDescription {
         vd::VertexInputBindingDescription::builder()
             .binding(0)

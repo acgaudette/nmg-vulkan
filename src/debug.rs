@@ -1,6 +1,8 @@
 use alg;
-use render;
 use graphics;
+
+#[cfg(debug_assertions)]
+use render;
 
 pub struct Handler {
     #[cfg(debug_assertions)]

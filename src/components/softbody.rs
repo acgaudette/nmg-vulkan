@@ -223,17 +223,35 @@ impl Manager {
     pub fn set_magnet(
         &mut self,
         entity: entity::Handle,
-        magnet: usize,
+        index: usize,
         target: alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
 
         if let Some(ref mut instance) = self.instances[i] {
-            debug_assert!(magnet < instance.magnets.len());
+            debug_assert!(index < instance.magnets.len());
 
-            instance.magnets[magnet].target = target;
+            instance.magnets[index].target = target;
         }
+    }
+
+    pub fn get_particle(
+        &self,
+        entity: entity::Handle,
+        index: usize,
+    ) -> alg::Vec3 {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.instances.len());
+
+        let mut position = alg::Vec3::zero();
+
+        if let Some(ref instance) = self.instances[i] {
+            debug_assert!(index < instance.particles.len());
+            position = instance.particles[index].position;
+        }
+
+        position
     }
 
     pub fn get_offsets(

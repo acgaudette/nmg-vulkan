@@ -54,6 +54,7 @@ impl nmg::Start for Demo {
                 (1, 4), // Crosspiece
                 (2, 3), // Crosspiece
             ],
+            &[],
         );
 
         // Initial force

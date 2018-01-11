@@ -111,9 +111,10 @@ impl Instance {
     }
 
     #[inline]
-    fn set_force(&mut self, force: alg::Vec3) {
+    fn set_force(&mut self, force: alg::Vec3, gravity: alg::Vec3) {
         self.force = force;
-        self.accel_dt = (force / self.mass) * FIXED_DT * FIXED_DT;
+        self.accel_dt = ((force / self.mass) + gravity)
+            * FIXED_DT * FIXED_DT;
     }
 }
 
@@ -121,6 +122,7 @@ impl Instance {
 pub struct Manager {
     instances: Vec<Option<Instance>>,
     planes: Vec<alg::Plane>,
+    gravity: alg::Vec3,
 }
 
 impl components::Component for Manager {
@@ -150,6 +152,7 @@ impl Manager {
         Manager {
             instances: Vec::with_capacity(instance_hint),
             planes: Vec::with_capacity(plane_hint),
+            gravity: alg::Vec3::new(0., -9.8, 0.),
         }
     }
 
@@ -175,7 +178,7 @@ impl Manager {
         debug_assert!(i < self.instances.len());
 
         if let Some(ref mut instance) = self.instances[i] {
-            instance.set_force(force);
+            instance.set_force(force, self.gravity);
         }
     }
 

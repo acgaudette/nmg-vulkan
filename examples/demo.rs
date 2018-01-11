@@ -5,6 +5,7 @@ use nmg::entity;
 use nmg::render;
 use nmg::components;
 use nmg::components::Component;
+use nmg::debug;
 
 struct Demo {
     objects: Vec<entity::Handle>,
@@ -47,7 +48,7 @@ impl nmg::Game for Demo {
         screen_width:  u32,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
-        debug: &mut nmg::Debug,
+        debug: &mut debug::Handler,
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
@@ -104,7 +105,7 @@ impl nmg::Game for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        debug: &mut nmg::Debug,
+        debug: &mut debug::Handler,
     ) {}
 }
 

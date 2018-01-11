@@ -8,6 +8,15 @@ function compile {
   $COMPILER -H $1.$2 > $2.spvasm
 }
 
+function compile_debug {
+  $COMPILER -V debug.$1 -o debug_$1.spv
+  $COMPILER -H debug.$1 > debug_$1.spvasm
+}
+
 ./clean
+
+compile_debug vert
+compile_debug frag
+
 compile shader vert
 compile shader frag

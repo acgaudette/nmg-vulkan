@@ -79,6 +79,7 @@ impl Instance {
         mass: f32,
         points: &[alg::Vec3],
         bindings: &[(usize, usize)],
+        gravity: alg::Vec3,
     ) -> Instance {
         debug_assert!(mass > 0.);
 
@@ -100,7 +101,7 @@ impl Instance {
             rods: rods,
             mass: mass,
             force: alg::Vec3::zero(),
-            accel_dt: alg::Vec3::zero(),
+            accel_dt: gravity * FIXED_DT * FIXED_DT,
             center: alg::Vec3::zero(),
             model,
         }
@@ -113,6 +114,8 @@ impl Instance {
     #[inline]
     fn set_force(&mut self, force: alg::Vec3, gravity: alg::Vec3) {
         self.force = force;
+
+        // Cache calculation
         self.accel_dt = ((force / self.mass) + gravity)
             * FIXED_DT * FIXED_DT;
     }
@@ -166,7 +169,14 @@ impl Manager {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
 
-        self.instances[i] = Some(Instance::new(mass, points, bindings));
+        self.instances[i] = Some(
+            Instance::new(
+                mass,
+                points,
+                bindings,
+                self.gravity,
+            )
+        );
     }
 
     pub fn set(

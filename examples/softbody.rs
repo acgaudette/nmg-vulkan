@@ -14,7 +14,7 @@ struct Demo {
     mesh: Vec<alg::Vec3>,
 }
 
-impl nmg::Game for Demo {
+impl nmg::Start for Demo {
     fn start(
         &mut self,
         entities: &mut entity::Manager,
@@ -71,7 +71,9 @@ impl nmg::Game for Demo {
         // Update demo state
         self.objects.push(object);
     }
+}
 
+impl nmg::Update for Demo {
     #[allow(unused_variables)]
     fn update(
         &mut self,
@@ -111,7 +113,9 @@ impl nmg::Game for Demo {
 
         shared_ubo
     }
+}
 
+impl nmg::FixedUpdate for Demo {
     #[allow(unused_variables)]
     fn fixed_update(
         &mut self,

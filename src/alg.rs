@@ -601,6 +601,9 @@ mod tests {
         );
 
         assert!(mat * vec == Vec3::new(5., -4., 0.,));
+
+        let translation = Mat::translation(2., -7., 0.5);
+        assert!(translation * Vec3::zero() == Vec3::new(2., -7., 0.5));
     }
 
     #[test]

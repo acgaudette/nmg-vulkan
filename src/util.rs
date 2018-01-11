@@ -108,7 +108,7 @@ mod tests {
             let mut ptr = ptr as *const render::PaddedVec3;
             let mut test_offsets = Vec::with_capacity(offsets.len());
 
-            for i in 0..offsets.len() {
+            for _ in 0..offsets.len() {
                 let offset = *ptr;
                 test_offsets.push(offset);
                 ptr = ptr.offset(1);

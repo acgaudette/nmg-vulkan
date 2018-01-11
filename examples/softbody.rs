@@ -58,7 +58,7 @@ impl nmg::Start for Demo {
         );
 
         // Initial force
-        components.softbodies.set(
+        components.softbodies.set_force(
             object,
             alg::Vec3::up() * 4400.,
         );
@@ -140,7 +140,7 @@ impl nmg::FixedUpdate for Demo {
     ) {
         if metadata.fixed_frame > 0 {
             // Reset forces
-            components.softbodies.set(
+            components.softbodies.set_force(
                 self.objects[0],
                 alg::Vec3::zero(),
             );

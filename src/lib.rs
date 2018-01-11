@@ -152,10 +152,12 @@ fn begin_update<T>(
 
     let mut metadata = Metadata::new();
 
-    let settings = &config::ENGINE_CONFIG;
-    let target_fps = settings.section(Some("settings")).unwrap().get("fps").unwrap();
+    let config_data = &config::ENGINE_CONFIG;
+    let target_fps = config_data
+        .section(Some("settings")).unwrap()
+        .get("fps").unwrap();
 
-    println!("Target fps: {}", target_fps);
+    println!("Target frames per second: {}", target_fps);
 
     loop {
         // Handle window events

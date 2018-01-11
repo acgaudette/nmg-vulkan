@@ -363,10 +363,11 @@ impl std::ops::Mul<Vec3> for Mat {
     type Output = Vec3;
 
     fn mul(self, vec: Vec3) -> Vec3 {
+        // Assume scaling factor of one (position)
         Vec3::new(
-            self.x0 * vec.x + self.x1 * vec.y + self.x2 * vec.z,
-            self.y0 * vec.x + self.y1 * vec.y + self.y2 * vec.z,
-            self.z0 * vec.x + self.z1 * vec.y + self.z2 * vec.z,
+            self.x0 * vec.x + self.x1 * vec.y + self.x2 * vec.z + self.x3,
+            self.y0 * vec.x + self.y1 * vec.y + self.y2 * vec.z + self.y3,
+            self.z0 * vec.x + self.z1 * vec.y + self.z2 * vec.z + self.z3,
         )
     }
 }

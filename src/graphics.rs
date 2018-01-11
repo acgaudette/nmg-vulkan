@@ -47,6 +47,15 @@ impl Color {
     }
 
     #[inline]
+    pub fn yellow() -> Color {
+        Color {
+            r: 1.,
+            g: 1.,
+            b: 0.,
+        }
+    }
+
+    #[inline]
     pub fn lerp(a: Color, b: Color, t: f32) -> Color {
         a * (1. - t) + b * t
     }

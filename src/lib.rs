@@ -13,11 +13,6 @@ pub mod config;
 mod statics;
 mod util;
 
-#[cfg(debug_assertions)]
-const DEBUG_MODE: bool = true;
-#[cfg(not(debug_assertions))]
-const DEBUG_MODE: bool = false;
-
 const FIXED_DT: f32 = 1. / 100.;
 
 #[derive(Clone, Copy)]
@@ -351,7 +346,7 @@ fn begin_update<T>(
             metadata.fps = metadata.frame - last_frame;
             last_frame = metadata.frame;
 
-            if DEBUG_MODE {
+            #[cfg(debug_assertions)] {
                 println!("Frames per second: {}", metadata.fps);
             }
 

@@ -27,6 +27,14 @@ impl Vec2 {
     pub fn new(x: f32, y: f32) -> Vec2 {
         Vec2 { x, y }
     }
+
+    #[inline]
+    pub fn up() -> Vec2 {
+        Vec2 {
+            x: 0.0,
+            y: 1.0,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

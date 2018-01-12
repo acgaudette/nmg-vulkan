@@ -22,45 +22,54 @@ impl Color {
     #[inline]
     pub fn red() -> Color {
         Color {
-            r: 1.,
-            g: 0.,
-            b: 0.,
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
         }
     }
 
     #[inline]
     pub fn green() -> Color {
         Color {
-            r: 0.,
-            g: 1.,
-            b: 0.,
+            r: 0.0,
+            g: 1.0,
+            b: 0.0,
         }
     }
 
     #[inline]
     pub fn blue() -> Color {
         Color {
-            r: 0.,
-            g: 0.,
-            b: 1.,
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
         }
     }
 
     #[inline]
     pub fn yellow() -> Color {
         Color {
-            r: 1.,
-            g: 1.,
-            b: 0.,
+            r: 1.0,
+            g: 1.0,
+            b: 0.0,
         }
     }
 
     #[inline]
     pub fn orange() -> Color {
         Color {
-            r: 1.,
+            r: 1.0,
             g: 0.5,
-            b: 0.,
+            b: 0.0,
+        }
+    }
+
+    #[inline]
+    pub fn cyan() -> Color {
+        Color {
+            r: 0.0,
+            g: 1.0,
+            b: 1.0,
         }
     }
 
@@ -75,7 +84,7 @@ impl Color {
 
     #[inline]
     pub fn lerp(a: Color, b: Color, t: f32) -> Color {
-        a * (1. - t) + b * t
+        a * (1.0 - t) + b * t
     }
 }
 

@@ -335,6 +335,25 @@ impl Manager {
         offsets
     }
 
+    pub fn add_joint(
+        &mut self,
+        child: entity::Handle,
+        parent: entity::Handle,
+    ) {
+        let (i, j) = (
+            child.get_index() as usize,
+            parent.get_index() as usize,
+        );
+
+        debug_assert!(i < self.instances.len());
+        debug_assert!(j < self.instances.len());
+
+        if self.instances[i].is_none() { return; }
+        if self.instances[j].is_none() { return; }
+
+        self.joints.push(Joint::new(i, j));
+    }
+
     pub fn add_plane(&mut self, plane: alg::Plane) {
         self.planes.push(plane);
     }

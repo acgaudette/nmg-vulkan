@@ -176,7 +176,10 @@ impl components::Component for Manager {
 }
 
 impl Manager {
-    pub fn new(instance_hint: usize, plane_hint: usize) -> Manager {
+    pub fn new(
+        instance_hint: usize,
+        plane_hint: usize,
+    ) -> Manager {
         Manager {
             instances: Vec::with_capacity(instance_hint),
             planes: Vec::with_capacity(plane_hint),
@@ -206,11 +209,44 @@ impl Manager {
         );
     }
 
-    pub fn set_force(
-        &mut self,
-        entity: entity::Handle,
-        force: alg::Vec3,
-    ) {
+    pub fn init_limb(&mut self, entity: entity::Handle, mass: f32) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.instances.len());
+
+        self.instances[i] = Some(
+            Instance::new(
+                mass,
+                &[
+                    // Front face
+                    alg::Vec3::new(-1.0,  1.0, -1.0), // 0
+                    alg::Vec3::new( 1.0,  1.0, -1.0), // 1
+                    alg::Vec3::new( 1.0, -1.0, -1.0), // 2
+                    alg::Vec3::new(-1.0, -1.0, -1.0), // 3
+
+                    // Back face
+                    alg::Vec3::new(-1.0,  1.0,  1.0), // 4
+                    alg::Vec3::new( 1.0,  1.0,  1.0), // 5
+                    alg::Vec3::new( 1.0, -1.0,  1.0), // 6
+                    alg::Vec3::new(-1.0, -1.0,  1.0), // 7
+                ],
+                &[
+                    // Front face
+                    (0, 1), (1, 2), (2, 3), (3, 0),
+                    // Back face
+                    (4, 5), (5, 6), (6, 7), (7, 4),
+                    // Connectors
+                    (0, 4), (1, 5), (2, 6), (3, 7),
+                    // Crosspieces
+                    (0, 2), (0, 5), (0, 7),
+                    (6, 4), (6, 1), (6, 3),
+                ],
+                &[],
+                self.gravity,
+            )
+        );
+    }
+
+    pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
 
@@ -259,6 +295,7 @@ impl Manager {
         entity: entity::Handle,
     ) -> [render::PaddedVec3; render::MAX_SOFTBODY_VERT] {
         let i = entity.get_index() as usize;
+        debug_assert!(i < self.instances.len());
 
         // Default to no offsets (identity)
         let mut offsets = [

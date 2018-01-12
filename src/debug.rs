@@ -32,6 +32,23 @@ impl Handler {
     }
 
     #[allow(unused_variables)]
+    pub fn add_ray(
+        &mut self,
+        start: alg::Vec3,
+        ray: alg::Vec3,
+        color: graphics::Color,
+    ) {
+        #[cfg(debug_assertions)] {
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(start, start + ray),
+                    color,
+                )
+            );
+        }
+    }
+
+    #[allow(unused_variables)]
     pub fn add_cross(
         &mut self,
         center: alg::Vec3,

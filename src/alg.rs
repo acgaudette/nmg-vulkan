@@ -93,16 +93,23 @@ impl Vec3 {
         self.dist_squared(other).sqrt()
     }
 
+    #[inline]
     pub fn cross(self, other: Vec3) -> Vec3 {
-        Vec3::new(
-            self.y * other.z - self.z * other.y,
-            self.z * other.x - self.x * other.z,
-            self.x * other.y - self.y * other.x,
-        )
+        Vec3 {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
+        }
     }
 
+    #[inline]
     pub fn dot(self, other: Vec3) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    #[inline]
+    pub fn lerp(self, other: Vec3, t: f32) -> Vec3 {
+        self * (1. - t) + other * t
     }
 }
 

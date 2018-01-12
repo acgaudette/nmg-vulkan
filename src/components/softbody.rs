@@ -246,6 +246,7 @@ impl Manager {
         entity: entity::Handle,
         mass: f32,
         rigidity: f32, // Expects a value between 0-1
+        scale: alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
@@ -254,16 +255,16 @@ impl Manager {
             Instance::new(
                 &[
                     // Front face
-                    alg::Vec3::new(-1.0,  1.0, -1.0), // 0
-                    alg::Vec3::new( 1.0,  1.0, -1.0), // 1
-                    alg::Vec3::new( 1.0, -1.0, -1.0), // 2
-                    alg::Vec3::new(-1.0, -1.0, -1.0), // 3
+                    alg::Vec3::new(-scale.x,  scale.y, -scale.z), // 0
+                    alg::Vec3::new( scale.x,  scale.y, -scale.z), // 1
+                    alg::Vec3::new( scale.x, -scale.y, -scale.z), // 2
+                    alg::Vec3::new(-scale.x, -scale.y, -scale.z), // 3
 
                     // Back face
-                    alg::Vec3::new(-1.0,  1.0,  1.0), // 4
-                    alg::Vec3::new( 1.0,  1.0,  1.0), // 5
-                    alg::Vec3::new( 1.0, -1.0,  1.0), // 6
-                    alg::Vec3::new(-1.0, -1.0,  1.0), // 7
+                    alg::Vec3::new(-scale.x,  scale.y,  scale.z), // 4
+                    alg::Vec3::new( scale.x,  scale.y,  scale.z), // 5
+                    alg::Vec3::new( scale.x, -scale.y,  scale.z), // 6
+                    alg::Vec3::new(-scale.x, -scale.y,  scale.z), // 7
                 ],
                 &[
                     // Front face

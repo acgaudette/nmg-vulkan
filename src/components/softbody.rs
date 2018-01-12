@@ -11,11 +11,6 @@ use components::transform;
 // Constraint solver iterations
 const ITERATIONS: usize = 1;
 
-// Range 0 - 0.5; "Rigid" = 0.5
-// Lower values produce springier meshes
-// A value of zero nullifies all rods in the instance
-const PUSH: f32 = 0.03;
-
 // Range 0 - inf; "Realistic" = 2.0
 // Values < 2 become force zones, values > 2 add impossible force
 // A value of zero nullifies all collisions
@@ -100,42 +95,52 @@ impl Joint {
     }
 }
 
-#[repr(C)]
 struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
-    mass: f32,
-    force: alg::Vec3,
-    accel_dt: alg::Vec3,
     magnets: Vec<Magnet>,
-    center: alg::Vec3,
-    model: Vec<alg::Vec3>,
+
+    force: alg::Vec3,
+    accel_dt: alg::Vec3, // Cached value, dependent on force
+    position: alg::Vec3, // Updated every frame
+
+    /* "Constants" */
+
+    mass: f32,
+    model: Vec<alg::Vec3>, // Vertices reference
+
+    // Range 0 - 0.5; "Rigid" = 0.5
+    // Lower values produce springier meshes
+    // A value of zero nullifies all rods in the instance
+    rigidity: f32,
 }
 
 impl Instance {
     fn new(
-        mass: f32,
         points: &[alg::Vec3],
         bindings: &[(usize, usize)],
         zones: &[(usize, Falloff)],
+        mass: f32,
+        rigidity: f32,
         gravity: alg::Vec3,
     ) -> Instance {
-        debug_assert!(mass > 0.);
+        debug_assert!(mass > 0.0);
+        debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
 
         let mut particles = Vec::with_capacity(points.len());
         let mut model = Vec::with_capacity(points.len());
-        let mut rods = Vec::with_capacity(bindings.len());
-        let mut magnets = Vec::with_capacity(zones.len());
 
         for point in points {
             particles.push(Particle::new(*point));
             model.push(*point);
         }
 
+        let mut rods = Vec::with_capacity(bindings.len());
         for binding in bindings {
             rods.push(Rod::new(binding.0, binding.1, &particles));
         }
 
+        let mut magnets = Vec::with_capacity(zones.len());
         for zone in zones {
             magnets.push(Magnet::new(zone.0, zone.1));
         }
@@ -143,18 +148,21 @@ impl Instance {
         Instance {
             particles: particles,
             rods: rods,
-            mass: mass,
+            magnets: magnets,
+
             force: alg::Vec3::zero(),
             accel_dt: gravity * FIXED_DT * FIXED_DT,
-            magnets: magnets,
-            center: alg::Vec3::zero(),
+            position: alg::Vec3::zero(),
+
+            mass: mass,
+            rigidity: rigidity,
             model,
         }
     }
 
     // Get offset from center for specific particle
     fn offset(&self, index: usize) -> alg::Vec3 {
-        self.particles[index].position - self.center - self.model[index]
+        self.particles[index].position - self.position - self.model[index]
     }
 
     #[inline]
@@ -213,6 +221,7 @@ impl Manager {
         &mut self,
         entity: entity::Handle,
         mass: f32,
+        rigidity: f32, // Expects a value between 0-1
         points: &[alg::Vec3],
         bindings: &[(usize, usize)],
         magnets: &[(usize, Falloff)],
@@ -222,22 +231,27 @@ impl Manager {
 
         self.instances[i] = Some(
             Instance::new(
-                mass,
                 points,
                 bindings,
                 magnets,
+                mass,
+                rigidity * 0.5, // Scale rigidity properly
                 self.gravity,
             )
         );
     }
 
-    pub fn init_limb(&mut self, entity: entity::Handle, mass: f32) {
+    pub fn init_limb(
+        &mut self,
+        entity: entity::Handle,
+        mass: f32,
+        rigidity: f32, // Expects a value between 0-1
+    ) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
 
         self.instances[i] = Some(
             Instance::new(
-                mass,
                 &[
                     // Front face
                     alg::Vec3::new(-1.0,  1.0, -1.0), // 0
@@ -263,6 +277,8 @@ impl Manager {
                     (6, 4), (6, 1), (6, 3),
                 ],
                 &[],
+                mass,
+                rigidity * 0.5, // Scale rigidity properly
                 self.gravity,
             )
         );
@@ -405,8 +421,8 @@ impl Manager {
                     let difference = right - left;
                     let distance = difference.mag();
 
-                    let percent = PUSH * (rod.length / distance - 1.);
-                    let offset = difference * percent;
+                    let offset = difference * instance.rigidity
+                        * (rod.length / distance - 1.);
 
                     instance.particles[rod.left].position = left - offset;
                     instance.particles[rod.right].position = right + offset;
@@ -520,7 +536,7 @@ impl Manager {
             };
 
             // Update instance position
-            instance.center = average;
+            instance.position = average;
 
             // Update transform position
             transforms.set_position_i(i, average);

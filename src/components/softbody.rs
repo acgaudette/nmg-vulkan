@@ -25,6 +25,11 @@ const BOUNCE: f32 = 0.05;
 // A value of zero nullifies all rods in the instance
 const DEFORM: f32 = 1.000;
 
+// Range 0 - 0.499; "Rigid" = 0.499
+// Lower values produce springier joints
+// A value of zero nullifies all joints in the manager
+const JOINT_PUSH: f32 = 0.499;
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,

@@ -452,22 +452,44 @@ impl Manager {
             debug_assert!(i < self.instances.len());
 
             if let Some(ref instance) = self.instances[i] {
-                for rod in &instance.rods {
-                    let left = instance.particles[rod.left].position;
-                    let right = instance.particles[rod.right].position;
+                self.draw_instance_debug(instance, debug);
+            }
+        }
+    }
 
-                    let lerp = (rod.length - left.dist(right)).abs()
-                        / (0.1 * rod.length);
-
-                    debug.add_line(
-                        alg::Line::new(left, right),
-                        graphics::Color::lerp(
-                            graphics::Color::green(),
-                            graphics::Color::red(),
-                            lerp,
-                        )
-                    );
+    #[allow(unused_variables)]
+    pub fn draw_all_debug(&self, debug: &mut debug::Handler) {
+        #[cfg(debug_assertions)] {
+            for i in 0..self.instances.len() {
+                if let Some(ref instance) = self.instances[i] {
+                    self.draw_instance_debug(instance, debug);
                 }
+            }
+        }
+    }
+
+    #[allow(unused_variables)]
+    fn draw_instance_debug(
+        &self,
+        instance: &Instance,
+        debug: &mut debug::Handler,
+    ) {
+        #[cfg(debug_assertions)] {
+            for rod in &instance.rods {
+                let left = instance.particles[rod.left].position;
+                let right = instance.particles[rod.right].position;
+
+                let lerp = (rod.length - left.dist(right)).abs()
+                    / (0.1 * rod.length);
+
+                debug.add_line(
+                    alg::Line::new(left, right),
+                    graphics::Color::lerp(
+                        graphics::Color::green(),
+                        graphics::Color::red(),
+                        lerp,
+                    )
+                );
             }
         }
     }

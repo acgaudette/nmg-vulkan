@@ -163,6 +163,7 @@ impl Instance {
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     instances: Vec<Option<Instance>>,
+    joints: Vec<Joint>,
     planes: Vec<alg::Plane>,
     gravity: alg::Vec3,
 }
@@ -192,10 +193,12 @@ impl components::Component for Manager {
 impl Manager {
     pub fn new(
         instance_hint: usize,
+        joint_hint: usize,
         plane_hint: usize,
     ) -> Manager {
         Manager {
             instances: Vec::with_capacity(instance_hint),
+            joints: Vec::with_capacity(joint_hint),
             planes: Vec::with_capacity(plane_hint),
             gravity: alg::Vec3::new(0., -9.8, 0.),
         }
@@ -421,6 +424,65 @@ impl Manager {
                     );
                 }
             }
+        }
+
+        // Solve joint constraints
+        for joint in &self.joints {
+            debug_assert!(joint.parent != joint.child);
+
+            /* Unsafely acquire mutable references to vector elements.
+             * Unfortunately, the only safe Rust alternative (split_at_mut())
+             * is slower.
+             */
+
+            let mut parent = unsafe {
+                let ptr = self.instances.as_mut_ptr()
+                    .offset(joint.parent as isize);
+
+                (*ptr).as_mut().unwrap()
+            };
+
+            let mut child = unsafe {
+                let ptr = self.instances.as_mut_ptr()
+                    .offset(joint.child as isize);
+
+                (*ptr).as_mut().unwrap()
+            };
+
+            let start = (
+                  parent.particles[4].position
+                + parent.particles[5].position
+                + parent.particles[6].position
+                + parent.particles[7].position
+            ) * 0.25;
+
+            let end = (
+                  child.particles[0].position
+                + child.particles[1].position
+                + child.particles[2].position
+                + child.particles[3].position
+            ) * 0.25;
+
+            let difference = end - start;
+            let offset = difference * -JOINT_PUSH;
+
+            for i in 4..8 {
+                let new_position = parent.particles[i].position - offset;
+                parent.particles[i].position = new_position;
+            }
+
+            for i in 0..4 {
+                let new_position = child.particles[i].position + offset;
+                child.particles[i].position = new_position;
+            }
+        }
+
+        // Finalize instances
+        for i in 0..self.instances.len() {
+            let mut instance = match self.instances[i] {
+                Some(ref mut instance) => instance,
+                None => continue,
+            };
 
             // Compute average position
             let average = {

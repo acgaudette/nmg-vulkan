@@ -81,6 +81,20 @@ impl Magnet {
     }
 }
 
+struct Joint {
+    parent: usize,
+    child: usize,
+}
+
+impl Joint {
+    fn new(parent: usize, child: usize) -> Joint {
+        Joint {
+            parent,
+            child,
+        }
+    }
+}
+
 #[repr(C)]
 struct Instance {
     particles: Vec<Particle>,

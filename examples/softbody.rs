@@ -15,6 +15,7 @@ use nmg::debug;
 struct Demo {
     objects: Vec<entity::Handle>,
     mass: f32,
+    rigidity: f32,
     mesh: Vec<alg::Vec3>,
 }
 
@@ -41,6 +42,7 @@ impl nmg::Start for Demo {
         components.softbodies.init_instance(
             object,
             self.mass,
+            self.rigidity,
             &self.mesh,
             &[
                 (0, 1),
@@ -163,7 +165,8 @@ fn main() {
 
     let demo = Demo {
         objects: Vec::new(),
-        mass: 10.,
+        mass: 10.0,
+        rigidity: 0.06, // Example value (jiggly)
         mesh: mesh,
     };
 

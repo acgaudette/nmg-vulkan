@@ -49,6 +49,44 @@ impl Handler {
     }
 
     #[allow(unused_variables)]
+    pub fn add_axes(
+        &mut self,
+        center: alg::Vec3,
+        size: f32,
+    ) {
+        #[cfg(debug_assertions)] {
+            let scale = 0.5 * size;
+
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + alg::Vec3::right() * scale,
+                    ),
+                    graphics::Color::red(),
+                )
+            );
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + alg::Vec3::up() * scale,
+                    ),
+                    graphics::Color::green(),
+                )
+            );
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + alg::Vec3::fwd() * scale,
+                    ),
+                    graphics::Color::cyan(),
+                )
+            );
+        }
+    }
+    #[allow(unused_variables)]
     pub fn add_cross(
         &mut self,
         center: alg::Vec3,

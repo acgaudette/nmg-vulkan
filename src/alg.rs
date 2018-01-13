@@ -293,19 +293,23 @@ impl Mat {
         Mat::scale(scale.x, scale.y, scale.z)
     }
 
+    pub fn inverse_axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat {
+        Mat::new(
+            right.x, right.y, right.z, 0.0,
+               up.x,    up.y,    up.z, 0.0,
+              fwd.x,   fwd.y,   fwd.z, 0.0,
+                0.0,     0.0,     0.0, 1.0,
+        )
+    }
+
     // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
-        let forward = (target - position).norm();
-        let right = up.cross(forward).norm();
-        let up = forward.cross(right);
+        let fwd = (target - position).norm();
+        let right = up.cross(fwd).norm();
+        let up = fwd.cross(right);
 
         // Transpose orthogonal matrix to get inverse
-        let inverse_rotation = Mat::new(
-              right.x,   right.y,   right.z, 0.0,
-                 up.x,      up.y,      up.z, 0.0,
-            forward.x, forward.y, forward.z, 0.0,
-                  0.0,       0.0,       0.0, 1.0,
-        );
+        let inverse_rotation = Mat::inverse_axes(right, up, fwd);
 
         // Reverse position input
         let inverse_position = Mat::translation(
@@ -335,7 +339,7 @@ impl Mat {
         )
     }
 
-    fn transpose(self) -> Mat {
+    pub fn transpose(self) -> Mat {
         Mat::new(
             self.x0, self.y0, self.z0, self.w0,
             self.x1, self.y1, self.z1, self.w1,

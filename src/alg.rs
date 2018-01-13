@@ -48,6 +48,19 @@ impl Vec2 {
     pub fn dot(self, other: Vec2) -> f32 {
         self.x * other.x + self.y * other.y
     }
+
+    pub fn norm(self) -> Vec2 {
+        let inverse_len = inverse_sqrt(self.mag_squared());
+
+        Vec2 {
+            x: self.x * inverse_len,
+            y: self.y * inverse_len,
+        }
+    }
+
+    pub fn mag_squared(self) -> f32 {
+        self.x * self.x + self.y * self.y
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

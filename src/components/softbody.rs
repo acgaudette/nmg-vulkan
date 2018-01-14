@@ -517,6 +517,9 @@ impl Manager {
         &mut self,
         parent: entity::Handle,
         child: entity::Handle,
+        x_limit: (f32, f32),
+        y_limit: (f32, f32),
+        z_limit: (f32, f32),
     ) {
         let (i, j) = (
             child.get_index() as usize,
@@ -529,7 +532,14 @@ impl Manager {
         if self.instances[i].is_none() { return; }
         if self.instances[j].is_none() { return; }
 
-        self.joints.push(Joint::new(i, j));
+        let joint = Joint::new(
+            i, j,
+            Range { min: x_limit.0, max: x_limit.1 },
+            Range { min: y_limit.0, max: y_limit.1 },
+            Range { min: z_limit.0, max: z_limit.1 },
+        );
+
+        self.joints.push(joint);
     }
 
     pub fn add_plane(&mut self, plane: alg::Plane) {

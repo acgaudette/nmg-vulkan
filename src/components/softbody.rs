@@ -721,15 +721,21 @@ impl Manager {
             let y = y * JOINT_ANG_RIGID;
             let z = z * JOINT_ANG_RIGID;
 
-            let correction = alg::Mat::rotation(x, y, z);
+            let correction = {
+                let inverse_child = child_orient.transpose();
+
+                child_orient
+                    * alg::Mat::rotation(x, y, z).transpose()
+                    * inverse_child
+            };
 
             // Correct parent
             let point = parent.end();
-            parent.transform_around(point, correction);
+            parent.transform_around(point, correction.transpose());
 
             // Correct child
             let point = child.start();
-            child.transform_around(point, correction.transpose());
+            child.transform_around(point, correction);
         }
 
         // Finalize instances

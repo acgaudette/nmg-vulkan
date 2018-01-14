@@ -139,26 +139,5 @@ fn main() {
         last_target: alg::Vec3::zero(),
     };
 
-    nmg::go(get_models(), demo)
-}
-
-fn get_models() -> Vec<render::ModelData> {
-    let pyramid = render::ModelData::new(
-        vec![
-            render::Vertex::new_raw( 0.0,  0.5,  0.0, 1., 1., 0.), // Peak
-            render::Vertex::new_raw( 0.5, -0.5, -0.5, 1., 0., 0.),
-            render::Vertex::new_raw(-0.5, -0.5, -0.5, 1., 0., 1.),
-            render::Vertex::new_raw( 0.5, -0.5,  0.5, 1., 1., 0.),
-            render::Vertex::new_raw(-0.5, -0.5,  0.5, 1., 1., 1.),
-        ], vec![
-            0u32, 1u32, 2u32,
-            0u32, 3u32, 1u32,
-            0u32, 4u32, 3u32,
-            0u32, 2u32, 4u32,
-            1u32, 2u32, 4u32,
-            4u32, 3u32, 1u32,
-        ],
-    );
-
-    vec![pyramid]
+    nmg::go(vec![], demo)
 }

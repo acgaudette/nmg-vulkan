@@ -684,6 +684,7 @@ impl Manager {
         #[cfg(debug_assertions)] {
             debug_assert!(index < self.instances.len());
             if let Some(ref instance) = self.instances[index] {
+                // Draw instance bindings
                 for rod in &instance.rods {
                     let left = instance.particles[rod.left].position;
                     let right = instance.particles[rod.right].position;
@@ -698,6 +699,25 @@ impl Manager {
                             graphics::Color::red(),
                             lerp,
                         )
+                    );
+                }
+            }
+
+            // Draw joint endpoints
+            for joint in &self.joints {
+                if joint.child == index {
+                    let child = self.instances[joint.child]
+                        .as_ref().unwrap();
+
+                    let parent = self.instances[joint.parent]
+                        .as_ref().unwrap();
+
+                    debug.add_local_axes(
+                        child.start(),
+                        child.fwd(),
+                        child.up(),
+                        1.0,
+                        1.0,
                     );
                 }
             }

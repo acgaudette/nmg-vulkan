@@ -56,19 +56,19 @@ impl Color {
     }
 
     #[inline]
-    pub fn orange() -> Color {
-        Color {
-            r: 1.0,
-            g: 0.5,
-            b: 0.0,
-        }
-    }
-
-    #[inline]
     pub fn cyan() -> Color {
         Color {
             r: 0.0,
             g: 1.0,
+            b: 1.0,
+        }
+    }
+
+    #[inline]
+    pub fn magenta() -> Color {
+        Color {
+            r: 1.0,
+            g: 0.0,
             b: 1.0,
         }
     }
@@ -79,6 +79,15 @@ impl Color {
             r: 1.0,
             g: 1.0,
             b: 1.0,
+        }
+    }
+
+    #[inline]
+    pub fn orange() -> Color {
+        Color {
+            r: 1.0,
+            g: 0.5,
+            b: 0.0,
         }
     }
 
@@ -104,7 +113,7 @@ impl std::ops::Add for Color {
         Color {
             r: self.r + other.r,
             g: self.g + other.g,
-            b: self.b + other.b
+            b: self.b + other.b,
         }
     }
 }
@@ -116,7 +125,7 @@ impl std::ops::Sub for Color {
         Color {
             r: self.r - other.r,
             g: self.g - other.g,
-            b: self.b - other.b
+            b: self.b - other.b,
         }
     }
 }

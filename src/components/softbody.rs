@@ -30,6 +30,10 @@ const JOINT_POS_RIGID: f32 = 0.499;
 // A value of zero nullifies the angular constraints of all joints
 const JOINT_ANG_RIGID: f32 = 0.5;
 
+// Range 0 - 2 * PI (radians); Locked = 0
+// A value of 2 * PI unconstrains angular joints
+const ANGLE_LIMIT: f32 = 0.5;
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,

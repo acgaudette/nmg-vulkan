@@ -513,9 +513,9 @@ impl Manager {
         &mut self,
         parent: entity::Handle,
         child: entity::Handle,
-        x_limit: (f32, f32),
-        y_limit: (f32, f32),
-        z_limit: (f32, f32),
+        x_limit: (f32, f32), // Degrees
+        y_limit: (f32, f32), // Degrees
+        z_limit: (f32, f32), // Degrees
     ) {
         let (i, j) = (
             child.get_index() as usize,
@@ -528,11 +528,20 @@ impl Manager {
         if self.instances[i].is_none() { return; }
         if self.instances[j].is_none() { return; }
 
+        let x_min = x_limit.0.to_radians();
+        let x_max = x_limit.1.to_radians();
+
+        let y_min = y_limit.0.to_radians();
+        let y_max = y_limit.1.to_radians();
+
+        let z_min = z_limit.0.to_radians();
+        let z_max = z_limit.1.to_radians();
+
         let joint = Joint::new(
             i, j,
-            Range { min: x_limit.0, max: x_limit.1 },
-            Range { min: y_limit.0, max: y_limit.1 },
-            Range { min: z_limit.0, max: z_limit.1 },
+            Range { min: x_min, max: x_max },
+            Range { min: y_min, max: y_max },
+            Range { min: z_min, max: z_max },
         );
 
         self.joints.push(joint);

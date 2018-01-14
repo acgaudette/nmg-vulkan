@@ -666,11 +666,7 @@ impl Manager {
     ) {
         #[cfg(debug_assertions)] {
             let i = entity.get_index() as usize;
-            debug_assert!(i < self.instances.len());
-
-            if let Some(ref instance) = self.instances[i] {
-                self.draw_instance_debug(instance, debug);
-            }
+            self.draw_instance_debug(i, debug);
         }
     }
 
@@ -678,35 +674,32 @@ impl Manager {
     pub fn draw_all_debug(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             for i in 0..self.instances.len() {
-                if let Some(ref instance) = self.instances[i] {
-                    self.draw_instance_debug(instance, debug);
-                }
+                self.draw_instance_debug(i, debug);
             }
         }
     }
 
     #[allow(unused_variables)]
-    fn draw_instance_debug(
-        &self,
-        instance: &Instance,
-        debug: &mut debug::Handler,
-    ) {
+    fn draw_instance_debug(&self, index: usize, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
-            for rod in &instance.rods {
-                let left = instance.particles[rod.left].position;
-                let right = instance.particles[rod.right].position;
+            debug_assert!(index < self.instances.len());
+            if let Some(ref instance) = self.instances[index] {
+                for rod in &instance.rods {
+                    let left = instance.particles[rod.left].position;
+                    let right = instance.particles[rod.right].position;
 
-                let lerp = (rod.length - left.dist(right)).abs()
-                    / (0.1 * rod.length);
+                    let lerp = (rod.length - left.dist(right)).abs()
+                        / (0.1 * rod.length);
 
-                debug.add_line(
-                    alg::Line::new(left, right),
-                    graphics::Color::lerp(
-                        graphics::Color::green(),
-                        graphics::Color::red(),
-                        lerp,
-                    )
-                );
+                    debug.add_line(
+                        alg::Line::new(left, right),
+                        graphics::Color::lerp(
+                            graphics::Color::green(),
+                            graphics::Color::red(),
+                            lerp,
+                        )
+                    );
+                }
             }
         }
     }

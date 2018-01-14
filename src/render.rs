@@ -1307,6 +1307,24 @@ fn load_models(
     vd::DeviceMemoryHandle,
     Vec<Model>,
 )> {
+    /* If there's no model data, make up some
+     * (really only useful for debugging purposes).
+     */
+
+    let model_data = if model_data.len() == 0 {
+        vec![
+            ModelData::new(
+                vec![
+                    Vertex::new(
+                        alg::Vec3::zero(),
+                        graphics::Color::black()
+                    ),
+                ],
+                vec![0],
+            ),
+        ]
+    } else { model_data };
+
     /* Concatenate model data */
 
     let (vertices_len, indices_len) = {

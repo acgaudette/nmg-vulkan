@@ -280,6 +280,24 @@ impl Instance {
             self.particles[i].position = self.particles[i].position + point;
         }
     }
+
+    #[inline]
+    fn transform_around(&mut self, point: alg::Vec3, transform: alg::Mat) {
+        // Center axis
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position - point;
+        }
+
+        for i in 0..8 {
+            self.particles[i].position = transform
+                * self.particles[i].position;
+        }
+
+        // Move back to worldspace
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position + point;
+        }
+    }
 }
 
 // Data layout assumes many physics objects (but may still be sparse)

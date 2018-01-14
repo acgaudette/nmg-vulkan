@@ -23,7 +23,33 @@ impl nmg::Start for Demo {
         &mut self,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-    ) { }
+    ) {
+        let parent = entities.add();
+        components.transforms.register(parent);
+        components.softbodies.register(parent);
+        components.softbodies.init_limb(parent, 10.0, 1.0, alg::Vec3::one());
+
+        let child = entities.add();
+        components.transforms.register(child);
+        components.softbodies.register(child);
+        components.softbodies.init_limb(child, 10.0, 1.0, alg::Vec3::one());
+
+        // Create joint
+        components.softbodies.add_joint(parent, child);
+
+        /* Add planes */
+
+        components.softbodies.add_plane(
+            alg::Plane::new(alg::Vec3::up(), 0.0)
+        );
+
+        components.softbodies.add_plane(
+            alg::Plane::new(-alg::Vec3::one(), 2.0)
+        );
+
+        self.parent = Some(parent);
+        self.child = Some(child);
+    }
 }
 
 impl nmg::Update for Demo {

@@ -171,6 +171,62 @@ impl Instance {
         self.accel_dt = ((self.force / self.mass) + gravity)
             * FIXED_DT * FIXED_DT;
     }
+
+    /* Limb helper methods */
+
+    #[inline]
+    fn start(&self) -> alg::Vec3 {
+        (     self.particles[0].position
+            + self.particles[1].position
+            + self.particles[2].position
+            + self.particles[3].position
+        ) * 0.25
+    }
+
+    #[inline]
+    fn end(&self) -> alg::Vec3 {
+        (     self.particles[4].position
+            + self.particles[5].position
+            + self.particles[6].position
+            + self.particles[7].position
+        ) * 0.25
+    }
+
+    #[inline]
+    fn top(&self) -> alg::Vec3 {
+        (     self.particles[0].position
+            + self.particles[1].position
+            + self.particles[4].position
+            + self.particles[5].position
+        ) * 0.25
+    }
+
+    #[inline]
+    fn bot(&self) -> alg::Vec3 {
+        (     self.particles[2].position
+            + self.particles[3].position
+            + self.particles[6].position
+            + self.particles[7].position
+        ) * 0.25
+    }
+
+    #[inline]
+    fn right_side(&self) -> alg::Vec3 {
+        (     self.particles[1].position
+            + self.particles[2].position
+            + self.particles[5].position
+            + self.particles[6].position
+        ) * 0.25
+    }
+
+    #[inline]
+    fn left_side(&self) -> alg::Vec3 {
+        (     self.particles[0].position
+            + self.particles[3].position
+            + self.particles[4].position
+            + self.particles[7].position
+        ) * 0.25
+    }
 }
 
 // Data layout assumes many physics objects (but may still be sparse)
@@ -490,22 +546,9 @@ impl Manager {
                 (*ptr).as_mut().unwrap()
             };
 
-            let start = (
-                  parent.particles[4].position
-                + parent.particles[5].position
-                + parent.particles[6].position
-                + parent.particles[7].position
-            ) * 0.25;
+            // Constrain positions
 
-            let end = (
-                  child.particles[0].position
-                + child.particles[1].position
-                + child.particles[2].position
-                + child.particles[3].position
-            ) * 0.25;
-
-            let difference = end - start;
-            let offset = difference * -JOINT_PUSH;
+            let offset = (child.start() - parent.end()) * -JOINT_PUSH;
 
             for i in 4..8 {
                 let new_position = parent.particles[i].position - offset;

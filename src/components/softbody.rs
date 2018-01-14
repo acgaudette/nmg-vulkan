@@ -729,13 +729,13 @@ impl Manager {
                     * inverse_child
             };
 
-            // Correct parent
-            let point = parent.end();
-            parent.transform_around(point, correction.transpose());
-
             // Correct child
             let point = child.start();
             child.transform_around(point, correction);
+
+            // Correct parent
+            let point = parent.end();
+            parent.transform_around(point, correction.transpose());
         }
 
         // Finalize instances

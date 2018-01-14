@@ -243,6 +243,16 @@ impl Instance {
         (self.right_side() - self.left_side()).norm()
     }
 
+    fn rotate_start(&mut self, x: f32, y: f32, z: f32) {
+        let point = self.start();
+        self.rotate_around(point, x, y, z);
+    }
+
+    fn rotate_end(&mut self, x: f32, y: f32, z: f32) {
+        let point = self.end();
+        self.rotate_around(point, x, y, z);
+    }
+
     #[inline]
     fn rotate_around(&mut self, point: alg::Vec3, x: f32, y: f32, z: f32) {
         // Center axis of rotation

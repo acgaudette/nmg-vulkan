@@ -227,6 +227,21 @@ impl Instance {
             + self.particles[7].position
         ) * 0.25
     }
+
+    #[inline]
+    fn fwd(&self) -> alg::Vec3 {
+        (self.end() - self.start()).norm()
+    }
+
+    #[inline]
+    fn up(&self) -> alg::Vec3 {
+        (self.top() - self.bot()).norm()
+    }
+
+    #[inline]
+    fn right(&self) -> alg::Vec3 {
+        (self.right_side() - self.left_side()).norm()
+    }
 }
 
 // Data layout assumes many physics objects (but may still be sparse)

@@ -90,16 +90,33 @@ impl Magnet {
     }
 }
 
+struct Range {
+    min: f32,
+    max: f32,
+}
+
 struct Joint {
-    parent: usize,
-    child: usize,
+    parent:  usize,
+    child:   usize,
+    x_limit: Range,
+    y_limit: Range,
+    z_limit: Range,
 }
 
 impl Joint {
-    fn new(parent: usize, child: usize) -> Joint {
+    fn new(
+        parent:  usize,
+        child:   usize,
+        x_limit: Range,
+        y_limit: Range,
+        z_limit: Range,
+    ) -> Joint {
         Joint {
             parent,
             child,
+            x_limit,
+            y_limit,
+            z_limit,
         }
     }
 }

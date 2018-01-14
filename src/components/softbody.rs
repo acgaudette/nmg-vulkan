@@ -100,6 +100,7 @@ impl Joint {
     }
 }
 
+#[allow(dead_code)]
 struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
@@ -491,8 +492,8 @@ impl Manager {
 
     pub fn add_joint(
         &mut self,
-        child: entity::Handle,
         parent: entity::Handle,
+        child: entity::Handle,
     ) {
         let (i, j) = (
             child.get_index() as usize,

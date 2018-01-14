@@ -352,6 +352,22 @@ impl Mat {
         }
     }
 
+    pub fn to_cardan_safe(self) -> (f32, f32, f32) {
+        let cy = (
+            self.x0 * self.x0 + self.x1 * self.x1
+        ).sqrt();
+
+        let ax = -(self.y2).atan2(self.z2);
+        let cx = ax.cos();
+        let sx = ax.sin();
+
+        (
+            ax,
+            -(-self.x2).atan2(cy),
+            (sx * self.z0 - cx * self.y0).atan2(cx * self.y1 - sx * self.z1),
+        )
+    }
+
     // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
         let fwd = (target - position).norm();

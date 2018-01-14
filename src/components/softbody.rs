@@ -22,8 +22,13 @@ const DEFORM: f32 = 1.000;
 
 // Range 0 - 0.499; "Rigid" = 0.499
 // Lower values produce springier joints
-// A value of zero nullifies all joints in the manager
+// A value of zero nullifies the translational constraints of all joints
 const JOINT_PUSH: f32 = 0.499;
+
+// Range 0 - 0.5; "Rigid" = 0.5
+// Lower values produce springier joints
+// A value of zero nullifies the angular constraints of all joints
+const JOINT_ANGULAR_PUSH: f32 = 0.5;
 
 struct Particle {
     position: alg::Vec3,
@@ -654,6 +659,11 @@ impl Manager {
             };
 
             let (x, y, z) = transformation.to_cardan();
+
+            let x = x * JOINT_ANGULAR_PUSH;
+            let y = y * JOINT_ANGULAR_PUSH;
+            let z = z * JOINT_ANGULAR_PUSH;
+
             let correction = alg::Mat::rotation(x, y, z);
 
             // Correct parent

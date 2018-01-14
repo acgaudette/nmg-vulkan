@@ -617,19 +617,52 @@ impl Manager {
                 (*ptr).as_mut().unwrap()
             };
 
-            // Constrain positions
+            /* Constrain positions */
 
             let offset = (child.start() - parent.end()) * -JOINT_PUSH;
 
             for i in 4..8 {
+                // Correct parent
                 let new_position = parent.particles[i].position - offset;
                 parent.particles[i].position = new_position;
             }
 
             for i in 0..4 {
+                // Correct child
                 let new_position = child.particles[i].position + offset;
                 child.particles[i].position = new_position;
             }
+
+            /* Constrain rotations */
+
+            let transformation = {
+                // Apply parent orientation
+                let parent_joint = alg::Mat::inverse_axes(
+                    parent.right(),
+                    parent.up(),
+                    parent.fwd(),
+                );
+
+                // Apply child orientation
+                let child_joint = alg::Mat::axes(
+                    child.right(),
+                    child.up(),
+                    child.fwd(),
+                );
+
+                child_joint * parent_joint
+            };
+
+            let (x, y, z) = transformation.to_cardan();
+            let correction = alg::Mat::rotation(x, y, z);
+
+            // Correct parent
+            let point = parent.end();
+            parent.transform_around(point, correction);
+
+            // Correct child
+            let point = child.start();
+            child.transform_around(point, correction.transpose());
         }
 
         // Finalize instances

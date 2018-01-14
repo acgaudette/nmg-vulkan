@@ -314,6 +314,15 @@ impl Mat {
         Mat::scale(scale.x, scale.y, scale.z)
     }
 
+    pub fn axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat {
+        Mat::new(
+            right.x, up.x, fwd.x, 0.0,
+            right.y, up.y, fwd.y, 0.0,
+            right.z, up.z, fwd.z, 0.0,
+                0.0,  0.0,   0.0, 1.0,
+        )
+    }
+
     pub fn inverse_axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat {
         Mat::new(
             right.x, right.y, right.z, 0.0,

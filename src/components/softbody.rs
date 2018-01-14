@@ -30,10 +30,6 @@ const JOINT_POS_RIGID: f32 = 0.499;
 // A value of zero nullifies the angular constraints of all joints
 const JOINT_ANG_RIGID: f32 = 0.5;
 
-// Range 0 - 2 * PI (radians); Locked = 0
-// A value of 2 * PI unconstrains angular joints
-const ANGLE_LIMIT: f32 = 0.5;
-
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,
@@ -694,16 +690,16 @@ impl Manager {
 
             let (x, y, z) = transformation.to_cardan();
 
-            let x =  if x >  ANGLE_LIMIT { x - ANGLE_LIMIT }
-                else if x < -ANGLE_LIMIT { x + ANGLE_LIMIT }
+            let x =  if x > joint.x_limit.max { x - joint.x_limit.max }
+                else if x < joint.x_limit.min { x - joint.x_limit.min }
                 else { 0.0 };
 
-            let y =  if y >  ANGLE_LIMIT { y - ANGLE_LIMIT }
-                else if y < -ANGLE_LIMIT { y + ANGLE_LIMIT }
+            let y =  if y > joint.y_limit.max { y - joint.y_limit.max }
+                else if y < joint.y_limit.min { y - joint.y_limit.min }
                 else { 0.0 };
 
-            let z =  if z >  ANGLE_LIMIT { z - ANGLE_LIMIT }
-                else if z < -ANGLE_LIMIT { z + ANGLE_LIMIT }
+            let z =  if z > joint.z_limit.max { z - joint.z_limit.max }
+                else if z < joint.z_limit.min { z - joint.z_limit.min }
                 else { 0.0 };
 
             let x = x * JOINT_ANG_RIGID;

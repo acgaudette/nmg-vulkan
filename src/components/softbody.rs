@@ -266,6 +266,28 @@ impl Instance {
         (self.right_side() - self.left_side()).norm()
     }
 
+    // Get limb orientation as matrix
+    fn orientation(&self) -> alg::Mat {
+        // Build orthogonal rotation matrix
+        let fwd = self.fwd();
+        let up = self.up(); // Approximation
+        let right = up.cross(fwd); // Resistant to x-axis deformity
+        let up = fwd.cross(right); // Recreate up vector
+
+        alg::Mat::axes(right, up, fwd)
+    }
+
+    // Get inverse limb orientation as matrix
+    fn inverse_orientation(&self) -> alg::Mat {
+        // Build orthogonal rotation matrix
+        let fwd = self.fwd();
+        let up = self.up(); // Approximation
+        let right = up.cross(fwd); // Resistant to x-axis deformity
+        let up = fwd.cross(right); // Recreate up vector
+
+        alg::Mat::inverse_axes(right, up, fwd)
+    }
+
     fn rotate_start(&mut self, x: f32, y: f32, z: f32) {
         let point = self.start();
         self.rotate_around(point, x, y, z);

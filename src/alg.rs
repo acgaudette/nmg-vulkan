@@ -332,6 +332,26 @@ impl Mat {
         )
     }
 
+    pub fn to_cardan(self) -> (f32, f32, f32) {
+        let cy = (
+            self.x0 * self.x0 + self.x1 * self.x1
+        ).sqrt();
+
+        if cy < 16. * std::f32::EPSILON { // Singular matrix
+            (
+               -(-self.z1).atan2(self.y1),
+               -(-self.x2).atan2(cy),
+                0.0, // Fix for gimbal lock
+            )
+        } else {
+            (
+               -( self.y2).atan2(self.z2),
+               -(-self.x2).atan2(cy),
+                ( self.x1).atan2(self.x0),
+            )
+        }
+    }
+
     // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
         let fwd = (target - position).norm();

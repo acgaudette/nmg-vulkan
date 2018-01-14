@@ -384,6 +384,8 @@ impl Manager {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
 
+        let scale = scale * 0.5;
+
         self.instances[i] = Some(
             Instance::new(
                 &[

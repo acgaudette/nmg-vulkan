@@ -23,12 +23,12 @@ const DEFORM: f32 = 1.000;
 // Range 0 - 0.499; "Rigid" = 0.499
 // Lower values produce springier joints
 // A value of zero nullifies the translational constraints of all joints
-const JOINT_PUSH: f32 = 0.499;
+const JOINT_POS_RIGID: f32 = 0.499;
 
 // Range 0 - 0.5; "Rigid" = 0.5
 // Lower values produce springier joints
 // A value of zero nullifies the angular constraints of all joints
-const JOINT_ANGULAR_PUSH: f32 = 0.5;
+const JOINT_ANG_RIGID: f32 = 0.5;
 
 struct Particle {
     position: alg::Vec3,
@@ -624,7 +624,7 @@ impl Manager {
 
             /* Constrain positions */
 
-            let offset = (child.start() - parent.end()) * -JOINT_PUSH;
+            let offset = (child.start() - parent.end()) * -JOINT_POS_RIGID;
 
             for i in 4..8 {
                 // Correct parent
@@ -660,9 +660,9 @@ impl Manager {
 
             let (x, y, z) = transformation.to_cardan();
 
-            let x = x * JOINT_ANGULAR_PUSH;
-            let y = y * JOINT_ANGULAR_PUSH;
-            let z = z * JOINT_ANGULAR_PUSH;
+            let x = x * JOINT_ANG_RIGID;
+            let y = y * JOINT_ANG_RIGID;
+            let z = z * JOINT_ANG_RIGID;
 
             let correction = alg::Mat::rotation(x, y, z);
 

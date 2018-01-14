@@ -701,24 +701,8 @@ impl Manager {
 
             /* Constrain rotations */
 
-            let transformation = {
-                // Apply parent orientation
-                let parent_joint = alg::Mat::inverse_axes(
-                    parent.right(),
-                    parent.up(),
-                    parent.fwd(),
-                );
-
-                // Apply child orientation
-                let child_joint = alg::Mat::axes(
-                    child.right(),
-                    child.up(),
-                    child.fwd(),
-                );
-
-                child_joint * parent_joint
-            };
-
+            let child_orient = child.orientation();
+            let transformation = parent.inverse_orientation() * child_orient;
             let (x, y, z) = transformation.to_cardan();
 
             let x =  if x > joint.x_limit.max { x - joint.x_limit.max }

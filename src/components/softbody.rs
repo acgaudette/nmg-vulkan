@@ -663,6 +663,18 @@ impl Manager {
 
             let (x, y, z) = transformation.to_cardan();
 
+            let x =  if x >  ANGLE_LIMIT { x - ANGLE_LIMIT }
+                else if x < -ANGLE_LIMIT { x + ANGLE_LIMIT }
+                else { 0.0 };
+
+            let y =  if y >  ANGLE_LIMIT { y - ANGLE_LIMIT }
+                else if y < -ANGLE_LIMIT { y + ANGLE_LIMIT }
+                else { 0.0 };
+
+            let z =  if z >  ANGLE_LIMIT { z - ANGLE_LIMIT }
+                else if z < -ANGLE_LIMIT { z + ANGLE_LIMIT }
+                else { 0.0 };
+
             let x = x * JOINT_ANG_RIGID;
             let y = y * JOINT_ANG_RIGID;
             let z = z * JOINT_ANG_RIGID;

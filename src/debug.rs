@@ -86,6 +86,52 @@ impl Handler {
             );
         }
     }
+
+    #[allow(unused_variables)]
+    pub fn add_local_axes(
+        &mut self,
+        center: alg::Vec3,
+        fwd: alg::Vec3,
+        up: alg::Vec3,
+        size: f32,
+        intensity: f32,
+    ) {
+        #[cfg(debug_assertions)] {
+            let scale = 0.5 * size;
+            let right = up.cross(fwd).norm();
+
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + right * scale,
+                    ),
+                    graphics::Color::red() * intensity,
+                )
+            );
+
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + up * scale,
+                    ),
+                    graphics::Color::green() * intensity,
+                )
+            );
+
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + fwd * scale,
+                    ),
+                    graphics::Color::cyan() * intensity,
+                )
+            );
+        }
+    }
+
     #[allow(unused_variables)]
     pub fn add_cross(
         &mut self,

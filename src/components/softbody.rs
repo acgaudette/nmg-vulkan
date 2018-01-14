@@ -242,6 +242,34 @@ impl Instance {
     fn right(&self) -> alg::Vec3 {
         (self.right_side() - self.left_side()).norm()
     }
+
+    #[inline]
+    fn rotate_around(&mut self, point: alg::Vec3, x: f32, y: f32, z: f32) {
+        // Center axis of rotation
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position - point;
+        }
+
+        let rx = alg::Mat::rotation_x(x);
+        for i in 0..8 {
+            self.particles[i].position = rx * self.particles[i].position;
+        }
+
+        let ry = alg::Mat::rotation_y(y);
+        for i in 0..8 {
+            self.particles[i].position = ry * self.particles[i].position;
+        }
+
+        let rz = alg::Mat::rotation_z(z);
+        for i in 0..8 {
+            self.particles[i].position = rz * self.particles[i].position;
+        }
+
+        // Move back to world space
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position + point;
+        }
+    }
 }
 
 // Data layout assumes many physics objects (but may still be sparse)

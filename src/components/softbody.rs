@@ -665,13 +665,13 @@ impl Manager {
 
             let offset = (child.start() - parent.end()) * -JOINT_POS_RIGID;
 
-            for i in 4..8 {
+            for i in 0..8 {
                 // Correct parent
                 let new_position = parent.particles[i].position - offset;
                 parent.particles[i].position = new_position;
             }
 
-            for i in 0..4 {
+            for i in 0..8 {
                 // Correct child
                 let new_position = child.particles[i].position + offset;
                 child.particles[i].position = new_position;

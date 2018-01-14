@@ -83,6 +83,15 @@ impl Color {
     }
 
     #[inline]
+    pub fn black() -> Color {
+        Color {
+            r: 0.0,
+            g: 0.0,
+            b: 0.0,
+        }
+    }
+
+    #[inline]
     pub fn orange() -> Color {
         Color {
             r: 1.0,

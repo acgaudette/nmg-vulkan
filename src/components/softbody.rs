@@ -829,10 +829,12 @@ impl Manager {
             } else { simple };
 
             let (axis, angle) = twist.to_axis_angle();
+            let sign = if axis.dot(local_child_fwd) > 0.0
+                { 1.0 } else { -1.0 };
 
             // Rebind (limit) twist
             let twist = alg::Quat::axis_angle(
-                simple * alg::Vec3::fwd(),
+                simple * alg::Vec3::fwd() * sign,
                 angle.max(joint.z_limit.min).min(joint.z_limit.max),
             );
 

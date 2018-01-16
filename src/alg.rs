@@ -824,6 +824,21 @@ mod tests {
         total
     }
 
+    fn quat_error(a: Quat, b: Quat) -> f32 {
+        let mut total = 0f32;
+
+        {
+            let mut error = |x: f32, y: f32| total += (x - y).abs();
+
+            error(a.x, b.x);
+            error(a.y, b.y);
+            error(a.z, b.z);
+            error(a.w, b.w);
+        }
+
+        total
+    }
+
     #[test]
     fn norm_quat() {
         // Baseline

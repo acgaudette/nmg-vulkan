@@ -52,6 +52,18 @@ impl nmg::Start for Demo {
             alg::Plane::new(-alg::Vec3::one(), 2.0)
         );
 
+        components.softbodies.add_plane(
+            alg::Plane::new(alg::Vec3::right(), 3.0)
+        );
+
+        components.softbodies.add_plane(
+            alg::Plane::new(alg::Vec3::fwd(), 3.0)
+        );
+
+        components.softbodies.add_plane(
+            alg::Plane::new(-alg::Vec3::right(), 3.0)
+        );
+
         self.parent = Some(parent);
         self.child = Some(child);
     }

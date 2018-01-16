@@ -569,6 +569,15 @@ impl Quat {
         self.mag_squared().sqrt()
     }
 
+    pub fn conjugate(self) -> Quat {
+        Quat {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w:  self.w,
+        }
+    }
+
     pub fn to_mat(self) -> Mat {
         self.norm().to_mat_raw() // Normalize first
     }

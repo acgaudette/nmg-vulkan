@@ -780,6 +780,30 @@ mod tests {
         assert!(error < 0.0001);
     }
 
+    #[test]
+    fn invert_quat() {
+        assert!(Quat::identity() * Quat::identity().conjugate() == Quat::identity());
+
+        let q1 = Quat::angle_axis(Vec3::one(), 3.5);
+
+        let error = quat_error(
+            q1 * q1.conjugate(),
+            Quat::identity(),
+        );
+
+        assert!(error < 0.0001);
+
+        let q2 = Quat::new(-1.0, -2.0, -3.0, -4.0).norm();
+        let diff = q2 * q1.conjugate();
+
+        let error = quat_error(
+            diff * q1,
+            q2,
+        );
+
+        assert!(error < 0.0001);
+    }
+
     fn mat_error(a: Mat, b: Mat) -> f32 {
         let mut total = 0f32;
 

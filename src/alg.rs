@@ -592,8 +592,8 @@ impl std::ops::Mul for Quat {
 
         let y = self.w * other.y
             + self.y * other.w
-            + self.x * other.z
-            - self.z * other.x;
+            + self.z * other.x
+            - self.x * other.z;
 
         let z = self.w * other.z
             + self.z * other.w

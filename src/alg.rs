@@ -822,6 +822,23 @@ mod tests {
         assert!(error < 0.0001);
     }
 
+    #[test]
+    fn quat_eq() {
+        let q1 = Quat::new(-1.0, -2.0, -3.0, -4.0).norm();
+
+        assert_eq!(q1, q1);
+
+        let q2 = Quat::new(1.0, 2.0, 3.0, 4.0).norm();
+
+        assert_eq!(q2, q2);
+        assert_eq!(q1, q2);
+
+        let q3 = Quat::new(4.0, 3.0, 2.0, 1.0).norm();
+
+        assert_ne!(q1, q3);
+        assert_ne!(q2, q3);
+    }
+
     fn mat_error(a: Mat, b: Mat) -> f32 {
         let mut total = 0f32;
 

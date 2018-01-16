@@ -604,6 +604,24 @@ impl Quat {
     }
 }
 
+impl std::cmp::PartialEq for Quat {
+    fn eq(&self, other: &Quat) -> bool {
+        let equal = {
+               self.x == other.x
+            && self.y == other.y
+            && self.z == other.z
+            && self.w == other.w
+        };
+
+        if !equal {
+               self.x == -other.x
+            && self.y == -other.y
+            && self.z == -other.z
+            && self.w == -other.w
+        } else { true }
+    }
+}
+
 impl std::ops::Mul<Vec3> for Quat {
     type Output = Vec3;
 

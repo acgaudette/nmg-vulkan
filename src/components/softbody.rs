@@ -348,20 +348,22 @@ impl Instance {
 }
 
 #[derive(Clone, Copy)]
-struct PlaneData {
+struct ReachPlane {
     normal: alg::Vec3,
 }
 
-impl PlaneData {
-    fn new(left: alg::Vec3, right: alg::Vec3) -> PlaneData {
-        PlaneData {
+// Specialized plane struct for joint constraints
+impl ReachPlane {
+    fn new(left: alg::Vec3, right: alg::Vec3) -> ReachPlane {
+        ReachPlane {
             normal: left.cross(right),
         }
     }
 
     #[inline]
-    fn inside(self, point: alg::Vec3) -> bool {
-        self.normal.dot(point) >= 0.0 - 0.0001 // TODO: make constant
+    fn contains(self, point: alg::Vec3) -> bool {
+        // Magic number found through trial and error
+        self.normal.dot(point) >= 0.0 - 0.0001
     }
 
     #[inline]
@@ -372,7 +374,7 @@ impl PlaneData {
     #[inline]
     fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
         let div = self.normal.dot(ray) + std::f32::EPSILON;
-        let scalar = -alg::Vec3::fwd().dot(self.normal) / div;
+        let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
 
         ray * scalar
     }
@@ -761,16 +763,16 @@ impl Manager {
             };
 
             // Build planes
-            let lower_left = PlaneData::new(left, lower);
-            let lower_right = PlaneData::new(lower, right);
-            let upper_right = PlaneData::new(right, upper);
-            let upper_left = PlaneData::new(upper, left);
+            let lower_left = ReachPlane::new(left, lower);
+            let lower_right = ReachPlane::new(lower, right);
+            let upper_right = ReachPlane::new(right, upper);
+            let upper_left = ReachPlane::new(upper, left);
 
             // Is the rotation inside the cone?
-            let inside = lower_left.inside(local_child_fwd)
-                && lower_right.inside(local_child_fwd)
-                && upper_right.inside(local_child_fwd)
-                && upper_left.inside(local_child_fwd);
+            let inside = lower_left.contains(local_child_fwd)
+                && lower_right.contains(local_child_fwd)
+                && upper_right.contains(local_child_fwd)
+                && upper_left.contains(local_child_fwd);
 
             // Get linear rotation path
             let ray = (local_child_fwd - alg::Vec3::fwd()).norm();
@@ -803,10 +805,10 @@ impl Manager {
                             let point = candidates[i] + alg::Vec3::fwd();
 
                             // Solution should be inside all four
-                            let inside = lower_left.inside(point)
-                                && lower_right.inside(point)
-                                && upper_right.inside(point)
-                                && upper_left.inside(point);
+                            let inside = lower_left.contains(point)
+                                && lower_right.contains(point)
+                                && upper_right.contains(point)
+                                && upper_left.contains(point);
 
                             if inside {
                                 result = candidates[i];

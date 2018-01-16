@@ -968,7 +968,7 @@ impl InstanceUBO {
 impl Default for InstanceUBO {
     fn default() -> InstanceUBO {
         InstanceUBO {
-            model: alg::Mat::identity(),
+            model: alg::Mat::id(),
             offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
         }
     }

@@ -347,6 +347,11 @@ impl Instance {
     }
 }
 
+#[derive(Clone, Copy)]
+struct PlaneData {
+    normal: alg::Vec3,
+}
+
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     instances: Vec<Option<Instance>>,

@@ -352,6 +352,32 @@ struct PlaneData {
     normal: alg::Vec3,
 }
 
+impl PlaneData {
+    fn new(left: alg::Vec3, right: alg::Vec3) -> PlaneData {
+        PlaneData {
+            normal: left.cross(right),
+        }
+    }
+
+    #[inline]
+    fn inside(self, point: alg::Vec3) -> bool {
+        self.normal.dot(point) >= 0.0 - 0.0001 // TODO: make constant
+    }
+
+    #[inline]
+    fn intersects(self, ray: alg::Vec3) -> bool {
+        self.normal.dot(alg::Vec3::fwd() + ray) < 0.0
+    }
+
+    #[inline]
+    fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
+        let div = self.normal.dot(ray) + std::f32::EPSILON;
+        let scalar = -alg::Vec3::fwd().dot(self.normal) / div;
+
+        ray * scalar
+    }
+}
+
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     instances: Vec<Option<Instance>>,

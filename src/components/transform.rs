@@ -20,7 +20,7 @@ impl components::Component for Manager {
         loop {
             if i >= self.positions.len() {
                 self.positions.push(alg::Vec3::zero());
-                self.orientations.push(alg::Quat::identity());
+                self.orientations.push(alg::Quat::id());
                 self.scales.push(alg::Vec3::one());
 
                 continue;

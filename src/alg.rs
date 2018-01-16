@@ -511,11 +511,11 @@ impl Quat {
         }
     }
 
-    pub fn angle_axis(axis: Vec3, angle: f32) -> Quat {
-        Quat::angle_axis_raw(axis.norm(), angle) // Normalize first
+    pub fn axis_angle(axis: Vec3, angle: f32) -> Quat {
+        Quat::axis_angle_raw(axis.norm(), angle) // Normalize first
     }
 
-    pub fn angle_axis_raw(axis: Vec3, angle: f32) -> Quat {
+    pub fn axis_angle_raw(axis: Vec3, angle: f32) -> Quat {
         let half = 0.5 * angle;
         let half_sin = half.sin();
         let half_cos = half.cos();

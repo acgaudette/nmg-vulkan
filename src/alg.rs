@@ -603,6 +603,35 @@ impl Quat {
         )
     }
 
+    pub fn to_axis_angle(self) -> (Vec3, f32) {
+        let this = if self.w > 1.0 { self.norm() } else { self };
+        this.to_axis_angle_raw()
+    }
+
+    pub fn to_axis_angle_raw(self) -> (Vec3, f32) {
+        let div = inverse_sqrt(1.0 - self.w * self.w);
+
+        if 1.0 / div < std::f32::EPSILON {
+            (
+                Vec3::new(
+                    self.x,
+                    self.y,
+                    self.z,
+                ),
+                self.angle(),
+            )
+        } else {
+            (
+                Vec3::new(
+                    self.x * div,
+                    self.y * div,
+                    self.z * div,
+                ),
+                self.angle(),
+            )
+        }
+    }
+
     #[inline]
     pub fn angle(self) -> f32 {
         self.w.acos() * 2.0

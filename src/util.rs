@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn pack_ubo() {
-        let mat = alg::Mat::identity();
+        let mat = alg::Mat::id();
 
         let make_offset = |vec| render::PaddedVec3::new(vec);
 
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn create_aligned_buffers() {
         let matrices = [
-            alg::Mat::identity(),
+            alg::Mat::id(),
             alg::Mat::translation(-1., 2., 5.),
             alg::Mat::translation(8., 3., 3.),
         ];

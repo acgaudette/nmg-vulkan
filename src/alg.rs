@@ -752,13 +752,31 @@ mod tests {
     }
 
     #[test]
-    fn mul_quat() {
+    fn mul_quat_vec() {
         let quat = Quat::angle_axis(Vec3::up(), 7.1);
         let mat = Mat::rotation_y(7.1);
         let vec = Vec3::new(1., 2., 3.);
 
         let error = vec3_error(quat.to_mat() * vec , mat * vec);
         eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
+    fn mul_quat() {
+        assert!(Quat::identity() * Quat::identity() == Quat::identity());
+
+        let m1 = Mat::rotation_y(1.0);
+        let m2 = Mat::rotation_z(-7.0);
+
+        let q1 = Quat::from_mat(m1);
+        let q2 = Quat::from_mat(m2);
+
+        let error = quat_error(
+            Quat::from_mat(m1 * m2),
+            q1 * q2,
+        );
+
         assert!(error < 0.0001);
     }
 

@@ -602,6 +602,11 @@ impl Quat {
             0., 0., 0., 1.,
         )
     }
+
+    #[inline]
+    pub fn angle(self) -> f32 {
+        self.w.acos() * 2.0
+    }
 }
 
 impl std::cmp::PartialEq for Quat {

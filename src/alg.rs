@@ -248,7 +248,7 @@ impl Mat {
     }
 
     #[inline]
-    pub fn identity() -> Mat {
+    pub fn id() -> Mat {
         Mat::new(
             1.0, 0.0, 0.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
@@ -502,7 +502,7 @@ impl Quat {
     }
 
     #[inline]
-    pub fn identity() -> Quat {
+    pub fn id() -> Quat {
         Quat {
             x: 0.,
             y: 0.,
@@ -766,8 +766,8 @@ mod tests {
     fn mul_mat() {
         let translation = Mat::translation(1.0, 2.0, 3.0);
 
-        assert!(translation * Mat::identity() == translation);
-        assert!(Mat::identity() * translation == translation);
+        assert!(translation * Mat::id() == translation);
+        assert!(Mat::id() * translation == translation);
     }
 
     #[test]
@@ -775,7 +775,7 @@ mod tests {
         let vec = Vec3::new(9., -4., 0.);
         let scale = Mat::scale(-1., 3., 2.);
 
-        assert!(Mat::identity() * vec == vec);
+        assert!(Mat::id() * vec == vec);
         assert!(scale * vec == Vec3::new(-9., -12., 0.));
 
         let mat = Mat::new(
@@ -793,7 +793,7 @@ mod tests {
 
     #[test]
     fn convert_quat() {
-        assert!(Quat::identity().to_mat() == Mat::identity());
+        assert!(Quat::id().to_mat() == Mat::id());
 
         let quat = Quat::angle_axis(Vec3::right(), -6.3);
         let mat = Mat::rotation_x(-6.3);
@@ -816,7 +816,7 @@ mod tests {
 
     #[test]
     fn mul_quat() {
-        assert!(Quat::identity() * Quat::identity() == Quat::identity());
+        assert!(Quat::id() * Quat::id() == Quat::id());
 
         let m1 = Mat::rotation_y(1.0);
         let m2 = Mat::rotation_z(-7.0);
@@ -834,13 +834,13 @@ mod tests {
 
     #[test]
     fn invert_quat() {
-        assert!(Quat::identity() * Quat::identity().conjugate() == Quat::identity());
+        assert!(Quat::id() * Quat::id().conjugate() == Quat::id());
 
         let q1 = Quat::angle_axis(Vec3::one(), 3.5);
 
         let error = quat_error(
             q1 * q1.conjugate(),
-            Quat::identity(),
+            Quat::id(),
         );
 
         assert!(error < 0.0001);
@@ -936,7 +936,7 @@ mod tests {
     fn norm_quat() {
         // Baseline
         let error = (
-            Quat::identity().norm().mag() - Quat::identity().mag()
+            Quat::id().norm().mag() - Quat::id().mag()
         ).abs();
 
         eprintln!("Error: {}", error);

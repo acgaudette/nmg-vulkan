@@ -34,7 +34,7 @@ impl nmg::Start for Demo {
         components.transforms.set(
             object,
             alg::Vec3::zero(),
-            alg::Quat::identity(),
+            alg::Quat::id(),
             alg::Vec3::one(),
         );
 

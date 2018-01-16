@@ -795,7 +795,7 @@ mod tests {
     fn convert_quat() {
         assert!(Quat::id().to_mat() == Mat::id());
 
-        let quat = Quat::angle_axis(Vec3::right(), -6.3);
+        let quat = Quat::axis_angle(Vec3::right(), -6.3);
         let mat = Mat::rotation_x(-6.3);
 
         let error = mat_error(quat.to_mat(), mat);
@@ -805,7 +805,7 @@ mod tests {
 
     #[test]
     fn mul_quat_vec() {
-        let quat = Quat::angle_axis(Vec3::up(), 7.1);
+        let quat = Quat::axis_angle(Vec3::up(), 7.1);
         let mat = Mat::rotation_y(7.1);
         let vec = Vec3::new(1., 2., 3.);
 
@@ -836,7 +836,7 @@ mod tests {
     fn invert_quat() {
         assert!(Quat::id() * Quat::id().conjugate() == Quat::id());
 
-        let q1 = Quat::angle_axis(Vec3::one(), 3.5);
+        let q1 = Quat::axis_angle(Vec3::one(), 3.5);
 
         let error = quat_error(
             q1 * q1.conjugate(),

@@ -476,7 +476,7 @@ impl std::fmt::Display for Mat {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Quat {
     x: f32,
     y: f32,

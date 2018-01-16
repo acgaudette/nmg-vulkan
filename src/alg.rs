@@ -528,6 +528,28 @@ impl Quat {
         }
     }
 
+    // Hestenes "simple" rotation (does not preserve Z twist)
+    pub fn simple(from: Vec3, to: Vec3) -> Quat {
+        let axis = from.cross(to);
+        let dot = from.dot(to);
+
+        if dot < -1.0 + std::f32::EPSILON {
+            Quat {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+                w: 0.0,
+            }
+        } else {
+            Quat {
+                x: axis.x,
+                y: axis.y,
+                z: axis.z,
+                w: (dot + 1.0),
+            }.norm()
+        }
+    }
+
     pub fn norm(self) -> Quat {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

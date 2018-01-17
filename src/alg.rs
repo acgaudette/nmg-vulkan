@@ -958,7 +958,8 @@ mod tests {
         let mut total = 0f32;
 
         {
-            let mut error = |x: f32, y: f32| total += (x - y).abs();
+            // Two-norm
+            let mut error = |x: f32, y: f32| total += (x - y) * (x - y);
 
             error(a.x, b.x);
             error(a.y, b.y);
@@ -966,7 +967,7 @@ mod tests {
             error(a.w, b.w);
         }
 
-        total
+        total.sqrt()
     }
 
     #[test]

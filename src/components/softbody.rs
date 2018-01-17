@@ -375,7 +375,6 @@ impl ReachPlane {
     fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
         let div = self.normal.dot(ray) + std::f32::EPSILON;
         let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
-
         ray * scalar
     }
 }
@@ -792,18 +791,18 @@ impl Manager {
                     let mut candidates = Vec::with_capacity(2);
 
                     if lower_left.intersects(ray) {
-                        candidates.push(lower_left.intersection(ray));
+                        candidates.push(lower_left.closest(local_child_fwd));
                     }
 
                     if lower_right.intersects(ray) {
-                        candidates.push(lower_right.intersection(ray));
+                        candidates.push(lower_right.closest(local_child_fwd));
                     }
                     if upper_right.intersects(ray) {
-                        candidates.push(upper_right.intersection(ray));
+                        candidates.push(upper_right.closest(local_child_fwd));
                     }
 
                     if upper_left.intersects(ray) {
-                        candidates.push(upper_left.intersection(ray));
+                        candidates.push(upper_left.closest(local_child_fwd));
                     }
 
                     let mut result = candidates[0];

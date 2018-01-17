@@ -894,6 +894,27 @@ mod tests {
     }
 
     #[test]
+    fn pow_quat() {
+        let error = quat_error(
+            Quat::id().pow(0.1),
+            Quat::id(),
+        );
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+
+        let q1 = Quat::new(-4.0, -3.0, -2.0, -1.0).norm();
+
+        let error = quat_error(
+            q1.pow(0.5) * q1.pow(0.5),
+            q1,
+        );
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.1); // TODO
+    }
+
+    #[test]
     fn quat_eq() {
         let q1 = Quat::new(-1.0, -2.0, -3.0, -4.0).norm();
 

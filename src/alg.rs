@@ -768,6 +768,11 @@ impl Plane {
     pub fn new_raw(normal: Vec3, offset: f32) -> Plane {
         Plane { normal, offset }
     }
+
+    #[inline]
+    pub fn contains(self, point: Vec3) -> bool {
+        self.normal.dot(point) > 0.0
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

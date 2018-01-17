@@ -840,7 +840,7 @@ impl Manager {
 
             // Calculate correction rotation
             let reverse = local_child.conjugate() * twist * simple;
-            let transformation = reverse.pow(0.5).to_mat();
+            let transformation = reverse.pow(JOINT_ANG_RIGID).to_mat();
 
             let correction = {
                 let inverse_child = child_orient.transpose();

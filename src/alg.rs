@@ -773,6 +773,11 @@ impl Plane {
     pub fn contains(self, point: Vec3) -> bool {
         self.normal.dot(point) > 0.0
     }
+
+    #[inline]
+    pub fn intersects(self, start: Vec3, ray: Vec3) -> bool {
+        self.normal.dot(start + ray) < 0.0
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

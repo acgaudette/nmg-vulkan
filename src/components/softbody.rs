@@ -736,6 +736,13 @@ impl Manager {
 
             /* Constrain rotations */
 
+            // If all limits are equal, then the joint is unlimited
+            debug_assert!(!(
+                   joint.x_limit.min == joint.x_limit.max
+                && joint.y_limit.min == joint.y_limit.max
+                && joint.x_limit.min == joint.y_limit.min
+            ));
+
             // Get child in local space
             let child_orient = child.orientation();
             let local_child = alg::Quat::from_mat(

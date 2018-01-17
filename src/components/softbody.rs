@@ -840,7 +840,7 @@ impl Manager {
 
             // Calculate correction rotation
             let reverse = local_child.conjugate() * twist * simple;
-            let transformation = reverse.to_mat();
+            let transformation = reverse.pow(0.5).to_mat();
 
             let correction = {
                 let inverse_child = child_orient.transpose();
@@ -851,7 +851,9 @@ impl Manager {
             let point = child.start();
             child.transform_around(point, correction);
 
-            // TODO: Correct parent
+            // Correct parent
+            let point = parent.end();
+            parent.transform_around(point, correction.transpose());
         }
 
         // Finalize instances

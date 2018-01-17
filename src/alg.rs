@@ -636,6 +636,33 @@ impl Quat {
     pub fn angle(self) -> f32 {
         self.w.acos() * 2.0
     }
+
+    pub fn pow(self, t: f32) -> Quat {
+        let mag = Vec3::new(self.x, self.y, self.z).mag();
+
+        let scale = if mag > std::f32::EPSILON {
+            mag.atan2(self.w) * t
+        } else { 0.0 };
+
+        let x = self.x * scale;
+        let y = self.y * scale;
+        let z = self.z * scale;
+        let w = self.mag_squared().ln() * 0.5 * t;
+
+        let mag = Vec3::new(x, y, z).mag();
+        let wexp = w.exp();
+
+        let scale = if mag >= std::f32::EPSILON {
+            wexp * mag.sin() / mag
+        } else { 0.0 };
+
+        Quat {
+            x: x * scale,
+            y: y * scale,
+            z: z * scale,
+            w: wexp * mag.cos(),
+        }
+    }
 }
 
 impl std::cmp::PartialEq for Quat {

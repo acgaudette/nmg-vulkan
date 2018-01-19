@@ -165,7 +165,7 @@ fn main() {
 
     let demo = Demo {
         objects: Vec::new(),
-        mass: 10.0,
+        mass: 50.0,
         rigidity: 0.06, // Example value (jiggly)
         mesh: mesh,
     };

@@ -131,7 +131,7 @@ struct Instance {
 
     /* "Constants" */
 
-    mass: f32,
+    inv_mass: f32, // Inverse mass per particle
     model: Vec<alg::Vec3>, // Vertices reference
 
     // Range 0 - 0.5; "Rigid" = 0.5
@@ -170,6 +170,8 @@ impl Instance {
             magnets.push(Magnet::new(zone.0, zone.1));
         }
 
+        debug_assert!(points.len() == particles.len());
+
         Instance {
             particles: particles,
             rods: rods,
@@ -179,7 +181,7 @@ impl Instance {
             accel_dt: gravity * FIXED_DT * FIXED_DT,
             position: alg::Vec3::zero(),
 
-            mass: mass,
+            inv_mass: 1.0 / (mass / points.len() as f32),
             rigidity: rigidity,
             model,
         }
@@ -193,7 +195,7 @@ impl Instance {
     #[inline]
     // Must be called when gravity or force changes
     fn update_cache(&mut self, gravity: alg::Vec3) {
-        self.accel_dt = ((self.force / self.mass) + gravity)
+        self.accel_dt = (self.force * self.inv_mass + gravity)
             * FIXED_DT * FIXED_DT;
     }
 

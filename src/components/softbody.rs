@@ -383,8 +383,6 @@ impl ReachPlane {
     #[inline]
     fn closest(self, point: alg::Vec3) -> alg::Vec3 {
         let signed_dist = self.normal.dot(point);
-        debug_assert!(signed_dist <= 0.0);
-
         point + self.normal * signed_dist
     }
 }

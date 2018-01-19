@@ -377,6 +377,14 @@ impl ReachPlane {
         let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
         ray * scalar
     }
+
+    #[inline]
+    fn closest(self, point: alg::Vec3) -> alg::Vec3 {
+        let signed_dist = self.normal.dot(point);
+        debug_assert!(signed_dist <= 0.0);
+
+        point + self.normal * signed_dist
+    }
 }
 
 // Data layout assumes many physics objects (but may still be sparse)

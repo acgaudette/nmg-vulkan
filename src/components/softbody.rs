@@ -816,13 +816,11 @@ impl Manager {
 
                     if candidates.len() >= 2 {
                         for i in 1..candidates.len() {
-                            let point = candidates[i] + alg::Vec3::fwd();
-
                             // Solution should be inside all four
-                            let inside = lower_left.contains(point)
-                                && lower_right.contains(point)
-                                && upper_right.contains(point)
-                                && upper_left.contains(point);
+                            let inside = lower_left.contains(candidates[i])
+                                && lower_right.contains(candidates[i])
+                                && upper_right.contains(candidates[i])
+                                && upper_left.contains(candidates[i]);
 
                             if inside {
                                 result = candidates[i];

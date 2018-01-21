@@ -32,6 +32,12 @@ const JOINT_POS_RIGID: f32 = 0.499;
 // A value of zero nullifies the angular constraints of all joints
 const JOINT_ANG_RIGID: f32 = 0.5;
 
+// Range 0 - 1
+// Higher values "kick" the joint at its limits and add velocity to the system
+// A small bias is needed in order to prevent floating-point error accumulation
+// A value of one locks all joints
+const JOINT_ANG_BIAS: f32 = 0.1;
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,
@@ -836,7 +842,7 @@ impl Manager {
                 // Calculate rotation midpoint
                 let midpoint = intersection.norm().lerp(
                     alg::Vec3::fwd(),
-                    0.1,
+                    JOINT_ANG_BIAS,
                 );
 
                 // Limit rotation

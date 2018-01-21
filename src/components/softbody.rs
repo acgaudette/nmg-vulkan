@@ -824,6 +824,7 @@ impl Manager {
 
                             if inside {
                                 result = candidates[i];
+                                break;
                             }
                         }
                     }

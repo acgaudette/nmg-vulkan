@@ -770,10 +770,10 @@ impl Manager {
                 let y_max = joint.x_limit.max / 90f32.to_radians();
 
                 (
-                    alg::Vec3::new(0.0, y_min, 1.0 - y_min).norm(),
-                    alg::Vec3::new(x_max, 0.0, 1.0 - x_max).norm(),
-                    alg::Vec3::new(0.0, y_max, 1.0 - y_max).norm(),
-                    alg::Vec3::new(x_min, 0.0, 1.0 - x_min).norm(),
+                    alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
+                    alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
+                    alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
+                    alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(),
                 )
             };
 

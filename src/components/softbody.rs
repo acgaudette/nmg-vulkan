@@ -804,6 +804,7 @@ impl Manager {
                     if lower_right.intersects(ray) {
                         candidates.push(lower_right.closest(local_child_fwd));
                     }
+
                     if upper_right.intersects(ray) {
                         candidates.push(upper_right.closest(local_child_fwd));
                     }
@@ -833,7 +834,10 @@ impl Manager {
                 };
 
                 // Calculate rotation midpoint
-                let midpoint = (alg::Vec3::fwd() + intersection).norm();
+                let midpoint = intersection.norm().lerp(
+                    alg::Vec3::fwd(),
+                    0.1,
+                );
 
                 // Limit rotation
                 alg::Quat::simple(alg::Vec3::fwd(), midpoint)

@@ -364,8 +364,7 @@ impl ReachPlane {
 
     #[inline]
     fn contains(self, point: alg::Vec3) -> bool {
-        // Magic number found through trial and error
-        self.normal.dot(point) >= 0.0 - 0.0001
+        self.normal.dot(point) >= 0.0
     }
 
     #[inline]

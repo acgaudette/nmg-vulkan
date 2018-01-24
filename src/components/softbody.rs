@@ -555,7 +555,6 @@ impl Manager {
         entity: entity::Handle,
     ) -> [render::PaddedVec3; render::MAX_SOFTBODY_VERT] {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.instances.len());
 
         // Default to no offsets (identity)
         let mut offsets = [

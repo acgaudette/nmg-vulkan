@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Aaron C Gaudette <gaudetteaaron@gmail.com>"]
 
 [dependencies]
-voodoo = "0.2.1"
-voodoo_winit = "0.1.0"
+voodoo = "0.3.0"
+voodoo_winit = "0.1.1"
 rust-ini = "0.10.0"
 lazy_static = "1.0.0"

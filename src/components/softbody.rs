@@ -809,19 +809,27 @@ impl Manager {
                     // which can be simplified to local_child_fwd
 
                     if lower_left.intersects(local_child_fwd) {
-                        candidates.push(lower_left.intersection(local_child_fwd));
+                        candidates.push(
+                            lower_left.intersection(local_child_fwd)
+                        );
                     }
 
                     if lower_right.intersects(local_child_fwd) {
-                        candidates.push(lower_right.intersection(local_child_fwd));
+                        candidates.push(
+                            lower_right.intersection(local_child_fwd)
+                        );
                     }
 
                     if upper_right.intersects(local_child_fwd) {
-                        candidates.push(upper_right.intersection(local_child_fwd));
+                        candidates.push(
+                            upper_right.intersection(local_child_fwd)
+                        );
                     }
 
                     if upper_left.intersects(local_child_fwd) {
-                        candidates.push(upper_left.intersection(local_child_fwd));
+                        candidates.push(
+                            upper_left.intersection(local_child_fwd)
+                        );
                     }
 
                     let mut result = candidates[0];

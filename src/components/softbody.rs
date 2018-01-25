@@ -243,6 +243,7 @@ impl Instance {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn right_side(&self) -> alg::Vec3 {
         (     self.particles[1].position
             + self.particles[2].position
@@ -252,6 +253,7 @@ impl Instance {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn left_side(&self) -> alg::Vec3 {
         (     self.particles[0].position
             + self.particles[3].position
@@ -292,17 +294,20 @@ impl Instance {
         alg::Mat::inverse_axes(right, up, fwd)
     }
 
+    #[allow(dead_code)]
     fn rotate_start(&mut self, x: f32, y: f32, z: f32) {
         let point = self.start();
         self.rotate_around(point, x, y, z);
     }
 
+    #[allow(dead_code)]
     fn rotate_end(&mut self, x: f32, y: f32, z: f32) {
         let point = self.end();
         self.rotate_around(point, x, y, z);
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn rotate_around(&mut self, point: alg::Vec3, x: f32, y: f32, z: f32) {
         // Center axis of rotation
         for i in 0..8 {

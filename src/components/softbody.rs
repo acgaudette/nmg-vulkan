@@ -125,7 +125,6 @@ impl Joint {
     }
 }
 
-#[allow(dead_code)]
 struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
@@ -269,11 +268,6 @@ impl Instance {
     #[inline]
     fn up(&self) -> alg::Vec3 {
         (self.top() - self.bot()).norm()
-    }
-
-    #[inline]
-    fn right(&self) -> alg::Vec3 {
-        (self.right_side() - self.left_side()).norm()
     }
 
     // Get limb orientation as matrix

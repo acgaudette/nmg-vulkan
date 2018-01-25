@@ -37,9 +37,9 @@ impl nmg::Start for Demo {
         // Create joint
         components.softbodies.add_joint(
             parent, child,
-            (-35.0, 35.0),
-            (-35.0, 35.0),
-            (-35.0, 35.0),
+            (-45.0, 45.0),
+            (-45.0, 45.0),
+            (-45.0, 45.0),
         );
 
         /* Add planes */

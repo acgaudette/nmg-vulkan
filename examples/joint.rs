@@ -85,7 +85,6 @@ impl nmg::Update for Demo {
         /* Debug */
 
         debug.clear_lines();
-        components.softbodies.draw_all_debug(debug);
 
         // Ground plane
         debug.add_cross(
@@ -93,6 +92,9 @@ impl nmg::Update for Demo {
             4.0,
             graphics::Color::gray(),
         );
+
+        // Draw softbodies
+        components.softbodies.draw_all_debug(debug);
 
         let shared_ubo = {
             let camera_position =

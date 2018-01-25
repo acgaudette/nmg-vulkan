@@ -373,6 +373,11 @@ impl ReachPlane {
     }
 
     #[inline]
+    fn contains_biased(self, point: alg::Vec3) -> bool {
+        self.normal.dot(point) >= 0.0 - 16. * std::f32::EPSILON
+    }
+
+    #[inline]
     fn intersects(self, ray: alg::Vec3) -> bool {
         self.normal.dot(ray) < 0.0
     }
@@ -823,10 +828,10 @@ impl Manager {
 
                     if candidates.len() == 2 {
                         // Solution should be inside all four
-                        let inside = lower_left.contains(candidates[1])
-                            && lower_right.contains(candidates[1])
-                            && upper_right.contains(candidates[1])
-                            && upper_left.contains(candidates[1]);
+                        let inside = lower_left.contains_biased(candidates[1])
+                            && lower_right.contains_biased(candidates[1])
+                            && upper_right.contains_biased(candidates[1])
+                            && upper_left.contains_biased(candidates[1]);
 
                         if inside {
                             result = candidates[1];

@@ -121,6 +121,7 @@ impl nmg::Update for Demo {
                 let new_target = (
                       components.transforms.get_position(self.first.unwrap())
                     + components.transforms.get_position(self.second.unwrap())
+                    + components.transforms.get_position(self.third.unwrap())
                 ) * 0.33;
 
                 self.last_target.lerp(new_target, delta as f32)

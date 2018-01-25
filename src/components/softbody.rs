@@ -36,7 +36,7 @@ const JOINT_ANG_RIGID: f32 = 0.5;
 // Higher values "kick" the joint at its limits and add velocity to the system
 // A small bias is needed in order to prevent floating-point error accumulation
 // A value of one locks all joints
-const JOINT_ANG_BIAS: f32 = 0.1;
+const JOINT_ANG_BIAS: f32 = 0.0;
 
 struct Particle {
     position: alg::Vec3,
@@ -378,7 +378,6 @@ impl ReachPlane {
     }
 
     #[inline]
-    #[allow(dead_code)]
     fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
         let div = self.normal.dot(ray) + std::f32::EPSILON;
         let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
@@ -386,6 +385,7 @@ impl ReachPlane {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn closest(self, point: alg::Vec3) -> alg::Vec3 {
         let signed_dist = self.normal.dot(point);
         point - self.normal * signed_dist
@@ -794,7 +794,8 @@ impl Manager {
                 && upper_left.contains(local_child_fwd);
 
             // Get linear rotation path
-            let ray = (local_child_fwd - alg::Vec3::fwd()).norm();
+            let ray = alg::Vec3::fwd()
+                + (local_child_fwd - alg::Vec3::fwd()).norm();
 
             // Rebind (limit) simple
             let simple = if !inside {

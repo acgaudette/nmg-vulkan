@@ -804,19 +804,19 @@ impl Manager {
                     let mut candidates = Vec::with_capacity(2);
 
                     if lower_left.intersects(ray) {
-                        candidates.push(lower_left.closest(local_child_fwd));
+                        candidates.push(lower_left.intersection(ray));
                     }
 
                     if lower_right.intersects(ray) {
-                        candidates.push(lower_right.closest(local_child_fwd));
+                        candidates.push(lower_right.intersection(ray));
                     }
 
                     if upper_right.intersects(ray) {
-                        candidates.push(upper_right.closest(local_child_fwd));
+                        candidates.push(upper_right.intersection(ray));
                     }
 
                     if upper_left.intersects(ray) {
-                        candidates.push(upper_left.closest(local_child_fwd));
+                        candidates.push(upper_left.intersection(ray));
                     }
 
                     let mut result = candidates[0];

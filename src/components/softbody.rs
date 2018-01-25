@@ -821,18 +821,15 @@ impl Manager {
 
                     let mut result = candidates[0];
 
-                    if candidates.len() >= 2 {
-                        for i in 1..candidates.len() {
-                            // Solution should be inside all four
-                            let inside = lower_left.contains(candidates[i])
-                                && lower_right.contains(candidates[i])
-                                && upper_right.contains(candidates[i])
-                                && upper_left.contains(candidates[i]);
+                    if candidates.len() == 2 {
+                        // Solution should be inside all four
+                        let inside = lower_left.contains(candidates[1])
+                            && lower_right.contains(candidates[1])
+                            && upper_right.contains(candidates[1])
+                            && upper_left.contains(candidates[1]);
 
-                            if inside {
-                                result = candidates[i];
-                                break;
-                            }
+                        if inside {
+                            result = candidates[1];
                         }
                     }
 

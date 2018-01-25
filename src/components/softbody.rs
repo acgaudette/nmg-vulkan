@@ -374,7 +374,7 @@ impl ReachPlane {
 
     #[inline]
     fn intersects(self, ray: alg::Vec3) -> bool {
-        self.normal.dot(alg::Vec3::fwd() + ray) < 0.0
+        self.normal.dot(ray) < 0.0
     }
 
     #[inline]

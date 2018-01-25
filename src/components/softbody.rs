@@ -386,7 +386,7 @@ impl ReachPlane {
     fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
         let div = self.normal.dot(ray) + std::f32::EPSILON;
         let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
-        ray * scalar
+        alg::Vec3::fwd() + ray * scalar
     }
 
     #[inline]

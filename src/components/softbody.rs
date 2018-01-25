@@ -793,30 +793,30 @@ impl Manager {
                 && upper_right.contains(local_child_fwd)
                 && upper_left.contains(local_child_fwd);
 
-            // Get linear rotation path
-            let ray = alg::Vec3::fwd()
-                + (local_child_fwd - alg::Vec3::fwd()).norm();
-
             // Rebind (limit) simple
             let simple = if !inside {
                 // Calculate intersection of ray with cone
                 let intersection = {
                     let mut candidates = Vec::with_capacity(2);
 
-                    if lower_left.intersects(ray) {
-                        candidates.push(lower_left.intersection(ray));
+                    // Linear rotation path (ray) is
+                    // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
+                    // which can be simplified to local_child_fwd
+
+                    if lower_left.intersects(local_child_fwd) {
+                        candidates.push(lower_left.intersection(local_child_fwd));
                     }
 
-                    if lower_right.intersects(ray) {
-                        candidates.push(lower_right.intersection(ray));
+                    if lower_right.intersects(local_child_fwd) {
+                        candidates.push(lower_right.intersection(local_child_fwd));
                     }
 
-                    if upper_right.intersects(ray) {
-                        candidates.push(upper_right.intersection(ray));
+                    if upper_right.intersects(local_child_fwd) {
+                        candidates.push(upper_right.intersection(local_child_fwd));
                     }
 
-                    if upper_left.intersects(ray) {
-                        candidates.push(upper_left.intersection(ray));
+                    if upper_left.intersects(local_child_fwd) {
+                        candidates.push(upper_left.intersection(local_child_fwd));
                     }
 
                     let mut result = candidates[0];

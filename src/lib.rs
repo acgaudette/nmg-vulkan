@@ -16,6 +16,7 @@ mod statics;
 mod util;
 
 const FIXED_DT: f32 = 1. / 100.;
+const FIXED_STEP: f32 = FIXED_DT;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
@@ -218,7 +219,7 @@ fn begin_update<T>(
 
         accumulator += delta as f32;
 
-        while accumulator >= FIXED_DT {
+        while accumulator >= FIXED_STEP {
             game.fixed_update(
                 time,
                 FIXED_DT,
@@ -234,7 +235,7 @@ fn begin_update<T>(
             components.rigidbodies.simulate(&mut components.transforms);
             components.softbodies.simulate(&mut components.transforms);
 
-            accumulator -= FIXED_DT;
+            accumulator -= FIXED_STEP;
             metadata.fixed_frame += 1;
         }
 

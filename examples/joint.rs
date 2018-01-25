@@ -13,8 +13,9 @@ use nmg::debug;
  */
 
 struct Demo {
-    parent: Option<entity::Handle>,
-    child: Option<entity::Handle>,
+    first:  Option<entity::Handle>,
+    second: Option<entity::Handle>,
+    third:  Option<entity::Handle>,
     last_target: alg::Vec3,
 }
 
@@ -24,19 +25,32 @@ impl nmg::Start for Demo {
         entities: &mut entity::Manager,
         components: &mut components::Container,
     ) {
-        let parent = entities.add();
-        components.transforms.register(parent);
-        components.softbodies.register(parent);
-        components.softbodies.init_limb(parent, 10.0, 1.0, alg::Vec3::one());
+        let first = entities.add();
+        components.transforms.register(first);
+        components.softbodies.register(first);
+        components.softbodies.init_limb(first, 10.0, 1.0, alg::Vec3::one());
 
-        let child = entities.add();
-        components.transforms.register(child);
-        components.softbodies.register(child);
-        components.softbodies.init_limb(child, 10.0, 1.0, alg::Vec3::one());
+        let second = entities.add();
+        components.transforms.register(second);
+        components.softbodies.register(second);
+        components.softbodies.init_limb(second, 10.0, 1.0, alg::Vec3::one());
 
-        // Create joint
+        let third = entities.add();
+        components.transforms.register(third);
+        components.softbodies.register(third);
+        components.softbodies.init_limb(third, 10.0, 1.0, alg::Vec3::one());
+
+        /* Create joints */
+
         components.softbodies.add_joint(
-            parent, child,
+            first, second,
+            (-45.0, 45.0),
+            (-45.0, 45.0),
+            (-45.0, 45.0),
+        );
+
+        components.softbodies.add_joint(
+            second, third,
             (-45.0, 45.0),
             (-45.0, 45.0),
             (-45.0, 45.0),
@@ -64,8 +78,9 @@ impl nmg::Start for Demo {
             alg::Plane::new(-alg::Vec3::right(), 3.0)
         );
 
-        self.parent = Some(parent);
-        self.child = Some(child);
+        self.first = Some(first);
+        self.second = Some(second);
+        self.third = Some(third);
     }
 }
 
@@ -103,13 +118,12 @@ impl nmg::Update for Demo {
                 * alg::Vec3::one();
 
             let target = {
-                let this = components.transforms.get_position(
-                    self.parent.unwrap(),
-                ) + components.transforms.get_position(
-                    self.child.unwrap(),
-                ) * 0.5;
+                let new_target = (
+                      components.transforms.get_position(self.first.unwrap())
+                    + components.transforms.get_position(self.second.unwrap())
+                ) * 0.33;
 
-                self.last_target.lerp(this, delta as f32)
+                self.last_target.lerp(new_target, delta as f32)
             };
 
             self.last_target = target;
@@ -153,8 +167,9 @@ impl nmg::FixedUpdate for Demo {
 
 fn main() {
     let demo = Demo {
-        parent: None,
-        child: None,
+        first:  None,
+        second: None,
+        third:  None,
         last_target: alg::Vec3::zero(),
     };
 

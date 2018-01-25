@@ -34,7 +34,6 @@ const JOINT_ANG_RIGID: f32 = 0.5;
 
 // Range 0 - 1
 // Higher values "kick" the joint at its limits and add velocity to the system
-// A small bias is needed in order to prevent floating-point error accumulation
 // A value of one locks all joints
 const JOINT_ANG_BIAS: f32 = 0.0;
 
@@ -374,6 +373,7 @@ impl ReachPlane {
 
     #[inline]
     fn contains_biased(self, point: alg::Vec3) -> bool {
+        // Allow points just near the plane
         self.normal.dot(point) >= 0.0 - 16. * std::f32::EPSILON
     }
 

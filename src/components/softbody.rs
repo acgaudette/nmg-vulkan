@@ -803,6 +803,7 @@ impl Manager {
                 // Calculate intersection of ray with cone
                 let intersection = {
                     let mut candidates = Vec::with_capacity(2);
+                    let mut plane = None;
 
                     // Linear rotation path (ray) is
                     // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
@@ -812,24 +813,40 @@ impl Manager {
                         candidates.push(
                             lower_left.closest(local_child_fwd)
                         );
+
+                        if plane.is_none() {
+                            plane = Some(lower_left);
+                        }
                     }
 
                     if lower_right.intersects(local_child_fwd) {
                         candidates.push(
                             lower_right.closest(local_child_fwd)
                         );
+
+                        if plane.is_none() {
+                            plane = Some(lower_right);
+                        }
                     }
 
                     if upper_right.intersects(local_child_fwd) {
                         candidates.push(
                             upper_right.closest(local_child_fwd)
                         );
+
+                        if plane.is_none() {
+                            plane = Some(upper_right);
+                        }
                     }
 
                     if upper_left.intersects(local_child_fwd) {
                         candidates.push(
                             upper_left.closest(local_child_fwd)
                         );
+
+                        if plane.is_none() {
+                            plane = Some(upper_left);
+                        }
                     }
 
                     let mut result = candidates[0];
@@ -843,6 +860,15 @@ impl Manager {
 
                         if inside {
                             result = candidates[1];
+                        }
+
+                        let first_in = lower_left.contains_biased(candidates[0])
+                            && lower_right.contains_biased(candidates[0])
+                            && upper_right.contains_biased(candidates[0])
+                            && upper_left.contains_biased(candidates[0]);
+
+                        if !first_in && !inside {
+                            result = plane.unwrap().closest(candidates[1]);
                         }
                     }
 

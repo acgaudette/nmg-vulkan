@@ -988,17 +988,17 @@ impl Manager {
 
             // Draw joint endpoints
             for joint in &self.joints {
-                if joint.child == index {
-                    let child = self.instances[joint.child]
-                        .as_ref().unwrap();
-
+                if joint.parent == index {
                     let parent = self.instances[joint.parent]
                         .as_ref().unwrap();
 
+                    let joint_orientation = parent.orientation()
+                        * joint.transform.conjugate().to_mat();
+
                     debug.add_local_axes(
-                        child.start(),
-                        child.fwd(),
-                        child.up(),
+                        parent.end(),
+                        joint_orientation * alg::Vec3::fwd(),
+                        joint_orientation * alg::Vec3::up(),
                         1.0,
                         1.0,
                     );

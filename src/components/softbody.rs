@@ -810,7 +810,7 @@ impl Manager {
                 // Calculate intersection of ray with cone
                 let intersection = {
                     let mut candidates = Vec::with_capacity(2);
-                    let mut plane = None;
+                    let mut plane = lower_left;
 
                     // Linear rotation path (ray) is
                     // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
@@ -820,40 +820,36 @@ impl Manager {
                         candidates.push(
                             lower_left.closest(local_child_fwd)
                         );
-
-                        if plane.is_none() {
-                            plane = Some(lower_left);
-                        }
                     }
 
                     if lower_right.intersects(local_child_fwd) {
+                        if candidates.len() == 0 {
+                            plane = lower_right;
+                        }
+
                         candidates.push(
                             lower_right.closest(local_child_fwd)
                         );
-
-                        if plane.is_none() {
-                            plane = Some(lower_right);
-                        }
                     }
 
                     if upper_right.intersects(local_child_fwd) {
+                        if candidates.len() == 0 {
+                            plane = upper_right;
+                        }
+
                         candidates.push(
                             upper_right.closest(local_child_fwd)
                         );
-
-                        if plane.is_none() {
-                            plane = Some(upper_right);
-                        }
                     }
 
                     if upper_left.intersects(local_child_fwd) {
+                        if candidates.len() == 0 {
+                            plane = upper_left;
+                        }
+
                         candidates.push(
                             upper_left.closest(local_child_fwd)
                         );
-
-                        if plane.is_none() {
-                            plane = Some(upper_left);
-                        }
                     }
 
                     let mut result = candidates[0];
@@ -887,7 +883,7 @@ impl Manager {
                                 || !upper_right.contains_biased(candidates[0])
                                 || !upper_left.contains_biased(candidates[0])
                         {
-                            result = plane.unwrap().closest(compare);
+                            result = plane.closest(compare);
                         }
                     }
 

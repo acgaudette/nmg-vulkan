@@ -489,6 +489,16 @@ impl Quat {
         Quat { x, y, z, w }
     }
 
+    #[inline]
+    pub fn id() -> Quat {
+        Quat {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+            w: 1.,
+        }
+    }
+
     pub fn from_mat(m: Mat) -> Quat {
         let w = (1.0 + m.x0 + m.y1 + m.z2).sqrt() * 0.5;
         let x4 = w * 4.0;
@@ -501,13 +511,16 @@ impl Quat {
         }
     }
 
-    #[inline]
-    pub fn id() -> Quat {
+    pub fn from_vecs(fwd: Vec3, up: Vec3) -> Quat {
+        let right = up.cross(fwd);
+        let w = (1.0 + right.x + up.y + fwd.z).sqrt() * 0.5;
+        let inv = 1.0 / (w * 4.0);
+
         Quat {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-            w: 1.,
+            x: (fwd.y - up.z) * inv,
+            y: (right.z - fwd.x) * inv,
+            z: (up.x - right.y) * inv,
+            w: w,
         }
     }
 

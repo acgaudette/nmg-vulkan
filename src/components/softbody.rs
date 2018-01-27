@@ -37,6 +37,12 @@ const JOINT_ANG_RIGID: f32 = 0.5;
 // A value of one locks all joints
 const JOINT_ANG_BIAS: f32 = 0.0;
 
+// Multiples of std::f32::EPSILON
+// A value > 0 is needed to correctly test for intersection containment
+// Large values will produce spurious intersections, especially with small
+// constraint angles
+const JOINT_CONTAINS_BIAS: f32 = 8.0;
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,
@@ -374,7 +380,7 @@ impl ReachPlane {
     #[inline]
     fn contains_biased(self, point: alg::Vec3) -> bool {
         // Allow points just near the plane
-        self.normal.dot(point) >= 0.0 - 8. * std::f32::EPSILON
+        self.normal.dot(point) >= 0.0 - JOINT_CONTAINS_BIAS * std::f32::EPSILON
     }
 
     #[inline]

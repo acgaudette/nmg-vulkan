@@ -374,7 +374,7 @@ impl ReachPlane {
     #[inline]
     fn contains_biased(self, point: alg::Vec3) -> bool {
         // Allow points just near the plane
-        self.normal.dot(point) >= 0.0 - 16. * std::f32::EPSILON
+        self.normal.dot(point) >= 0.0 - 8. * std::f32::EPSILON
     }
 
     #[inline]

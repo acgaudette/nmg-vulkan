@@ -40,7 +40,8 @@ const JOINT_ANG_BIAS: f32 = 0.0;
 // Multiples of std::f32::EPSILON
 // A value > 0 is needed to correctly test for intersection containment
 // Large values will produce spurious intersections, especially with small
-// constraint angles
+// constraint angles--this leads to "softer" and eventually degenerate
+// joints
 const JOINT_CONTAINS_BIAS: f32 = 8.0;
 
 struct Particle {

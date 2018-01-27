@@ -758,7 +758,8 @@ impl Manager {
                 parent.inverse_orientation() * child_orient,
             );
 
-            let local_child_fwd = local_child * alg::Vec3::fwd();
+            let local_joint = joint.transform * local_child;
+            let local_child_fwd = local_joint * alg::Vec3::fwd();
 
             // Compute simple and twist rotations
             let simple = alg::Quat::simple(alg::Vec3::fwd(), local_child_fwd);
@@ -898,7 +899,7 @@ impl Manager {
             );
 
             // Calculate correction rotation
-            let reverse = local_child.conjugate() * twist * simple;
+            let reverse = local_joint.conjugate() * twist * simple;
             let transformation = reverse.pow(JOINT_ANG_RIGID).to_mat();
 
             let correction = {

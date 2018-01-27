@@ -851,24 +851,36 @@ impl Manager {
 
                     let mut result = candidates[0];
 
-                    if candidates.len() == 2 {
+                    debug_assert!(candidates.len() != 3);
+
+                    if candidates.len() > 1 {
+                        let compare = if candidates.len() == 2
+                            || candidates[0] == candidates[2] // X: -90 to 90
+                        {
+                            candidates[1]
+                        } else {
+                            // Y: -90 to 90
+                            debug_assert!(candidates[0] == candidates[1]);
+                            candidates[2]
+                        };
+
                         // Solution should be inside all four
-                        let inside = lower_left.contains_biased(candidates[1])
-                            && lower_right.contains_biased(candidates[1])
-                            && upper_right.contains_biased(candidates[1])
-                            && upper_left.contains_biased(candidates[1]);
+                        let inside = lower_left.contains_biased(compare)
+                            && lower_right.contains_biased(compare)
+                            && upper_right.contains_biased(compare)
+                            && upper_left.contains_biased(compare);
 
                         if inside {
-                            result = candidates[1];
+                            result = compare;
                         }
 
-                        let first_in = lower_left.contains_biased(candidates[0])
-                            && lower_right.contains_biased(candidates[0])
-                            && upper_right.contains_biased(candidates[0])
-                            && upper_left.contains_biased(candidates[0]);
-
-                        if !first_in && !inside {
-                            result = plane.unwrap().closest(candidates[1]);
+                        // Both candidates are outside
+                        else if !lower_left.contains_biased(candidates[0])
+                                || !lower_right.contains_biased(candidates[0])
+                                || !upper_right.contains_biased(candidates[0])
+                                || !upper_left.contains_biased(candidates[0])
+                        {
+                            result = plane.unwrap().closest(compare);
                         }
                     }
 

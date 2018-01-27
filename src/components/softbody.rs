@@ -383,6 +383,7 @@ impl ReachPlane {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
         let div = self.normal.dot(ray) + std::f32::EPSILON;
         let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
@@ -390,7 +391,6 @@ impl ReachPlane {
     }
 
     #[inline]
-    #[allow(dead_code)]
     fn closest(self, point: alg::Vec3) -> alg::Vec3 {
         let signed_dist = self.normal.dot(point);
         point - self.normal * signed_dist
@@ -810,25 +810,25 @@ impl Manager {
 
                     if lower_left.intersects(local_child_fwd) {
                         candidates.push(
-                            lower_left.intersection(local_child_fwd)
+                            lower_left.closest(local_child_fwd)
                         );
                     }
 
                     if lower_right.intersects(local_child_fwd) {
                         candidates.push(
-                            lower_right.intersection(local_child_fwd)
+                            lower_right.closest(local_child_fwd)
                         );
                     }
 
                     if upper_right.intersects(local_child_fwd) {
                         candidates.push(
-                            upper_right.intersection(local_child_fwd)
+                            upper_right.closest(local_child_fwd)
                         );
                     }
 
                     if upper_left.intersects(local_child_fwd) {
                         candidates.push(
-                            upper_left.intersection(local_child_fwd)
+                            upper_left.closest(local_child_fwd)
                         );
                     }
 

@@ -687,9 +687,9 @@ impl Manager {
 
                         // Friction
                         let moved = particle.position - particle.last;
-                        let factor = 1. - moved.norm().dot(plane.normal).abs();
-                        particle.position = particle.last + moved
-                            * factor * FRICTION;
+                        let factor = moved.norm().dot(plane.normal).abs();
+                        particle.position = particle.position - moved
+                            * FRICTION * (1.0 - factor);
 
                         // Collision
                         particle.position = particle.position

@@ -22,6 +22,9 @@ const BOUNCE: f32 = 0.05;
 // A value of zero nullifies all rods in the instance
 const DEFORM: f32 = 1.000;
 
+// Range 0 - 1; 0 = no planar friction
+const FRICTION: f32 = 1.0;
+
 // Range 0 - 0.499; "Rigid" = 0.499
 // Lower values produce springier joints
 // A value of zero nullifies the translational constraints of all joints
@@ -685,7 +688,8 @@ impl Manager {
                         // Friction
                         let moved = particle.position - particle.last;
                         let factor = 1. - moved.norm().dot(plane.normal).abs();
-                        particle.position = particle.last + moved * factor;
+                        particle.position = particle.last + moved
+                            * factor * FRICTION;
 
                         // Collision
                         particle.position = particle.position

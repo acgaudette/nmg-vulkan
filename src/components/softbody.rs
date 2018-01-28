@@ -796,7 +796,8 @@ impl Manager {
 
             /* Constrain positions */
 
-            let offset = (child.start() - parent.end()) * -JOINT_POS_RIGID;
+            let offset = (child.start() - parent.extend(joint.offset))
+                * -JOINT_POS_RIGID;
 
             for i in 0..8 {
                 // Correct parent
@@ -976,7 +977,7 @@ impl Manager {
             child.transform_around(point, correction);
 
             // Correct parent
-            let point = parent.end();
+            let point = parent.extend(joint.offset);
             parent.transform_around(point, correction.transpose());
         }
     }
@@ -1036,7 +1037,7 @@ impl Manager {
                         * joint.transform.conjugate().to_mat();
 
                     debug.add_local_axes(
-                        parent.end(),
+                        parent.extend(joint.offset),
                         joint_orientation * alg::Vec3::fwd(),
                         joint_orientation * alg::Vec3::up(),
                         1.0,

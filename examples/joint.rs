@@ -63,7 +63,7 @@ impl nmg::Start for Demo {
         /* Add planes */
 
         components.softbodies.add_plane(
-            alg::Plane::new(alg::Vec3::up(), 0.0)
+            alg::Plane::new(alg::Vec3::up(), 0.4)
         );
 
         components.softbodies.add_plane(

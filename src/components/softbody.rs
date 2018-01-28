@@ -634,23 +634,29 @@ impl Manager {
     }
 
     pub fn simulate(&mut self, transforms: &mut transform::Manager) {
-        // Update instances
+        // Update instance particles
         for i in 0..self.instances.len() {
             let mut instance = match self.instances[i] {
                 Some(ref mut instance) => instance,
                 None => continue,
             };
 
-            // Update particles in instance
             for particle in &mut instance.particles {
                 // Position Verlet
                 let target = particle.position * 2. - particle.last;
                 particle.last = particle.position;
                 particle.position = target + instance.accel_dt;
             }
+        }
 
-            // Solve constraints
-            for _ in 0..ITERATIONS {
+        // Solve constraints
+        for _ in 0..ITERATIONS {
+            for i in 0..self.instances.len() {
+                let mut instance = match self.instances[i] {
+                    Some(ref mut instance) => instance,
+                    None => continue,
+                };
+
                 // Rods
                 for rod in &instance.rods {
                     let left = instance.particles[rod.left].position;
@@ -702,10 +708,10 @@ impl Manager {
                     );
                 }
             }
-        }
 
-        // Solve joint constraints
-        self.solve_joints();
+            // Solve joint constraints
+            self.solve_joints();
+        }
 
         // Finalize instances
         for i in 0..self.instances.len() {

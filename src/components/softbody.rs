@@ -115,6 +115,7 @@ struct Joint {
     y_limit: Range,
     z_limit: Range,
     transform: alg::Quat,
+    offset: alg::Vec3,
 }
 
 struct Instance {
@@ -602,6 +603,7 @@ impl Manager {
         z_limit: (f32, f32), // Degrees
         fwd: alg::Vec3,
         up: alg::Vec3,
+        offset: alg::Vec3,
     ) {
         let (i, j) = (
             child.get_index() as usize,
@@ -629,6 +631,7 @@ impl Manager {
             y_limit: Range { min: y_min, max: y_max },
             z_limit: Range { min: z_min, max: z_max },
             transform: alg::Quat::from_vecs(fwd, up),
+            offset: offset,
         };
 
         self.joints.push(joint);

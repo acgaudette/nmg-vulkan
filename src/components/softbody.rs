@@ -264,6 +264,19 @@ impl Instance {
         (self.top() - self.bot()).norm()
     }
 
+    #[inline]
+    fn center(&self) -> alg::Vec3 {
+        (     self.particles[0].position
+            + self.particles[1].position
+            + self.particles[2].position
+            + self.particles[3].position
+            + self.particles[4].position
+            + self.particles[5].position
+            + self.particles[6].position
+            + self.particles[7].position
+        ) * 0.125
+    }
+
     // Get limb orientation as matrix
     fn orientation(&self) -> alg::Mat {
         // Build orthogonal rotation matrix

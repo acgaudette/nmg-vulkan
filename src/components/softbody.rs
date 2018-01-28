@@ -23,7 +23,7 @@ const BOUNCE: f32 = 0.05;
 const DEFORM: f32 = 1.000;
 
 // Range 0 - 1; 0 = no planar friction
-const FRICTION: f32 = 1.0;
+const FRICTION: f32 = 0.1;
 
 // Range 0 - 0.499; "Rigid" = 0.499
 // Lower values produce springier joints

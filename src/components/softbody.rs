@@ -877,8 +877,6 @@ impl Manager {
 
                     let mut result = candidates[0];
 
-                    debug_assert!(candidates.len() != 3);
-
                     if candidates.len() > 1 {
                         let compare = if candidates.len() == 2
                             || candidates[0] == candidates[2] // X: -90 to 90
@@ -886,7 +884,6 @@ impl Manager {
                             candidates[1]
                         } else {
                             // Y: -90 to 90
-                            debug_assert!(candidates[0] == candidates[1]);
                             candidates[2]
                         };
 

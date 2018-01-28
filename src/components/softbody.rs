@@ -11,7 +11,7 @@ use ::FIXED_DT; // Import from lib
 use components::transform;
 
 // Constraint solver iterations
-const ITERATIONS: usize = 1;
+const ITERATIONS: usize = 10;
 
 // Range 0 - inf; "Realistic" = 2.0
 // Values < 2 become force zones, values > 2 add impossible force

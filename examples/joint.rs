@@ -49,6 +49,7 @@ impl nmg::Start for Demo {
             (-45.0, 45.0),
             alg::Vec3::fwd(),
             alg::Vec3::up(),
+            alg::Vec3::fwd() * 0.5,
         );
 
         components.softbodies.add_joint(
@@ -58,12 +59,13 @@ impl nmg::Start for Demo {
             (-45.0, 45.0),
             alg::Vec3::fwd(),
             alg::Vec3::up(),
+            alg::Vec3::fwd() * 0.5,
         );
 
         /* Add planes */
 
         components.softbodies.add_plane(
-            alg::Plane::new(alg::Vec3::up(), 0.4)
+            alg::Plane::new(alg::Vec3::up(), 0.0)
         );
 
         components.softbodies.add_plane(

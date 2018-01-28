@@ -277,6 +277,11 @@ impl Instance {
         ) * 0.125
     }
 
+    #[inline]
+    fn extend(&self, offset: alg::Vec3) -> alg::Vec3 {
+        self.center() + self.orientation() * offset
+    }
+
     // Get limb orientation as matrix
     fn orientation(&self) -> alg::Mat {
         // Build orthogonal rotation matrix

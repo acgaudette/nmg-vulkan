@@ -705,6 +705,36 @@ impl Manager {
         }
 
         // Solve joint constraints
+        self.solve_joints();
+
+        // Finalize instances
+        for i in 0..self.instances.len() {
+            let mut instance = match self.instances[i] {
+                Some(ref mut instance) => instance,
+                None => continue,
+            };
+
+            // Compute average position
+            let average = {
+                let mut sum = alg::Vec3::zero();
+
+                for particle in &instance.particles {
+                    sum = sum + particle.position;
+                }
+
+                sum / instance.particles.len() as f32
+            };
+
+            // Update instance position
+            instance.position = average;
+
+            // Update transform position
+            transforms.set_position_i(i, average);
+        }
+    }
+
+    #[inline]
+    fn solve_joints(&mut self) {
         for joint in &self.joints {
             debug_assert!(joint.parent != joint.child);
 
@@ -914,31 +944,6 @@ impl Manager {
             // Correct parent
             let point = parent.end();
             parent.transform_around(point, correction.transpose());
-        }
-
-        // Finalize instances
-        for i in 0..self.instances.len() {
-            let mut instance = match self.instances[i] {
-                Some(ref mut instance) => instance,
-                None => continue,
-            };
-
-            // Compute average position
-            let average = {
-                let mut sum = alg::Vec3::zero();
-
-                for particle in &instance.particles {
-                    sum = sum + particle.position;
-                }
-
-                sum / instance.particles.len() as f32
-            };
-
-            // Update instance position
-            instance.position = average;
-
-            // Update transform position
-            transforms.set_position_i(i, average);
         }
     }
 

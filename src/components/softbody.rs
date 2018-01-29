@@ -606,8 +606,8 @@ impl Manager {
         offset: alg::Vec3,
     ) {
         let (i, j) = (
-            child.get_index() as usize,
             parent.get_index() as usize,
+            child.get_index() as usize,
         );
 
         debug_assert!(i < self.instances.len());

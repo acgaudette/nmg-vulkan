@@ -772,6 +772,20 @@ impl Manager {
 
     #[inline]
     fn solve_joints(&mut self) {
+        let mut last_parent = None;
+        let mut position_sum = alg::Vec3::zero();
+
+        macro_rules! apply_parent {
+            ($parent: expr) => (
+                // Position
+                for i in 0..8 {
+                    let new_position = $parent.particles[i].position
+                        + position_sum;
+                    $parent.particles[i].position = new_position;
+                }
+            )
+        }
+
         for joint in &self.joints {
             debug_assert!(joint.parent != joint.child);
 
@@ -794,16 +808,23 @@ impl Manager {
                 (*ptr).as_mut().unwrap()
             };
 
+            if let Some(last) = last_parent {
+                if joint.parent != last {
+                    // New parent; apply all parent transformations
+                    apply_parent!(parent);
+                    position_sum = alg::Vec3::zero();
+                }
+            }
+
+            last_parent = Some(joint.parent);
+
             /* Constrain positions */
 
             let offset = (child.start() - parent.extend(joint.offset))
                 * -JOINT_POS_RIGID;
 
-            for i in 0..8 {
-                // Correct parent
-                let new_position = parent.particles[i].position - offset;
-                parent.particles[i].position = new_position;
-            }
+            // Correct parent
+            position_sum = position_sum - offset;
 
             for i in 0..8 {
                 // Correct child
@@ -979,6 +1000,11 @@ impl Manager {
             // Correct parent
             let point = parent.extend(joint.offset);
             parent.transform_around(point, correction.transpose());
+        }
+
+        if let Some(last) = last_parent {
+            let parent = self.instances[last].as_mut().unwrap();
+            apply_parent!(parent);
         }
     }
 

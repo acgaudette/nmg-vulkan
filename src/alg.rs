@@ -513,14 +513,44 @@ impl Quat {
 
     pub fn from_vecs(fwd: Vec3, up: Vec3) -> Quat {
         let right = up.cross(fwd);
-        let w = (1.0 + right.x + up.y + fwd.z).sqrt() * 0.5;
-        let inv = 1.0 / (w * 4.0);
+        let trace = right.x + up.y + fwd.z;
 
-        Quat {
-            x: (fwd.y - up.z) * inv,
-            y: (right.z - fwd.x) * inv,
-            z: (up.x - right.y) * inv,
-            w: w,
+        if trace > 0.0 {
+            let s = (1.0 + trace).sqrt() * 2.0;
+
+            Quat {
+                x: (fwd.y - up.z) / s,
+                y: (right.z - fwd.x) / s,
+                z: (up.x - right.y) / s,
+                w: s * 0.25,
+            }
+        } else if right.x > up.y && right.x > fwd.z {
+            let s = (1.0 + right.x - up.y - fwd.z).sqrt() * 2.0;
+
+            Quat {
+                x: s * 0.25,
+                y: (right.y + up.x) / s,
+                z: (right.z + fwd.x) / s,
+                w: (fwd.y - up.z) / s,
+            }
+        } else if up.y > fwd.z {
+            let s = (1.0 + up.y - right.x - fwd.z).sqrt() * 2.0;
+
+            Quat {
+                x: (right.y + up.x) / s,
+                y: s * 0.25,
+                z: (up.z + fwd.y) / s,
+                w: (right.z - fwd.x) / s,
+            }
+        } else {
+            let s = (1.0 + fwd.z - right.x - up.y).sqrt() * 2.0;
+
+            Quat {
+                x: (right.z - fwd.x) / s,
+                y: (up.z + fwd.y) / s,
+                z: s * 0.25,
+                w: (up.x - right.y) / s,
+            }
         }
     }
 

@@ -368,6 +368,18 @@ impl Mat {
         )
     }
 
+    pub fn to_quat(self) -> Quat {
+        let w = (1.0 + self.x0 + self.y1 + self.z2).sqrt() * 0.5;
+        let x4 = w * 4.0;
+
+        Quat {
+            x: (self.z1 - self.y2) / x4,
+            y: (self.x2 - self.z0) / x4,
+            z: (self.y0 - self.x1) / x4,
+            w: w,
+        }
+    }
+
     // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
         let fwd = (target - position).norm();

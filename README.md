@@ -7,7 +7,6 @@ For the upcoming game, NMG ([watch original prototype here!][3])
 ## Goals
 - Specialized
 - Data-oriented
-- Performant
 - Concurrent
 
 ## Features

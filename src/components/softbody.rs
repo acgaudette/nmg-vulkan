@@ -662,13 +662,12 @@ impl Manager {
             offset: offset,
         };
 
-        if !self.joints.contains_key(&i) {
-            let mut children = Vec::with_capacity(1);
-            children.push(joint);
-            self.joints.insert(i, children);
-        } else {
-            self.joints.get_mut(&i).unwrap().push(joint);
+        if let Some(entry) = self.joints.get_mut(&i) {
+            entry.push(joint);
+            return;
         }
+
+        self.joints.insert(i, vec![joint]);
     }
 
     pub fn add_plane(&mut self, plane: alg::Plane) {
@@ -904,10 +903,9 @@ impl Manager {
             && joint.x_limit.min == joint.y_limit.min
         ));
 
-        // Get child in local space
-
         let child_orient = child.orientation();
 
+        // Get child in local space
         let local_child = alg::Quat::from_mat(
             joint.transform.to_mat()
                 * parent.inverse_orientation()

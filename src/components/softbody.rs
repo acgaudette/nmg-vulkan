@@ -865,7 +865,15 @@ impl Manager {
         }
     }
 
-    fn solve_joint_rotation() {
+    fn solve_joint_rotation(
+        &self,
+        parent: &Instance,
+        child: &mut Instance,
+        joint: &Joint,
+    ) -> (
+        alg::Vec3,
+        alg::Vec3,
+    ) {
         // If all limits are equal, then the joint is unlimited
         debug_assert!(!(
                joint.x_limit.min == joint.x_limit.max
@@ -1032,9 +1040,18 @@ impl Manager {
         let point = child.start();
         child.transform_around(point, correction);
 
-        // Correct parent
-        let point = parent.extend(joint.offset);
-        parent.transform_around(point, correction.transpose());
+        // Convert parent correction to vector
+        let torque = {
+            let (dir, mag) = correction.transpose().to_quat().to_axis_angle();
+            dir * mag
+        };
+
+        // Solve for force at point (T = f x d)
+        let d = parent.extend(joint.offset) - parent.center();
+        let force = d.cross(torque);
+
+        // Return decomposed parent correction
+        (torque, force)
     }
 
     #[allow(unused_variables)]

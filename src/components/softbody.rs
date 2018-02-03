@@ -110,8 +110,7 @@ struct Range {
 }
 
 struct Joint {
-    parent:  usize,
-    child:   usize,
+    child: usize,
     x_limit: Range,
     y_limit: Range,
     z_limit: Range,
@@ -627,7 +626,7 @@ impl Manager {
         let z_max = z_limit.1.to_radians();
 
         let joint = Joint {
-            parent: i, child: j,
+            child: j,
             x_limit: Range { min: x_min, max: x_max },
             y_limit: Range { min: y_min, max: y_max },
             z_limit: Range { min: z_min, max: z_max },

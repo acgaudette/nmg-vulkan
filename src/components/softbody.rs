@@ -819,12 +819,20 @@ impl Manager {
                 (*ptr).as_mut().unwrap()
             };
 
-            let mut child = unsafe {
-                let ptr = self.instances.as_mut_ptr()
-                    .offset(joint.child as isize);
+            let mut children = Vec::with_capacity(joints.len());
 
-                (*ptr).as_mut().unwrap()
-            };
+            for joint in joints {
+                let mut child = unsafe {
+                    let ptr = self.instances.as_mut_ptr()
+                        .offset(joint.child as isize);
+
+                    (*ptr).as_mut().unwrap()
+                };
+
+                children.push(child);
+            }
+
+            debug_assert!(children.len() == joints.len());
 
             /* Constrain positions */
 

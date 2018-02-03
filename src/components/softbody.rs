@@ -317,6 +317,32 @@ impl Instance {
         self.rotate_around(point, x, y, z);
     }
 
+    fn transform(&mut self, rotation: alg::Quat, translation: alg::Vec3) {
+        let point = self.center();
+
+        // Center axis of rotation
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position - point;
+        }
+
+        // Translate
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position
+                + translation;
+        }
+
+        // Rotate
+        for i in 0..8 {
+            self.particles[i].position = rotation
+                * self.particles[i].position;
+        }
+
+        // Move back to world space
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position + point;
+        }
+    }
+
     #[inline]
     #[allow(dead_code)]
     fn rotate_around(&mut self, point: alg::Vec3, x: f32, y: f32, z: f32) {

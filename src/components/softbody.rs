@@ -631,6 +631,8 @@ impl Manager {
         up: alg::Vec3,
         offset: alg::Vec3,
     ) {
+        debug_assert!(parent != child);
+
         let (i, j) = (
             parent.get_index() as usize,
             child.get_index() as usize,
@@ -819,8 +821,6 @@ impl Manager {
         }
 
         for joint in &self.joints {
-            debug_assert!(joint.parent != joint.child);
-
             /* Unsafely acquire mutable references to vector elements.
              * Unfortunately, the only safe Rust alternative (split_at_mut())
              * is slower.

@@ -834,22 +834,34 @@ impl Manager {
 
             debug_assert!(children.len() == joints.len());
 
+            /* Constrain rotations */
+
+            solve_joint_rotation();
+
             /* Constrain positions */
 
-            let offset = (child.start() - parent.extend(joint.offset))
-                * -JOINT_POS_RIGID;
+            let mut position_sum = alg::Vec3::zero();
 
-            // Correct parent
-            position_sum = position_sum - offset;
+            for i in 0..children.len() {
+                let offset = (
+                        children[i].start() - parent.extend(joints[i].offset)
+                    ) * -JOINT_POS_RIGID;
 
-            for i in 0..8 {
-                // Correct child
-                let new_position = child.particles[i].position + offset;
-                child.particles[i].position = new_position;
+                // Sum parent correction
+                position_sum = position_sum - offset;
+
+                for j in 0..8 {
+                    // Correct child
+                    let new = children[i].particles[j].position + offset;
+                    children[i].particles[j].position = new;
+                }
             }
 
-            /* Constrain rotations */
-            solve_joint_rotation();
+            // Correct parent
+            for j in 0..8 {
+                let new = parent.particles[j].position + position_sum;
+                parent.particles[j].position = new;
+            }
         }
     }
 

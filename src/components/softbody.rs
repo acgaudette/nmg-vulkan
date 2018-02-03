@@ -806,20 +806,6 @@ impl Manager {
 
     #[inline]
     fn solve_joints(&mut self) {
-        let mut last_parent = None;
-        let mut position_sum = alg::Vec3::zero();
-
-        macro_rules! apply_parent {
-            ($parent: expr) => (
-                // Position
-                for i in 0..8 {
-                    let new_position = $parent.particles[i].position
-                        + position_sum;
-                    $parent.particles[i].position = new_position;
-                }
-            )
-        }
-
         for joint in &self.joints {
             /* Unsafely acquire mutable references to vector elements.
              * Unfortunately, the only safe Rust alternative (split_at_mut())
@@ -840,16 +826,6 @@ impl Manager {
                 (*ptr).as_mut().unwrap()
             };
 
-            if let Some(last) = last_parent {
-                if joint.parent != last {
-                    // New parent; apply all parent transformations
-                    apply_parent!(parent);
-                    position_sum = alg::Vec3::zero();
-                }
-            }
-
-            last_parent = Some(joint.parent);
-
             /* Constrain positions */
 
             let offset = (child.start() - parent.extend(joint.offset))
@@ -866,11 +842,6 @@ impl Manager {
 
             /* Constrain rotations */
             solve_joint_rotation();
-        }
-
-        if let Some(last) = last_parent {
-            let parent = self.instances[last].as_mut().unwrap();
-            apply_parent!(parent);
         }
     }
 

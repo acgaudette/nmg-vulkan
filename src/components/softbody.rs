@@ -660,7 +660,13 @@ impl Manager {
             offset: offset,
         };
 
-        self.joints.push(joint);
+        if !self.joints.contains_key(&i) {
+            let mut children = Vec::with_capacity(1);
+            children.push(joint);
+            self.joints.insert(i, children);
+        } else {
+            self.joints.get_mut(&i).unwrap().push(joint);
+        }
     }
 
     pub fn add_plane(&mut self, plane: alg::Plane) {

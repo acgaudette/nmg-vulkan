@@ -865,182 +865,185 @@ impl Manager {
             }
 
             /* Constrain rotations */
-
-            // If all limits are equal, then the joint is unlimited
-            debug_assert!(!(
-                   joint.x_limit.min == joint.x_limit.max
-                && joint.y_limit.min == joint.y_limit.max
-                && joint.x_limit.min == joint.y_limit.min
-            ));
-
-            // Get child in local space
-
-            let child_orient = child.orientation();
-
-            let local_child = alg::Quat::from_mat(
-                joint.transform.to_mat()
-                    * parent.inverse_orientation()
-                    * child_orient
-            );
-
-            let local_child_fwd = local_child * alg::Vec3::fwd();
-
-            // Compute simple and twist rotations
-            let simple = alg::Quat::simple(alg::Vec3::fwd(), local_child_fwd);
-            let twist = local_child * simple.conjugate();
-
-            // Build cone
-            let (lower, right, upper, left) = {
-                let x_min = joint.y_limit.min / 90f32.to_radians();
-                let x_max = joint.y_limit.max / 90f32.to_radians();
-                let y_min = joint.x_limit.min / 90f32.to_radians();
-                let y_max = joint.x_limit.max / 90f32.to_radians();
-
-                (
-                    alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
-                    alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
-                    alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
-                    alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(),
-                )
-            };
-
-            // Build planes
-            let lower_left = ReachPlane::new(left, lower);
-            let lower_right = ReachPlane::new(lower, right);
-            let upper_right = ReachPlane::new(right, upper);
-            let upper_left = ReachPlane::new(upper, left);
-
-            // Is the rotation inside the cone?
-            let inside = lower_left.contains(local_child_fwd)
-                && lower_right.contains(local_child_fwd)
-                && upper_right.contains(local_child_fwd)
-                && upper_left.contains(local_child_fwd);
-
-            // Rebind (limit) simple
-            let simple = if !inside {
-                // Calculate intersection of ray with cone
-                let intersection = {
-                    let mut candidates = Vec::with_capacity(2);
-                    let mut plane = lower_left;
-
-                    // Linear rotation path (ray) is
-                    // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
-                    // which can be simplified to local_child_fwd
-
-                    if lower_left.intersects(local_child_fwd) {
-                        candidates.push(
-                            lower_left.closest(local_child_fwd)
-                        );
-                    }
-
-                    if lower_right.intersects(local_child_fwd) {
-                        if candidates.len() == 0 {
-                            plane = lower_right;
-                        }
-
-                        candidates.push(
-                            lower_right.closest(local_child_fwd)
-                        );
-                    }
-
-                    if upper_right.intersects(local_child_fwd) {
-                        if candidates.len() == 0 {
-                            plane = upper_right;
-                        }
-
-                        candidates.push(
-                            upper_right.closest(local_child_fwd)
-                        );
-                    }
-
-                    if upper_left.intersects(local_child_fwd) {
-                        if candidates.len() == 0 {
-                            plane = upper_left;
-                        }
-
-                        candidates.push(
-                            upper_left.closest(local_child_fwd)
-                        );
-                    }
-
-                    let mut result = candidates[0];
-
-                    if candidates.len() > 1 {
-                        let compare = if candidates.len() == 2
-                            || candidates[0] == candidates[2] // X: -90 to 90
-                        {
-                            candidates[1]
-                        } else {
-                            // Y: -90 to 90
-                            candidates[2]
-                        };
-
-                        // Solution should be inside all four
-                        let inside = lower_left.contains_biased(compare)
-                            && lower_right.contains_biased(compare)
-                            && upper_right.contains_biased(compare)
-                            && upper_left.contains_biased(compare);
-
-                        if inside {
-                            result = compare;
-                        }
-
-                        // Both candidates are outside
-                        else if !lower_left.contains_biased(candidates[0])
-                                || !lower_right.contains_biased(candidates[0])
-                                || !upper_right.contains_biased(candidates[0])
-                                || !upper_left.contains_biased(candidates[0])
-                        {
-                            result = plane.closest(compare);
-                        }
-                    }
-
-                    result
-                };
-
-                // Calculate rotation midpoint
-                let midpoint = intersection.norm().lerp(
-                    alg::Vec3::fwd(),
-                    JOINT_ANG_BIAS,
-                );
-
-                // Limit rotation
-                alg::Quat::simple(alg::Vec3::fwd(), midpoint)
-
-            } else { simple };
-
-            let (axis, angle) = twist.to_axis_angle();
-            let sign = if axis.dot(local_child_fwd) > 0.0
-                { 1.0 } else { -1.0 };
-
-            // Rebind (limit) twist
-            let twist = alg::Quat::axis_angle(
-                simple * alg::Vec3::fwd() * sign,
-                angle.max(joint.z_limit.min).min(joint.z_limit.max),
-            );
-
-            // Calculate correction rotation
-            let reverse = local_child.conjugate() * twist * simple;
-            let transformation = reverse.pow(JOINT_ANG_RIGID).to_mat();
-
-            let correction = {
-                let inverse_child = child_orient.transpose();
-                child_orient * transformation * inverse_child
-            };
-
-            // Correct child
-            let point = child.start();
-            child.transform_around(point, correction);
-
-            // Correct parent
-            let point = parent.extend(joint.offset);
-            parent.transform_around(point, correction.transpose());
+            solve_joint_rotation();
         }
 
         if let Some(last) = last_parent {
             let parent = self.instances[last].as_mut().unwrap();
             apply_parent!(parent);
         }
+    }
+
+    fn solve_joint_rotation() {
+        // If all limits are equal, then the joint is unlimited
+        debug_assert!(!(
+               joint.x_limit.min == joint.x_limit.max
+            && joint.y_limit.min == joint.y_limit.max
+            && joint.x_limit.min == joint.y_limit.min
+        ));
+
+        // Get child in local space
+
+        let child_orient = child.orientation();
+
+        let local_child = alg::Quat::from_mat(
+            joint.transform.to_mat()
+                * parent.inverse_orientation()
+                * child_orient
+        );
+
+        let local_child_fwd = local_child * alg::Vec3::fwd();
+
+        // Compute simple and twist rotations
+        let simple = alg::Quat::simple(alg::Vec3::fwd(), local_child_fwd);
+        let twist = local_child * simple.conjugate();
+
+        // Build cone
+        let (lower, right, upper, left) = {
+            let x_min = joint.y_limit.min / 90f32.to_radians();
+            let x_max = joint.y_limit.max / 90f32.to_radians();
+            let y_min = joint.x_limit.min / 90f32.to_radians();
+            let y_max = joint.x_limit.max / 90f32.to_radians();
+
+            (
+                alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
+                alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
+                alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
+                alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(),
+            )
+        };
+
+        // Build planes
+        let lower_left = ReachPlane::new(left, lower);
+        let lower_right = ReachPlane::new(lower, right);
+        let upper_right = ReachPlane::new(right, upper);
+        let upper_left = ReachPlane::new(upper, left);
+
+        // Is the rotation inside the cone?
+        let inside = lower_left.contains(local_child_fwd)
+            && lower_right.contains(local_child_fwd)
+            && upper_right.contains(local_child_fwd)
+            && upper_left.contains(local_child_fwd);
+
+        // Rebind (limit) simple
+        let simple = if !inside {
+            // Calculate intersection of ray with cone
+            let intersection = {
+                let mut candidates = Vec::with_capacity(2);
+                let mut plane = lower_left;
+
+                // Linear rotation path (ray) is
+                // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
+                // which can be simplified to local_child_fwd
+
+                if lower_left.intersects(local_child_fwd) {
+                    candidates.push(
+                        lower_left.closest(local_child_fwd)
+                    );
+                }
+
+                if lower_right.intersects(local_child_fwd) {
+                    if candidates.len() == 0 {
+                        plane = lower_right;
+                    }
+
+                    candidates.push(
+                        lower_right.closest(local_child_fwd)
+                    );
+                }
+
+                if upper_right.intersects(local_child_fwd) {
+                    if candidates.len() == 0 {
+                        plane = upper_right;
+                    }
+
+                    candidates.push(
+                        upper_right.closest(local_child_fwd)
+                    );
+                }
+
+                if upper_left.intersects(local_child_fwd) {
+                    if candidates.len() == 0 {
+                        plane = upper_left;
+                    }
+
+                    candidates.push(
+                        upper_left.closest(local_child_fwd)
+                    );
+                }
+
+                let mut result = candidates[0];
+
+                if candidates.len() > 1 {
+                    let compare = if candidates.len() == 2
+                        || candidates[0] == candidates[2] // X: -90 to 90
+                    {
+                        candidates[1]
+                    } else {
+                        // Y: -90 to 90
+                        candidates[2]
+                    };
+
+                    // Solution should be inside all four
+                    let inside = lower_left.contains_biased(compare)
+                        && lower_right.contains_biased(compare)
+                        && upper_right.contains_biased(compare)
+                        && upper_left.contains_biased(compare);
+
+                    if inside {
+                        result = compare;
+                    }
+
+                    // Both candidates are outside
+                    else if !lower_left.contains_biased(candidates[0])
+                            || !lower_right.contains_biased(candidates[0])
+                            || !upper_right.contains_biased(candidates[0])
+                            || !upper_left.contains_biased(candidates[0])
+                    {
+                        result = plane.closest(compare);
+                    }
+                }
+
+                result
+            };
+
+            // Calculate rotation midpoint
+            let midpoint = intersection.norm().lerp(
+                alg::Vec3::fwd(),
+                JOINT_ANG_BIAS,
+            );
+
+            // Limit rotation
+            alg::Quat::simple(alg::Vec3::fwd(), midpoint)
+
+        } else { simple };
+
+        let (axis, angle) = twist.to_axis_angle();
+        let sign = if axis.dot(local_child_fwd) > 0.0
+            { 1.0 } else { -1.0 };
+
+        // Rebind (limit) twist
+        let twist = alg::Quat::axis_angle(
+            simple * alg::Vec3::fwd() * sign,
+            angle.max(joint.z_limit.min).min(joint.z_limit.max),
+        );
+
+        // Calculate correction rotation
+        let reverse = local_child.conjugate() * twist * simple;
+        let transformation = reverse.pow(JOINT_ANG_RIGID).to_mat();
+
+        let correction = {
+            let inverse_child = child_orient.transpose();
+            child_orient * transformation * inverse_child
+        };
+
+        // Correct child
+        let point = child.start();
+        child.transform_around(point, correction);
+
+        // Correct parent
+        let point = parent.extend(joint.offset);
+        parent.transform_around(point, correction.transpose());
     }
 
     #[allow(unused_variables)]

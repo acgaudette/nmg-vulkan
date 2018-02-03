@@ -412,7 +412,7 @@ impl ReachPlane {
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     instances: Vec<Option<Instance>>,
-    joints: Vec<Joint>,
+    joints: std::collections::HashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
     gravity: alg::Vec3,
 }
@@ -447,7 +447,7 @@ impl Manager {
     ) -> Manager {
         Manager {
             instances: Vec::with_capacity(instance_hint),
-            joints: Vec::with_capacity(joint_hint),
+            joints: std::collections::HashMap::with_capacity(joint_hint),
             planes: Vec::with_capacity(plane_hint),
             gravity: alg::Vec3::new(0., -9.8, 0.),
         }

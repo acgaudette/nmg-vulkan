@@ -806,7 +806,7 @@ impl Manager {
 
     #[inline]
     fn solve_joints(&mut self) {
-        for joint in &self.joints {
+        for (parent_index, joints) in &self.joints {
             /* Unsafely acquire mutable references to vector elements.
              * Unfortunately, the only safe Rust alternative (split_at_mut())
              * is slower.
@@ -814,7 +814,7 @@ impl Manager {
 
             let mut parent = unsafe {
                 let ptr = self.instances.as_mut_ptr()
-                    .offset(joint.parent as isize);
+                    .offset(*parent_index as isize);
 
                 (*ptr).as_mut().unwrap()
             };

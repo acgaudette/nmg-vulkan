@@ -1092,21 +1092,23 @@ impl Manager {
             }
 
             // Draw joint endpoints
-            for joint in &self.joints {
-                if joint.parent == index {
-                    let parent = self.instances[joint.parent]
+            for (parent_index, joints) in &self.joints {
+                if *parent_index == index {
+                    let parent = self.instances[*parent_index]
                         .as_ref().unwrap();
 
-                    let joint_orientation = parent.orientation()
-                        * joint.transform.conjugate().to_mat();
+                    for joint in joints {
+                        let joint_orientation = parent.orientation()
+                            * joint.transform.conjugate().to_mat();
 
-                    debug.add_local_axes(
-                        parent.extend(joint.offset),
-                        joint_orientation * alg::Vec3::fwd(),
-                        joint_orientation * alg::Vec3::up(),
-                        1.0,
-                        1.0,
-                    );
+                        debug.add_local_axes(
+                            parent.extend(joint.offset),
+                            joint_orientation * alg::Vec3::fwd(),
+                            joint_orientation * alg::Vec3::up(),
+                            1.0,
+                            1.0,
+                        );
+                    }
                 }
             }
         }

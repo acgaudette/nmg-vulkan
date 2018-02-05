@@ -858,7 +858,9 @@ impl Manager {
             );
 
             // Correct parent
-            parent.transform(rotation, net_force);
+            if children.len() > 1 { // FIXME
+                parent.transform(rotation, net_force);
+            }
 
             /* Constrain positions */
 

@@ -13,11 +13,6 @@ use components::transform;
 // Constraint solver iterations
 const ITERATIONS: usize = 10;
 
-// Range 0 - inf; "Realistic" = 2.0
-// Values < 2 become force zones, values > 2 add impossible force
-// A value of zero nullifies all collisions
-const BOUNCE: f32 = 0.05;
-
 // Range 0 - 1; 1.0 = cannot be deformed
 // A value of zero nullifies all rods in the instance
 const DEFORM: f32 = 1.000;
@@ -441,6 +436,11 @@ pub struct Manager {
     joints: std::collections::HashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
     gravity: alg::Vec3,
+
+    // Range 0 - inf; "Realistic" = 2.0
+    // Values < 2 become force zones, values > 2 add impossible force
+    // A value of zero nullifies all collisions
+    bounce: f32,
 }
 
 impl components::Component for Manager {
@@ -476,6 +476,7 @@ impl Manager {
             joints: std::collections::HashMap::with_capacity(joint_hint),
             planes: Vec::with_capacity(plane_hint),
             gravity: alg::Vec3::new(0., -9.8, 0.),
+            bounce: 2.0,
         }
     }
 
@@ -747,7 +748,7 @@ impl Manager {
 
                         // Collision
                         particle.position = particle.position
-                            - plane.normal * BOUNCE * distance;
+                            - plane.normal * self.bounce * distance;
                     }
                 }
 

@@ -75,9 +75,11 @@ impl nmg::Start for Demo {
             alg::Plane::new(alg::Vec3::up(), 1.),
         );
 
-        /* Zero gravity */
-
+        // Zero gravity
         components.softbodies.set_gravity_raw(alg::Vec3::zero());
+
+        // Set plane bounciness
+        components.softbodies.set_bounce(0.05);
 
         // Update demo state
         self.objects.push(object);

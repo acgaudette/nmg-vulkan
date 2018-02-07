@@ -84,6 +84,9 @@ impl nmg::Start for Demo {
             alg::Plane::new(-alg::Vec3::right(), 3.0)
         );
 
+        // Set plane bounciness
+        components.softbodies.set_bounce(0.04);
+
         self.first = Some(first);
         self.second = Some(second);
         self.third = Some(third);

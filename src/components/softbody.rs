@@ -691,6 +691,10 @@ impl Manager {
         self.gravity = gravity;
     }
 
+    pub fn set_bounce(&mut self, bounce: f32) {
+        self.bounce = bounce;
+    }
+
     pub fn simulate(&mut self, transforms: &mut transform::Manager) {
         // Update instance particles
         for i in 0..self.instances.len() {

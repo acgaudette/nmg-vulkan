@@ -657,6 +657,7 @@ impl Manager {
         fwd: alg::Vec3,
         up: alg::Vec3,
         offset: alg::Vec3,
+        expand: bool,
     ) {
         debug_assert!(parent != child);
 
@@ -690,6 +691,25 @@ impl Manager {
             transform: transform,
             offset: offset,
         };
+
+        if expand {
+            let parent = unsafe {
+                let ptr = self.instances.as_ptr().offset(i as isize);
+                (*ptr).as_ref().unwrap()
+            };
+
+            let child = unsafe {
+                let ptr = self.instances.as_mut_ptr().offset(j as isize);
+                (*ptr).as_mut().unwrap()
+            };
+
+            let rotation = parent.orientation().to_quat()
+                * transform.conjugate();
+            let translation = parent.extend(offset)
+                + rotation * child.start();
+
+            child.transform_outer(rotation, translation);
+        }
 
         if let Some(entry) = self.joints.get_mut(&i) {
             entry.push(joint);

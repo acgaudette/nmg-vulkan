@@ -312,7 +312,11 @@ impl Instance {
         self.rotate_around(point, x, y, z);
     }
 
-    fn transform_inner(&mut self, rotation: alg::Quat, translation: alg::Vec3) {
+    fn transform_inner(
+        &mut self,
+        rotation: alg::Quat,
+        translation: alg::Vec3,
+    ) {
         let point = self.center();
 
         // Center axis of rotation
@@ -338,7 +342,11 @@ impl Instance {
         }
     }
 
-    fn transform_outer(&mut self, rotation: alg::Quat, translation: alg::Vec3) {
+    fn transform_outer(
+        &mut self,
+        rotation: alg::Quat,
+        translation: alg::Vec3,
+    ) {
         // Translate
         for i in 0..8 {
             self.particles[i].position = self.particles[i].position
@@ -707,7 +715,7 @@ impl Manager {
             };
 
             let translation = parent.extend(offset)
-                + rotation * child.start();
+                + rotation * child.end();
 
             // Align child with joint
             child.transform_outer(rotation, translation);

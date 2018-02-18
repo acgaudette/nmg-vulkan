@@ -312,7 +312,7 @@ impl Instance {
         self.rotate_around(point, x, y, z);
     }
 
-    fn transform(&mut self, rotation: alg::Quat, translation: alg::Vec3) {
+    fn transform_inner(&mut self, rotation: alg::Quat, translation: alg::Vec3) {
         let point = self.center();
 
         // Center axis of rotation
@@ -324,6 +324,32 @@ impl Instance {
         for i in 0..8 {
             self.particles[i].position = self.particles[i].position
                 + translation;
+        }
+
+        // Rotate
+        for i in 0..8 {
+            self.particles[i].position = rotation
+                * self.particles[i].position;
+        }
+
+        // Move back to world space
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position + point;
+        }
+    }
+
+    fn transform_outer(&mut self, rotation: alg::Quat, translation: alg::Vec3) {
+        // Translate
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position
+                + translation;
+        }
+
+        let point = self.center();
+
+        // Center axis of rotation
+        for i in 0..8 {
+            self.particles[i].position = self.particles[i].position - point;
         }
 
         // Rotate
@@ -654,12 +680,14 @@ impl Manager {
         let z_min = z_limit.0.to_radians();
         let z_max = z_limit.1.to_radians();
 
+        let transform = alg::Quat::from_vecs(fwd, up);
+
         let joint = Joint {
             child: j,
             x_limit: Range { min: x_min, max: x_max },
             y_limit: Range { min: y_min, max: y_max },
             z_limit: Range { min: z_min, max: z_max },
-            transform: alg::Quat::from_vecs(fwd, up),
+            transform: transform,
             offset: offset,
         };
 
@@ -864,7 +892,7 @@ impl Manager {
 
             // Correct parent
             if children.len() > 1 { // FIXME
-                parent.transform(rotation, net_force);
+                parent.transform_inner(rotation, net_force);
             }
 
             /* Constrain positions */

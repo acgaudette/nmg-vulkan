@@ -698,17 +698,24 @@ impl Manager {
                 (*ptr).as_ref().unwrap()
             };
 
+            let rotation = parent.orientation().to_quat()
+                * transform.conjugate();
+
             let child = unsafe {
                 let ptr = self.instances.as_mut_ptr().offset(j as isize);
                 (*ptr).as_mut().unwrap()
             };
 
-            let rotation = parent.orientation().to_quat()
-                * transform.conjugate();
             let translation = parent.extend(offset)
                 + rotation * child.start();
 
+            // Align child with joint
             child.transform_outer(rotation, translation);
+
+            // Reset child position
+            for particle in &mut child.particles {
+                particle.last = particle.position;
+            }
         }
 
         if let Some(entry) = self.joints.get_mut(&i) {

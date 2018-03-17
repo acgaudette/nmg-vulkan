@@ -300,10 +300,10 @@ impl Instance {
         alg::Mat::inverse_axes(right, up, fwd)
     }
 
-    #[allow(dead_code)]
-    fn rotate_start(&mut self, x: f32, y: f32, z: f32) {
+    #[inline]
+    fn rotate_start(&mut self, rotation: alg::Quat) {
         let point = self.start();
-        self.rotate_around(point, x, y, z);
+        self.rotate_around(rotation, point);
     }
 
     #[allow(dead_code)]

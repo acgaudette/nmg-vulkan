@@ -306,10 +306,10 @@ impl Instance {
         self.rotate_around(rotation, point);
     }
 
-    #[allow(dead_code)]
-    fn rotate_end(&mut self, x: f32, y: f32, z: f32) {
+    #[inline]
+    fn rotate_end(&mut self, rotation: alg::Quat) {
         let point = self.end();
-        self.rotate_around(point, x, y, z);
+        self.rotate_around(rotation, point);
     }
 
     fn transform_inner(

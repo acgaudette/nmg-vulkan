@@ -408,6 +408,14 @@ impl Instance {
             self.particles[i].position = self.particles[i].position + point;
         }
     }
+
+    #[inline]
+    fn translate(&mut self, offset: alg::Vec3) {
+        for i in 0..8 {
+            let new = self.particles[i].position + offset;
+            self.particles[i].position = new;
+        }
+    }
 }
 
 #[derive(Clone, Copy)]

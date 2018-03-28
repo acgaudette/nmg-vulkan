@@ -312,6 +312,7 @@ impl Instance {
         self.rotate_around(rotation, point);
     }
 
+    #[inline]
     fn transform_inner(
         &mut self,
         rotation: alg::Quat,

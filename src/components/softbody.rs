@@ -900,7 +900,43 @@ impl Manager {
 
             debug_assert!(children.len() == joints.len());
 
-            /* Constrain rotations */
+            /* Constrain orientations to joint connection */
+
+            let parent_end = parent.extend(joints[0].offset);
+            let parent_start = parent.extend(-joints[0].offset);
+
+            // Find midpoint for initial correction
+            let midpoint = (children[0].start() + parent_end) * 0.5;
+
+            /* Rotate child torwards midpoint */
+
+            let child_correction = alg::Quat::from_to(
+                children[0].fwd(),
+                (children[0].end() - midpoint).norm(),
+            );
+
+            children[0].rotate_end(child_correction);
+
+            /* Rotate parent towards midpoint,
+             * taking joint transform into account
+             */
+
+            let parent_correction = alg::Quat::from_to(
+                (parent_end - parent_start).norm(),
+                (midpoint - parent_start).norm(),
+            );
+
+            parent.rotate_start(parent_correction);
+
+            /* Constrain positions */
+
+            let offset = (children[0].start() - parent_end)
+                * -JOINT_POS_RIGID;
+
+            children[0].translate(offset);
+            parent.translate(-offset);
+
+            /* Constrain orientations to limits */
 
             let mut net_torque = alg::Vec3::zero();
             let mut net_force = alg::Vec3::zero();
@@ -927,31 +963,6 @@ impl Manager {
             // Correct parent
             if children.len() > 1 { // FIXME
                 parent.transform_inner(rotation, net_force);
-            }
-
-            /* Constrain positions */
-
-            let mut position_sum = alg::Vec3::zero();
-
-            for i in 0..children.len() {
-                let offset = (
-                        children[i].start() - parent.extend(joints[i].offset)
-                    ) * -JOINT_POS_RIGID;
-
-                // Sum parent correction
-                position_sum = position_sum - offset;
-
-                for j in 0..8 {
-                    // Correct child
-                    let new = children[i].particles[j].position + offset;
-                    children[i].particles[j].position = new;
-                }
-            }
-
-            // Correct parent
-            for j in 0..8 {
-                let new = parent.particles[j].position + position_sum;
-                parent.particles[j].position = new;
             }
         }
     }

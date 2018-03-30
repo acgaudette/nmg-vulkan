@@ -902,39 +902,41 @@ impl Manager {
 
             /* Constrain orientations to joint connection */
 
-            let parent_end = parent.extend(joints[0].offset);
-            let parent_start = parent.extend(-joints[0].offset);
+            for i in 0..children.len() {
+                let parent_end = parent.extend(joints[i].offset);
+                let parent_start = parent.extend(-joints[i].offset);
 
-            // Find midpoint for initial correction
-            let midpoint = (children[0].start() + parent_end) * 0.5;
+                // Find midpoint for initial correction
+                let midpoint = (children[i].start() + parent_end) * 0.5;
 
-            /* Rotate child torwards midpoint */
+                /* Rotate child torwards midpoint */
 
-            let child_correction = alg::Quat::from_to(
-                children[0].fwd(),
-                (children[0].end() - midpoint).norm(),
-            );
+                let child_correction = alg::Quat::from_to(
+                    children[i].fwd(),
+                    (children[i].end() - midpoint).norm(),
+                );
 
-            children[0].rotate_end(child_correction);
+                children[i].rotate_end(child_correction);
 
-            /* Rotate parent towards midpoint,
-             * taking joint transform into account
-             */
+                /* Rotate parent towards midpoint,
+                 * taking joint transform into account
+                 */
 
-            let parent_correction = alg::Quat::from_to(
-                (parent_end - parent_start).norm(),
-                (midpoint - parent_start).norm(),
-            );
+                let parent_correction = alg::Quat::from_to(
+                    (parent_end - parent_start).norm(),
+                    (midpoint - parent_start).norm(),
+                );
 
-            parent.rotate_start(parent_correction);
+                parent.rotate_start(parent_correction);
 
-            /* Constrain positions */
+                /* Constrain positions */
 
-            let offset = (children[0].start() - parent_end)
-                * -JOINT_POS_RIGID;
+                let offset = (children[i].start() - parent_end)
+                    * -JOINT_POS_RIGID;
 
-            children[0].translate(offset);
-            parent.translate(-offset);
+                children[i].translate(offset);
+                parent.translate(-offset);
+            }
 
             /* Constrain orientations to limits */
 

@@ -963,9 +963,7 @@ impl Manager {
             );
 
             // Correct parent
-            if children.len() > 1 { // FIXME
-                parent.transform_inner(rotation, net_force);
-            }
+            parent.transform_inner(rotation, net_force);
         }
     }
 

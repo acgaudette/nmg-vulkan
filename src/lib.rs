@@ -1,3 +1,4 @@
+#![feature(duration_extras)]
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 extern crate ini;
@@ -148,7 +149,8 @@ fn begin_update<T>(
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
     let mut accumulator = 0f32; // Fixed-framerate accumulator
-    let mut last_updated = std::time::Instant::now();
+    let mut last_updated_fps_counter = std::time::Instant::now();
+    let mut last_updated_renderer = std::time::Instant::now();
     let mut last_frame = 0u32;
 
     let mut metadata = Metadata::new();
@@ -157,6 +159,7 @@ fn begin_update<T>(
     let target_fps = config_data
         .section(Some("settings")).unwrap()
         .get("fps").unwrap();
+    let frame_duration_millis = 1000u32 / target_fps.parse::<u32>().unwrap();
 
     println!("Target frames per second: {}", target_fps);
 
@@ -261,6 +264,12 @@ fn begin_update<T>(
             }
         }
 
+        while now.duration_since(last_updated_renderer).subsec_millis() < frame_duration_millis {
+            // Sleep until frame_duration is reached
+        }
+        
+        last_updated_renderer = now;
+        
         // Render frame
         if let Err(e) = context.draw(&components.draws.instances) {
             // Handle render errors
@@ -290,7 +299,7 @@ fn begin_update<T>(
         // Increment frame counter
         metadata.frame += 1;
 
-        if now.duration_since(last_updated).as_secs() > 0 {
+        if now.duration_since(last_updated_fps_counter).as_secs() > 0 {
             // Frames per second
             metadata.fps = metadata.frame - last_frame;
             last_frame = metadata.frame;
@@ -299,7 +308,7 @@ fn begin_update<T>(
                 println!("Frames per second: {}", metadata.fps);
             }
 
-            last_updated = now;
+            last_updated_fps_counter = now;
         }
     }
 }

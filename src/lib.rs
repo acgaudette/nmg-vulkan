@@ -278,9 +278,10 @@ fn begin_update<T>(
             
             thread::sleep(sleep_duration);
         }
-        
+
+        let now = std::time::Instant::now();
         last_updated_renderer = now;
-        
+
         // Render frame
         if let Err(e) = context.draw(&components.draws.instances) {
             // Handle render errors

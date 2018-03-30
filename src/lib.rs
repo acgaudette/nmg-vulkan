@@ -1,4 +1,5 @@
 #![feature(duration_extras)]
+
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 extern crate ini;
@@ -151,7 +152,7 @@ fn begin_update<T>(
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
     let mut accumulator = 0f32; // Fixed-framerate accumulator
-    let mut last_updated_fps_counter = std::time::Instant::now();
+    let mut last_updated_counter = std::time::Instant::now();
     let mut last_updated_renderer = std::time::Instant::now();
     let mut last_frame = 0u32;
 
@@ -161,7 +162,7 @@ fn begin_update<T>(
     let target_fps = config_data
         .section(Some("settings")).unwrap()
         .get("fps").unwrap();
-    let frame_duration_millis = 1000u32 / target_fps.parse::<u32>().unwrap();
+    let frame_limit = 1000u32 / target_fps.parse::<u32>().unwrap();
 
     println!("Target frames per second: {}", target_fps);
 
@@ -266,19 +267,21 @@ fn begin_update<T>(
             }
         }
 
-        
-        let millis_since_updated =
-            now.duration_since(last_updated_renderer).subsec_millis();
-        if millis_since_updated < frame_duration_millis {
+        /* Limit frames per second */
+
+        let ms_since_update = now.duration_since(last_updated_renderer)
+            .subsec_millis();
+
+        if ms_since_update < frame_limit {
             // Sleep until frame_duration is reached
-            let sleep_duration = std::time::Duration::from_millis(
-                (frame_duration_millis as u64) -
-                (millis_since_updated as u64)
-                );
-            
-            thread::sleep(sleep_duration);
+            let duration = std::time::Duration::from_millis(
+                (frame_limit - ms_since_update) as u64
+            );
+
+            thread::sleep(duration);
         }
 
+        // Reset now
         let now = std::time::Instant::now();
         last_updated_renderer = now;
 
@@ -311,7 +314,7 @@ fn begin_update<T>(
         // Increment frame counter
         metadata.frame += 1;
 
-        if now.duration_since(last_updated_fps_counter).as_secs() > 0 {
+        if now.duration_since(last_updated_counter).as_secs() > 0 {
             // Frames per second
             metadata.fps = metadata.frame - last_frame;
             last_frame = metadata.frame;
@@ -320,7 +323,7 @@ fn begin_update<T>(
                 println!("Frames per second: {}", metadata.fps);
             }
 
-            last_updated_fps_counter = now;
+            last_updated_counter = now;
         }
     }
 }

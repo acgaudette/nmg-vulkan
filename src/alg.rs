@@ -583,6 +583,29 @@ impl Quat {
         }
     }
 
+    pub fn from_to(from: Vec3, to: Vec3) -> Quat {
+        let cross = from.cross(to);
+        let dot = from.dot(to);
+
+        if dot > 1.0 - std::f32::EPSILON {
+            Quat::id()
+        } else if dot < -1.0 + std::f32::EPSILON {
+            Quat {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                w: 0.0,
+            }
+        } else {
+            Quat {
+                x: cross.x,
+                y: cross.y,
+                z: cross.z,
+                w: (from.mag_squared() * to.mag_squared()).sqrt() + dot,
+            }
+        }
+    }
+
     // Hestenes "simple" rotation (does not preserve Z twist)
     pub fn simple(from: Vec3, to: Vec3) -> Quat {
         let axis = from.cross(to);

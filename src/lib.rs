@@ -16,6 +16,8 @@ pub mod debug;
 mod statics;
 mod util;
 
+use std::thread;
+
 const FIXED_DT: f32 = 1. / 100.;
 const FIXED_STEP: f32 = FIXED_DT;
 
@@ -264,8 +266,17 @@ fn begin_update<T>(
             }
         }
 
-        while now.duration_since(last_updated_renderer).subsec_millis() < frame_duration_millis {
+        
+        let millis_since_updated =
+            now.duration_since(last_updated_renderer).subsec_millis();
+        if millis_since_updated < frame_duration_millis {
             // Sleep until frame_duration is reached
+            let sleep_duration = std::time::Duration::from_millis(
+                (frame_duration_millis as u64) -
+                (millis_since_updated as u64)
+                );
+            
+            thread::sleep(sleep_duration);
         }
         
         last_updated_renderer = now;

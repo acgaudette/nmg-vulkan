@@ -861,6 +861,12 @@ impl Plane {
     pub fn dist(self, point: Vec3) -> f32 {
         self.normal.dot(point) + self.offset
     }
+
+    #[inline]
+    pub fn reflect(self, vec: Vec3) -> Vec3 {
+        // Does not flip the sign of the result
+        self.normal * vec.dot(self.normal) * 2. - vec
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

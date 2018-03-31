@@ -856,6 +856,11 @@ impl Plane {
     pub fn intersects(self, start: Vec3, ray: Vec3) -> bool {
         self.normal.dot(start + ray) < 0.0
     }
+
+    #[inline]
+    pub fn dist(self, point: Vec3) -> f32 {
+        self.normal.dot(point) + self.offset
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]

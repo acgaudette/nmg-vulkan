@@ -787,6 +787,20 @@ impl Manager {
                     None => continue,
                 };
 
+                // Plane collision
+                for plane in &self.planes {
+                    for particle in &mut instance.particles {
+                        let distance = plane.dist(particle.position);
+
+                        if distance > 0. {
+                            continue;
+                        }
+
+                        particle.position = particle.position
+                            - plane.normal * self.bounce * distance;
+                    }
+                }
+
                 // Rods
                 for rod in &instance.rods {
                     let left = instance.particles[rod.left].position;
@@ -800,28 +814,6 @@ impl Manager {
 
                     instance.particles[rod.left].position = left - offset;
                     instance.particles[rod.right].position = right + offset;
-                }
-
-                // Planes
-                for plane in &self.planes {
-                    for particle in &mut instance.particles {
-                        let distance = plane.normal.dot(particle.position)
-                            + plane.offset;
-
-                        if distance > 0. {
-                            continue;
-                        }
-
-                        // Friction
-                        let moved = particle.position - particle.last;
-                        let factor = moved.norm().dot(plane.normal).abs();
-                        particle.position = particle.position - moved
-                            * FRICTION * (1.0 - factor);
-
-                        // Collision
-                        particle.position = particle.position
-                            - plane.normal * self.bounce * distance;
-                    }
                 }
 
                 // Deformity

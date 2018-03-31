@@ -777,6 +777,23 @@ impl Manager {
                 particle.last = particle.position;
                 particle.position = next_position;
             }
+
+            // Plane friction
+            for plane in &self.planes {
+                for particle in &mut instance.particles {
+                    let distance = plane.dist(particle.position);
+
+                    if distance > 0. {
+                        continue;
+                    }
+
+                    let factor = particle.displacement.norm()
+                        .dot(plane.normal).abs();
+
+                    particle.position = particle.position
+                        - particle.displacement * FRICTION * (1.0 - factor);
+                }
+            }
         }
 
         // Solve constraints

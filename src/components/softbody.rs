@@ -17,9 +17,6 @@ const ITERATIONS: usize = 10;
 // A value of zero nullifies all rods in the instance
 const DEFORM: f32 = 1.000;
 
-// Range 0 - 1; 0 = no planar friction
-const FRICTION: f32 = 0.001;
-
 // Range 0 - 0.499; "Rigid" = 0.499
 // Lower values produce springier joints
 // A value of zero nullifies the translational constraints of all joints
@@ -476,6 +473,9 @@ pub struct Manager {
     // Values < 2 become force zones, values > 2 add impossible force
     // A value of zero nullifies all collisions
     bounce: f32,
+
+    // Range 0 - 1; 0 = no planar friction
+    friction: f32,
 }
 
 impl components::Component for Manager {
@@ -512,6 +512,7 @@ impl Manager {
             planes: Vec::with_capacity(plane_hint),
             gravity: alg::Vec3::new(0., -9.8, 0.),
             bounce: 2.0,
+            friction: 0.001,
         }
     }
 

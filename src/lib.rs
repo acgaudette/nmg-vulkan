@@ -20,7 +20,6 @@ mod util;
 use std::thread;
 
 const FIXED_DT: f32 = 1. / 100.;
-const FIXED_STEP: f32 = FIXED_DT;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
@@ -172,6 +171,12 @@ fn begin_update<T>(
 
     println!("Target frames per second: {}", target_fps);
 
+    let fixed_step_factor = config_data
+        .section(Some("settings")).unwrap()
+        .get("fixed_step_factor").unwrap();
+
+    let fixed_step = FIXED_DT * fixed_step_factor.parse::<f32>().unwrap();
+
     loop {
         // Handle window events
         events.poll_events(|event| {
@@ -231,7 +236,7 @@ fn begin_update<T>(
 
         accumulator += delta as f32;
 
-        while accumulator >= FIXED_STEP {
+        while accumulator >= fixed_step {
             game.fixed_update(
                 time,
                 FIXED_DT,
@@ -247,7 +252,7 @@ fn begin_update<T>(
             components.rigidbodies.simulate(&mut components.transforms);
             components.softbodies.simulate(&mut components.transforms);
 
-            accumulator -= FIXED_STEP;
+            accumulator -= fixed_step;
             metadata.fixed_frame += 1;
         }
 

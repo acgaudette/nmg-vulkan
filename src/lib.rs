@@ -159,13 +159,16 @@ fn begin_update<T>(
     let mut metadata = Metadata::new();
 
     let config_data = &config::ENGINE_CONFIG;
+
     let target_fps = config_data
         .section(Some("settings")).unwrap()
         .get("fps").unwrap();
-    let mut frame_limit = 0u32;
-    if target_fps != "0" {
-        frame_limit = 1000u32 / target_fps.parse::<u32>().unwrap();
-    }
+
+    let frame_limit = if target_fps != "0" {
+        1000u32 / target_fps.parse::<u32>().unwrap()
+    } else {
+        0u32
+    };
 
     println!("Target frames per second: {}", target_fps);
 

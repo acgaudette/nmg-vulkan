@@ -45,7 +45,7 @@ const JOINT_CONTAINS_BIAS: f32 = 8.0;
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,
-    velocity: alg::Vec3,
+    displacement: alg::Vec3,
 }
 
 impl Particle {
@@ -53,7 +53,7 @@ impl Particle {
         Particle {
             position: position,
             last: position,
-            velocity: alg::Vec3::zero(),
+            displacement: alg::Vec3::zero(),
         }
     }
 }
@@ -773,7 +773,7 @@ impl Manager {
                     - particle.last
                     + instance.accel_dt;
 
-                particle.velocity = (next_position - particle.last) / 2.0;
+                particle.displacement = (next_position - particle.last) / 2.0;
                 particle.last = particle.position;
                 particle.position = next_position;
             }

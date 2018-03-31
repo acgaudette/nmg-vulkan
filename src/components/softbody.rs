@@ -760,6 +760,10 @@ impl Manager {
         self.bounce = bounce;
     }
 
+    pub fn set_friction(&mut self, friction: f32) {
+        self.friction = friction;
+    }
+
     pub fn simulate(&mut self, transforms: &mut transform::Manager) {
         // Update instance particles
         for i in 0..self.instances.len() {
@@ -770,7 +774,7 @@ impl Manager {
 
             // Position Verlet
             for particle in &mut instance.particles {
-                let next_position = particle.position * 2
+                let next_position = particle.position * 2.
                     - particle.last
                     + instance.accel_dt;
 
@@ -792,7 +796,8 @@ impl Manager {
                         .dot(plane.normal).abs();
 
                     particle.position = particle.position
-                        - particle.displacement * FRICTION * (1.0 - factor);
+                        - particle.displacement * self.friction
+                        * (1.0 - factor);
                 }
             }
         }

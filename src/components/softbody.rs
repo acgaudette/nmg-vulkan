@@ -767,11 +767,15 @@ impl Manager {
                 None => continue,
             };
 
+            // Position Verlet
             for particle in &mut instance.particles {
-                // Position Verlet
-                let target = particle.position * 2. - particle.last;
+                let next_position = particle.position * 2
+                    - particle.last
+                    + instance.accel_dt;
+
+                particle.velocity = (next_position - particle.last) / 2.0;
                 particle.last = particle.position;
-                particle.position = target + instance.accel_dt;
+                particle.position = next_position;
             }
         }
 

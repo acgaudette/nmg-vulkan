@@ -45,6 +45,7 @@ const JOINT_CONTAINS_BIAS: f32 = 8.0;
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,
+    velocity: alg::Vec3,
 }
 
 impl Particle {
@@ -52,6 +53,7 @@ impl Particle {
         Particle {
             position: position,
             last: position,
+            velocity: alg::Vec3::zero(),
         }
     }
 }

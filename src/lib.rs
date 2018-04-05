@@ -151,23 +151,31 @@ fn begin_update<T>(
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
     let mut accumulator = 0f32; // Fixed-framerate accumulator
-    let mut last_updated_counter = std::time::Instant::now();
-    let mut last_updated_renderer = std::time::Instant::now();
+    let mut last_updated_counter = start;
+    let mut last_updated_renderer = start;
     let mut last_frame = 0u32;
 
     let mut metadata = Metadata::new();
 
+    // Load config file
     let config_data = &config::ENGINE_CONFIG;
+
+    /* Frame limiter */
 
     let target_fps = config_data
         .section(Some("settings")).unwrap()
         .get("fps").unwrap();
 
+    // Maximum time allowed to render a frame (ms)
     let frame_limit = if target_fps != "0" {
         1000u32 / target_fps.parse::<u32>().unwrap()
     } else {
         0u32
     };
+
+    /* Time scaling factor for the fixed timestep;
+     * useful for debugging physics
+     */
 
     println!("Target frames per second: {}", target_fps);
 

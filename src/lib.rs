@@ -150,7 +150,7 @@ fn begin_update<T>(
 
     let start = std::time::Instant::now();
     let mut last_time = 0f64;
-    let mut accumulator = 0f32; // Fixed-framerate accumulator
+    let mut accumulator = 0f64; // Fixed-framerate accumulator
     let mut last_updated_counter = start;
     let mut last_updated_renderer = start;
     let mut last_frame = 0u32;
@@ -166,6 +166,8 @@ fn begin_update<T>(
         .section(Some("settings")).unwrap()
         .get("fps").unwrap();
 
+    println!("Target frames per second: {}", target_fps);
+
     // Maximum time allowed to render a frame (ms)
     let frame_limit = if target_fps != "0" {
         1000u32 / target_fps.parse::<u32>().unwrap()
@@ -177,13 +179,13 @@ fn begin_update<T>(
      * useful for debugging physics
      */
 
-    println!("Target frames per second: {}", target_fps);
-
     let fixed_step_factor = config_data
         .section(Some("settings")).unwrap()
         .get("fixed_step_factor").unwrap();
 
-    let fixed_step = FIXED_DT * fixed_step_factor.parse::<f32>().unwrap();
+    let fixed_step = (
+        FIXED_DT * fixed_step_factor.parse::<f32>().unwrap()
+    ) as f64;
 
     loop {
         // Handle window events
@@ -242,7 +244,7 @@ fn begin_update<T>(
 
         /* Fixed update loop */
 
-        accumulator += delta as f32;
+        accumulator += delta;
 
         while accumulator >= fixed_step {
             game.fixed_update(

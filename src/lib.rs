@@ -18,7 +18,7 @@ mod util;
 use std::thread;
 
 const FIXED_DT: f32 = 1. / 100.;
-const LIMIT_NS: u32 = 2048;
+const LIMIT_NS: u32 = 100000;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
@@ -294,7 +294,14 @@ fn begin_update<T>(
 
             if ns_since_update >= frame_limit { break; }
 
-            thread::sleep(std::time::Duration::new(0, LIMIT_NS));
+            let sleep_time = frame_limit - ns_since_update;
+            if sleep_time > LIMIT_NS {
+                thread::sleep(
+                    std::time::Duration::new(0, sleep_time - LIMIT_NS)
+                );
+            }
+
+            thread::sleep(std::time::Duration::new(0, 0));
         }
 
         // Reset now

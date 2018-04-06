@@ -291,7 +291,7 @@ fn begin_update<T>(
         let ms_since_update = now.duration_since(last_updated_renderer)
             .subsec_millis();
 
-        if frame_limit != 0 && ms_since_update < frame_limit {
+        if ms_since_update < frame_limit {
             // Sleep until frame_duration is reached
             let duration = std::time::Duration::from_millis(
                 (frame_limit - ms_since_update) as u64

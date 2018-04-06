@@ -288,17 +288,15 @@ fn begin_update<T>(
 
         /* Limit frames per second */
 
-        let ms_since_update = now.duration_since(last_updated_renderer)
-            .subsec_millis();
+        while {
+            let ms_since_update = std::time::Instant::now()
+                .duration_since(last_updated_renderer)
+                .subsec_millis();
 
-        if ms_since_update < frame_limit {
-            // Sleep until frame_duration is reached
-            let duration = std::time::Duration::from_millis(
-                (frame_limit - ms_since_update) as u64
-            );
+            thread::sleep(std::time::Duration::new(0, 0));
 
-            thread::sleep(duration);
-        }
+            ms_since_update < frame_limit
+        } { }
 
         // Reset now
         let now = std::time::Instant::now();

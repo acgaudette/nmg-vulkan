@@ -926,13 +926,16 @@ impl Manager {
             /* Constrain orientations to joint connection */
 
             for i in 0..children.len() {
+                // Calculate mass imbalance
+                let weight = 1. / (children[i].mass / parent.mass + 1.);
+
                 let parent_end = parent.extend(joints[i].offset);
                 let parent_start = parent.extend(-joints[i].offset);
 
                 // Find midpoint for initial correction
-                let midpoint = (children[i].start() + parent_end) * 0.5;
+                let midpoint = children[i].start().lerp(parent_end, weight);
 
-                /* Rotate child torwards midpoint */
+                /* Rotate child towards midpoint */
 
                 let child_correction = alg::Quat::from_to(
                     children[i].fwd(),
@@ -957,8 +960,8 @@ impl Manager {
                 let offset = (children[i].start() - parent_end)
                     * -JOINT_POS_RIGID;
 
-                children[i].translate(offset);
-                parent.translate(-offset);
+                children[i].translate(offset * weight);
+                parent.translate(-offset * (1. - weight));
             }
 
             /* Constrain orientations to limits */

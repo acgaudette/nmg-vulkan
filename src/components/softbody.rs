@@ -123,6 +123,7 @@ struct Instance {
 
     /* "Constants" */
 
+    mass: f32,
     inv_pt_mass: f32, // Inverse mass per particle
     model: Vec<alg::Vec3>, // Vertices reference
 
@@ -173,6 +174,7 @@ impl Instance {
             accel_dt: gravity * FIXED_DT * FIXED_DT,
             position: alg::Vec3::zero(),
 
+            mass: mass,
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
             rigidity: rigidity,
             model,

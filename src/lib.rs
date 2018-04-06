@@ -287,15 +287,15 @@ fn begin_update<T>(
 
         /* Limit frames per second */
 
-        while {
+        loop {
             let ns_since_update = std::time::Instant::now()
                 .duration_since(last_updated_renderer)
                 .subsec_nanos();
 
-            thread::sleep(std::time::Duration::new(0, LIMIT_NS));
+            if ns_since_update >= frame_limit { break; }
 
-            ns_since_update < frame_limit
-        } { }
+            thread::sleep(std::time::Duration::new(0, LIMIT_NS));
+        }
 
         // Reset now
         let now = std::time::Instant::now();

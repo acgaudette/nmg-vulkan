@@ -512,7 +512,7 @@ impl Manager {
             planes: Vec::with_capacity(plane_hint),
             gravity: alg::Vec3::new(0., -9.8, 0.),
             bounce: 2.0,
-            friction: 0.001,
+            friction: 0.02,
         }
     }
 

@@ -1,5 +1,3 @@
-#![feature(duration_extras)]
-
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 extern crate ini;
@@ -168,12 +166,10 @@ fn begin_update<T>(
 
     println!("Target frames per second: {}", target_fps);
 
-    // Maximum time allowed to render a frame (ms)
+    // Maximum time allowed to render a frame (ns)
     let frame_limit = if target_fps != "0" {
-        1000u32 / target_fps.parse::<u32>().unwrap()
-    } else {
-        0u32
-    };
+        1000000000 / target_fps.parse::<u32>().unwrap()
+    } else { 0 };
 
     /* Time scaling factor for the fixed timestep;
      * useful for debugging physics
@@ -291,13 +287,13 @@ fn begin_update<T>(
         /* Limit frames per second */
 
         while {
-            let ms_since_update = std::time::Instant::now()
+            let ns_since_update = std::time::Instant::now()
                 .duration_since(last_updated_renderer)
-                .subsec_millis();
+                .subsec_nanos();
 
             thread::sleep(std::time::Duration::new(0, 0));
 
-            ms_since_update < frame_limit
+            ns_since_update < frame_limit
         } { }
 
         // Reset now

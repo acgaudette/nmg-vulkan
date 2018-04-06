@@ -18,6 +18,7 @@ mod util;
 use std::thread;
 
 const FIXED_DT: f32 = 1. / 100.;
+const LIMIT_NS: u32 = 2048;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
@@ -291,7 +292,7 @@ fn begin_update<T>(
                 .duration_since(last_updated_renderer)
                 .subsec_nanos();
 
-            thread::sleep(std::time::Duration::new(0, 0));
+            thread::sleep(std::time::Duration::new(0, LIMIT_NS));
 
             ns_since_update < frame_limit
         } { }

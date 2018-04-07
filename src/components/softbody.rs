@@ -1169,13 +1169,15 @@ impl Manager {
         let point = child.start();
         child.transform_around(
             point,
-            correction.to_quat().pow(weight).to_mat(), // TODO
+            correction.to_quat()
+                .pow(weight * JOINT_ANG_RIGID)
+                .to_mat(), // TODO: Fix double conversion
         );
 
         // Convert parent correction to vector
         let torque = {
             let (dir, mag) = correction.transpose().to_quat()
-                .pow(1. - weight)
+                .pow((1. - weight) * JOINT_ANG_RIGID)
                 .to_axis_angle();
 
             dir * mag

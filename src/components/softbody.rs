@@ -17,10 +17,10 @@ const ITERATIONS: usize = 10;
 // A value of zero nullifies all rods in the instance
 const DEFORM: f32 = 1.000;
 
-// Range 0 - 0.499; "Rigid" = 0.499
+// Range 0 - 1.0; "Rigid" = 1.0
 // Lower values produce springier joints
 // A value of zero nullifies the translational constraints of all joints
-const JOINT_POS_RIGID: f32 = 0.499;
+const JOINT_POS_RIGID: f32 = 1.0;
 
 // Range 0 - 0.5; "Rigid" = 0.5
 // Lower values produce springier joints

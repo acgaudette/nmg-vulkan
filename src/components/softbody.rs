@@ -22,10 +22,10 @@ const DEFORM: f32 = 1.000;
 // A value of zero nullifies the translational constraints of all joints
 const JOINT_POS_RIGID: f32 = 1.0;
 
-// Range 0 - 0.5; "Rigid" = 0.5
+// Range 0 - 1.0; "Rigid" = 1.0
 // Lower values produce springier joints
 // A value of zero nullifies the angular constraints of all joints
-const JOINT_ANG_RIGID: f32 = 0.5;
+const JOINT_ANG_RIGID: f32 = 1.0;
 
 // Range 0 - 1
 // Higher values "kick" the joint at its limits and add velocity to the system

@@ -1154,22 +1154,30 @@ impl Manager {
             angle.max(joint.z_limit.min).min(joint.z_limit.max),
         );
 
+        // Calculate mass imbalance
+        let weight = 1. / (child.mass / parent.mass + 1.);
+
         // Calculate correction rotation
         let reverse = local_child.conjugate() * twist * simple;
-        let transformation = reverse.pow(JOINT_ANG_RIGID).to_mat();
 
         let correction = {
             let inverse_child = child_orient.transpose();
-            child_orient * transformation * inverse_child
+            child_orient * reverse.to_mat() * inverse_child
         };
 
         // Correct child
         let point = child.start();
-        child.transform_around(point, correction);
+        child.transform_around(
+            point,
+            correction.to_quat().pow(weight).to_mat(), // TODO
+        );
 
         // Convert parent correction to vector
         let torque = {
-            let (dir, mag) = correction.transpose().to_quat().to_axis_angle();
+            let (dir, mag) = correction.transpose().to_quat()
+                .pow(1. - weight)
+                .to_axis_angle();
+
             dir * mag
         };
 

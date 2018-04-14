@@ -11,6 +11,7 @@ pub mod graphics;
 pub mod entity;
 pub mod components;
 pub mod config;
+pub mod input;
 pub mod debug;
 mod statics;
 mod util;
@@ -55,6 +56,7 @@ pub trait Update {
         screen_width:  u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     ) -> render::SharedUBO;
 }
@@ -69,8 +71,27 @@ pub trait FixedUpdate {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     );
+}
+
+fn vdw_key_to_key(key: vdw::winit::VirtualKeyCode) -> Option<input::Key> {
+    match key {
+        vdw::winit::VirtualKeyCode::W => Some(input::Key::W),
+        vdw::winit::VirtualKeyCode::A => Some(input::Key::A),
+        vdw::winit::VirtualKeyCode::S => Some(input::Key::S),
+        vdw::winit::VirtualKeyCode::D => Some(input::Key::D),
+        vdw::winit::VirtualKeyCode::Up => Some(input::Key::Up),
+        vdw::winit::VirtualKeyCode::Down => Some(input::Key::Down),
+        vdw::winit::VirtualKeyCode::Left => Some(input::Key::Left),
+        vdw::winit::VirtualKeyCode::Right => Some(input::Key::Right),
+        vdw::winit::VirtualKeyCode::Space => Some(input::Key::Space),
+        vdw::winit::VirtualKeyCode::Return => Some(input::Key::Enter),
+        vdw::winit::VirtualKeyCode::LControl => Some(input::Key::LCtrl),
+        vdw::winit::VirtualKeyCode::LShift => Some(input::Key::LShift),
+        _ => None,
+    }
 }
 
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
@@ -155,6 +176,7 @@ fn begin_update<T>(
     let mut last_frame = 0u32;
 
     let mut metadata = Metadata::new();
+    let mut input_manager = input::Manager::new();
 
     // Load config file
     let config_data = &config::ENGINE_CONFIG;
@@ -185,6 +207,12 @@ fn begin_update<T>(
     ) as f64;
 
     loop {
+        
+        for val in input_manager.key_pressed_map.iter_mut() {
+            val.0 = val.1;
+            val.1 = false;
+        }
+        
         // Handle window events
         events.poll_events(|event| {
             match event {
@@ -208,6 +236,27 @@ fn begin_update<T>(
                     ..
                 } => {
                     running = false;
+                },
+
+                // Keyboard input
+                vdw::winit::Event::WindowEvent {
+                    event: vdw::winit::WindowEvent::KeyboardInput {
+                        device_id, input
+                    },
+                    ..
+                }=> {
+                    match input.virtual_keycode {
+                        Some(vdw) => {
+                            let curr_key = vdw_key_to_key(vdw);
+                            match curr_key {
+                                Some(keycode) => {
+                                    input_manager.key_pressed_map[(keycode as usize)].1 = true;
+                                },
+                                None => {},
+                            }
+                        },
+                        None => {},
+                    }
                 },
 
                 _ => ()
@@ -236,9 +285,10 @@ fn begin_update<T>(
             context.swapchain.extent().width(),
             entities,
             components,
+            &input_manager,
             debug,
         );
-
+        
         /* Fixed update loop */
 
         accumulator += delta;
@@ -252,6 +302,7 @@ fn begin_update<T>(
                 context.swapchain.extent().width(),
                 entities,
                 components,
+                &input_manager,
                 debug,
             );
 

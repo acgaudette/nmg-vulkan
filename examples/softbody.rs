@@ -6,6 +6,7 @@ use nmg::render;
 use nmg::graphics;
 use nmg::components;
 use nmg::components::Component;
+use nmg::input;
 use nmg::debug;
 
 /* In debug mode, this demo will render in wireframe, with physics markers.
@@ -97,6 +98,7 @@ impl nmg::Update for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     ) -> render::SharedUBO {
         let shared_ubo = {
@@ -140,6 +142,7 @@ impl nmg::FixedUpdate for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     ) {
         if metadata.fixed_frame > 0 {

@@ -4,6 +4,7 @@ use nmg::alg;
 use nmg::entity;
 use nmg::render;
 use nmg::components;
+use nmg::input;
 use nmg::debug;
 
 struct Demo { }
@@ -28,6 +29,7 @@ impl nmg::Update for Demo {
         screen_width:  u32,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     ) -> render::SharedUBO {
         render::SharedUBO::new(
@@ -48,6 +50,7 @@ impl nmg::FixedUpdate for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     ) { }
 }

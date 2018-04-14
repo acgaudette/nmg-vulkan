@@ -1,10 +1,13 @@
 extern crate nmg_vulkan as nmg;
 
+extern crate voodoo_winit as vdw;
+
 use nmg::alg;
 use nmg::entity;
 use nmg::render;
 use nmg::components;
 use nmg::components::Component;
+use nmg::input;
 use nmg::debug;
 
 struct Demo {
@@ -50,8 +53,10 @@ impl nmg::Update for Demo {
         screen_width:  u32,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
     ) -> render::SharedUBO {
+
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
                 alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
@@ -109,8 +114,9 @@ impl nmg::FixedUpdate for Demo {
         screen_width: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
+        input: &input::Manager,
         debug: &mut debug::Handler,
-    ) {}
+    ) { }
 }
 
 fn main() {

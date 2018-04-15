@@ -120,6 +120,9 @@ where
         softbodies:  components::softbody::Manager::new(1, 1, 1),
     };
 
+    // Create input manager
+    let mut input = input::Manager::new();
+
     // Initialize debug struct
     let mut debug = debug::Handler::new();
 
@@ -134,6 +137,7 @@ where
         &mut context,
         &mut entities,
         &mut components,
+        &mut input,
         &mut debug,
     );
 
@@ -162,6 +166,7 @@ fn begin_update<T>(
     context:    &mut render::Context,
     entities:   &mut entity::Manager,
     components: &mut components::Container,
+    input:      &mut input::Manager,
     debug:      &mut debug::Handler,
 ) where
     T: Start + Update + FixedUpdate
@@ -176,7 +181,6 @@ fn begin_update<T>(
     let mut last_frame = 0u32;
 
     let mut metadata = Metadata::new();
-    let mut input_manager = input::Manager::new();
 
     // Load config file
     let config_data = &config::ENGINE_CONFIG;
@@ -207,8 +211,8 @@ fn begin_update<T>(
     ) as f64;
 
     loop {
-        
-        for val in input_manager.key_pressed_map.iter_mut() {
+        // Update last frame of input
+        for val in input.key_pressed_map.iter_mut() {
             val.0 = val.1;
         }
 
@@ -250,7 +254,7 @@ fn begin_update<T>(
                     ..
                 }=> { 
                     if let Some(keycode) = vdw_key_to_key(virtual_keycode) {
-                        input_manager.key_pressed_map[(keycode as usize)].1 = 
+                        input.key_pressed_map[(keycode as usize)].1 = 
                             match state {
                                 vdw::winit::ElementState::Pressed => true,
                                 vdw::winit::ElementState::Released => false,
@@ -284,10 +288,10 @@ fn begin_update<T>(
             context.swapchain.extent().width(),
             entities,
             components,
-            &input_manager,
+            input,
             debug,
         );
-        
+
         /* Fixed update loop */
 
         accumulator += delta;
@@ -301,7 +305,7 @@ fn begin_update<T>(
                 context.swapchain.extent().width(),
                 entities,
                 components,
-                &input_manager,
+                input,
                 debug,
             );
 

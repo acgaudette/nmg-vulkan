@@ -1,7 +1,5 @@
 extern crate nmg_vulkan as nmg;
 
-extern crate voodoo_winit as vdw;
-
 use nmg::alg;
 use nmg::entity;
 use nmg::render;

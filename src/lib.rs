@@ -270,7 +270,7 @@ fn begin_update<T>(
                     },
                     ..
                 } => {
-                    input_manager.cursor_coords = position;
+                    input.cursor_coords = position;
                 },
 
                 vdw::winit::Event::DeviceEvent {
@@ -279,7 +279,7 @@ fn begin_update<T>(
                     },
                     ..
                 } => {
-                    input_manager.mouse_delta = delta;
+                    input.mouse_delta = delta;
                 },
                 _ => ()
             }

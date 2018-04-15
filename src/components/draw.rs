@@ -68,4 +68,13 @@ impl Manager {
     pub fn count(&self) -> usize {
         self.handles.len()
     }
+
+    pub fn hide(&mut self, entity: entity::Handle) {
+        debug_assert!(self.handles.contains_key(&entity));
+
+        self.instances.update_meta(
+            *self.handles.get(&entity).unwrap(),
+            render::InstanceMeta::new(true),
+        );
+    }
 }

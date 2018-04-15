@@ -1,7 +1,7 @@
 extern crate voodoo_winit as vdw;
 
 pub struct Manager {
-    pub key_pressed_map: [(bool,bool);12],
+    pub key_pressed_map: [(bool, bool); 12],
 }
 
 #[derive(Clone, Copy, Debug, Eq)]
@@ -29,7 +29,7 @@ impl PartialEq for Key {
 impl Manager {
     pub fn new() -> Manager {
         Manager {
-            key_pressed_map: [(false,false); 12],
+            key_pressed_map: [(false, false); 12],
         }
     }
 
@@ -41,7 +41,7 @@ impl Manager {
         let vals = self.key_pressed_map[key as usize];
         !vals.0 && vals.1
     }
-    
+
     pub fn get_key_up(&self, key: Key) -> bool {
         let vals = self.key_pressed_map[key as usize];
         vals.0 && !vals.1

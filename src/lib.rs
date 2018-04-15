@@ -262,6 +262,25 @@ fn begin_update<T>(
                     }
                 },
 
+                // Mouse input
+                vdw::winit::Event::WindowEvent {
+                    event: vdw::winit::WindowEvent::CursorMoved {
+                        position,
+                        ..
+                    },
+                    ..
+                } => {
+                    input_manager.cursor_coords = position;
+                },
+
+                vdw::winit::Event::DeviceEvent {
+                    event: vdw::winit::DeviceEvent::MouseMotion {
+                        delta
+                    },
+                    ..
+                } => {
+                    input_manager.mouse_delta = delta;
+                },
                 _ => ()
             }
         });

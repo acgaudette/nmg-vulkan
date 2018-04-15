@@ -2,6 +2,8 @@ extern crate voodoo_winit as vdw;
 
 pub struct Manager {
     pub key_pressed_map: [(bool, bool); 12],
+    pub cursor_coords: (f64, f64),
+    pub mouse_delta: (f64, f64),
 }
 
 #[derive(Clone, Copy, Debug, Eq)]
@@ -30,20 +32,30 @@ impl Manager {
     pub fn new() -> Manager {
         Manager {
             key_pressed_map: [(false, false); 12],
+            cursor_coords: (0f64, 0f64),
+            mouse_delta: (0f64, 0f64),
         }
     }
 
-    pub fn get_key(&self, key: Key) -> bool {
+    pub fn key_held(&self, key: Key) -> bool {
         self.key_pressed_map[key as usize].1
     }
 
-    pub fn get_key_down(&self, key: Key) -> bool {
+    pub fn key_pressed(&self, key: Key) -> bool {
         let vals = self.key_pressed_map[key as usize];
         !vals.0 && vals.1
     }
 
-    pub fn get_key_up(&self, key: Key) -> bool {
+    pub fn key_released(&self, key: Key) -> bool {
         let vals = self.key_pressed_map[key as usize];
         vals.0 && !vals.1
+    }
+
+    pub fn cursor_coords(&self) -> (f64, f64) {
+        return self.cursor_coords.clone();
+    }
+
+    pub fn mouse_delta(&self) -> (f64, f64) {
+        return self.mouse_delta.clone();
     }
 }

@@ -65,7 +65,7 @@ impl nmg::Update for Demo {
             alg::Vec3::one(),
         );
 
-        if input.get_key(input::Key::Space) {
+        if input.key_held(input::Key::Space) {
             components.draws.unhide(self.pyramid.unwrap());
         } else {
             components.draws.hide(self.pyramid.unwrap());

@@ -843,6 +843,23 @@ impl InstanceHandle {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct InstanceMeta {
+    hide: bool,
+}
+
+impl InstanceMeta {
+    pub fn new(hide: bool) -> InstanceMeta {
+        InstanceMeta { hide }
+    }
+}
+
+impl Default for InstanceMeta {
+    fn default() -> InstanceMeta {
+        InstanceMeta { hide: false }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vertex {

@@ -536,7 +536,12 @@ impl<'a> Context<'a> {
         let mut instance = 0;
         for j in 0..self.models.len() {
             // Render each instance
-            for _ in 0..instances.data[j].len() {
+            for k in 0..instances.data[j].len() {
+                // Skip drawing hidden instances
+                if instances.meta[j][k].hide {
+                    continue;
+                }
+
                 // Bind uniform data
                 cmd_buffer.bind_descriptor_sets(
                     vd::PipelineBindPoint::Graphics,

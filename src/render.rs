@@ -414,8 +414,8 @@ impl<'a> Context<'a> {
         );
 
         for model in &instances.data {
-            for ubo in model {
-                dynamic_buffer.push(ubo.clone());
+            for entry in model {
+                dynamic_buffer.push(entry.0.clone());
             }
         }
 
@@ -538,7 +538,7 @@ impl<'a> Context<'a> {
             // Render each instance
             for k in 0..instances.data[j].len() {
                 // Skip drawing hidden instances
-                if instances.meta[j][k].hide {
+                if instances.data[j][k].1.hide {
                     continue;
                 }
 
@@ -758,14 +758,12 @@ impl Model {
 }
 
 pub struct Instances {
-    data: Vec<Vec<InstanceUBO>>,
-    meta: Vec<Vec<InstanceMeta>>,
+    data: Vec<Vec<(InstanceUBO, InstanceMeta)>>,
 }
 
 impl Instances {
     pub fn new(model_count: usize, hints: Option<&[usize]>) -> Instances {
         let mut data = Vec::with_capacity(model_count);
-        let mut meta = Vec::with_capacity(model_count);
 
         match hints {
             Some(hints) => {
@@ -773,19 +771,17 @@ impl Instances {
 
                 for i in 0..model_count {
                     data.push(Vec::with_capacity(hints[i]));
-                    meta.push(Vec::with_capacity(hints[i]));
                 }
             }
 
             None => {
                 for _ in 0..model_count {
                     data.push(Vec::new());
-                    meta.push(Vec::new());
                 }
             }
         };
 
-        Instances { data, meta }
+        Instances { data }
     }
 
     // Returns handle to new instance
@@ -794,8 +790,9 @@ impl Instances {
         instance_data: InstanceUBO,
         model_index: usize,
     ) -> InstanceHandle {
-        self.data[model_index].push(instance_data);
-        self.meta[model_index].push(InstanceMeta::default());
+        self.data[model_index].push(
+            (instance_data, InstanceMeta::default())
+        );
 
         InstanceHandle::new(
             model_index as u32,
@@ -807,14 +804,24 @@ impl Instances {
     pub fn update(
         &mut self,
         handle: InstanceHandle,
-        data: InstanceUBO,
+        ubo: InstanceUBO,
     ) {
         let (m, i) = (
             handle.model_index() as usize,
             handle.instance_index() as usize,
         );
 
-        self.data[m][i] = data;
+        self.data[m][i].0 = ubo;
+    }
+
+    // Modify metadata for an existing instance
+    pub fn update_meta(&mut self, handle: InstanceHandle, meta: InstanceMeta) {
+        let (m, i) = (
+            handle.model_index() as usize,
+            handle.instance_index() as usize,
+        );
+
+        self.data[m][i].1 = meta;
     }
 
     // Count instances (O(model_count))
@@ -826,17 +833,6 @@ impl Instances {
         }
 
         count
-    }
-
-    pub fn update_meta(&mut self, handle: InstanceHandle, meta: InstanceMeta) {
-        let (m, i) = (
-            handle.model_index() as usize,
-            handle.instance_index() as usize,
-        );
-
-        debug_assert!(self.data[m].len() == self.meta[m].len());
-
-        self.meta[m][i] = meta;
     }
 }
 

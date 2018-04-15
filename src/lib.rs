@@ -76,24 +76,6 @@ pub trait FixedUpdate {
     );
 }
 
-fn vdw_key_to_key(key: vdw::winit::VirtualKeyCode) -> Option<input::Key> {
-    match key {
-        vdw::winit::VirtualKeyCode::W => Some(input::Key::W),
-        vdw::winit::VirtualKeyCode::A => Some(input::Key::A),
-        vdw::winit::VirtualKeyCode::S => Some(input::Key::S),
-        vdw::winit::VirtualKeyCode::D => Some(input::Key::D),
-        vdw::winit::VirtualKeyCode::Up => Some(input::Key::Up),
-        vdw::winit::VirtualKeyCode::Down => Some(input::Key::Down),
-        vdw::winit::VirtualKeyCode::Left => Some(input::Key::Left),
-        vdw::winit::VirtualKeyCode::Right => Some(input::Key::Right),
-        vdw::winit::VirtualKeyCode::Space => Some(input::Key::Space),
-        vdw::winit::VirtualKeyCode::Return => Some(input::Key::Enter),
-        vdw::winit::VirtualKeyCode::LControl => Some(input::Key::LCtrl),
-        vdw::winit::VirtualKeyCode::LShift => Some(input::Key::LShift),
-        _ => None,
-    }
-}
-
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
 where
     T: Start + Update + FixedUpdate
@@ -421,5 +403,26 @@ fn begin_update<T>(
 
             last_updated_counter = now;
         }
+    }
+}
+
+fn vdw_key_to_key(keycode: vdw::winit::VirtualKeyCode) -> Option<input::Key> {
+    use vdw::winit::VirtualKeyCode;
+    use input::Key;
+
+    match keycode {
+        VirtualKeyCode::W =>        Some(Key::W),
+        VirtualKeyCode::A =>        Some(Key::A),
+        VirtualKeyCode::S =>        Some(Key::S),
+        VirtualKeyCode::D =>        Some(Key::D),
+        VirtualKeyCode::Up =>       Some(Key::Up),
+        VirtualKeyCode::Down =>     Some(Key::Down),
+        VirtualKeyCode::Left =>     Some(Key::Left),
+        VirtualKeyCode::Right =>    Some(Key::Right),
+        VirtualKeyCode::Space =>    Some(Key::Space),
+        VirtualKeyCode::Return =>   Some(Key::Enter),
+        VirtualKeyCode::LControl => Some(Key::LCtrl),
+        VirtualKeyCode::LShift =>   Some(Key::LShift),
+        _ => None,
     }
 }

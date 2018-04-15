@@ -754,6 +754,7 @@ impl Model {
 
 pub struct Instances {
     data: Vec<Vec<InstanceUBO>>,
+    meta: Vec<Vec<InstanceMeta>>,
 }
 
 impl Instances {

@@ -760,6 +760,7 @@ pub struct Instances {
 impl Instances {
     pub fn new(model_count: usize, hints: Option<&[usize]>) -> Instances {
         let mut data = Vec::with_capacity(model_count);
+        let mut meta = Vec::with_capacity(model_count);
 
         match hints {
             Some(hints) => {
@@ -767,17 +768,19 @@ impl Instances {
 
                 for i in 0..model_count {
                     data.push(Vec::with_capacity(hints[i]));
+                    meta.push(Vec::with_capacity(hints[i]));
                 }
             }
 
             None => {
                 for _ in 0..model_count {
                     data.push(Vec::new());
+                    meta.push(Vec::new());
                 }
             }
         };
 
-        Instances { data }
+        Instances { data, meta }
     }
 
     // Returns handle to new instance
@@ -787,6 +790,7 @@ impl Instances {
         model_index: usize,
     ) -> InstanceHandle {
         self.data[model_index].push(instance_data);
+        self.meta[model_index].push(InstanceMeta::default());
 
         InstanceHandle::new(
             model_index as u32,

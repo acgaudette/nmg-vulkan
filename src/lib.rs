@@ -318,7 +318,7 @@ fn begin_update<T>(
                     || result == vd::CallResult::SuboptimalKhr
                 {
                     // Use existing window size
-                    if let Some(size) = window.get_inner_size_pixels() {
+                    if let Some(size) = window.get_inner_size() {
                         match context.refresh_swapchain(size.0, size.1) {
                             Ok(()) => continue,
                             Err(e) => eprintln!("{}", e) // Fall through

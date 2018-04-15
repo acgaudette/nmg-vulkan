@@ -210,9 +210,8 @@ fn begin_update<T>(
         
         for val in input_manager.key_pressed_map.iter_mut() {
             val.0 = val.1;
-            val.1 = false;
         }
-        
+
         // Handle window events
         events.poll_events(|event| {
             match event {
@@ -241,21 +240,21 @@ fn begin_update<T>(
                 // Keyboard input
                 vdw::winit::Event::WindowEvent {
                     event: vdw::winit::WindowEvent::KeyboardInput {
-                        device_id, input
+                        input: vdw::winit::KeyboardInput {
+                            state,
+                            virtual_keycode: Some(virtual_keycode),
+                            ..
+                        },
+                        ..
                     },
                     ..
-                }=> {
-                    match input.virtual_keycode {
-                        Some(vdw) => {
-                            let curr_key = vdw_key_to_key(vdw);
-                            match curr_key {
-                                Some(keycode) => {
-                                    input_manager.key_pressed_map[(keycode as usize)].1 = true;
-                                },
-                                None => {},
-                            }
-                        },
-                        None => {},
+                }=> { 
+                    if let Some(keycode) = vdw_key_to_key(virtual_keycode) {
+                        input_manager.key_pressed_map[(keycode as usize)].1 = 
+                            match state {
+                                vdw::winit::ElementState::Pressed => true,
+                                vdw::winit::ElementState::Released => false,
+                            };
                     }
                 },
 

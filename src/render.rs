@@ -822,6 +822,17 @@ impl Instances {
 
         count
     }
+
+    pub fn update_meta(&mut self, handle: InstanceHandle, meta: InstanceMeta) {
+        let (m, i) = (
+            handle.model_index() as usize,
+            handle.instance_index() as usize,
+        );
+
+        debug_assert!(self.data[m].len() == self.meta[m].len());
+
+        self.meta[m][i] = meta;
+    }
 }
 
 #[derive(Clone, Copy)]

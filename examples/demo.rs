@@ -54,7 +54,6 @@ impl nmg::Update for Demo {
         input: &input::Manager,
         debug: &mut debug::Handler,
     ) -> render::SharedUBO {
-
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
                 alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position

@@ -586,7 +586,20 @@ impl Manager {
                     alg::Vec3::new( scale.x, -scale.y,  scale.z), // 6
                     alg::Vec3::new(-scale.x, -scale.y,  scale.z), // 7
                 ],
-                None, // Stub
+                // Override scaled input with unit cube
+                Some(vec!(
+                    // Front face
+                    alg::Vec3::new(-0.5,  0.5, -0.5),
+                    alg::Vec3::new( 0.5,  0.5, -0.5),
+                    alg::Vec3::new( 0.5, -0.5, -0.5),
+                    alg::Vec3::new(-0.5, -0.5, -0.5),
+
+                    // Back face
+                    alg::Vec3::new(-0.5,  0.5,  0.5),
+                    alg::Vec3::new( 0.5,  0.5,  0.5),
+                    alg::Vec3::new( 0.5, -0.5,  0.5),
+                    alg::Vec3::new(-0.5, -0.5,  0.5),
+                )),
                 &[
                     // Front face
                     (0, 1), (1, 2), (2, 3), (3, 0),

@@ -198,6 +198,9 @@ fn begin_update<T>(
             val.0 = val.1;
         }
 
+        // Reset dirty input
+        input.mouse_delta = (0.0, 0.0);
+
         // Handle window events
         events.poll_events(|event| {
             match event {
@@ -263,6 +266,7 @@ fn begin_update<T>(
                 } => {
                     input.mouse_delta = delta;
                 },
+
                 _ => ()
             }
         });

@@ -136,6 +136,7 @@ struct Instance {
 impl Instance {
     fn new(
         points: &[alg::Vec3],
+        model_override: Option<Vec<alg::Vec3>>,
         bindings: &[(usize, usize)],
         zones: &[(usize, Falloff)],
         mass: f32,
@@ -145,13 +146,28 @@ impl Instance {
         debug_assert!(mass > 0.0);
         debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
 
-        let mut particles = Vec::with_capacity(points.len());
-        let mut model = Vec::with_capacity(points.len());
+        /* Initialize particles and base comparison model */
 
-        for point in points {
-            particles.push(Particle::new(*point));
-            model.push(*point);
-        }
+        let mut particles = Vec::with_capacity(points.len());
+
+        let model = if let Some(model) = model_override {
+            for point in points {
+                particles.push(Particle::new(*point));
+            }
+
+            model
+        } else {
+            let mut model = Vec::with_capacity(points.len());
+
+            for point in points {
+                particles.push(Particle::new(*point));
+                model.push(*point);
+            }
+
+            model
+        };
+
+        /* Initialize rods and magnets */
 
         let mut rods = Vec::with_capacity(bindings.len());
         for binding in bindings {
@@ -533,6 +549,7 @@ impl Manager {
         self.instances[i] = Some(
             Instance::new(
                 points,
+                None, // Stub
                 bindings,
                 magnets,
                 mass,
@@ -569,6 +586,7 @@ impl Manager {
                     alg::Vec3::new( scale.x, -scale.y,  scale.z), // 6
                     alg::Vec3::new(-scale.x, -scale.y,  scale.z), // 7
                 ],
+                None, // Stub
                 &[
                     // Front face
                     (0, 1), (1, 2), (2, 3), (3, 0),

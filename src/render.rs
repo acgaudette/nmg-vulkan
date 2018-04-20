@@ -881,13 +881,17 @@ impl Default for InstanceMeta {
 #[repr(C)]
 pub struct Vertex {
     pub position: alg::Vec3,
+    pub normal: alg::Vec3,
     pub color: graphics::Color,
 }
 
 impl Vertex {
     pub fn new(position: alg::Vec3, color: graphics::Color) -> Vertex {
+        let normal = alg::Vec3::zero();
+
         Vertex {
             position,
+            normal,
             color,
         }
     }
@@ -895,6 +899,7 @@ impl Vertex {
     pub fn new_raw(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
         Vertex {
             position: alg::Vec3::new(x, y, z),
+            normal: alg::Vec3::zero(),
             color: graphics::Color::new(r, g, b),
         }
     }

@@ -4,3 +4,4 @@
 *.spv
 *.spvasm
 Cargo.lock
+dep/

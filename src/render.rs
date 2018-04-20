@@ -729,6 +729,43 @@ pub struct ModelData {
 }
 
 impl ModelData {
+    pub fn new_with_normals(
+        mut vertices: Vec<Vertex>,
+        indices: Vec<u32>,
+        smooth: bool,
+    ) -> ModelData {
+        let mut i = 0;
+
+        if smooth {
+            while i < indices.len() {
+                let a_index = indices[i] as usize;
+                let b_index = indices[i + 1] as usize;
+                let c_index = indices[i + 2] as usize;
+
+                let a = vertices[a_index].position;
+                let b = vertices[b_index].position;
+                let c = vertices[c_index].position;
+
+                let normal = (b - a).cross(c - b).norm();
+
+                vertices[a_index].normal = vertices[a_index].normal + normal;
+                vertices[b_index].normal = vertices[b_index].normal + normal;
+                vertices[c_index].normal = vertices[c_index].normal + normal;
+
+                i += 3;
+            }
+
+            for vertex in &mut vertices {
+                vertex.normal = vertex.normal.norm();
+            }
+        }
+
+        ModelData {
+            vertices,
+            indices,
+        }
+    }
+
     pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> ModelData {
         ModelData {
             vertices,

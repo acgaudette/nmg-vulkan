@@ -722,6 +722,9 @@ struct DebugData {
     _frag:    vd::ShaderModule,
 }
 
+#[derive(PartialEq)]
+pub enum NormalMode { Flat, Smooth }
+
 #[derive(Clone)]
 pub struct ModelData {
     pub vertices: Vec<Vertex>,
@@ -732,11 +735,11 @@ impl ModelData {
     pub fn new_with_normals(
         mut vertices: Vec<Vertex>,
         indices: Vec<u32>,
-        smooth: bool,
+        mode: NormalMode,
     ) -> ModelData {
         let mut i = 0;
 
-        if smooth {
+        if mode == NormalMode::Smooth {
             while i < indices.len() {
                 let a_index = indices[i] as usize;
                 let b_index = indices[i + 1] as usize;
@@ -758,7 +761,7 @@ impl ModelData {
             for vertex in &mut vertices {
                 vertex.normal = vertex.normal.norm();
             }
-        } else {
+        } else if mode == NormalMode::Flat {
             while i < indices.len() {
                 let a_index = indices[i] as usize;
                 let b_index = indices[i + 1] as usize;

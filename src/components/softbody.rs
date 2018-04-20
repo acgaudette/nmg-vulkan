@@ -571,39 +571,42 @@ impl Manager {
 
         let scale = scale * 0.5;
 
+        // Build 8-particle scaled box instance
         self.instances[i] = Some(
             Instance::new(
                 &[
-                    // Front face
+                    // Front face (CW)
                     alg::Vec3::new(-scale.x,  scale.y, -scale.z), // 0
                     alg::Vec3::new( scale.x,  scale.y, -scale.z), // 1
                     alg::Vec3::new( scale.x, -scale.y, -scale.z), // 2
                     alg::Vec3::new(-scale.x, -scale.y, -scale.z), // 3
 
-                    // Back face
-                    alg::Vec3::new(-scale.x,  scale.y,  scale.z), // 4
-                    alg::Vec3::new( scale.x,  scale.y,  scale.z), // 5
-                    alg::Vec3::new( scale.x, -scale.y,  scale.z), // 6
-                    alg::Vec3::new(-scale.x, -scale.y,  scale.z), // 7
+                    // Back face (CW)
+                    alg::Vec3::new(-scale.x,  scale.y, scale.z), // 4
+                    alg::Vec3::new( scale.x,  scale.y, scale.z), // 5
+                    alg::Vec3::new( scale.x, -scale.y, scale.z), // 6
+                    alg::Vec3::new(-scale.x, -scale.y, scale.z), // 7
                 ],
-                // Override scaled input with unit cube
+                /* Override scaled input with unit cube.
+                 * Enables offsets to work properly with non-matching mesh.
+                 */
                 Some(vec!(
-                    // Front face
+                    // Front face (CW)
                     alg::Vec3::new(-0.5,  0.5, -0.5),
                     alg::Vec3::new( 0.5,  0.5, -0.5),
                     alg::Vec3::new( 0.5, -0.5, -0.5),
                     alg::Vec3::new(-0.5, -0.5, -0.5),
 
-                    // Back face
+                    // Back face (CW)
                     alg::Vec3::new(-0.5,  0.5,  0.5),
                     alg::Vec3::new( 0.5,  0.5,  0.5),
                     alg::Vec3::new( 0.5, -0.5,  0.5),
                     alg::Vec3::new(-0.5, -0.5,  0.5),
                 )),
                 &[
-                    // Front face
+                    // Front face ring
                     (0, 1), (1, 2), (2, 3), (3, 0),
-                    // Back face
+                    // Back face ring
                     (4, 5), (5, 6), (6, 7), (7, 4),
                     // Connectors
                     (0, 4), (1, 5), (2, 6), (3, 7),

@@ -896,10 +896,14 @@ impl Vertex {
         }
     }
 
-    pub fn new_raw(x: f32, y: f32, z: f32, r: f32, g: f32, b: f32) -> Vertex {
+    pub fn new_raw(
+        px: f32, py: f32, pz: f32,
+        nx: f32, ny: f32, nz: f32,
+         r: f32,  g: f32,  b: f32,
+    ) -> Vertex {
         Vertex {
-            position: alg::Vec3::new(x, y, z),
-            normal: alg::Vec3::zero(),
+            position: alg::Vec3::new(px, py, pz),
+            normal: alg::Vec3::new(nx, ny, nz),
             color: graphics::Color::new(r, g, b),
         }
     }

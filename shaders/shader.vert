@@ -29,4 +29,5 @@ void main() {
     * vec4(inPosition + this_data.offsets[gl_VertexIndex], 1);
 
   fragColor = inColor;
+  fragNormal = (this_data.model * vec4(inNormal, 0)).xyz;
 }

@@ -887,6 +887,8 @@ pub struct Vertex {
 
 impl Vertex {
     pub fn new(position: alg::Vec3, color: graphics::Color) -> Vertex {
+        // Initialize without a normal by default
+        // (useful for automatic normal computation)
         let normal = alg::Vec3::zero();
 
         Vertex {

@@ -110,44 +110,58 @@ fn main() {
 
 // "Load" model(s)
 fn get_models() -> Vec<render::ModelData> {
-    let cube = render::ModelData::new(
+    let cube = render::ModelData::new_with_normals(
         vec![
-            // Top face
-            render::Vertex::new(alg::Vec3::new(-0.5, 0.5,  0.5), graphics::Color::white()),
-            render::Vertex::new(alg::Vec3::new( 0.5, 0.5,  0.5), graphics::Color::white()),
-            render::Vertex::new(alg::Vec3::new( 0.5, 0.5, -0.5), graphics::Color::white()),
-            render::Vertex::new(alg::Vec3::new(-0.5, 0.5, -0.5), graphics::Color::white()),
+            // Front Face
+            render::Vertex::new_raw(-0.5,  0.5, -0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_raw( 0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_raw( 0.5,  0.5, -0.5, 0., 0., 0., 1., 1., 1.),
 
-            // Bottom face
-            render::Vertex::new(alg::Vec3::new(-0.5, -0.5,  0.5), graphics::Color::red()),
-            render::Vertex::new(alg::Vec3::new( 0.5, -0.5,  0.5), graphics::Color::red()),
-            render::Vertex::new(alg::Vec3::new( 0.5, -0.5, -0.5), graphics::Color::red()),
-            render::Vertex::new(alg::Vec3::new(-0.5, -0.5, -0.5), graphics::Color::red()),
+            // Back Face
+            render::Vertex::new_raw(-0.5,  0.5, 0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_raw( 0.5,  0.5, 0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_raw( 0.5, -0.5, 0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_raw(-0.5, -0.5, 0.5, 0., 0., 0., 1., 1., 1.),
+
+            // Top Face
+            render::Vertex::new_raw(-0.5, 0.5, -0.5, 0., 0., 0., 1., 0., 1.),
+            render::Vertex::new_raw( 0.5, 0.5, -0.5, 0., 0., 0., 1., 0., 1.),
+            render::Vertex::new_raw( 0.5, 0.5,  0.5, 0., 0., 0., 1., 0., 1.),
+            render::Vertex::new_raw(-0.5, 0.5,  0.5, 0., 0., 0., 1., 0., 1.),
+
+            // Bottom Face
+            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 0.),
+            render::Vertex::new_raw(-0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 0.),
+            render::Vertex::new_raw( 0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 0.),
+            render::Vertex::new_raw( 0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 0.),
+
+            // Left Face
+            render::Vertex::new_raw(-0.5,  0.5, -0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_raw(-0.5,  0.5,  0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_raw(-0.5, -0.5,  0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 0., 0.),
+
+            // Right Face
+            render::Vertex::new_raw(0.5,  0.5, -0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_raw(0.5, -0.5, -0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_raw(0.5, -0.5,  0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_raw(0.5,  0.5,  0.5, 0., 0., 0., 1., 0., 0.),
         ], vec![
-            // Top face
-            0, 1, 2,
-            2, 3, 0,
-
-            // Back face
-            0, 1, 5,
-            5, 4, 0,
-
-            // Front face
-            2, 3, 7,
-            7, 6, 2,
-
-            // Right face
-            1, 2, 6,
-            6, 5, 1,
-
-            // Left face
-            0, 3, 7,
-            7, 4, 0,
-
-            // Bottom face
-            4, 5, 6,
-            6, 7, 4,
+             0,  1,  2,
+             2,  3,  0,
+             4,  5,  6,
+             6,  7,  4,
+             8,  9, 10,
+            10, 11,  8,
+            12, 13, 14,
+            14, 15, 12,
+            16, 17, 18,
+            18, 19, 16,
+            20, 21, 22,
+            22, 23, 20,
         ],
+        render::NormalMode::Flat,
     );
 
     vec![cube]

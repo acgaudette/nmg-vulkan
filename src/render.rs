@@ -758,6 +758,24 @@ impl ModelData {
             for vertex in &mut vertices {
                 vertex.normal = vertex.normal.norm();
             }
+        } else {
+            while i < indices.len() {
+                let a_index = indices[i] as usize;
+                let b_index = indices[i + 1] as usize;
+                let c_index = indices[i + 2] as usize;
+
+                let a = vertices[a_index].position;
+                let b = vertices[b_index].position;
+                let c = vertices[c_index].position;
+
+                let normal = (b - a).cross(c - b).norm();
+
+                vertices[a_index].normal = normal;
+                vertices[b_index].normal = normal;
+                vertices[c_index].normal = normal;
+
+                i += 3;
+            }
         }
 
         ModelData {

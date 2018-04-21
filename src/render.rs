@@ -29,8 +29,11 @@ const MAX_INSTANCES: u64 = 1024;
 #[cfg(debug_assertions)]
 const MAX_DEBUG_LINES: u64 = 512;
 
-// Good GPUs have a minimum alignment of 256, which gives us about 12
-// vertices to work with (adjusting for matrix size and padding).
+/* Good GPUs have a minimum alignment of 256,
+ * which gives us some extra space to pack offset vectors
+ * (adjusting for matrix size and padding)
+ */
+
 const DYNAMIC_UBO_WIDTH: usize = 256;
 
 pub const MAX_SOFTBODY_VERT: usize = (

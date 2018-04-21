@@ -12,6 +12,7 @@ pub mod entity;
 pub mod components;
 pub mod config;
 pub mod input;
+pub mod obj_loader;
 pub mod debug;
 mod statics;
 mod util;

@@ -732,6 +732,42 @@ impl Manager {
         offsets
     }
 
+    // Get instance particle offsets from the normals model
+    pub fn get_normal_offsets(
+        &self,
+        entity: entity::Handle,
+    ) -> [render::PaddedVec3; render::MAX_SOFTBODY_VERT] {
+        let i = entity.get_index() as usize;
+
+        // Default to no offsets (identity)
+        let mut offsets = [
+            render::PaddedVec3::default();
+            render::MAX_SOFTBODY_VERT
+        ];
+
+        // Space has not been allocated for this component (does not exist)
+        if i >= self.instances.len() {
+            return offsets;
+        }
+
+        // If the entity has a softbody component, fill the offsets array
+        if let Some(ref instance) = self.instances[i] {
+            let new = Instance::compute_normals(
+                &instance.particles,
+                &instance.triangles,
+            );
+
+            // Compute offsets
+            for i in 0..new.len() {
+                offsets[i] = render::PaddedVec3::new(
+                    new[i] - instance.normals[i]
+                );
+            }
+        }
+
+        offsets
+    }
+
     pub fn add_joint(
         &mut self,
         parent: entity::Handle,

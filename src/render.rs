@@ -753,7 +753,7 @@ impl ModelData {
                 let b = vertices[b_index].position;
                 let c = vertices[c_index].position;
 
-                let normal = (b - a).cross(c - b).norm();
+                let normal = alg::Vec3::normal(a, b, c);
 
                 vertices[a_index].normal = vertices[a_index].normal + normal;
                 vertices[b_index].normal = vertices[b_index].normal + normal;

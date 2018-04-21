@@ -126,6 +126,8 @@ struct Instance {
     mass: f32,
     inv_pt_mass: f32, // Inverse mass per particle
     model: Vec<alg::Vec3>, // Vertices reference
+    triangles: Vec<usize>, // Indices reference, for normals
+    normals: Vec<alg::Vec3>, // Normals reference
 
     // Range 0 - 0.5; "Rigid" = 0.5
     // Lower values produce springier meshes
@@ -1250,6 +1252,7 @@ impl Manager {
     fn draw_instance_debug(&self, index: usize, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             debug_assert!(index < self.instances.len());
+
             if let Some(ref instance) = self.instances[index] {
                 // Draw instance bindings
                 for rod in &instance.rods {

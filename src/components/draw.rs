@@ -54,10 +54,11 @@ impl Manager {
                 let rotation = transform.1.to_mat();
                 let scale = alg::Mat::scale_vec(transform.2);
 
-                let model = translation * rotation * scale;
-                let offsets = softbodies.get_offsets(*entity);
-
-                render::InstanceUBO::new(model, offsets)
+                render::InstanceUBO::new(
+                    translation * rotation * scale, // Model matrix
+                    softbodies.get_position_offsets(*entity),
+                    softbodies.get_normal_offsets(*entity),
+                )
             };
 
             // Update renderer

@@ -705,7 +705,8 @@ impl Manager {
         position
     }
 
-    pub fn get_offsets(
+    // Get instance particle offsets from the model
+    pub fn get_position_offsets(
         &self,
         entity: entity::Handle,
     ) -> [render::PaddedVec3; render::MAX_SOFTBODY_VERT] {

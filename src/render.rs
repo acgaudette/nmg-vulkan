@@ -38,7 +38,8 @@ const DYNAMIC_UBO_WIDTH: usize = 512;
 
 pub const MAX_SOFTBODY_VERT: usize = (
     DYNAMIC_UBO_WIDTH - std::mem::size_of::<alg::Mat>()
-) / std::mem::size_of::<PaddedVec3>();
+) / std::mem::size_of::<PaddedVec3>()
+  / 2; // There are two offset arrays
 
 #[allow(dead_code)]
 pub struct Context<'a> {

@@ -199,6 +199,43 @@ impl Instance {
         }
     }
 
+    /* Calculate normals for implicit softbody mesh,
+     * useful for blending rendered mesh normals
+     * and/or determining softbody topology.
+     */
+    fn compute_normals(
+        particles: &Vec<Particle>,
+        triangles: &Vec<usize>,
+    ) -> Vec<alg::Vec3> {
+        let mut result = vec![alg::Vec3::zero(); particles.len()];
+
+        let mut i = 0;
+        while i < triangles.len() {
+            let j = i + 1;
+            let k = i + 2;
+
+            let normal = alg::Vec3::normal(
+                particles[triangles[i]].position,
+                particles[triangles[j]].position,
+                particles[triangles[k]].position,
+            );
+
+            // Sum normal contributions
+            result[triangles[i]] = result[triangles[i]] + normal;
+            result[triangles[j]] = result[triangles[j]] + normal;
+            result[triangles[k]] = result[triangles[k]] + normal;
+
+            i += 3;
+        }
+
+        // Rescale
+        for i in 0..result.len() {
+            result[i] = -result[i].norm();
+        }
+
+        result
+    }
+
     // Get offset from center for specific particle
     fn offset(&self, index: usize) -> alg::Vec3 {
         self.particles[index].position - self.position - self.model[index]

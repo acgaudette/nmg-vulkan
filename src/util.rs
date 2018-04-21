@@ -88,12 +88,20 @@ mod tests {
             make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
             make_offset(alg::Vec3::new(0., 0.5, 0.)),
             make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
         ];
 
         let mut raw = {
-            let mut buffer = AlignedBuffer::new(256, 1);
+            let mut buffer = AlignedBuffer::new(512, 1);
 
-            buffer.push(render::InstanceUBO::new(mat, offsets));
+            buffer.push(
+                render::InstanceUBO::new(
+                    mat,
+                    offsets,
+                    [render::PaddedVec3::default(); render::MAX_SOFTBODY_VERT],
+                )
+            );
 
             unsafe {
                 buffer.finalize()
@@ -135,6 +143,7 @@ mod tests {
         compare_aligned_buffer(64, &matrices);
         compare_aligned_buffer(128, &matrices);
         compare_aligned_buffer(256, &matrices);
+        compare_aligned_buffer(512, &matrices);
     }
 
     fn compare_aligned_buffer(alignment: usize, matrices: &[alg::Mat]) {

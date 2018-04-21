@@ -17,7 +17,7 @@ struct Demo {
     objects: Vec<entity::Handle>,
     mass: f32,
     rigidity: f32,
-    mesh: Vec<alg::Vec3>,
+    mesh: (Vec<alg::Vec3>, Vec<usize>),
 }
 
 impl nmg::Start for Demo {
@@ -44,7 +44,8 @@ impl nmg::Start for Demo {
             object,
             self.mass,
             self.rigidity,
-            &self.mesh,
+            &self.mesh.0,
+            self.mesh.1.clone(),
             &[
                 (0, 1),
                 (0, 2),
@@ -103,8 +104,8 @@ impl nmg::Update for Demo {
     ) -> render::SharedUBO {
         let shared_ubo = {
             let view = alg::Mat::look_at_view(
-                alg::Vec3::new(-1.0, 0.5, -2.0), // Camera position
-                alg::Vec3::new( 0.0, 0.0,  0.0), // Target position
+                alg::Vec3::new(-1., 0.5, 2.0), // Camera position
+                alg::Vec3::new(0.0, 0.0, 0.0), // Target position
                 alg::Vec3::up(),
             );
 
@@ -160,12 +161,17 @@ fn main() {
 
     let mesh = {
         let mut points = Vec::with_capacity(model_data[0].vertices.len());
+        let mut triangles = Vec::with_capacity(model_data[0].indices.len());
 
         for vertex in &model_data[0].vertices {
             points.push(vertex.position);
         }
 
-        points
+        for index in &model_data[0].indices {
+            triangles.push(*index as usize);
+        }
+
+        (points, triangles)
     };
 
     let demo = Demo {

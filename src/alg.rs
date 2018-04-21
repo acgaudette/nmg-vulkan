@@ -101,6 +101,12 @@ impl Vec3 {
         Vec3::new(1., 1., 1.)
     }
 
+    #[inline]
+    // Triangle normal (CCW)
+    pub fn normal(a: Vec3, b: Vec3, c: Vec3) -> Vec3 {
+        (b - a).cross(c - b).norm()
+    }
+
     pub fn norm(self) -> Vec3 {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

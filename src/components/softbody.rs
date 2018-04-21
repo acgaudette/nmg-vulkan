@@ -138,6 +138,7 @@ struct Instance {
 impl Instance {
     fn new(
         points: &[alg::Vec3],
+        triangles: Vec<usize>,
         model_override: Option<Vec<alg::Vec3>>,
         bindings: &[(usize, usize)],
         zones: &[(usize, Falloff)],
@@ -169,6 +170,10 @@ impl Instance {
             model
         };
 
+        // Compute base comparison normals for instance
+        debug_assert!(triangles.len() % 3 == 0);
+        let normals = Instance::compute_normals(&particles, &triangles);
+
         /* Initialize rods and magnets */
 
         let mut rods = Vec::with_capacity(bindings.len());
@@ -196,6 +201,8 @@ impl Instance {
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
             rigidity: rigidity,
             model,
+            triangles,
+            normals,
         }
     }
 

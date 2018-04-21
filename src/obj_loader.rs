@@ -14,15 +14,18 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
 
     for m in models {
         let mesh = &m.mesh;
-        let positions = mesh.positions.clone();
+        let positions = &mesh.positions;
         let mut normals = mesh.normals.clone();
         let indices = mesh.indices.clone();
         let mut vertices = Vec::new();
-
+        let mut has_normals = true;
+        
+        
         if normals.len() == 0 {
             for _ in 0..positions.len() {
                 normals.push(0.);
             }
+            hasNormals = false;
         }
 
         for v in 0..positions.len() / 3 {
@@ -36,12 +39,20 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
                 )
             );
         }
+
         return_models.push(
-            render::ModelData::new_with_normals(
-                vertices,
-                indices,
-                render::NormalMode::Smooth,
-            )
+            if has_normals {
+                render::ModelData::new(
+                    vertices,
+                    indices,
+                )
+            } else {
+                render::ModelData::new_with_normals(
+                    vertices,
+                    indices,
+                    render::NormalMode::Smooth,
+                )
+            }
         );
     }
     return_models

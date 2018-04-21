@@ -9,7 +9,8 @@ layout(binding = 0) uniform shared_ubo {
 
 layout(binding = 1, std140) uniform instance_ubo {
   mat4 model;
-  vec3 offsets[MAX_SOFTBODY_VERT];
+  vec3 position_offsets[MAX_SOFTBODY_VERT];
+  vec3 normal_offsets[MAX_SOFTBODY_VERT];
 } this_data;
 
 layout(location = 0) in  vec3 inPosition;
@@ -26,7 +27,7 @@ out gl_PerVertex {
 void main() {
   gl_Position = shared_data.projection * shared_data.view
     * this_data.model
-    * vec4(inPosition + this_data.offsets[gl_VertexIndex], 1);
+    * vec4(inPosition + this_data.position_offsets[gl_VertexIndex], 1);
 
   fragColor = inColor;
   fragNormal = (this_data.model * vec4(inNormal, 0)).xyz;

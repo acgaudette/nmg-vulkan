@@ -586,6 +586,7 @@ impl Manager {
         mass: f32,
         rigidity: f32, // Expects a value between 0-1
         points: &[alg::Vec3],
+        indices: Vec<usize>,
         bindings: &[(usize, usize)],
         magnets: &[(usize, Falloff)],
     ) {
@@ -595,6 +596,7 @@ impl Manager {
         self.instances[i] = Some(
             Instance::new(
                 points,
+                indices,
                 None, // Stub
                 bindings,
                 magnets,

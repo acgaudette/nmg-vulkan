@@ -34,7 +34,7 @@ const MAX_DEBUG_LINES: u64 = 512;
  * (adjusting for matrix size and padding)
  */
 
-const DYNAMIC_UBO_WIDTH: usize = 256;
+const DYNAMIC_UBO_WIDTH: usize = 512;
 
 pub const MAX_SOFTBODY_VERT: usize = (
     DYNAMIC_UBO_WIDTH - std::mem::size_of::<alg::Mat>()

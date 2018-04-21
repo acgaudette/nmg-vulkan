@@ -226,6 +226,31 @@ fn begin_update<T>(
                     running = false;
                 },
 
+                // Grab mouse cursor if window is focused; otherwise release
+                // TODO: potentially do something with set_cursor_state error
+                vdw::winit::Event::WindowEvent {
+                    event: vdw::winit::WindowEvent::Focused(
+                        focused
+                    ),
+                    ..
+                } => {
+                    if focused {
+                        match window.set_cursor_state(
+                            vdw::winit::CursorState::Grab
+                        ) {
+                            Err(e) => eprintln!("{}", e),
+                            _ => {}
+                        }
+                    } else {
+                        match window.set_cursor_state(
+                            vdw::winit::CursorState::Normal
+                        ) {
+                            Err(e) => eprintln!("{}", e),
+                            _ => {}
+                        };
+                    }
+                },
+
                 // Keyboard input
                 vdw::winit::Event::WindowEvent {
                     event: vdw::winit::WindowEvent::KeyboardInput {

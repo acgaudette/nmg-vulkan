@@ -64,7 +64,7 @@ impl nmg::Start for Demo {
         // Initial force
         components.softbodies.set_force(
             object,
-            alg::Vec3::up() * 4400.,
+            alg::Vec3::up() * 6000.,
         );
 
         /* Add collision planes */

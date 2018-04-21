@@ -1059,17 +1059,20 @@ impl SharedUBO {
 #[repr(C)]
 pub struct InstanceUBO {
     model: alg::Mat,
-    offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
+    position_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
+    normal_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
 }
 
 impl InstanceUBO {
     pub fn new(
         model: alg::Mat,
-        offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
+        position_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
+        normal_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
     ) -> InstanceUBO {
         InstanceUBO {
             model,
-            offsets,
+            position_offsets,
+            normal_offsets,
         }
     }
 }
@@ -1078,7 +1081,8 @@ impl Default for InstanceUBO {
     fn default() -> InstanceUBO {
         InstanceUBO {
             model: alg::Mat::id(),
-            offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
+            position_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
+            normal_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
         }
     }
 }

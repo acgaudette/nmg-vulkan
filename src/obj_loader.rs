@@ -25,7 +25,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
             for _ in 0..positions.len() {
                 normals.push(0.);
             }
-            hasNormals = false;
+            has_normals = false;
         }
 
         for v in 0..positions.len() / 3 {

@@ -763,7 +763,7 @@ impl ModelData {
             }
 
             for vertex in &mut vertices {
-                vertex.normal = -vertex.normal.norm();
+                vertex.normal = vertex.normal.norm();
             }
         } else if mode == NormalMode::Flat {
             while i < indices.len() {

@@ -237,7 +237,7 @@ impl Instance {
 
         // Rescale
         for i in 0..result.len() {
-            result[i] = -result[i].norm();
+            result[i] = result[i].norm();
         }
 
         result

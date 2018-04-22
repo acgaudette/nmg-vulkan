@@ -131,12 +131,12 @@ fn get_models() -> Vec<render::ModelData> {
             render::Vertex::new_raw( 0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 0.),
             render::Vertex::new_raw(-0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 1.),
         ], vec![
-            0u32, 1u32, 2u32,
-            0u32, 2u32, 3u32,
-            0u32, 3u32, 4u32,
-            0u32, 4u32, 1u32,
-            1u32, 4u32, 2u32,
-            2u32, 4u32, 3u32,
+            0u32, 2u32, 1u32,
+            0u32, 3u32, 2u32,
+            0u32, 4u32, 3u32,
+            0u32, 1u32, 4u32,
+            2u32, 4u32, 1u32,
+            3u32, 4u32, 2u32,
         ],
         render::NormalMode::Smooth,
     );

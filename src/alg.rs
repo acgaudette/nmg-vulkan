@@ -102,9 +102,9 @@ impl Vec3 {
     }
 
     #[inline]
-    // Triangle normal (CCW)
+    // Triangle normal (CW)
     pub fn normal(a: Vec3, b: Vec3, c: Vec3) -> Vec3 {
-        (b - a).cross(c - b).norm()
+        (b - a).cross(c - a).norm()
     }
 
     pub fn norm(self) -> Vec3 {

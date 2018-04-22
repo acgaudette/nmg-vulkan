@@ -635,20 +635,20 @@ impl Manager {
                     alg::Vec3::new( scale.x, -scale.y, scale.z), // 6
                     alg::Vec3::new(-scale.x, -scale.y, scale.z), // 7
                 ],
-                // CCW triangle indices
+                // CW triangle indices
                 vec![
-                    0, 3, 2, // Front face
-                    2, 1, 0,
-                    4, 5, 6, // Back face
-                    6, 7, 4,
-                    0, 1, 5, // Top face
-                    5, 4, 0,
-                    3, 7, 6, // Bottom face
-                    6, 2, 3,
-                    0, 4, 7, // Left face
-                    7, 3, 0,
-                    1, 6, 5, // Right face
-                    6, 1, 2,
+                    0, 1, 2, // Front face
+                    2, 3, 0,
+                    4, 7, 6, // Back face
+                    6, 5, 4,
+                    0, 4, 5, // Top face
+                    5, 1, 0,
+                    3, 2, 6, // Bottom face
+                    6, 7, 3,
+                    0, 3, 7, // Left face
+                    7, 4, 0,
+                    6, 2, 1, // Right face
+                    1, 5, 6,
                 ],
                 /* Override scaled input with unit cube.
                  * Enables offsets to work properly with non-matching mesh.

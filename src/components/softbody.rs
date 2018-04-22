@@ -673,9 +673,9 @@ impl Manager {
                     (4, 5), (5, 6), (6, 7), (7, 4),
                     // Connectors
                     (0, 4), (1, 5), (2, 6), (3, 7),
-                    // Crosspieces
+                    // Crosspieces (topology indicators)
                     (0, 2), (0, 5), (0, 7),
-                    (6, 4), (6, 1), (6, 3),
+                    (6, 4), (6, 3), (6, 1),
                 ],
                 &[],
                 mass,

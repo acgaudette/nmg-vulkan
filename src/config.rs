@@ -18,7 +18,7 @@ pub fn load_section_setting(section: &str, setting: &str) -> String {
     let settings = ENGINE_CONFIG.section(Some(section))
         .unwrap_or_else(
         || panic!(
-            "Failed to load section {}",
+            "Failed to load section \"{}\"",
             section,
         )
     );
@@ -26,8 +26,9 @@ pub fn load_section_setting(section: &str, setting: &str) -> String {
     settings.get(setting)
         .unwrap_or_else(
         || panic!(
-            "Failed to load setting {}",
+            "Failed to load setting \"{}\" in section \"{}\"",
             setting,
+            section,
         )
     ).clone()
 }

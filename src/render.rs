@@ -1371,11 +1371,11 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
     let path = {
-        let mut path = &config::load_section_setting(
+        let mut path = &config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
             "settings",
             "shader_path"
-            );
+        );
 
         [path, "/"].concat()
     };

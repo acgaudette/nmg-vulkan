@@ -8,9 +8,10 @@ lazy_static! {
 }
 
 pub fn load_config(filename: &str) -> ini::Ini {
-    let conf_opt = ini::Ini::load_from_file(filename);
-    assert!(conf_opt.is_ok());
-    conf_opt.unwrap()
+    match ini::Ini::load_from_file(filename) {
+        Ok(result) => result,
+        Err(err) => panic!(err.msg),
+    }
 }
 
 pub fn load_section_setting(section: &str, setting: &str) -> String {

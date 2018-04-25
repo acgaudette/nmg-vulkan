@@ -2,9 +2,8 @@ use ini;
 use std::string::String;
 
 lazy_static! {
-    pub static ref ENGINE_CONFIG: ini::Ini = {
-        load_config("config.ini")
-    };
+    pub static ref ENGINE_CONFIG: ini::Ini = 
+        load_config("config.ini");
 }
 
 pub fn load_config(filename: &str) -> ini::Ini {
@@ -14,8 +13,11 @@ pub fn load_config(filename: &str) -> ini::Ini {
     }
 }
 
-pub fn load_section_setting(section: &str, setting: &str) -> String {
-    let settings = ENGINE_CONFIG.section(Some(section))
+pub fn load_section_setting(
+    config: &ini::Ini,
+    section: &str,
+    setting: &str) -> String {
+    let settings = config.section(Some(section))
         .unwrap_or_else(
         || panic!(
             "Failed to load section \"{}\"",

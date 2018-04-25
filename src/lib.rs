@@ -167,7 +167,10 @@ fn begin_update<T>(
 
     /* Frame limiter */
 
-    let target_fps = config::load_section_setting("settings", "fps");
+    let target_fps = config::load_section_setting(
+        &config::ENGINE_CONFIG,
+        "settings",
+        "fps");
 
     println!("Target frames per second: {}", target_fps);
 
@@ -181,6 +184,7 @@ fn begin_update<T>(
      */
 
     let fixed_step_factor = config::load_section_setting(
+        &config::ENGINE_CONFIG,
         "settings",
         "fixed_step_factor"
         );

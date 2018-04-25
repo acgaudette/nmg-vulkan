@@ -1372,6 +1372,7 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
 )> {
     let path = {
         let mut path = &config::load_section_setting(
+            &config::ENGINE_CONFIG,
             "settings",
             "shader_path"
             );
@@ -1547,6 +1548,7 @@ fn init_debug(
 
     let path = {
         let mut path = &config::load_section_setting(
+            &config::ENGINE_CONFIG,
             "settings",
             "shader_path"
             );

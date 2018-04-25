@@ -1371,9 +1371,10 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
     let path = {
-        let mut path = config::ENGINE_CONFIG
-            .section(Some("settings")).unwrap()
-            .get("shader_path").unwrap();
+        let mut path = &config::load_section_setting(
+            "settings",
+            "shader_path"
+            );
 
         [path, "/"].concat()
     };
@@ -1545,9 +1546,10 @@ fn init_debug(
     /* Load debug shaders */
 
     let path = {
-        let mut path = config::ENGINE_CONFIG
-            .section(Some("settings")).unwrap()
-            .get("shader_path").unwrap();
+        let mut path = &config::load_section_setting(
+            "settings",
+            "shader_path"
+            );
 
         [path, "/"].concat()
     };

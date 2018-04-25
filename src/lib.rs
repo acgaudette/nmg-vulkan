@@ -165,14 +165,9 @@ fn begin_update<T>(
 
     let mut metadata = Metadata::new();
 
-    // Load config file
-    let config_data = &config::ENGINE_CONFIG;
-
     /* Frame limiter */
 
-    let target_fps = config_data
-        .section(Some("settings")).unwrap()
-        .get("fps").unwrap();
+    let target_fps = config::load_section_setting("settings", "fps");
 
     println!("Target frames per second: {}", target_fps);
 
@@ -185,9 +180,10 @@ fn begin_update<T>(
      * useful for debugging physics
      */
 
-    let fixed_step_factor = config_data
-        .section(Some("settings")).unwrap()
-        .get("fixed_step_factor").unwrap();
+    let fixed_step_factor = config::load_section_setting(
+        "settings",
+        "fixed_step_factor"
+        );
 
     let fixed_step = (
         FIXED_DT * fixed_step_factor.parse::<f32>().unwrap()

@@ -1547,11 +1547,11 @@ fn init_debug(
     /* Load debug shaders */
 
     let path = {
-        let mut path = &config::load_section_setting(
+        let mut path = &config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
             "settings",
             "shader_path"
-            );
+        );
 
         [path, "/"].concat()
     };

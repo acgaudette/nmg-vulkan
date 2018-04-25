@@ -167,30 +167,31 @@ fn begin_update<T>(
 
     /* Frame limiter */
 
-    let target_fps = config::load_section_setting(
+    let target_fps = config::load_section_setting::<u32>(
         &config::ENGINE_CONFIG,
         "settings",
-        "fps");
+        "fps",
+    );
 
     println!("Target frames per second: {}", target_fps);
 
     // Maximum time allowed to render a frame (ns)
-    let frame_limit = if target_fps != "0" {
-        1000000000 / target_fps.parse::<u32>().unwrap()
+    let frame_limit = if target_fps != 0 {
+        1000000000 / target_fps
     } else { 0 };
 
     /* Time scaling factor for the fixed timestep;
      * useful for debugging physics
      */
 
-    let fixed_step_factor = config::load_section_setting(
+    let fixed_step_factor = config::load_section_setting::<f32>(
         &config::ENGINE_CONFIG,
         "settings",
         "fixed_step_factor"
-        );
+    );
 
     let fixed_step = (
-        FIXED_DT * fixed_step_factor.parse::<f32>().unwrap()
+        FIXED_DT * fixed_step_factor
     ) as f64;
 
     loop {

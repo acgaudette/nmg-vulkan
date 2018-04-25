@@ -1,7 +1,6 @@
 extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
-use nmg::graphics;
 use nmg::entity;
 use nmg::render;
 use nmg::components;

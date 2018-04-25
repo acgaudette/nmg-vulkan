@@ -14,11 +14,19 @@ pub fn load_config(filename: &str) -> ini::Ini {
 }
 
 pub fn load_section_setting(section: &str, setting: &str) -> String {
-    let section_opt = ENGINE_CONFIG.section(Some(section));
-    assert!(section_opt.is_some());
-    let settings = section_opt.unwrap();
-    
-    let setting_opt = settings.get(setting);
-    assert!(setting_opt.is_some());
-    setting_opt.unwrap().clone()
+    let settings = ENGINE_CONFIG.section(Some(section))
+        .unwrap_or_else(
+        || panic!(
+            "Failed to load section {}",
+            section,
+        )
+    );
+
+    settings.get(setting)
+        .unwrap_or_else(
+        || panic!(
+            "Failed to load setting {}",
+            setting,
+        )
+    ).clone()
 }

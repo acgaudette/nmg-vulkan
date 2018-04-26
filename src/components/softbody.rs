@@ -294,26 +294,6 @@ impl Instance {
     }
 
     #[inline]
-    #[allow(dead_code)]
-    fn right_side(&self) -> alg::Vec3 {
-        (     self.particles[1].position
-            + self.particles[2].position
-            + self.particles[5].position
-            + self.particles[6].position
-        ) * 0.25
-    }
-
-    #[inline]
-    #[allow(dead_code)]
-    fn left_side(&self) -> alg::Vec3 {
-        (     self.particles[0].position
-            + self.particles[3].position
-            + self.particles[4].position
-            + self.particles[7].position
-        ) * 0.25
-    }
-
-    #[inline]
     fn fwd(&self) -> alg::Vec3 {
         (self.end() - self.start()).norm()
     }

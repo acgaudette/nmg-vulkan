@@ -293,13 +293,14 @@ impl Instance {
         ) * 0.25
     }
 
+    // Orientation relies on forward vector calculation
     #[inline]
     fn fwd(&self) -> alg::Vec3 {
         (self.end() - self.start()).norm()
     }
 
     #[inline]
-    fn up(&self) -> alg::Vec3 {
+    fn up_est(&self) -> alg::Vec3 {
         (self.top() - self.bot()).norm()
     }
 
@@ -325,7 +326,7 @@ impl Instance {
     fn orientation(&self) -> alg::Mat {
         // Build orthogonal rotation matrix
         let fwd = self.fwd();
-        let up = self.up(); // Approximation
+        let up = self.up_est(); // Approximation
         let right = up.cross(fwd); // Resistant to x-axis deformity
         let up = fwd.cross(right); // Recreate up vector
 
@@ -336,7 +337,7 @@ impl Instance {
     fn inverse_orientation(&self) -> alg::Mat {
         // Build orthogonal rotation matrix
         let fwd = self.fwd();
-        let up = self.up(); // Approximation
+        let up = self.up_est(); // Approximation
         let right = up.cross(fwd); // Resistant to x-axis deformity
         let up = fwd.cross(right); // Recreate up vector
 

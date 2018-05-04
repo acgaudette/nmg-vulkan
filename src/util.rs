@@ -1,10 +1,10 @@
 use std;
 
 pub struct AlignedBuffer<T> {
-    alignment: usize,
-    pub size:  usize, // Length in usizes
-    start:     *const T,
-    ptr:       *mut usize,
+    alignment: usize, // Alignment in usizes (not bytes)
+    length: usize, // Length in usizes (not bytes)
+    start: *const T,
+    ptr: *mut usize,
 }
 
 impl<T> AlignedBuffer<T> {
@@ -19,10 +19,10 @@ impl<T> AlignedBuffer<T> {
         debug_assert!(std::mem::size_of::<T>() <= alignment);
 
         let alignment = alignment / ptr_len;
-        let size = count * alignment;
+        let length = count * alignment;
 
         // Waiting for std::heap...
-        let mut memory = Vec::<usize>::with_capacity(size);
+        let mut memory = Vec::<usize>::with_capacity(length);
         let ptr = memory.as_mut_ptr();
         std::mem::forget(memory);
 
@@ -30,7 +30,7 @@ impl<T> AlignedBuffer<T> {
 
         AlignedBuffer {
             alignment,
-            size,
+            length,
             start,
             ptr,
         }
@@ -40,7 +40,7 @@ impl<T> AlignedBuffer<T> {
         assert!(
             (self.ptr as usize - self.start as usize)
                 / std::mem::size_of::<usize>()
-                < self.size
+                < self.length
         );
 
         unsafe {
@@ -57,8 +57,8 @@ impl<T> AlignedBuffer<T> {
     pub unsafe fn finalize(&self) -> Vec<usize> {
         Vec::from_raw_parts(
             self.start as *mut usize,
-            self.size,
-            self.size,
+            self.length,
+            self.length,
         )
     }
 }

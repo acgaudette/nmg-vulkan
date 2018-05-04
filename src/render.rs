@@ -855,6 +855,8 @@ impl Instances {
         instance_data: InstanceUBO,
         model_index: usize,
     ) -> InstanceHandle {
+        debug_assert!(model_index < self.data.len());
+
         self.data[model_index].push(
             (instance_data, InstanceMeta::default())
         );

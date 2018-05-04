@@ -1485,21 +1485,27 @@ fn load_models(
         let mut indices = Vec::with_capacity(indices_len);
         let mut models = Vec::with_capacity(model_data.len());
 
-        let mut offset = 0;
+        let mut index_offset = 0;
+        let mut vertex_offset = 0;
 
         for mut data in model_data {
-            // Destructive
-            vertices.append(&mut data.vertices);
+            let vertex_count = data.vertices.len();
+            vertices.append(&mut data.vertices); // Destructive
 
             let index_count = data.indices.len() as u32;
+            indices.append(&mut data.indices); // Destructive
 
-            for index in &data.indices {
-                indices.push(index + offset);
-            }
+            models.push(
+                Model::new(
+                    index_count,
+                    index_offset,
+                    vertex_count,
+                    vertex_offset,
+                )
+            );
 
-            models.push(Model::new(index_count, offset, data.vertices.len()));
-
-            offset += index_count;
+            index_offset += index_count;
+            vertex_offset += vertex_count as i32;
         }
 
         (vertices, indices, models)

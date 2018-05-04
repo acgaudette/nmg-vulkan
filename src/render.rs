@@ -803,6 +803,7 @@ pub struct Model {
     index_count:  u32,
     index_offset: u32,
     vertex_count: usize,
+    vertex_offset: i32,
 }
 
 impl Model {
@@ -810,11 +811,13 @@ impl Model {
         index_count:  u32,
         index_offset: u32,
         vertex_count: usize,
+        vertex_offset: i32,
     ) -> Model {
         Model {
             index_count,
             index_offset,
             vertex_count,
+            vertex_offset,
         }
     }
 }

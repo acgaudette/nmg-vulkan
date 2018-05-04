@@ -927,6 +927,17 @@ impl InstanceHandle {
     }
 }
 
+impl std::fmt::Display for InstanceHandle {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            out,
+            "{}:{}",
+            self.model_index(),
+            self.instance_index(),
+        )
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct InstanceMeta {
     hide: bool,

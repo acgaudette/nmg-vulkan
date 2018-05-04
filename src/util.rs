@@ -36,6 +36,16 @@ impl<T> AlignedBuffer<T> {
         }
     }
 
+    // Returns alignment of buffer in bytes
+    pub fn byte_alignment(&self) -> usize {
+        self.alignment * std::mem::size_of::<usize>()
+    }
+
+    // Returns size of buffer in bytes
+    pub fn size(&self) -> usize {
+        self.length * std::mem::size_of::<usize>()
+    }
+
     pub fn push(&mut self, entry: T) {
         assert!(
             (self.ptr as usize - self.start as usize)

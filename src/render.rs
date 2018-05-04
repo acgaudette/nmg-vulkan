@@ -427,7 +427,7 @@ impl<'a> Context<'a> {
             copy_buffer(
                 &self.device,
                 self.dyn_ubo_memory,
-                dynamic_buffer.size as u64,
+                dynamic_buffer.size() as u64,
                 &dynamic_buffer.finalize(),
             )?;
         }

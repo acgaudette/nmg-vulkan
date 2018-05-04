@@ -561,7 +561,7 @@ impl<'a> Context<'a> {
                     self.models[j].index_count,
                     1,
                     self.models[j].index_offset,
-                    0, // No vertex offset
+                    self.models[j].vertex_offset,
                     0,
                 );
 

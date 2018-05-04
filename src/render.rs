@@ -1473,9 +1473,8 @@ fn load_models(
         let mut j = 0usize;
 
         for data in &model_data {
-            let len = data.vertices.len();
-            i += len;
-            j += len / 3;
+            i += data.vertices.len();
+            j += data.indices.len();
         }
 
         (i, j)

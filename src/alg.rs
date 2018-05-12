@@ -2,6 +2,7 @@
 
 use std;
 
+// For kicks
 fn inverse_sqrt(x: f32) -> f32 {
     let half = x * 0.5;
 
@@ -16,7 +17,7 @@ fn inverse_sqrt(x: f32) -> f32 {
     iteration * (1.5 - half * iteration * iteration)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vec2 {
     pub x: f32,

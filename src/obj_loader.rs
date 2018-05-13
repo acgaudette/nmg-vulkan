@@ -1,16 +1,16 @@
 extern crate tobj;
 
+use std;
 use render;
-
-use std::path::Path;
 
 pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
 
-    let tobj_models = tobj::load_obj(&Path::new(filename));
+    let tobj_models = tobj::load_obj(&std::path::Path::new(filename));
     assert!(tobj_models.is_ok());
+
     let (models, materials) = tobj_models.unwrap();
-    
-    let mut return_models = Vec::new();
+
+    let mut result = Vec::new();
 
     for m in models {
         let mesh = &m.mesh;
@@ -19,12 +19,12 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
         let indices = mesh.indices.clone();
         let mut vertices = Vec::new();
         let mut has_normals = true;
-        
-        
+
         if normals.len() == 0 {
             for _ in 0..positions.len() {
                 normals.push(0.);
             }
+
             has_normals = false;
         }
 
@@ -40,7 +40,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
             );
         }
 
-        return_models.push(
+        result.push(
             if has_normals {
                 render::ModelData::new(
                     vertices,
@@ -55,5 +55,6 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
             }
         );
     }
-    return_models
+
+    result
 }

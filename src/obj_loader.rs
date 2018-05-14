@@ -8,7 +8,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
     let tobj_models = tobj::load_obj(&std::path::Path::new(filename));
     assert!(tobj_models.is_ok());
 
-    let (models, materials) = tobj_models.unwrap();
+    let (models, _) = tobj_models.unwrap();
 
     let mut result = Vec::new();
 

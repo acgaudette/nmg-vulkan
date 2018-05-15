@@ -9,33 +9,33 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
     assert!(tobj_models.is_ok());
 
     let (models, _) = tobj_models.unwrap();
-
     let mut result = Vec::new();
 
-    for m in models {
-        let mesh = &m.mesh;
-        let positions = &mesh.positions;
-        let mut normals = mesh.normals.clone();
-        let indices = mesh.indices.clone();
-        let mut vertices = Vec::new();
-        let mut has_normals = true;
+    for model in models {
+        let positions = &model.mesh.positions;
+        let count = positions.len();
 
-        if normals.len() == 0 {
-            for _ in 0..positions.len() {
-                normals.push(0.);
+        let (normals, has_normals) = if model.mesh.normals.len() == 0 {
+            let mut normals = Vec::with_capacity(count);
+
+            for _ in 0..count {
+                normals.push(0f32)
             }
 
-            has_normals = false;
-        }
+            (normals, true)
+        } else {
+            (model.mesh.normals, false)
+        };
 
-        for v in 0..positions.len() / 3 {
+        let mut vertices = Vec::with_capacity(count);
+        for v in 0..count / 3 {
             let v3 = v * 3;
 
             vertices.push(
                 render::Vertex::new_raw(
-                    positions[v3], positions[v3+1], positions[v3+2],
-                    normals[v3], normals[v3+1], normals[v3+2],
-                    1., 1., 1.
+                    positions[v3], positions[v3 + 1], positions[v3 + 2],
+                      normals[v3],   normals[v3 + 1],   normals[v3 + 2],
+                    1.0, 1.0, 1.0, // White
                 )
             );
         }
@@ -44,12 +44,12 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
             if has_normals {
                 render::ModelData::new(
                     vertices,
-                    indices,
+                    model.mesh.indices,
                 )
             } else {
                 render::ModelData::new_with_normals(
                     vertices,
-                    indices,
+                    model.mesh.indices,
                     render::NormalMode::Smooth,
                 )
             }

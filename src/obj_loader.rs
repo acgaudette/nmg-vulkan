@@ -6,9 +6,12 @@ use render;
 pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
 
     let tobj_models = tobj::load_obj(&std::path::Path::new(filename));
-    assert!(tobj_models.is_ok());
 
-    let (models, _) = tobj_models.unwrap();
+    let (models, _) = tobj_models.unwrap_or_else(
+        |err| panic!(
+            "Could not load obj file: \"{}\"", err
+        )
+    );
     let mut result = Vec::new();
 
     for model in models {
@@ -22,9 +25,9 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
                 normals.push(0f32)
             }
 
-            (normals, true)
+            (normals, false)
         } else {
-            (model.mesh.normals, false)
+            (model.mesh.normals, true)
         };
 
         let mut vertices = Vec::with_capacity(count);

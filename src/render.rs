@@ -1122,6 +1122,40 @@ pub struct Light {
     intensity: f32,
 }
 
+impl Light {
+    pub fn new_point(
+        position: alg::Vec3,
+        radius: f32,
+        color: graphics::Color,
+        intensity: f32,
+    ) -> Light {
+        let vector = position;
+
+        Light {
+            vector,
+            intensity,
+            color,
+            radius,
+        }
+    }
+
+    pub fn new_directional(
+        direction: alg::Vec3,
+        color: graphics::Color,
+        intensity: f32,
+    ) -> Light {
+        let vector = -direction.norm();
+        let radius = -1.0; // Sentinel
+
+        Light {
+            vector,
+            intensity,
+            color,
+            radius,
+        }
+    }
+}
+
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
     u32,

@@ -9,7 +9,7 @@ use nmg::input;
 use nmg::debug;
 
 struct Demo {
-    last_angle: (f64, f64),
+    last_angle: alg::Vec2,
     cube: Option<entity::Handle>,
 }
 
@@ -42,17 +42,13 @@ impl nmg::Update for Demo {
     ) -> render::SharedUBO {
         let shared_ubo = {
             // Compute rotation angle using mouse
-            let angle = (
-                self.last_angle.0 + input.mouse_delta.0 * 0.005,
-                self.last_angle.1 + input.mouse_delta.1 * 0.005,
-            );
-
+            let angle = self.last_angle + input.mouse_delta * 0.005;
             self.last_angle = angle;
 
             // Orbit camera
             let camera_position = alg::Mat::id()
-                * alg::Mat::rotation_y(angle.0 as f32)
-                * alg::Mat::rotation_x(angle.1 as f32)
+                * alg::Mat::rotation_y(angle.x as f32)
+                * alg::Mat::rotation_x(angle.y as f32)
                 * alg::Mat::translation(0.0, 0.0, -2.0)
                 * alg::Vec3::zero();
 
@@ -102,7 +98,7 @@ impl nmg::FixedUpdate for Demo {
 }
 
 fn main() {
-    let demo = Demo { last_angle: (0.0, 0.0), cube: None };
+    let demo = Demo { last_angle: alg::Vec2::zero(), cube: None };
     let model_data = get_models();
     nmg::go(model_data, demo)
 }

@@ -1,9 +1,11 @@
 extern crate voodoo_winit as vdw;
 
+use alg;
+
 pub struct Manager {
     pub key_pressed_map: [(bool, bool); 12],
-    pub cursor_coords: (f64, f64),
-    pub mouse_delta: (f64, f64),
+    pub cursor_coords: alg::Vec2,
+    pub mouse_delta: alg::Vec2,
 }
 
 #[derive(Clone, Copy, Debug, Eq)]
@@ -32,8 +34,8 @@ impl Manager {
     pub fn new() -> Manager {
         Manager {
             key_pressed_map: [(false, false); 12],
-            cursor_coords: (0f64, 0f64),
-            mouse_delta: (0f64, 0f64),
+            cursor_coords: alg::Vec2::zero(),
+            mouse_delta: alg::Vec2::zero(),
         }
     }
 
@@ -51,11 +53,11 @@ impl Manager {
         vals.0 && !vals.1
     }
 
-    pub fn cursor_coords(&self) -> (f64, f64) {
-        return self.cursor_coords.clone();
+    pub fn cursor_coords(&self) -> alg::Vec2 {
+        self.cursor_coords
     }
 
-    pub fn mouse_delta(&self) -> (f64, f64) {
-        return self.mouse_delta.clone();
+    pub fn mouse_delta(&self) -> alg::Vec2 {
+        self.mouse_delta
     }
 }

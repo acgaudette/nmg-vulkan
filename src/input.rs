@@ -4,8 +4,8 @@ use alg;
 
 pub struct Manager {
     key_map: [KeyState; 12],
-    cursor_coords: alg::Vec2,
-    mouse_delta: alg::Vec2,
+    pub cursor_coords: alg::Vec2,
+    pub mouse_delta: alg::Vec2,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -78,27 +78,5 @@ impl Manager {
     pub fn key_released(&self, key: Key) -> bool {
         let key_state = self.key_map[key as usize];
         key_state.was_pressed && !key_state.pressed
-    }
-
-    /* Mouse */
-
-    pub fn reset_mouse_delta(&mut self) {
-        self.mouse_delta = alg::Vec2::zero();
-    }
-
-    pub fn set_cursor_coords(&mut self, coords: alg::Vec2) {
-        self.cursor_coords = coords;
-    }
-
-    pub fn set_mouse_delta(&mut self, delta: alg::Vec2) {
-        self.mouse_delta = delta;
-    }
-
-    pub fn cursor_coords(&self) -> alg::Vec2 {
-        self.cursor_coords
-    }
-
-    pub fn mouse_delta(&self) -> alg::Vec2 {
-        self.mouse_delta
     }
 }

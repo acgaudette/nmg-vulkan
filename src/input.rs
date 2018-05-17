@@ -56,6 +56,16 @@ impl Manager {
 
     /* Key state */
 
+    pub fn increment_key_states(&mut self) {
+        for key_state in self.key_map.iter_mut() {
+            key_state.was_pressed = key_state.pressed;
+        }
+    }
+
+    pub fn set_key_pressed(&mut self, key: usize, pressed: bool) {
+        self.key_map[key].pressed = pressed;
+    }
+
     pub fn key_held(&self, key: Key) -> bool {
         self.key_map[key as usize].pressed
     }

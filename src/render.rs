@@ -1113,6 +1113,15 @@ impl Default for InstanceUBO {
     }
 }
 
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Light {
+    vector: alg::Vec3,
+    radius: f32,
+    color: graphics::Color,
+    intensity: f32,
+}
+
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     vd::SurfaceKhr,
     u32,

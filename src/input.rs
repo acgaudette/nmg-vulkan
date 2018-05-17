@@ -54,7 +54,7 @@ impl Manager {
         }
     }
 
-    /* Key state */
+    /* Key states */
 
     pub fn increment_key_states(&mut self) {
         for key_state in self.key_map.iter_mut() {
@@ -81,6 +81,18 @@ impl Manager {
     }
 
     /* Mouse */
+
+    pub fn reset_mouse_delta(&mut self) {
+        self.mouse_delta = alg::Vec2::zero();
+    }
+
+    pub fn set_cursor_coords(&mut self, coords: alg::Vec2) {
+        self.cursor_coords = coords;
+    }
+
+    pub fn set_mouse_delta(&mut self, delta: alg::Vec2) {
+        self.mouse_delta = delta;
+    }
 
     pub fn cursor_coords(&self) -> alg::Vec2 {
         self.cursor_coords

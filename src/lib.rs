@@ -196,8 +196,8 @@ fn begin_update<T>(
 
     loop {
         // Update last frame of input
-        for val in input.key_pressed_map.iter_mut() {
-            val.0 = val.1;
+        for key_state in input.key_map.iter_mut() {
+            key_state.was_pressed = key_state.pressed;
         }
 
         // Reset dirty input
@@ -264,9 +264,9 @@ fn begin_update<T>(
                         ..
                     },
                     ..
-                }=> { 
+                }=> {
                     if let Some(keycode) = vdw_key_to_key(virtual_keycode) {
-                        input.key_pressed_map[(keycode as usize)].1 = 
+                        input.key_map[(keycode as usize)].pressed =
                             match state {
                                 vdw::winit::ElementState::Pressed => true,
                                 vdw::winit::ElementState::Released => false,

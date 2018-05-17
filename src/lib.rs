@@ -199,7 +199,7 @@ fn begin_update<T>(
         input.increment_key_states();
 
         // Reset dirty input
-        input.mouse_delta = alg::Vec2::zero();
+        input.reset_mouse_delta();
 
         // Handle window events
         events.poll_events(|event| {
@@ -282,9 +282,11 @@ fn begin_update<T>(
                     },
                     ..
                 } => {
-                    input.cursor_coords = alg::Vec2::new(
-                        position.0 as f32,
-                        position.1 as f32,
+                    input.set_cursor_coords(
+                        alg::Vec2::new(
+                            position.0 as f32,
+                            position.1 as f32,
+                        )
                     );
                 },
 
@@ -294,9 +296,11 @@ fn begin_update<T>(
                     },
                     ..
                 } => {
-                    input.mouse_delta = alg::Vec2::new(
-                        delta.0 as f32,
-                        delta.1 as f32,
+                    input.set_mouse_delta(
+                        alg::Vec2::new(
+                            delta.0 as f32,
+                            delta.1 as f32,
+                        )
                     );
                 },
 

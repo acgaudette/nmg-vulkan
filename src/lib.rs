@@ -201,7 +201,7 @@ fn begin_update<T>(
         }
 
         // Reset dirty input
-        input.mouse_delta = (0.0, 0.0);
+        input.mouse_delta = alg::Vec2::zero();
 
         // Handle window events
         events.poll_events(|event| {
@@ -282,7 +282,10 @@ fn begin_update<T>(
                     },
                     ..
                 } => {
-                    input.cursor_coords = position;
+                    input.cursor_coords = alg::Vec2::new(
+                        position.0 as f32,
+                        position.1 as f32,
+                    );
                 },
 
                 vdw::winit::Event::DeviceEvent {
@@ -291,7 +294,10 @@ fn begin_update<T>(
                     },
                     ..
                 } => {
-                    input.mouse_delta = delta;
+                    input.mouse_delta = alg::Vec2::new(
+                        delta.0 as f32,
+                        delta.1 as f32,
+                    );
                 },
 
                 _ => ()

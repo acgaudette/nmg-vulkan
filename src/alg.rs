@@ -72,6 +72,17 @@ impl Vec2 {
     }
 }
 
+impl std::ops::Add for Vec2 {
+    type Output = Vec2;
+
+    fn add(self, other: Vec2) -> Vec2 {
+        Vec2::new(
+            self.x + other.x,
+            self.y + other.y,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vec3 {

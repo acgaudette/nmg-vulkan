@@ -1154,6 +1154,15 @@ impl Light {
             radius,
         }
     }
+
+    pub fn none() -> Light {
+        Light {
+            position: alg::Vec3::zero(),
+            intensity: 0.0,
+            color: graphics::Color::black(),
+            radius: 0.0,
+        }
+    }
 }
 
 fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(

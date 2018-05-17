@@ -3,9 +3,9 @@ extern crate voodoo_winit as vdw;
 use alg;
 
 pub struct Manager {
-    pub key_map: [KeyState; 12],
-    pub cursor_coords: alg::Vec2,
-    pub mouse_delta: alg::Vec2,
+    key_map: [KeyState; 12],
+    cursor_coords: alg::Vec2,
+    mouse_delta: alg::Vec2,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

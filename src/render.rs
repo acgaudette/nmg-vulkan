@@ -1121,11 +1121,11 @@ impl Default for InstanceUBO {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct Light {
-    vector: alg::Vec3,
-    radius: f32,
+    pub vector: alg::Vec3,
+    pub radius: f32,
     color: graphics::Color,
     intensity: f32,
 }

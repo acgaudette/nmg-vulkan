@@ -1,6 +1,7 @@
 extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
+use nmg::graphics;
 use nmg::entity;
 use nmg::render;
 use nmg::components;
@@ -37,6 +38,18 @@ impl nmg::Start for Demo {
         self.objects.push(object_0);
         self.objects.push(object_1);
         self.objects.push(object_2);
+
+        let light = entities.add();
+        components.lights.register(light);
+        components.lights.set(
+            light,
+            render::Light::new_point(
+                alg::Vec3::zero(),
+                8.0,
+                graphics::Color::white(),
+                2.0,
+            ),
+        );
     }
 }
 

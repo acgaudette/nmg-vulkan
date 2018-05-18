@@ -19,22 +19,24 @@ layout(location = 0) in  vec3 inPosition;
 layout(location = 1) in  vec3 inNormal;
 layout(location = 2) in  vec3 inColor;
 
-layout(location = 0) out vec3 fragNormal;
-layout(location = 1) out vec3 fragColor;
+layout(location = 0) out vec3 fragPosition;
+layout(location = 1) out vec3 fragNormal;
+layout(location = 2) out vec3 fragColor;
 
 out gl_PerVertex {
   vec4 gl_Position;
 };
 
 void main() {
-  gl_Position = shared_data.projection * shared_data.view
-    * this_data.model
+  vec4 position = this_data.model
     * vec4(inPosition + this_data.position_offsets[gl_VertexIndex], 1);
 
+  fragPosition = position.xyz;
   fragColor = inColor;
-
   fragNormal = (
     this_data.model
       * vec4(inNormal + this_data.normal_offsets[gl_VertexIndex], 0)
   ).xyz;
+
+  gl_Position = shared_data.projection * shared_data.view * position;
 }

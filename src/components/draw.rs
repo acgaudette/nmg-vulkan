@@ -5,6 +5,7 @@ use render;
 
 use components::transform;
 use components::softbody;
+use components::light;
 
 pub struct Manager {
     pub instances: render::Instances,
@@ -43,6 +44,7 @@ impl Manager {
         &mut self,
         transforms: &transform::Manager,
         softbodies: &softbody::Manager,
+        lights: &light::Manager,
     ) {
         for (entity, instance) in &self.handles {
             // Get transform component data
@@ -54,8 +56,11 @@ impl Manager {
                 let rotation = transform.1.to_mat();
                 let scale = alg::Mat::scale_vec(transform.2);
 
+                let instance_lights = lights.cull(transform.0);
+
                 render::InstanceUBO::new(
                     translation * rotation * scale, // Model matrix
+                    instance_lights,
                     softbodies.get_position_offsets(*entity),
                     softbodies.get_normal_offsets(*entity),
                 )

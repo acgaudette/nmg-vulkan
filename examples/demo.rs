@@ -91,7 +91,7 @@ impl nmg::Update for Demo {
         components.transforms.set(
             self.objects[0],
             alg::Vec3::new(0., 0., 2.),
-            alg::Quat::axis_angle(alg::Vec3::one(), angle * 2.),
+            alg::Quat::axis_angle(alg::Vec3::new(-0.5, 1.0, 0.5), angle * 2.),
             alg::Vec3::one(),
         );
 

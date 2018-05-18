@@ -99,6 +99,7 @@ where
     let mut components = components::Container {
         transforms:  components::transform::Manager::new(1),
         draws:       components::draw::Manager::new(1, instances),
+        lights:      components::light::Manager::new(8),
         rigidbodies: components::rigidbody::Manager::new(1),
         softbodies:  components::softbody::Manager::new(1, 1, 1),
     };
@@ -359,6 +360,7 @@ fn begin_update<T>(
         components.draws.transfer(
             &mut components.transforms,
             &mut components.softbodies,
+            &mut components.lights,
         );
 
         // Update renderer

@@ -3,6 +3,7 @@ extern crate nmg_vulkan as nmg;
 use nmg::alg;
 use nmg::entity;
 use nmg::render;
+use nmg::graphics;
 use nmg::components;
 use nmg::components::Component;
 use nmg::input;
@@ -22,6 +23,17 @@ impl nmg::Start for Demo {
         components.transforms.register(pyramid);
         components.draws.register(pyramid, 0);
         self.pyramid = Some(pyramid);
+
+        let light = entities.add();
+        components.lights.register(light);
+        components.lights.set(
+            light,
+            render::Light::new_directional(
+                alg::Vec3::fwd(),
+                graphics::Color::white(),
+                2.0,
+            ),
+        );
     }
 }
 

@@ -1,6 +1,7 @@
 #version 450
 
-#define MAX_SOFTBODY_VERT 14
+#define MAX_SOFTBODY_VERT 10
+#define MAX_INSTANCE_LIGHTS 4
 
 layout(binding = 0) uniform shared_ubo {
   mat4 view;
@@ -9,6 +10,7 @@ layout(binding = 0) uniform shared_ubo {
 
 layout(binding = 1, std140) uniform instance_ubo {
   mat4 model;
+  vec4 lights[MAX_INSTANCE_LIGHTS * 2];
   vec3 position_offsets[MAX_SOFTBODY_VERT];
   vec3 normal_offsets[MAX_SOFTBODY_VERT];
 } this_data;

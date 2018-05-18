@@ -1849,6 +1849,7 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
     /* Descriptor set layout */
 
     let ubo_layout = {
+        // Shared UBO, sent to vertex shader
         let shared_binding = vd::DescriptorSetLayoutBinding::builder()
             .binding(0) // First binding
             .descriptor_type(vd::DescriptorType::UniformBuffer)
@@ -1856,11 +1857,12 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
             .stage_flags(vd::ShaderStageFlags::VERTEX)
             .build();
 
+        // Instance UBOs, sent to vertex and fragment shaders
         let dynamic_binding = vd::DescriptorSetLayoutBinding::builder()
             .binding(1) // Second binding
             .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
             .descriptor_count(1) // Single descriptor (UBO)
-            .stage_flags(vd::ShaderStageFlags::VERTEX)
+            .stage_flags(vd::ShaderStageFlags::VERTEX | vd::ShaderStageFlags::FRAGMENT)
             .build();
 
         vd::DescriptorSetLayout::builder()

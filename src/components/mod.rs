@@ -1,5 +1,6 @@
 pub mod transform;
 pub mod draw;
+pub mod light;
 pub mod rigidbody;
 pub mod softbody;
 
@@ -13,6 +14,7 @@ pub trait Component {
 pub struct Container {
     pub transforms:  transform::Manager,
     pub draws:       draw::Manager,
+    pub lights:      light::Manager,
     pub rigidbodies: rigidbody::Manager,
     pub softbodies:  softbody::Manager,
 }

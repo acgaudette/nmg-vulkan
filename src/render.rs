@@ -37,9 +37,13 @@ const MAX_DEBUG_LINES: u64 = 512;
 const DYNAMIC_UBO_WIDTH: usize = 512;
 
 pub const MAX_SOFTBODY_VERT: usize = (
-    DYNAMIC_UBO_WIDTH - std::mem::size_of::<alg::Mat>()
+    DYNAMIC_UBO_WIDTH
+        - std::mem::size_of::<alg::Mat>()
+        - std::mem::size_of::<[Light; MAX_INSTANCE_LIGHTS]>()
 ) / std::mem::size_of::<PaddedVec3>()
   / 2; // There are two offset arrays
+
+pub const MAX_INSTANCE_LIGHTS: usize = 4;
 
 #[allow(dead_code)]
 pub struct Context<'a> {
@@ -1085,6 +1089,7 @@ impl SharedUBO {
 #[repr(C)]
 pub struct InstanceUBO {
     model: alg::Mat,
+    lights: [Light; MAX_INSTANCE_LIGHTS],
     position_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
     normal_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
 }
@@ -1092,11 +1097,13 @@ pub struct InstanceUBO {
 impl InstanceUBO {
     pub fn new(
         model: alg::Mat,
+        lights: [Light; MAX_INSTANCE_LIGHTS],
         position_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
         normal_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
     ) -> InstanceUBO {
         InstanceUBO {
             model,
+            lights,
             position_offsets,
             normal_offsets,
         }
@@ -1107,6 +1114,7 @@ impl Default for InstanceUBO {
     fn default() -> InstanceUBO {
         InstanceUBO {
             model: alg::Mat::id(),
+            lights: [Light::none(); MAX_INSTANCE_LIGHTS],
             position_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
             normal_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
         }
@@ -1157,7 +1165,7 @@ impl Light {
 
     pub fn none() -> Light {
         Light {
-            position: alg::Vec3::zero(),
+            vector: alg::Vec3::zero(),
             intensity: 0.0,
             color: graphics::Color::black(),
             radius: 0.0,

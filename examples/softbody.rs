@@ -85,6 +85,18 @@ impl nmg::Start for Demo {
 
         // Update demo state
         self.objects.push(object);
+
+        let light = entities.add();
+        components.lights.register(light);
+        components.lights.set(
+            light,
+            render::Light::new_point(
+                alg::Vec3::fwd() * 2.0,
+                16.0,
+                graphics::Color::white(),
+                2.0,
+            ),
+        );
     }
 }
 

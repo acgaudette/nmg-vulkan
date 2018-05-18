@@ -3,6 +3,7 @@ extern crate nmg_vulkan as nmg;
 use nmg::alg;
 use nmg::entity;
 use nmg::render;
+use nmg::graphics;
 use nmg::components;
 use nmg::components::Component;
 use nmg::input;
@@ -23,6 +24,17 @@ impl nmg::Start for Demo {
         components.transforms.register(cube);
         components.draws.register(cube, 0);
         self.cube = Some(cube);
+
+        let light = entities.add();
+        components.lights.register(light);
+        components.lights.set(
+            light,
+            render::Light::new_directional(
+                -alg::Vec3::one(),
+                graphics::Color::white(),
+                1.0,
+            ),
+        );
     }
 }
 

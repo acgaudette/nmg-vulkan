@@ -1888,15 +1888,15 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
 }
 
 fn init_swapchain(
-    device:          &vd::Device,
-    surface:         &vd::SurfaceKhr,
-    window_width:    u32,
-    window_height:   u32,
-    surface_format:  &vd::SurfaceFormatKhr,
-    sharing_mode:    vd::SharingMode,
-    indices:         &[u32],
-    present_mode:    vd::PresentModeKhr,
-    old_swapchain:   Option<&vd::SwapchainKhr>,
+    device:         &vd::Device,
+    surface:        &vd::SurfaceKhr,
+    window_width:   u32,
+    window_height:  u32,
+    surface_format: &vd::SurfaceFormatKhr,
+    sharing_mode:   vd::SharingMode,
+    indices:        &[u32],
+    present_mode:   vd::PresentModeKhr,
+    old_swapchain:  Option<&vd::SwapchainKhr>,
 ) -> vd::Result<(
     vd::SwapchainKhr,
     Vec<vd::Fence>,

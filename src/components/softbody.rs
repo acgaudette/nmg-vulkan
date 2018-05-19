@@ -335,13 +335,7 @@ impl Instance {
 
     // Get inverse limb orientation as matrix
     fn inverse_orientation(&self) -> alg::Mat {
-        // Build orthogonal rotation matrix
-        let fwd = self.fwd();
-        let up = self.up_est(); // Approximation
-        let right = up.cross(fwd); // Resistant to x-axis deformity
-        let up = fwd.cross(right); // Recreate up vector
-
-        alg::Mat::inverse_axes(right, up, fwd)
+        self.orientation().transpose()
     }
 
     #[inline]

@@ -27,7 +27,7 @@ const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 
 const MAX_INSTANCES: u64 = 1024;
 #[cfg(debug_assertions)]
-const MAX_DEBUG_LINES: u64 = 512;
+const MAX_DEBUG_LINES: u64 = 1024;
 
 /* Good GPUs have a minimum alignment of 256,
  * which gives us some extra space to pack offset vectors

@@ -257,9 +257,30 @@ impl std::fmt::Display for Vec3 {
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat3 {
+    /* GLSL/SPIR-V expects matrices in column-major order
+     * Here I format methods transposed for conventional readability:
+     * [ x0 ] [ x1 ] [ x2 ]
+     * [ y0 ] [ y1 ] [ y2 ]
+     * [ z0 ] [ z1 ] [ z2 ]
+     */
+
     pub x0: f32, pub y0: f32, pub z0: f32,
     pub x1: f32, pub y1: f32, pub z1: f32,
     pub x2: f32, pub y2: f32, pub z2: f32,
+}
+
+impl Mat3 {
+    pub fn new(
+        x0 : f32, x1: f32, x2: f32,
+        y0 : f32, y1: f32, y2: f32,
+        z0 : f32, z1: f32, z2: f32,
+    ) -> Mat3 {
+        Mat3 {
+            x0, x1, x2,
+            y0, y1, y2,
+            z0, z1, z2,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

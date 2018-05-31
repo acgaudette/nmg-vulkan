@@ -378,6 +378,8 @@ impl<'a> Context<'a> {
 
         if self.debug_line_count == 0 {
             return Ok(());
+        } else if self.debug_line_count > MAX_DEBUG_LINES as u32 {
+            return Err("Exceeded maximum number of debug lines".into());
         }
 
         /* Copy debug data to GPU */

@@ -256,6 +256,14 @@ impl std::fmt::Display for Vec3 {
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
+pub struct Mat3 {
+    pub x0: f32, pub y0: f32, pub z0: f32,
+    pub x1: f32, pub y1: f32, pub z1: f32,
+    pub x2: f32, pub y2: f32, pub z2: f32,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+#[repr(C)]
 pub struct Mat {
 
     /*

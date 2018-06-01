@@ -1132,7 +1132,9 @@ impl Manager {
             && joint.x_limit.min == joint.y_limit.min
         ));
 
+        let parent_orient = parent.orientation();
         let child_orient = child.orientation();
+        let child_orient_inv = child_orient.transpose();
 
         // Get child in local space
         let local_child = (

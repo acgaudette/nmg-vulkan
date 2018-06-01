@@ -59,7 +59,7 @@ impl Manager {
                 let instance_lights = lights.cull(transform.0);
 
                 render::InstanceUBO::new(
-                    translation * rotation * scale, // Model matrix
+                    translation * (rotation * scale), // Model matrix
                     instance_lights,
                     softbodies.get_position_offsets(*entity),
                     softbodies.get_normal_offsets(*entity),

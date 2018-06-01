@@ -144,6 +144,7 @@ impl Instance {
         model_override: Option<Vec<alg::Vec3>>,
         bindings: &[(usize, usize)],
         zones: &[(usize, Falloff)],
+        match_shape: bool,
         mass: f32,
         rigidity: f32,
         gravity: alg::Vec3,
@@ -185,19 +186,20 @@ impl Instance {
         debug_assert!(points.len() == particles.len());
 
         Instance {
-            particles: particles,
-            rods: rods,
-            magnets: magnets,
+            particles,
+            rods,
+            magnets,
+            match_shape,
 
             force: alg::Vec3::zero(),
             accel_dt: gravity * FIXED_DT * FIXED_DT,
             position: alg::Vec3::zero(),
 
-            mass: mass,
+            mass,
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
-            rigidity: rigidity,
+            rigidity,
             perfect_model,
-            mode: model_override,
+            model: model_override,
             triangles,
             normals,
         }

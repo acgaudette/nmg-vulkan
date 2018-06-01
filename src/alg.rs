@@ -933,45 +933,7 @@ impl Quat {
 
     pub fn from_vecs(fwd: Vec3, up: Vec3) -> Quat {
         let right = up.cross(fwd);
-        let trace = right.x + up.y + fwd.z;
-
-        if trace > 0.0 {
-            let s = (1.0 + trace).sqrt() * 2.0;
-
-            Quat {
-                x: (fwd.y - up.z) / s,
-                y: (right.z - fwd.x) / s,
-                z: (up.x - right.y) / s,
-                w: s * 0.25,
-            }
-        } else if right.x > up.y && right.x > fwd.z {
-            let s = (1.0 + right.x - up.y - fwd.z).sqrt() * 2.0;
-
-            Quat {
-                x: s * 0.25,
-                y: (right.y + up.x) / s,
-                z: (right.z + fwd.x) / s,
-                w: (fwd.y - up.z) / s,
-            }
-        } else if up.y > fwd.z {
-            let s = (1.0 + up.y - right.x - fwd.z).sqrt() * 2.0;
-
-            Quat {
-                x: (right.y + up.x) / s,
-                y: s * 0.25,
-                z: (up.z + fwd.y) / s,
-                w: (right.z - fwd.x) / s,
-            }
-        } else {
-            let s = (1.0 + fwd.z - right.x - up.y).sqrt() * 2.0;
-
-            Quat {
-                x: (right.z - fwd.x) / s,
-                y: (up.z + fwd.y) / s,
-                z: s * 0.25,
-                w: (up.x - right.y) / s,
-            }
-        }
+        Mat::axes(right, up, fwd).to_quat()
     }
 
     pub fn axis_angle(axis: Vec3, angle: f32) -> Quat {

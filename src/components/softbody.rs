@@ -221,6 +221,7 @@ impl Joint {
         }
     }
 
+    #[allow(dead_code)]
     fn update_cone(&mut self) {
         self.cone = ReachCone::new(
             self.x_limit,

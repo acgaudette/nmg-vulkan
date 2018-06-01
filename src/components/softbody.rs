@@ -1224,27 +1224,6 @@ impl Manager {
         let simple = alg::Quat::simple(alg::Vec3::fwd(), local_child_fwd);
         let twist = simple.conjugate() * local_child;
 
-        // Build cone
-        let (lower, right, upper, left) = {
-            let x_min = joint.y_limit.min / 90f32.to_radians();
-            let x_max = joint.y_limit.max / 90f32.to_radians();
-            let y_min = joint.x_limit.min / 90f32.to_radians();
-            let y_max = joint.x_limit.max / 90f32.to_radians();
-
-            (
-                alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
-                alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
-                alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
-                alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(),
-            )
-        };
-
-        // Build planes
-        let lower_left = ReachPlane::new(left, lower);
-        let lower_right = ReachPlane::new(lower, right);
-        let upper_right = ReachPlane::new(right, upper);
-        let upper_left = ReachPlane::new(upper, left);
-
         // Is the rotation inside the cone?
         let inside = lower_left.contains(local_child_fwd)
             && lower_right.contains(local_child_fwd)

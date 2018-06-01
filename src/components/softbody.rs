@@ -1380,8 +1380,26 @@ impl Manager {
                             graphics::Color::green(),
                             graphics::Color::red(),
                             lerp,
-                        )
+                        ),
                     );
+                }
+
+                if instance.match_shape {
+                    let mut draw = |triangle: &[usize], a: usize, b: usize| {
+                        debug.add_line(
+                            alg::Line::new(
+                                instance.particles[triangle[a]].position,
+                                instance.particles[triangle[b]].position,
+                            ),
+                            graphics::Color::gray(),
+                        );
+                    };
+
+                    for triangle in instance.triangles.chunks(3) {
+                        draw(triangle, 0, 1);
+                        draw(triangle, 1, 2);
+                        draw(triangle, 2, 0);
+                    }
                 }
             }
 

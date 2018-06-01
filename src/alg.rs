@@ -248,6 +248,19 @@ impl std::ops::Div<f32> for Vec3 {
     }
 }
 
+// Multiply column vector (LHS) by row vector (RHS) to produce a matrix
+impl std::ops::Mul<Vec3> for Vec3 {
+    type Output = Mat3;
+
+    fn mul(self, other: Vec3) -> Mat3 {
+        Mat3::new(
+            self.x * other.x, self.x * other.y, self.x * other.z,
+            self.y * other.x, self.y * other.y, self.y * other.z,
+            self.z * other.x, self.z * other.y, self.z * other.z,
+        )
+    }
+}
+
 impl std::fmt::Display for Vec3 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(

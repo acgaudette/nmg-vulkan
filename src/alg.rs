@@ -282,6 +282,36 @@ impl Mat3 {
         }
     }
 
+    pub fn get(self, row: usize, column: usize) -> f32 {
+        match (row, column) {
+            (0, 0) => self.x0,
+            (0, 1) => self.x1,
+            (0, 2) => self.x2,
+            (1, 0) => self.y0,
+            (1, 1) => self.y1,
+            (1, 2) => self.y2,
+            (2, 0) => self.z0,
+            (2, 1) => self.z1,
+            (2, 2) => self.z2,
+            _ => panic!("Mat3 index ({}, {}) out of bounds", row, column)
+        }
+    }
+
+    pub fn set(&mut self, row: usize, column: usize, value: f32) {
+        match (row, column) {
+            (0, 0) => self.x0 = value,
+            (0, 1) => self.x1 = value,
+            (0, 2) => self.x2 = value,
+            (1, 0) => self.y0 = value,
+            (1, 1) => self.y1 = value,
+            (1, 2) => self.y2 = value,
+            (2, 0) => self.z0 = value,
+            (2, 1) => self.z1 = value,
+            (2, 2) => self.z2 = value,
+            _ => panic!("Mat3 index ({}, {}) out of bounds", row, column)
+        }
+    }
+
     #[inline]
     pub fn id() -> Mat3 {
         Mat3::new(

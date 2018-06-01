@@ -2,6 +2,10 @@
 
 use std;
 
+const JACOBI_ITERATIONS: usize = 16;
+const JACOBI_SKIP_SCALE: f32 = 10.0;
+const JACOBI_SKIP_ITERATIONS: usize = 4;
+
 // For kicks
 fn inverse_sqrt(x: f32) -> f32 {
     let half = x * 0.5;
@@ -395,6 +399,149 @@ impl Mat3 {
             self.y1.sqrt(),
             self.z2.sqrt(),
         )
+    }
+
+    /* Jacobi eigenvalue algorithm
+     * Input: real symmetric matrix
+     * Returns (eigenvectors, diagonal eigenvalues)
+     */
+
+    pub fn jacobi(self) -> (Mat3, Mat3) {
+        let mut vectors = Mat3::id(); // Eigenvectors
+        // Initialize eigenvalues with diagonal
+        let mut values = [self.x0, self.y1, self.z2];
+
+        let mut b = values.clone();
+        let mut accumulator = [0.0; 3];
+        let mut input = self.clone();
+
+        let rotate = |
+            matrix: &mut Mat3,
+            g_cell: (usize, usize),
+            h_cell: (usize, usize),
+            s: f32, tau: f32,
+        | {
+            let g = matrix.get(g_cell.0, g_cell.1);
+            let h = matrix.get(h_cell.0, h_cell.1);
+
+            matrix.set(g_cell.0, g_cell.1, g - s * (h + g * tau));
+            matrix.set(h_cell.0, h_cell.1, h + s * (g - h * tau));
+        };
+
+        for iteration in 0..JACOBI_ITERATIONS {
+            // Iterate through off-diagonal
+            for i in 0..3 {
+                for j in (i + 1)..3 {
+                    /* Skip rotation if the current cell is close to zero */
+
+                    let scaled = JACOBI_SKIP_SCALE * input.get(i, j).abs();
+                    let i_abs = values[i].abs();
+                    let j_abs = values[j].abs();
+
+                    if iteration >= JACOBI_SKIP_ITERATIONS
+                        && scaled + i_abs == i_abs
+                        && scaled + j_abs == j_abs
+                    {
+                        input.set(i, j, 0.0);
+                    }
+
+                    /* Perform rotation */
+
+                    else {
+                        let h = values[j] - values[i];
+                        let h_abs = h.abs();
+
+                        let t = if scaled + h_abs == h_abs {
+                            input.get(i, j) / if h == 0.0 {
+                                std::f32::EPSILON
+                            } else { h }
+                        } else {
+                            let theta = 0.5 * h / input.get(i, j);
+
+                            let t = 1.0 / (
+                                theta.abs() + (1.0 + theta * theta).sqrt()
+                            );
+
+                            if theta < 0.0 { -t } else { t }
+                        };
+
+                        let c = 1.0 / (1.0 + t * t).sqrt();
+                        let s = t * c;
+                        let tau = s / (1.0 + c);
+
+                        /* Accumulate */
+
+                        let h = t * input.get(i, j);
+
+                        accumulator[i] -= h;
+                        accumulator[j] += h;
+                        values[i] -= h;
+                        values[j] += h;
+
+                        input.set(i, j, 0.0);
+
+                        /* Rotate */
+
+                        for k in 0..i {
+                            rotate(&mut input, (k, i), (k, j), s, tau);
+                        }
+
+                        for k in (i + 1)..j {
+                            rotate(&mut input, (i, k), (k, j), s, tau);
+                        }
+
+                        for k in (j + 1)..3 {
+                            rotate(&mut input, (i, k), (j, k), s, tau);
+                        }
+
+                        for k in 0..3 {
+                            rotate(&mut vectors, (k, i), (k, j), s, tau);
+                        }
+                    }
+                }
+            }
+
+            // Update values and reset accumulator
+            for i in 0..3 {
+                b[i] += accumulator[i];
+                values[i] = b[i];
+                accumulator[i] = 0.0;
+            }
+        }
+
+        /* Sort in ascending order via network */
+
+        {
+            let mut compare_swap = |i, j| {
+                if values[i] > values[j] {
+                    values.swap(i, j);
+
+                    // Swap eigenvector columns
+                    for k in 0..3 {
+                        let ki = vectors.get(k, i);
+                        let kj = vectors.get(k, j);
+                        vectors.set(k, j, ki);
+                        vectors.set(k, i, kj);
+                    }
+                }
+            };
+
+            compare_swap(0, 1);
+            compare_swap(0, 2);
+            compare_swap(1, 2);
+        }
+
+        debug_assert!(values[0] <= values[1]);
+        debug_assert!(values[1] <= values[2]);
+
+        let values = Mat3::new_diagonal(
+            // Clamp result in case it's close to zero
+            values[0].max(0.0),
+            values[1].max(0.0),
+            values[2].max(0.0),
+        );
+
+        (vectors, values)
     }
 }
 

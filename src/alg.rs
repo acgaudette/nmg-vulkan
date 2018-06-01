@@ -368,6 +368,30 @@ impl Mat3 {
     }
 }
 
+impl std::ops::Mul for Mat3 {
+    type Output = Mat3;
+
+    fn mul(self, m: Mat3) -> Mat3 {
+        let x0 = self.x0 * m.x0 + self.x1 * m.y0 + self.x2 * m.z0;
+        let x1 = self.x0 * m.x1 + self.x1 * m.y1 + self.x2 * m.z1;
+        let x2 = self.x0 * m.x2 + self.x1 * m.y2 + self.x2 * m.z2;
+
+        let y0 = self.y0 * m.x0 + self.y1 * m.y0 + self.y2 * m.z0;
+        let y1 = self.y0 * m.x1 + self.y1 * m.y1 + self.y2 * m.z1;
+        let y2 = self.y0 * m.x2 + self.y1 * m.y2 + self.y2 * m.z2;
+
+        let z0 = self.z0 * m.x0 + self.z1 * m.y0 + self.z2 * m.z0;
+        let z1 = self.z0 * m.x1 + self.z1 * m.y1 + self.z2 * m.z1;
+        let z2 = self.z0 * m.x2 + self.z1 * m.y2 + self.z2 * m.z2;
+
+        Mat3::new(
+            x0, x1, x2,
+            y0, y1, y2,
+            z0, z1, z2,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat {

@@ -1056,7 +1056,7 @@ impl Quat {
         }
     }
 
-    pub fn to_mat(self) -> Mat {
+    pub fn to_mat(self) -> Mat3 {
         let xx = self.x * self.x;
         let yy = self.y * self.y;
         let zz = self.z * self.z;
@@ -1080,15 +1080,10 @@ impl Quat {
         let z1 = 2.0 * inverse * (yz + xw);
         let y2 = 2.0 * inverse * (yz - xw);
 
-        // TODO: Move out of Mat
-        let x3 = 0.0; let y3 = 0.0; let z3 = 0.0;
-        let w0 = 0.0; let w1 = 0.0; let w2 = 0.0; let w3 = 1.0;
-
-        Mat {
-            x0, x1, x2, x3,
-            y0, y1, y2, y3,
-            z0, z1, z2, z3,
-            w0, w1, w2, w3,
+        Mat3 {
+            x0, x1, x2,
+            y0, y1, y2,
+            z0, z1, z2,
         }
     }
 

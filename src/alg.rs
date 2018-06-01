@@ -1425,11 +1425,11 @@ mod tests {
         let m1 = Mat::rotation_y(1.0);
         let m2 = Mat::rotation_z(-7.0);
 
-        let q1 = Quat::from_mat(m1);
-        let q2 = Quat::from_mat(m2);
+        let q1 = m1.to_quat();
+        let q2 = m2.to_quat();
 
         let error = quat_error(
-            Quat::from_mat(m1 * m2),
+            (m1 * m2).to_quat(),
             q1 * q2,
         );
 

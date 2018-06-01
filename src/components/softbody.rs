@@ -116,6 +116,7 @@ struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
     magnets: Vec<Magnet>,
+    match_shape: bool,
 
     force: alg::Vec3,
     accel_dt: alg::Vec3, // Cached value, dependent on force

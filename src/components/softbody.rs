@@ -1232,101 +1232,11 @@ impl Manager {
 
         // Rebind (limit) simple
         let simple = if !inside {
-            // Calculate intersection of ray with cone
-            let intersection = {
-                let mut candidates = Vec::with_capacity(2);
-                let mut plane = joint.cone.lower_left;
-
-                // Linear rotation path (ray) is
-                // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
-                // which can be simplified to local_child_fwd
-
-                if joint.cone.lower_left.intersects(local_child_fwd) {
-                    candidates.push(
-                        joint.cone.lower_left.closest(local_child_fwd)
-                    );
-                }
-
-                if joint.cone.lower_right.intersects(local_child_fwd) {
-                    if candidates.len() == 0 {
-                        plane = joint.cone.lower_right;
-                    }
-
-                    candidates.push(
-                        joint.cone.lower_right.closest(local_child_fwd)
-                    );
-                }
-
-                if joint.cone.upper_right.intersects(local_child_fwd) {
-                    if candidates.len() == 0 {
-                        plane = joint.cone.upper_right;
-                    }
-
-                    candidates.push(
-                        joint.cone.upper_right.closest(local_child_fwd)
-                    );
-                }
-
-                if joint.cone.upper_left.intersects(local_child_fwd) {
-                    if candidates.len() == 0 {
-                        plane = joint.cone.upper_left;
-                    }
-
-                    candidates.push(
-                        joint.cone.upper_left.closest(local_child_fwd)
-                    );
-                }
-
-                debug_assert!(candidates.len() > 0);
-                let mut result = candidates[0];
-
-                if candidates.len() > 1 {
-                    let compare = if candidates.len() == 2
-                        || candidates[0] == candidates[2] // X: -90 to 90
-                    {
-                        candidates[1]
-                    } else {
-                        // Y: -90 to 90
-                        candidates[2]
-                    };
-
-                    // Solution should be inside all four
-                    let inside = joint.cone.lower_left.contains_biased(compare)
-                        && joint.cone.lower_right.contains_biased(compare)
-                        && joint.cone.upper_right.contains_biased(compare)
-                        && joint.cone.upper_left.contains_biased(compare);
-
-                    if inside {
-                        result = compare;
-                    }
-
-                    // Both candidates are outside
-                    else if !joint.cone.lower_left.contains_biased(candidates[0])
-                        || !joint.cone.lower_right.contains_biased(candidates[0])
-                        || !joint.cone.upper_right.contains_biased(candidates[0])
-                        || !joint.cone.upper_left.contains_biased(candidates[0])
-                    {
-                        result = plane.closest(compare);
-                    }
-                }
-
-                result
-            };
-
-            // Calculate rotation midpoint
-            let midpoint = intersection.norm().lerp(
-                alg::Vec3::fwd(),
-                JOINT_ANG_BIAS,
-            );
-
-            // Limit rotation
-            alg::Quat::simple(alg::Vec3::fwd(), midpoint)
-
+            Manager::limit_simple_joint(&joint.cone, local_child_fwd)
         } else { simple };
 
-        let (axis, angle) = twist.to_axis_angle();
-
         // Rebind (limit) twist
+        let (axis, angle) = twist.to_axis_angle();
         let twist = alg::Quat::axis_angle(
             axis,
             angle.max(joint.z_limit.min).min(joint.z_limit.max),
@@ -1368,6 +1278,102 @@ impl Manager {
         );
 
         // TODO: Add back transform decomposition code
+    }
+
+    // Returns limited simple rotation given cone and forward vector
+    fn limit_simple_joint(
+        cone: &ReachCone,
+        local_child_fwd: alg::Vec3,
+    ) -> alg::Quat {
+        // Calculate intersection of ray with cone
+        let intersection = {
+            let mut candidates = Vec::with_capacity(2);
+            let mut plane = cone.lower_left;
+
+            // Linear rotation path (ray) is
+            // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
+            // which can be simplified to local_child_fwd
+
+            if cone.lower_left.intersects(local_child_fwd) {
+                candidates.push(
+                    cone.lower_left.closest(local_child_fwd)
+                );
+            }
+
+            if cone.lower_right.intersects(local_child_fwd) {
+                if candidates.len() == 0 {
+                    plane = cone.lower_right;
+                }
+
+                candidates.push(
+                    cone.lower_right.closest(local_child_fwd)
+                );
+            }
+
+            if cone.upper_right.intersects(local_child_fwd) {
+                if candidates.len() == 0 {
+                    plane = cone.upper_right;
+                }
+
+                candidates.push(
+                    cone.upper_right.closest(local_child_fwd)
+                );
+            }
+
+            if cone.upper_left.intersects(local_child_fwd) {
+                if candidates.len() == 0 {
+                    plane = cone.upper_left;
+                }
+
+                candidates.push(
+                    cone.upper_left.closest(local_child_fwd)
+                );
+            }
+
+            debug_assert!(candidates.len() > 0);
+            let mut result = candidates[0];
+
+            if candidates.len() > 1 {
+                let compare = if candidates.len() == 2
+                    || candidates[0] == candidates[2] // X: -90 to 90
+                {
+                    candidates[1]
+                } else {
+                    // Y: -90 to 90
+                    candidates[2]
+                };
+
+                // Solution should be inside all four
+                let inside = cone.lower_left.contains_biased(compare)
+                    && cone.lower_right.contains_biased(compare)
+                    && cone.upper_right.contains_biased(compare)
+                    && cone.upper_left.contains_biased(compare);
+
+                if inside {
+                    result = compare;
+                }
+
+                // Both candidates are outside
+                else if !cone.lower_left.contains_biased(candidates[0])
+                    || !cone.lower_right.contains_biased(candidates[0])
+                    || !cone.upper_right.contains_biased(candidates[0])
+                    || !cone.upper_left.contains_biased(candidates[0])
+                {
+                    result = plane.closest(compare);
+                }
+            }
+
+            result
+        };
+
+        // Calculate rotation midpoint
+        let midpoint = intersection.norm().lerp(
+            alg::Vec3::fwd(),
+            JOINT_ANG_BIAS,
+        );
+
+        // Limit rotation
+        alg::Quat::simple(alg::Vec3::fwd(), midpoint)
     }
 
     #[allow(unused_variables)]

@@ -842,6 +842,10 @@ impl Mat {
             self.x3, self.y3, self.z3, self.w3,
         )
     }
+
+    pub fn trace(self) -> f32 {
+        self.x0 + self.y1 + self.z2 + self.w3
+    }
 }
 
 impl std::ops::Mul for Mat {

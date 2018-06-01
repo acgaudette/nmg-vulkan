@@ -404,6 +404,18 @@ impl std::ops::Mul<Vec3> for Mat3 {
     }
 }
 
+impl std::ops::Add for Mat3 {
+    type Output = Mat3;
+
+    fn add(self, other: Mat3) -> Mat3 {
+        Mat3::new(
+            self.x0 + other.x0, self.x1 + other.x1, self.x2 + other.x2,
+            self.y0 + other.y0, self.y1 + other.y1, self.y2 + other.y2,
+            self.z0 + other.z0, self.z1 + other.z1, self.z2 + other.z2,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat {

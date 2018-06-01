@@ -416,6 +416,18 @@ impl std::ops::Add for Mat3 {
     }
 }
 
+impl std::fmt::Display for Mat3 {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            out,
+            "[ {}, {}, {} ]\n[ {}, {}, {} ]\n[ {}, {}, {} ]",
+            self.x0, self.x1, self.x2,
+            self.y0, self.y1, self.y2,
+            self.z0, self.z1, self.z2,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat {

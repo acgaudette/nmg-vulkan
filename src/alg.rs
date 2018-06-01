@@ -786,14 +786,44 @@ impl Mat {
     }
 
     pub fn to_quat(self) -> Quat {
-        let w = (1.0 + self.x0 + self.y1 + self.z2).sqrt() * 0.5;
-        let x4 = w * 4.0;
+        let trace = self.trace();
 
-        Quat {
-            x: (self.z1 - self.y2) / x4,
-            y: (self.x2 - self.z0) / x4,
-            z: (self.y0 - self.x1) / x4,
-            w: w,
+        if trace > 0.0 {
+            let s = 2.0 * (1.0 + trace).sqrt();
+
+            Quat::new(
+                (self.z1 - self.y2) / s,
+                (self.x2 - self.z0) / s,
+                (self.y0 - self.x1) / s,
+                0.25 * s,
+            )
+        } else if (self.x0 > self.y1) && (self.x0 > self.z2) {
+            let s = 2.0 * (1.0 + self.x0 - self.y1 - self.z2).sqrt();
+
+            Quat::new(
+                s * 0.25,
+                (self.x1 + self.y0) / s,
+                (self.x2 + self.z0) / s,
+                (self.z1 - self.y2) / s,
+            )
+        } else if self.y1 > self.z2 {
+            let s = 2.0 * (1.0 + self.y1 - self.x0 - self.z2).sqrt();
+
+            Quat::new(
+                (self.x1 + self.y0) / s,
+                0.25 * s,
+                (self.y2 + self.z1) / s,
+                (self.x2 - self.z0) / s,
+            )
+        } else {
+            let s = 2.0 * (1.0 + self.z2 - self.x0 - self.y1).sqrt();
+
+            Quat::new(
+                (self.x2 + self.z0) / s,
+                (self.y2 + self.z1) / s,
+                0.25 * s,
+                (self.y0 - self.x1) / s,
+            )
         }
     }
 

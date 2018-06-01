@@ -1221,6 +1221,7 @@ impl Manager {
                     );
                 }
 
+                debug_assert!(candidates.len() > 0);
                 let mut result = candidates[0];
 
                 if candidates.len() > 1 {

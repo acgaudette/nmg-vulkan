@@ -1330,6 +1330,23 @@ mod tests {
     }
 
     #[test]
+    fn mat3_sqrt() {
+        let mat = Mat3::new(
+            1., 0., 1.,
+            0., 1., 0.,
+            1., 0., 1.,
+        );
+
+        assert!(mat.transpose() == mat);
+
+        let sqrt = mat.sqrt();
+        let error = mat3_error(mat, sqrt * sqrt);
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
     fn invert_mat3() {
         let mat = Mat3::new(
             1.0,  7.0,  3.0,

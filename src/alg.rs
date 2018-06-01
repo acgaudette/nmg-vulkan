@@ -308,6 +308,17 @@ impl Mat3 {
             0.0, 0.0, z2,
         )
     }
+
+    #[inline]
+    pub fn diagonal(self) -> Mat3 {
+        Mat3::new_diagonal(self.x0, self.y1, self.z2)
+    }
+
+    pub fn is_diagonal(self) -> bool {
+           self.x1 == 0.0 && self.x2 == 0.0
+        && self.y0 == 0.0 && self.y2 == 0.0
+        && self.z0 == 0.0 && self.z1 == 0.0
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

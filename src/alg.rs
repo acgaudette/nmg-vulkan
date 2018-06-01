@@ -874,7 +874,7 @@ impl Mat {
     }
 
     pub fn trace(self) -> f32 {
-        self.x0 + self.y1 + self.z2 + self.w3
+        self.x0 + self.y1 + self.z2
     }
 }
 

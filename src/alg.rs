@@ -1379,7 +1379,7 @@ mod tests {
 
     #[test]
     fn axis_angle() {
-        let rotation = Mat::rotation_y(45f32.to_radians()).to_quat();
+        let rotation = Mat3::rotation_y(45f32.to_radians()).to_quat();
         let (axis, angle) = rotation.to_axis_angle();
 
         let error = vec3_error(axis, Vec3::up());
@@ -1411,12 +1411,12 @@ mod tests {
 
     #[test]
     fn convert_quat() {
-        assert!(Quat::id().to_mat() == Mat::id());
+        assert!(Quat::id().to_mat() == Mat3::id());
 
         let quat = Quat::axis_angle(Vec3::right(), -6.3);
-        let mat = Mat::rotation_x(-6.3);
+        let mat = Mat3::rotation_x(-6.3);
 
-        let error = mat_error(quat.to_mat(), mat);
+        let error = mat3_error(quat.to_mat(), mat);
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
     }
@@ -1424,7 +1424,7 @@ mod tests {
     #[test]
     fn mul_quat_vec() {
         let quat = Quat::axis_angle(Vec3::up(), 7.1);
-        let mat = Mat::rotation_y(7.1);
+        let mat = Mat3::rotation_y(7.1);
         let vec = Vec3::new(1., 2., 3.);
 
         let error = vec3_error(quat.to_mat() * vec , mat * vec);
@@ -1436,9 +1436,9 @@ mod tests {
     fn mul_quat() {
         assert!(Quat::id() * Quat::id() == Quat::id());
 
-        let m1 = Mat::rotation_x(4.0);
-        let m2 = Mat::rotation_y(1.0);
-        let m3 = Mat::rotation_z(-7.0);
+        let m1 = Mat3::rotation_x(4.0);
+        let m2 = Mat3::rotation_y(1.0);
+        let m3 = Mat3::rotation_z(-7.0);
 
         let q1 = m1.to_quat();
         let q2 = m2.to_quat();

@@ -126,7 +126,7 @@ impl nmg::Update for Demo {
 
         let shared_ubo = {
             let camera_position =
-                  alg::Mat::rotation(0.0, 90_f32.to_radians(), 0.0)
+                  alg::Mat3::rotation(0.0, 90_f32.to_radians(), 0.0)
                 * alg::Mat::translation(-3.0, 3.0, -6.0)
                 * alg::Vec3::one();
 

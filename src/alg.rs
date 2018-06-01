@@ -1264,6 +1264,28 @@ mod tests {
         total
     }
 
+    fn mat3_error(a: Mat3, b: Mat3) -> f32 {
+        let mut total = 0f32;
+
+        {
+            let mut error = |x: f32, y: f32| total += (x - y).abs();
+
+            error(a.x0, b.x0);
+            error(a.y0, b.y0);
+            error(a.z0, b.z0);
+
+            error(a.x1, b.x1);
+            error(a.y1, b.y1);
+            error(a.z1, b.z1);
+
+            error(a.x2, b.x2);
+            error(a.y2, b.y2);
+            error(a.z2, b.z2);
+        }
+
+        total
+    }
+
     fn vec3_error(a: Vec3, b: Vec3) -> f32 {
         let mut total = 0f32;
 

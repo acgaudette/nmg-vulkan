@@ -449,7 +449,7 @@ impl Instance {
     }
 
     #[inline]
-    fn transform_around(&mut self, point: alg::Vec3, transform: alg::Mat3) {
+    fn transform_around(&mut self, transform: alg::Mat3, point: alg::Vec3) {
         // Center axis
         for i in 0..8 {
             self.particles[i].position = self.particles[i].position - point;

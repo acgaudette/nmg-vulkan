@@ -1298,6 +1298,24 @@ impl Manager {
                 .to_mat(), // TODO: Fix double conversion
             point,
         );
+
+        /* Correct parent */
+
+        // Transform from the same position as the midpoint correction
+        let point = parent.extend(-joint.offset);
+
+        let parent_correction = child_orient
+            * (simple * twist).conjugate().to_mat()
+            * joint_global_inv();
+
+        parent.transform_around(
+            parent_correction.to_quat()
+                .pow((1. - weight) * JOINT_ANG_RIGID)
+                .to_mat(),
+            point,
+        );
+
+        // TODO: Add back transform decomposition code
     }
 
     #[allow(unused_variables)]

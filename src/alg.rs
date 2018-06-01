@@ -402,6 +402,96 @@ impl Mat3 {
         + self.x2 * ((self.y0 * self.z1) - (self.y1 * self.z0))
     }
 
+    pub fn trace(self) -> f32 {
+        self.x0 + self.y1 + self.z2
+    }
+
+    pub fn axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat3 {
+        Mat3::new(
+            right.x, up.x, fwd.x,
+            right.y, up.y, fwd.y,
+            right.z, up.z, fwd.z,
+        )
+    }
+
+    pub fn inverse_axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat3 {
+        Mat3::new(
+            right.x, right.y, right.z,
+               up.x,    up.y,    up.z,
+              fwd.x,   fwd.y,   fwd.z,
+        )
+    }
+
+    pub fn rotation_x(rad: f32) -> Mat3 {
+        Mat3::new(
+            1.0,       0.0,        0.0,
+            0.0, rad.cos(), -rad.sin(),
+            0.0, rad.sin(),  rad.cos(),
+        )
+    }
+
+    pub fn rotation_y(rad: f32) -> Mat3 {
+        Mat3::new(
+             rad.cos(), 0.0, rad.sin(),
+                   0.0, 1.0,       0.0,
+            -rad.sin(), 0.0, rad.cos(),
+        )
+    }
+
+    pub fn rotation_z(rad: f32) -> Mat3 {
+        Mat3::new(
+             rad.cos(), rad.sin(), 0.0,
+            -rad.sin(), rad.cos(), 0.0,
+                  0.0,        0.0, 1.0,
+        )
+    }
+
+    pub fn rotation(x: f32, y: f32, z: f32) -> Mat3 {
+        Mat3::rotation_x(x) * Mat3::rotation_y(y) * Mat3::rotation_z(z)
+    }
+
+    pub fn to_quat(self) -> Quat {
+        let trace = self.trace();
+
+        if trace > 0.0 {
+            let s = 2.0 * (1.0 + trace).sqrt();
+
+            Quat::new(
+                (self.z1 - self.y2) / s,
+                (self.x2 - self.z0) / s,
+                (self.y0 - self.x1) / s,
+                0.25 * s,
+            )
+        } else if (self.x0 > self.y1) && (self.x0 > self.z2) {
+            let s = 2.0 * (1.0 + self.x0 - self.y1 - self.z2).sqrt();
+
+            Quat::new(
+                s * 0.25,
+                (self.x1 + self.y0) / s,
+                (self.x2 + self.z0) / s,
+                (self.z1 - self.y2) / s,
+            )
+        } else if self.y1 > self.z2 {
+            let s = 2.0 * (1.0 + self.y1 - self.x0 - self.z2).sqrt();
+
+            Quat::new(
+                (self.x1 + self.y0) / s,
+                0.25 * s,
+                (self.y2 + self.z1) / s,
+                (self.x2 - self.z0) / s,
+            )
+        } else {
+            let s = 2.0 * (1.0 + self.z2 - self.x0 - self.y1).sqrt();
+
+            Quat::new(
+                (self.x2 + self.z0) / s,
+                (self.y2 + self.z1) / s,
+                0.25 * s,
+                (self.y0 - self.x1) / s,
+            )
+        }
+    }
+
     pub fn diagonal_sqrt(self) -> Mat3 {
         debug_assert!(self.x0 >= 0.0);
         debug_assert!(self.y1 >= 0.0);
@@ -702,37 +792,6 @@ impl Mat {
         Mat::translation(translation.x, translation.y, translation.z)
     }
 
-    pub fn rotation_x(rad: f32) -> Mat {
-        Mat::new(
-            1.0,       0.0,        0.0, 0.0,
-            0.0, rad.cos(), -rad.sin(), 0.0,
-            0.0, rad.sin(),  rad.cos(), 0.0,
-            0.0,       0.0,        0.0, 1.0,
-        )
-    }
-
-    pub fn rotation_y(rad: f32) -> Mat {
-        Mat::new(
-             rad.cos(), 0.0, rad.sin(), 0.0,
-                   0.0, 1.0,       0.0, 0.0,
-            -rad.sin(), 0.0, rad.cos(), 0.0,
-                   0.0, 0.0,       0.0, 1.0,
-        )
-    }
-
-    pub fn rotation_z(rad: f32) -> Mat {
-        Mat::new(
-             rad.cos(), rad.sin(), 0.0, 0.0,
-            -rad.sin(), rad.cos(), 0.0, 0.0,
-                  0.0,        0.0, 1.0, 0.0,
-                  0.0,        0.0, 0.0, 1.0,
-        )
-    }
-
-    pub fn rotation(x: f32, y: f32, z: f32) -> Mat {
-        Mat::rotation_x(x) * Mat::rotation_y(y) * Mat::rotation_z(z)
-    }
-
     pub fn scale(x: f32, y: f32, z: f32) -> Mat {
         Mat::new(
               x, 0.0, 0.0, 0.0,
@@ -744,24 +803,6 @@ impl Mat {
 
     pub fn scale_vec(scale: Vec3) -> Mat {
         Mat::scale(scale.x, scale.y, scale.z)
-    }
-
-    pub fn axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat {
-        Mat::new(
-            right.x, up.x, fwd.x, 0.0,
-            right.y, up.y, fwd.y, 0.0,
-            right.z, up.z, fwd.z, 0.0,
-                0.0,  0.0,   0.0, 1.0,
-        )
-    }
-
-    pub fn inverse_axes(right: Vec3, up: Vec3, fwd: Vec3) -> Mat {
-        Mat::new(
-            right.x, right.y, right.z, 0.0,
-               up.x,    up.y,    up.z, 0.0,
-              fwd.x,   fwd.y,   fwd.z, 0.0,
-                0.0,     0.0,     0.0, 1.0,
-        )
     }
 
     pub fn to_cardan(self) -> (f32, f32, f32) {
@@ -798,48 +839,6 @@ impl Mat {
             -(-self.x2).atan2(cy),
             (sx * self.z0 - cx * self.y0).atan2(cx * self.y1 - sx * self.z1),
         )
-    }
-
-    pub fn to_quat(self) -> Quat {
-        let trace = self.trace();
-
-        if trace > 0.0 {
-            let s = 2.0 * (1.0 + trace).sqrt();
-
-            Quat::new(
-                (self.z1 - self.y2) / s,
-                (self.x2 - self.z0) / s,
-                (self.y0 - self.x1) / s,
-                0.25 * s,
-            )
-        } else if (self.x0 > self.y1) && (self.x0 > self.z2) {
-            let s = 2.0 * (1.0 + self.x0 - self.y1 - self.z2).sqrt();
-
-            Quat::new(
-                s * 0.25,
-                (self.x1 + self.y0) / s,
-                (self.x2 + self.z0) / s,
-                (self.z1 - self.y2) / s,
-            )
-        } else if self.y1 > self.z2 {
-            let s = 2.0 * (1.0 + self.y1 - self.x0 - self.z2).sqrt();
-
-            Quat::new(
-                (self.x1 + self.y0) / s,
-                0.25 * s,
-                (self.y2 + self.z1) / s,
-                (self.x2 - self.z0) / s,
-            )
-        } else {
-            let s = 2.0 * (1.0 + self.z2 - self.x0 - self.y1).sqrt();
-
-            Quat::new(
-                (self.x2 + self.z0) / s,
-                (self.y2 + self.z1) / s,
-                0.25 * s,
-                (self.y0 - self.x1) / s,
-            )
-        }
     }
 
     // Returns view matrix (inverted)
@@ -886,10 +885,6 @@ impl Mat {
             self.x2, self.y2, self.z2, self.w2,
             self.x3, self.y3, self.z3, self.w3,
         )
-    }
-
-    pub fn trace(self) -> f32 {
-        self.x0 + self.y1 + self.z2
     }
 }
 

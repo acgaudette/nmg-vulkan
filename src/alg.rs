@@ -659,6 +659,42 @@ impl Mat3 {
 
         (vectors, values)
     }
+
+    pub fn to_cardan(self) -> (f32, f32, f32) {
+        let cy = (
+            self.x0 * self.x0 + self.x1 * self.x1
+        ).sqrt();
+
+        if cy < 16. * std::f32::EPSILON { // Singular matrix
+            (
+               -(-self.z1).atan2(self.y1),
+               -(-self.x2).atan2(cy),
+                0.0, // Fix for gimbal lock
+            )
+        } else {
+            (
+               -( self.y2).atan2(self.z2),
+               -(-self.x2).atan2(cy),
+                ( self.x1).atan2(self.x0),
+            )
+        }
+    }
+
+    pub fn to_cardan_safe(self) -> (f32, f32, f32) {
+        let cy = (
+            self.x0 * self.x0 + self.x1 * self.x1
+        ).sqrt();
+
+        let ax = -(self.y2).atan2(self.z2);
+        let cx = ax.cos();
+        let sx = ax.sin();
+
+        (
+            ax,
+            -(-self.x2).atan2(cy),
+            (sx * self.z0 - cx * self.y0).atan2(cx * self.y1 - sx * self.z1),
+        )
+    }
 }
 
 impl std::ops::Mul for Mat3 {
@@ -803,42 +839,6 @@ impl Mat {
 
     pub fn scale_vec(scale: Vec3) -> Mat {
         Mat::scale(scale.x, scale.y, scale.z)
-    }
-
-    pub fn to_cardan(self) -> (f32, f32, f32) {
-        let cy = (
-            self.x0 * self.x0 + self.x1 * self.x1
-        ).sqrt();
-
-        if cy < 16. * std::f32::EPSILON { // Singular matrix
-            (
-               -(-self.z1).atan2(self.y1),
-               -(-self.x2).atan2(cy),
-                0.0, // Fix for gimbal lock
-            )
-        } else {
-            (
-               -( self.y2).atan2(self.z2),
-               -(-self.x2).atan2(cy),
-                ( self.x1).atan2(self.x0),
-            )
-        }
-    }
-
-    pub fn to_cardan_safe(self) -> (f32, f32, f32) {
-        let cy = (
-            self.x0 * self.x0 + self.x1 * self.x1
-        ).sqrt();
-
-        let ax = -(self.y2).atan2(self.z2);
-        let cx = ax.cos();
-        let sx = ax.sin();
-
-        (
-            ax,
-            -(-self.x2).atan2(cy),
-            (sx * self.z0 - cx * self.y0).atan2(cx * self.y1 - sx * self.z1),
-        )
     }
 
     // Returns view matrix (inverted)

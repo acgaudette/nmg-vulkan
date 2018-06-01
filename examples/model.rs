@@ -58,9 +58,9 @@ impl nmg::Update for Demo {
             self.last_angle = angle;
 
             // Orbit camera
-            let camera_position = alg::Mat::id()
-                * alg::Mat::rotation_y(angle.x as f32)
-                * alg::Mat::rotation_x(angle.y as f32)
+            let camera_position =
+                  alg::Mat3::rotation_y(angle.x as f32)
+                * alg::Mat3::rotation_x(angle.y as f32)
                 * alg::Mat::translation(0.0, 0.0, -2.0)
                 * alg::Vec3::zero();
 

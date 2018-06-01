@@ -340,11 +340,6 @@ impl Instance {
         alg::Mat3::axes(right, up, fwd)
     }
 
-    // Get inverse limb orientation as matrix
-    fn inverse_orientation(&self) -> alg::Mat3 {
-        self.orientation().transpose()
-    }
-
     #[inline]
     fn rotate_start(&mut self, rotation: alg::Quat) {
         let point = self.start();

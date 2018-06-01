@@ -193,6 +193,7 @@ struct Joint {
     z_limit: Range,
     transform: alg::Quat,
     offset: alg::Vec3,
+    cone: ReachCone,
 }
 
 struct Instance {

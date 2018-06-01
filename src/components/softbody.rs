@@ -1094,7 +1094,8 @@ impl Manager {
                     (midpoint - parent_start).norm(),
                 );
 
-                parent.rotate_start(parent_correction);
+                // Rotate around joint "start" position
+                parent.rotate_around(parent_correction, parent_start);
 
                 /* Constrain positions */
 

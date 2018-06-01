@@ -1124,11 +1124,11 @@ impl Manager {
         let child_orient = child.orientation();
 
         // Get child in local space
-        let local_child = alg::Quat::from_mat(
+        let local_child = (
             joint.transform.to_mat()
-                * parent.inverse_orientation()
-                * child_orient
-        );
+            * parent.inverse_orientation()
+            * child_orient
+        ).to_quat();
 
         let local_child_fwd = local_child * alg::Vec3::fwd();
 

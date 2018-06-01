@@ -1121,7 +1121,7 @@ impl Manager {
 
     fn solve_joint_rotation(
         &self,
-        parent: &mutInstance,
+        parent: &mut Instance,
         child: &mut Instance,
         joint: &Joint,
     ) {
@@ -1280,9 +1280,6 @@ impl Manager {
         // Calculate mass imbalance
         let weight = 1. / (child.mass / parent.mass + 1.);
 
-        // Calculate correction rotation
-        let reverse = local_child.conjugate() * twist * simple;
-
         /* Correct child */
 
         let point = child.start();
@@ -1306,7 +1303,7 @@ impl Manager {
 
         let parent_correction = child_orient
             * (simple * twist).conjugate().to_mat()
-            * joint_global_inv();
+            * joint_global_inv;
 
         parent.transform_around(
             parent_correction.to_quat()

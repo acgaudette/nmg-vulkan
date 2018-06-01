@@ -103,6 +103,50 @@ struct Range {
     max: f32,
 }
 
+#[derive(Clone, Copy)]
+struct ReachPlane {
+    normal: alg::Vec3,
+}
+
+// Specialized plane struct for joint constraints
+impl ReachPlane {
+    fn new(left: alg::Vec3, right: alg::Vec3) -> ReachPlane {
+        ReachPlane {
+            normal: left.cross(right),
+        }
+    }
+
+    #[inline]
+    fn contains(self, point: alg::Vec3) -> bool {
+        self.normal.dot(point) >= 0.0
+    }
+
+    #[inline]
+    fn contains_biased(self, point: alg::Vec3) -> bool {
+        // Allow points just near the plane
+        self.normal.dot(point) >= 0.0 - JOINT_CONTAINS_BIAS * std::f32::EPSILON
+    }
+
+    #[inline]
+    fn intersects(self, ray: alg::Vec3) -> bool {
+        self.normal.dot(ray) < 0.0
+    }
+
+    #[inline]
+    #[allow(dead_code)]
+    fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
+        let div = self.normal.dot(ray) + std::f32::EPSILON;
+        let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
+        alg::Vec3::fwd() + ray * scalar
+    }
+
+    #[inline]
+    fn closest(self, point: alg::Vec3) -> alg::Vec3 {
+        let signed_dist = self.normal.dot(point);
+        point - self.normal * signed_dist
+    }
+}
+
 struct Joint {
     child: usize,
     x_limit: Range,
@@ -474,50 +518,6 @@ impl Instance {
             let new = self.particles[i].position + offset;
             self.particles[i].position = new;
         }
-    }
-}
-
-#[derive(Clone, Copy)]
-struct ReachPlane {
-    normal: alg::Vec3,
-}
-
-// Specialized plane struct for joint constraints
-impl ReachPlane {
-    fn new(left: alg::Vec3, right: alg::Vec3) -> ReachPlane {
-        ReachPlane {
-            normal: left.cross(right),
-        }
-    }
-
-    #[inline]
-    fn contains(self, point: alg::Vec3) -> bool {
-        self.normal.dot(point) >= 0.0
-    }
-
-    #[inline]
-    fn contains_biased(self, point: alg::Vec3) -> bool {
-        // Allow points just near the plane
-        self.normal.dot(point) >= 0.0 - JOINT_CONTAINS_BIAS * std::f32::EPSILON
-    }
-
-    #[inline]
-    fn intersects(self, ray: alg::Vec3) -> bool {
-        self.normal.dot(ray) < 0.0
-    }
-
-    #[inline]
-    #[allow(dead_code)]
-    fn intersection(self, ray: alg::Vec3) -> alg::Vec3 {
-        let div = self.normal.dot(ray) + std::f32::EPSILON;
-        let scalar = (-alg::Vec3::fwd()).dot(self.normal) / div;
-        alg::Vec3::fwd() + ray * scalar
-    }
-
-    #[inline]
-    fn closest(self, point: alg::Vec3) -> alg::Vec3 {
-        let signed_dist = self.normal.dot(point);
-        point - self.normal * signed_dist
     }
 }
 

@@ -657,10 +657,10 @@ impl Mat {
         w0: f32, w1: f32, w2: f32, w3: f32,
     ) -> Mat {
         Mat {
-            x0, x1, x2, x3,
-            y0, y1, y2, y3,
-            z0, z1, z2, z3,
-            w0, w1, w2, w3,
+            x0, y0, z0, w0,
+            x1, y1, z1, w1,
+            x2, y2, z2, w2,
+            x3, y3, z3, w3,
         }
     }
 
@@ -847,7 +847,6 @@ impl Mat {
 impl std::ops::Mul for Mat {
     type Output = Mat;
 
-    // Naive matrix multiply
     fn mul(self, m: Mat) -> Mat {
         let x0 = self.x0 * m.x0 + self.x1 * m.y0 + self.x2 * m.z0 + self.x3 * m.w0;
         let x1 = self.x0 * m.x1 + self.x1 * m.y1 + self.x2 * m.z1 + self.x3 * m.w1;
@@ -882,11 +881,11 @@ impl std::ops::Mul<Vec3> for Mat {
     type Output = Vec3;
 
     fn mul(self, vec: Vec3) -> Vec3 {
-        // Assume scaling factor of one (position)
+        // Assume scaling factor of one (translation)
         Vec3::new(
-            self.x0 * vec.x + self.x1 * vec.y + self.x2 * vec.z + self.x3,
-            self.y0 * vec.x + self.y1 * vec.y + self.y2 * vec.z + self.y3,
-            self.z0 * vec.x + self.z1 * vec.y + self.z2 * vec.z + self.z3,
+            self.x0 * vec.x + self.x1 * vec.y + self.x2 * vec.z + (self.x3),
+            self.y0 * vec.x + self.y1 * vec.y + self.y2 * vec.z + (self.y3),
+            self.z0 * vec.x + self.z1 * vec.y + self.z2 * vec.z + (self.z3),
         )
     }
 }

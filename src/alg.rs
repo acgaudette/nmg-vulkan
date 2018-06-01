@@ -281,6 +281,24 @@ impl Mat3 {
             z0, z1, z2,
         }
     }
+
+    #[inline]
+    pub fn id() -> Mat3 {
+        Mat3::new(
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0,
+        )
+    }
+
+    #[inline]
+    pub fn zero() -> Mat3 {
+        Mat3::new(
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+        )
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

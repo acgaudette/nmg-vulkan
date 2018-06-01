@@ -1146,7 +1146,7 @@ impl Manager {
 
         // Compute simple and twist rotations
         let simple = alg::Quat::simple(alg::Vec3::fwd(), local_child_fwd);
-        let twist = local_child * simple.conjugate();
+        let twist = simple.conjugate() * local_child;
 
         // Build cone
         let (lower, right, upper, left) = {

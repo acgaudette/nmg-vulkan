@@ -401,6 +401,17 @@ impl Mat3 {
         )
     }
 
+    pub fn sqrt(self) -> Mat3 {
+        // Check for early exit
+        if self.is_diagonal() { self.diagonal_sqrt() }
+
+        else {
+            let (vectors, values) = self.jacobi(); // Diagonalize
+            let d = values.diagonal_sqrt(); // Get square root
+            vectors * d * vectors.inverse()
+        }
+    }
+
     /* Jacobi eigenvalue algorithm
      * Input: real symmetric matrix
      * Returns (eigenvectors, diagonal eigenvalues)

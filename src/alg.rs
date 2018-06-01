@@ -408,7 +408,9 @@ impl Mat3 {
         else {
             let (vectors, values) = self.jacobi(); // Diagonalize
             let d = values.diagonal_sqrt(); // Get square root
-            vectors * d * vectors.inverse()
+
+            // Diagonalizing matrix is orthogonal; can use transpose
+            vectors * d * vectors.transpose()
         }
     }
 

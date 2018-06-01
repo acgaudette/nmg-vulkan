@@ -196,6 +196,32 @@ struct Joint {
     cone: ReachCone,
 }
 
+impl Joint {
+    fn new(
+        child: usize,
+        x_limit: Range,
+        y_limit: Range,
+        z_limit: Range,
+        transform: alg::Quat,
+        offset: alg::Vec3,
+    ) -> Joint {
+        let cone = ReachCone::new(
+            x_limit,
+            y_limit,
+        );
+
+        Joint {
+            child,
+            x_limit,
+            y_limit,
+            z_limit,
+            transform,
+            offset,
+            cone,
+        }
+    }
+}
+
 struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,

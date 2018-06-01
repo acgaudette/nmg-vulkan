@@ -1283,18 +1283,20 @@ impl Manager {
         // Calculate correction rotation
         let reverse = local_child.conjugate() * twist * simple;
 
-        let correction = {
-            let inverse_child = child_orient.transpose();
-            child_orient * reverse.to_mat() * inverse_child
-        };
+        /* Correct child */
 
-        // Correct child
         let point = child.start();
+
+        // Clear child, apply new rotation, apply parent joint
+        let child_correction = joint_global
+            * (simple * twist).to_mat()
+            * child_orient_inv;
+
         child.transform_around(
-            point,
-            correction.to_quat()
+            child_correction.to_quat()
                 .pow(weight * JOINT_ANG_RIGID)
                 .to_mat(), // TODO: Fix double conversion
+            point,
         );
 
         // Convert parent correction to vector

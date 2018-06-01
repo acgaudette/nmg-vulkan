@@ -1121,12 +1121,9 @@ impl Manager {
 
     fn solve_joint_rotation(
         &self,
-        parent: &Instance,
+        parent: &mutInstance,
         child: &mut Instance,
         joint: &Joint,
-    ) -> (
-        alg::Vec3,
-        alg::Vec3,
     ) {
         // If all limits are equal, then the joint is unlimited
         debug_assert!(!(

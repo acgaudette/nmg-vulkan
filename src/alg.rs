@@ -848,7 +848,7 @@ impl Mat {
         let up = fwd.cross(right);
 
         // Transpose orthogonal matrix to get inverse
-        let inverse_rotation = Mat::inverse_axes(right, up, fwd);
+        let inverse_rotation = Mat3::inverse_axes(right, up, fwd);
 
         // Reverse position input
         let inverse_position = Mat::translation(

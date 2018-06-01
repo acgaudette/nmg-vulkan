@@ -1136,6 +1136,10 @@ impl Manager {
         let child_orient = child.orientation();
         let child_orient_inv = child_orient.transpose();
 
+        // Joint transform is treated as child of parent limb
+        let joint_global = parent_orient * joint.transform.to_mat();
+        let joint_global_inv = joint_global.transpose();
+
         // Get child in local space
         let local_child = (
             joint.transform.to_mat()

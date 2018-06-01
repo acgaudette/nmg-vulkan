@@ -938,6 +938,10 @@ impl Manager {
         self.planes.push(plane);
     }
 
+    pub fn add_planes(&mut self, planes: &[alg::Plane]) {
+        planes.iter().for_each(|plane| self.add_plane(*plane));
+    }
+
     // Heavier call, but will force-update all instances
     pub fn set_gravity(&mut self, gravity: alg::Vec3) {
         self.gravity = gravity;

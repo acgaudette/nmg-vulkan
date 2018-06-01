@@ -1318,7 +1318,7 @@ mod tests {
     use alg::*;
 
     #[test]
-    fn mul_mat() {
+    fn mul_mat4() {
         let translation = Mat4::translation(1.0, 2.0, 3.0);
 
         assert!(translation * Mat4::id() == translation);
@@ -1326,7 +1326,7 @@ mod tests {
     }
 
     #[test]
-    fn mul_vec() {
+    fn mul_mat4_vec() {
         let vec = Vec3::new(9., -4., 0.);
         let scale = Mat4::scale(-1., 3., 2.);
 
@@ -1525,7 +1525,7 @@ mod tests {
         assert_ne!(q2, q3);
     }
 
-    fn mat_error(a: Mat4, b: Mat4) -> f32 {
+    fn mat4_error(a: Mat4, b: Mat4) -> f32 {
         let mut total = 0f32;
 
         {

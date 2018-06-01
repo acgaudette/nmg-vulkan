@@ -125,7 +125,8 @@ struct Instance {
 
     mass: f32,
     inv_pt_mass: f32, // Inverse mass per particle
-    model: Vec<alg::Vec3>, // Vertices reference
+    perfect_model: Vec<alg::Vec3>, // Vertices reference
+    model: Option<Vec<alg::Vec3>>, // Optional override
     triangles: Vec<usize>, // Indices reference, for normals
     normals: Vec<alg::Vec3>, // Normals reference
 
@@ -153,21 +154,15 @@ impl Instance {
 
         let mut particles = Vec::with_capacity(points.len());
 
-        let model = if let Some(model) = model_override {
-            for point in points {
-                particles.push(Particle::new(*point));
-            }
-
-            model
-        } else {
-            let mut model = Vec::with_capacity(points.len());
+        let perfect_model = {
+            let mut perfect_model = Vec::with_capacity(points.len());
 
             for point in points {
                 particles.push(Particle::new(*point));
-                model.push(*point);
+                perfect_model.push(*point);
             }
 
-            model
+            perfect_model
         };
 
         // Compute base comparison normals for instance
@@ -200,7 +195,8 @@ impl Instance {
             mass: mass,
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
             rigidity: rigidity,
-            model,
+            perfect_model,
+            mode: model_override,
             triangles,
             normals,
         }

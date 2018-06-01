@@ -1225,55 +1225,55 @@ impl Manager {
         let twist = simple.conjugate() * local_child;
 
         // Is the rotation inside the cone?
-        let inside = lower_left.contains(local_child_fwd)
-            && lower_right.contains(local_child_fwd)
-            && upper_right.contains(local_child_fwd)
-            && upper_left.contains(local_child_fwd);
+        let inside = joint.cone.lower_left.contains(local_child_fwd)
+            && joint.cone.lower_right.contains(local_child_fwd)
+            && joint.cone.upper_right.contains(local_child_fwd)
+            && joint.cone.upper_left.contains(local_child_fwd);
 
         // Rebind (limit) simple
         let simple = if !inside {
             // Calculate intersection of ray with cone
             let intersection = {
                 let mut candidates = Vec::with_capacity(2);
-                let mut plane = lower_left;
+                let mut plane = joint.cone.lower_left;
 
                 // Linear rotation path (ray) is
                 // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
                 // which can be simplified to local_child_fwd
 
-                if lower_left.intersects(local_child_fwd) {
+                if joint.cone.lower_left.intersects(local_child_fwd) {
                     candidates.push(
-                        lower_left.closest(local_child_fwd)
+                        joint.cone.lower_left.closest(local_child_fwd)
                     );
                 }
 
-                if lower_right.intersects(local_child_fwd) {
+                if joint.cone.lower_right.intersects(local_child_fwd) {
                     if candidates.len() == 0 {
-                        plane = lower_right;
+                        plane = joint.cone.lower_right;
                     }
 
                     candidates.push(
-                        lower_right.closest(local_child_fwd)
+                        joint.cone.lower_right.closest(local_child_fwd)
                     );
                 }
 
-                if upper_right.intersects(local_child_fwd) {
+                if joint.cone.upper_right.intersects(local_child_fwd) {
                     if candidates.len() == 0 {
-                        plane = upper_right;
+                        plane = joint.cone.upper_right;
                     }
 
                     candidates.push(
-                        upper_right.closest(local_child_fwd)
+                        joint.cone.upper_right.closest(local_child_fwd)
                     );
                 }
 
-                if upper_left.intersects(local_child_fwd) {
+                if joint.cone.upper_left.intersects(local_child_fwd) {
                     if candidates.len() == 0 {
-                        plane = upper_left;
+                        plane = joint.cone.upper_left;
                     }
 
                     candidates.push(
-                        upper_left.closest(local_child_fwd)
+                        joint.cone.upper_left.closest(local_child_fwd)
                     );
                 }
 
@@ -1291,20 +1291,20 @@ impl Manager {
                     };
 
                     // Solution should be inside all four
-                    let inside = lower_left.contains_biased(compare)
-                        && lower_right.contains_biased(compare)
-                        && upper_right.contains_biased(compare)
-                        && upper_left.contains_biased(compare);
+                    let inside = joint.cone.lower_left.contains_biased(compare)
+                        && joint.cone.lower_right.contains_biased(compare)
+                        && joint.cone.upper_right.contains_biased(compare)
+                        && joint.cone.upper_left.contains_biased(compare);
 
                     if inside {
                         result = compare;
                     }
 
                     // Both candidates are outside
-                    else if !lower_left.contains_biased(candidates[0])
-                            || !lower_right.contains_biased(candidates[0])
-                            || !upper_right.contains_biased(candidates[0])
-                            || !upper_left.contains_biased(candidates[0])
+                    else if !joint.cone.lower_left.contains_biased(candidates[0])
+                        || !joint.cone.lower_right.contains_biased(candidates[0])
+                        || !joint.cone.upper_right.contains_biased(candidates[0])
+                        || !joint.cone.upper_left.contains_biased(candidates[0])
                     {
                         result = plane.closest(compare);
                     }

@@ -392,6 +392,18 @@ impl std::ops::Mul for Mat3 {
     }
 }
 
+impl std::ops::Mul<Vec3> for Mat3 {
+    type Output = Vec3;
+
+    fn mul(self, vec: Vec3) -> Vec3 {
+        Vec3::new(
+            self.x0 * vec.x + self.x1 * vec.y + self.x2 * vec.z,
+            self.y0 * vec.x + self.y1 * vec.y + self.y2 * vec.z,
+            self.z0 * vec.x + self.z1 * vec.y + self.z2 * vec.z,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Mat {

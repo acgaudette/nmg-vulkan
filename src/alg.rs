@@ -721,10 +721,10 @@ impl std::ops::Mul for Mat3 {
     }
 }
 
-impl std::ops::Mul<Mat> for Mat3 {
-    type Output = Mat;
+impl std::ops::Mul<Mat4> for Mat3 {
+    type Output = Mat4;
 
-    fn mul(self, other: Mat) -> Mat {
+    fn mul(self, other: Mat4) -> Mat4 {
         let (a, b) = (self, other);
 
         let x0 = a.x0 * b.x0 + a.x1 * b.y0 + a.x2 * b.z0;
@@ -747,7 +747,7 @@ impl std::ops::Mul<Mat> for Mat3 {
         let w2 = b.w2;
         let w3 = b.w3;
 
-        Mat::new(
+        Mat4::new(
             x0, x1, x2, x3,
             y0, y1, y2, y3,
             z0, z1, z2, z3,
@@ -794,7 +794,7 @@ impl std::fmt::Display for Mat3 {
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
-pub struct Mat {
+pub struct Mat4 {
 
     /* GLSL/SPIR-V expects matrices in column-major order
      * Here I format methods transposed for conventional readability:
@@ -810,14 +810,14 @@ pub struct Mat {
     pub x3: f32, pub y3: f32, pub z3: f32, pub w3: f32,
 }
 
-impl Mat {
+impl Mat4 {
     pub fn new(
         x0: f32, x1: f32, x2: f32, x3: f32,
         y0: f32, y1: f32, y2: f32, y3: f32,
         z0: f32, z1: f32, z2: f32, z3: f32,
         w0: f32, w1: f32, w2: f32, w3: f32,
-    ) -> Mat {
-        Mat {
+    ) -> Mat4 {
+        Mat4 {
             x0, y0, z0, w0,
             x1, y1, z1, w1,
             x2, y2, z2, w2,
@@ -826,8 +826,8 @@ impl Mat {
     }
 
     #[inline]
-    pub fn id() -> Mat {
-        Mat::new(
+    pub fn id() -> Mat4 {
+        Mat4::new(
             1.0, 0.0, 0.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0,
@@ -835,8 +835,8 @@ impl Mat {
         )
     }
 
-    pub fn translation(x: f32, y: f32, z: f32) -> Mat {
-        Mat::new(
+    pub fn translation(x: f32, y: f32, z: f32) -> Mat4 {
+        Mat4::new(
             1.0, 0.0, 0.0,   x,
             0.0, 1.0, 0.0,   y,
             0.0, 0.0, 1.0,   z,
@@ -844,12 +844,12 @@ impl Mat {
         )
     }
 
-    pub fn translation_vec(translation: Vec3) -> Mat {
-        Mat::translation(translation.x, translation.y, translation.z)
+    pub fn translation_vec(translation: Vec3) -> Mat4 {
+        Mat4::translation(translation.x, translation.y, translation.z)
     }
 
-    pub fn scale(x: f32, y: f32, z: f32) -> Mat {
-        Mat::new(
+    pub fn scale(x: f32, y: f32, z: f32) -> Mat4 {
+        Mat4::new(
               x, 0.0, 0.0, 0.0,
             0.0,   y, 0.0, 0.0,
             0.0, 0.0,   z, 0.0,
@@ -857,12 +857,12 @@ impl Mat {
         )
     }
 
-    pub fn scale_vec(scale: Vec3) -> Mat {
-        Mat::scale(scale.x, scale.y, scale.z)
+    pub fn scale_vec(scale: Vec3) -> Mat4 {
+        Mat4::scale(scale.x, scale.y, scale.z)
     }
 
     // Returns view matrix (inverted)
-    pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat {
+    pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat4 {
         let fwd = (target - position).norm();
         let right = up.cross(fwd).norm();
         let up = fwd.cross(right);
@@ -871,7 +871,7 @@ impl Mat {
         let inverse_rotation = Mat3::inverse_axes(right, up, fwd);
 
         // Reverse position input
-        let inverse_position = Mat::translation(
+        let inverse_position = Mat4::translation(
             -position.x,
             -position.y,
             -position.z,
@@ -881,7 +881,7 @@ impl Mat {
     }
 
     // Input: vertical field of view, screen aspect ratio, near and far planes
-    pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> Mat {
+    pub fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> Mat4 {
         // Perspective scaling (rectilinear)
         let y_scale = 1. / (0.5 * fov).to_radians().tan();
         let x_scale = y_scale / aspect;
@@ -890,7 +890,7 @@ impl Mat {
         let z_scale = 1. / (far - near);
         let z_offset = -near / (far - near);
 
-        Mat::new(
+        Mat4::new(
             x_scale,      0.0,     0.0,      0.0,
                 0.0, -y_scale,     0.0,      0.0, // Flip for Vulkan
                 0.0,      0.0, z_scale, z_offset,
@@ -899,10 +899,10 @@ impl Mat {
     }
 }
 
-impl std::ops::Mul for Mat {
-    type Output = Mat;
+impl std::ops::Mul for Mat4 {
+    type Output = Mat4;
 
-    fn mul(self, other: Mat) -> Mat {
+    fn mul(self, other: Mat4) -> Mat4 {
         let (a, b) = (self, other);
 
         let x0 = a.x0 * b.x0 + a.x1 * b.y0 + a.x2 * b.z0 + a.x3 * b.w0;
@@ -925,7 +925,7 @@ impl std::ops::Mul for Mat {
         let w2 = a.w0 * b.x2 + a.w1 * b.y2 + a.w2 * b.z2 + a.w3 * b.w2;
         let w3 = a.w0 * b.x3 + a.w1 * b.y3 + a.w2 * b.z3 + a.w3 * b.w3;
 
-        Mat::new(
+        Mat4::new(
             x0, x1, x2, x3,
             y0, y1, y2, y3,
             z0, z1, z2, z3,
@@ -934,7 +934,7 @@ impl std::ops::Mul for Mat {
     }
 }
 
-impl std::ops::Mul<Vec3> for Mat {
+impl std::ops::Mul<Vec3> for Mat4 {
     type Output = Vec3;
 
     fn mul(self, vec: Vec3) -> Vec3 {
@@ -947,7 +947,7 @@ impl std::ops::Mul<Vec3> for Mat {
     }
 }
 
-impl std::fmt::Display for Mat {
+impl std::fmt::Display for Mat4 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             out,
@@ -1319,21 +1319,21 @@ mod tests {
 
     #[test]
     fn mul_mat() {
-        let translation = Mat::translation(1.0, 2.0, 3.0);
+        let translation = Mat4::translation(1.0, 2.0, 3.0);
 
-        assert!(translation * Mat::id() == translation);
-        assert!(Mat::id() * translation == translation);
+        assert!(translation * Mat4::id() == translation);
+        assert!(Mat4::id() * translation == translation);
     }
 
     #[test]
     fn mul_vec() {
         let vec = Vec3::new(9., -4., 0.);
-        let scale = Mat::scale(-1., 3., 2.);
+        let scale = Mat4::scale(-1., 3., 2.);
 
-        assert!(Mat::id() * vec == vec);
+        assert!(Mat4::id() * vec == vec);
         assert!(scale * vec == Vec3::new(-9., -12., 0.));
 
-        let mat = Mat::new(
+        let mat = Mat4::new(
             1., 1., 1., 0.,
             0., 1., 0., 0.,
             0., 0., 0., 0.,
@@ -1342,7 +1342,7 @@ mod tests {
 
         assert!(mat * vec == Vec3::new(5., -4., 0.,));
 
-        let translation = Mat::translation(2., -7., 0.5);
+        let translation = Mat4::translation(2., -7., 0.5);
         assert!(translation * Vec3::zero() == Vec3::new(2., -7., 0.5));
     }
 
@@ -1525,7 +1525,7 @@ mod tests {
         assert_ne!(q2, q3);
     }
 
-    fn mat_error(a: Mat, b: Mat) -> f32 {
+    fn mat_error(a: Mat4, b: Mat4) -> f32 {
         let mut total = 0f32;
 
         {

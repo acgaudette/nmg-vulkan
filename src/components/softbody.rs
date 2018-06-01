@@ -220,6 +220,13 @@ impl Joint {
             cone,
         }
     }
+
+    fn update_cone(&mut self) {
+        self.cone = ReachCone::new(
+            self.x_limit,
+            self.y_limit,
+        );
+    }
 }
 
 struct Instance {

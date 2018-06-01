@@ -81,7 +81,7 @@ mod tests {
 
     #[test]
     fn pack_ubo() {
-        let mat = alg::Mat::id();
+        let mat = alg::Mat4::id();
 
         let make_offset = |vec| render::PaddedVec3::new(vec);
 
@@ -116,7 +116,7 @@ mod tests {
         };
 
         let (test_mat, test_offsets) = unsafe {
-            let mut ptr = raw.as_mut_ptr() as *const alg::Mat;
+            let mut ptr = raw.as_mut_ptr() as *const alg::Mat4;
             let test_mat = *ptr;
 
             ptr = ptr.offset(1);
@@ -145,9 +145,9 @@ mod tests {
     #[test]
     fn create_aligned_buffers() {
         let matrices = [
-            alg::Mat::id(),
-            alg::Mat::translation(-1., 2., 5.),
-            alg::Mat::translation(8., 3., 3.),
+            alg::Mat4::id(),
+            alg::Mat4::translation(-1., 2., 5.),
+            alg::Mat4::translation(8., 3., 3.),
         ];
 
         compare_aligned_buffer(64, &matrices);
@@ -156,7 +156,7 @@ mod tests {
         compare_aligned_buffer(512, &matrices);
     }
 
-    fn compare_aligned_buffer(alignment: usize, matrices: &[alg::Mat]) {
+    fn compare_aligned_buffer(alignment: usize, matrices: &[alg::Mat4]) {
         let mut raw = {
             let mut buffer = AlignedBuffer::new(alignment, matrices.len());
 
@@ -170,7 +170,7 @@ mod tests {
         };
 
         let aligned = {
-            let mut result = Vec::<alg::Mat>::with_capacity(matrices.len());
+            let mut result = Vec::<alg::Mat4>::with_capacity(matrices.len());
             let ptr_len = std::mem::size_of::<usize>();
 
             unsafe {
@@ -179,7 +179,7 @@ mod tests {
                 let mut start = ptr as usize;
 
                 for i in 0..matrices.len() {
-                    let matrix = *(ptr as *const alg::Mat);
+                    let matrix = *(ptr as *const alg::Mat4);
                     result.push(matrix);
 
                     let diff = {

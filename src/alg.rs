@@ -727,11 +727,31 @@ impl std::ops::Mul<Mat> for Mat3 {
     fn mul(self, other: Mat) -> Mat {
         let (a, b) = (self, other);
 
+        let x0 = a.x0 * b.x0 + a.x1 * b.y0 + a.x2 * b.z0;
+        let x1 = a.x0 * b.x1 + a.x1 * b.y1 + a.x2 * b.z1;
+        let x2 = a.x0 * b.x2 + a.x1 * b.y2 + a.x2 * b.z2;
+        let x3 = a.x0 * b.x3 + a.x1 * b.y3 + a.x2 * b.z3;
+
+        let y0 = a.y0 * b.x0 + a.y1 * b.y0 + a.y2 * b.z0;
+        let y1 = a.y0 * b.x1 + a.y1 * b.y1 + a.y2 * b.z1;
+        let y2 = a.y0 * b.x2 + a.y1 * b.y2 + a.y2 * b.z2;
+        let y3 = a.y0 * b.x3 + a.y1 * b.y3 + a.y2 * b.z3;
+
+        let z0 = a.z0 * b.x0 + a.z1 * b.y0 + a.z2 * b.z0;
+        let z1 = a.z0 * b.x1 + a.z1 * b.y1 + a.z2 * b.z1;
+        let z2 = a.z0 * b.x2 + a.z1 * b.y2 + a.z2 * b.z2;
+        let z3 = a.z0 * b.x3 + a.z1 * b.y3 + a.z2 * b.z3;
+
+        let w0 = b.w0;
+        let w1 = b.w1;
+        let w2 = b.w2;
+        let w3 = b.w3;
+
         Mat::new(
-            a.x0 + b.x0, a.x1 + b.x1, a.x2 + b.x2, b.x3,
-            a.y0 + b.y0, a.y1 + b.y1, a.y2 + b.y2, b.y3,
-            a.z0 + b.z0, a.z1 + b.z1, a.z2 + b.z2, b.z3,
-                   b.w0,        b.w1,        b.w2, b.w3,
+            x0, x1, x2, x3,
+            y0, y1, y2, y3,
+            z0, z1, z2, z3,
+            w0, w1, w2, w3,
         )
     }
 }

@@ -432,9 +432,12 @@ impl std::fmt::Display for Mat3 {
 #[repr(C)]
 pub struct Mat {
 
-    /*
-     * GLSL expects matrices in column-major order
-     * Calculations below are formatted in row-major order
+    /* GLSL/SPIR-V expects matrices in column-major order
+     * Here I format methods transposed for conventional readability:
+     * [ x0 ] [ x1 ] [ x2 ] [ x3 ]
+     * [ y0 ] [ y1 ] [ y2 ] [ y3 ]
+     * [ z0 ] [ z1 ] [ z2 ] [ z3 ]
+     * [ w0 ] [ w1 ] [ w2 ] [ w3 ]
      */
 
     pub x0: f32, pub y0: f32, pub z0: f32, pub w0: f32,

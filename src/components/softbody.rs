@@ -582,6 +582,7 @@ impl Manager {
         indices: Vec<usize>,
         bindings: &[(usize, usize)],
         magnets: &[(usize, Falloff)],
+        match_shape: bool,
     ) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());
@@ -593,6 +594,7 @@ impl Manager {
                 None, // Stub
                 bindings,
                 magnets,
+                match_shape,
                 mass,
                 rigidity * 0.5, // Scale rigidity properly
                 self.gravity,

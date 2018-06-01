@@ -241,7 +241,15 @@ impl Instance {
 
     // Get offset from center for specific particle
     fn offset(&self, index: usize) -> alg::Vec3 {
-        self.particles[index].position - self.position - self.model[index]
+        let model = if let Some(ref model) = self.model {
+            model
+        } else {
+            &self.perfect_model
+        };
+
+        self.particles[index].position
+            - self.position // Aggregate position of instance
+            - model[index]
     }
 
     #[inline]

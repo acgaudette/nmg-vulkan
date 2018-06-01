@@ -968,6 +968,24 @@ impl Manager {
                     instance.particles[rod.right].position = right + offset;
                 }
 
+                // Shape matching
+                if instance.match_shape {
+                    let orient = instance.matched_orientation();
+                    let inverse = orient.transpose();
+
+                    for i in 0..instance.particles.len() {
+                        let base = inverse * (
+                            instance.particles[i].position - instance.center()
+                        );
+
+                        let offset = orient * (instance.perfect_model[i] - base)
+                            * instance.rigidity;
+
+                        instance.particles[i].position =
+                            instance.particles[i].position + offset;
+                    }
+                }
+
                 // Deformity
                 for rod in &mut instance.rods {
                     let left = instance.particles[rod.left].position;

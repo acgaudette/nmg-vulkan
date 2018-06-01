@@ -323,18 +323,18 @@ impl Instance {
     }
 
     // Get limb orientation as matrix
-    fn orientation(&self) -> alg::Mat {
+    fn orientation(&self) -> alg::Mat3 {
         // Build orthogonal rotation matrix
         let fwd = self.fwd();
         let up = self.up_est(); // Approximation
         let right = up.cross(fwd); // Resistant to x-axis deformity
         let up = fwd.cross(right); // Recreate up vector
 
-        alg::Mat::axes(right, up, fwd)
+        alg::Mat3::axes(right, up, fwd)
     }
 
     // Get inverse limb orientation as matrix
-    fn inverse_orientation(&self) -> alg::Mat {
+    fn inverse_orientation(&self) -> alg::Mat3 {
         self.orientation().transpose()
     }
 
@@ -431,7 +431,7 @@ impl Instance {
     }
 
     #[inline]
-    fn transform_around(&mut self, point: alg::Vec3, transform: alg::Mat) {
+    fn transform_around(&mut self, point: alg::Vec3, transform: alg::Mat3) {
         // Center axis
         for i in 0..8 {
             self.particles[i].position = self.particles[i].position - point;

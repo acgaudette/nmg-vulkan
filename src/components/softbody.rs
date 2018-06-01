@@ -891,14 +891,14 @@ impl Manager {
 
         let transform = alg::Quat::from_vecs(fwd, up);
 
-        let joint = Joint {
-            child: j,
-            x_limit: Range { min: x_min, max: x_max },
-            y_limit: Range { min: y_min, max: y_max },
-            z_limit: Range { min: z_min, max: z_max },
-            transform: transform,
-            offset: offset,
-        };
+        let joint = Joint::new(
+            j, // Child index
+            Range { min: x_min, max: x_max },
+            Range { min: y_min, max: y_max },
+            Range { min: z_min, max: z_max },
+            transform,
+            offset,
+        );
 
         if expand {
             let parent = unsafe {

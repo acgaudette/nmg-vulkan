@@ -147,6 +147,13 @@ impl ReachPlane {
     }
 }
 
+struct ReachCone {
+    lower_left:  ReachPlane,
+    lower_right: ReachPlane,
+    upper_right: ReachPlane,
+    upper_left:  ReachPlane,
+}
+
 struct Joint {
     child: usize,
     x_limit: Range,

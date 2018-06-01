@@ -1108,30 +1108,14 @@ impl Manager {
 
             /* Constrain orientations to limits */
 
-            let mut net_torque = alg::Vec3::zero();
-            let mut net_force = alg::Vec3::zero();
-
             for i in 0..children.len() {
-                // Correct child, get parent correction
-                let (torque, force) = self.solve_joint_rotation(
+                // Correct parent and child
+                self.solve_joint_rotation(
                     parent,
                     &mut children[i],
                     &joints[i],
                 );
-
-                // Sum parent correction
-                net_torque = net_torque + torque;
-                net_force = net_force + force;
             }
-
-            // Convert torque to quaternion
-            let rotation = alg::Quat::axis_angle(
-                net_torque.norm(),
-                net_torque.mag(),
-            );
-
-            // Correct parent
-            parent.transform_inner(rotation, net_force);
         }
     }
 

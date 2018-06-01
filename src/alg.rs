@@ -595,6 +595,21 @@ impl std::ops::Mul for Mat3 {
     }
 }
 
+impl std::ops::Mul<Mat> for Mat3 {
+    type Output = Mat;
+
+    fn mul(self, other: Mat) -> Mat {
+        let (a, b) = (self, other);
+
+        Mat::new(
+            a.x0 + b.x0, a.x1 + b.x1, a.x2 + b.x2, b.x3,
+            a.y0 + b.y0, a.y1 + b.y1, a.y2 + b.y2, b.y3,
+            a.z0 + b.z0, a.z1 + b.z1, a.z2 + b.z2, b.z3,
+                   b.w0,        b.w1,        b.w2, b.w3,
+        )
+    }
+}
+
 impl std::ops::Mul<Vec3> for Mat3 {
     type Output = Vec3;
 

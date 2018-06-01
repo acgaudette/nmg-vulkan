@@ -340,6 +340,22 @@ impl Instance {
         alg::Mat3::axes(right, up, fwd)
     }
 
+    // Determine instance orientation using least squares fit
+    fn matched_orientation(&self) -> alg::Mat3 {
+        let center = self.center();
+        let mut transform = alg::Mat3::zero();
+
+        // Sum multiplication of actual and model particle positions
+        for i in 0..self.particles.len() {
+            let actual = self.particles[i].position - center;
+            transform = transform + (actual * self.perfect_model[i]);
+        }
+
+        // Compute rotation component using polar decomposition
+        let s = (transform.transpose() * transform).sqrt();
+        transform * s.inverse()
+    }
+
     #[inline]
     fn rotate_start(&mut self, rotation: alg::Quat) {
         let point = self.start();

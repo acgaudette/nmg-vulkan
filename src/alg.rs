@@ -975,7 +975,7 @@ impl Quat {
 
     pub fn from_vecs(fwd: Vec3, up: Vec3) -> Quat {
         let right = up.cross(fwd);
-        Mat::axes(right, up, fwd).to_quat()
+        Mat3::axes(right, up, fwd).to_quat()
     }
 
     pub fn axis_angle(axis: Vec3, angle: f32) -> Quat {

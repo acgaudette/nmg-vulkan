@@ -299,6 +299,15 @@ impl Mat3 {
             0.0, 0.0, 0.0,
         )
     }
+
+    #[inline]
+    pub fn new_diagonal(x0: f32, y1: f32, z2: f32) -> Mat3 {
+        Mat3::new(
+            x0, 0.0, 0.0,
+            0.0, y1, 0.0,
+            0.0, 0.0, z2,
+        )
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

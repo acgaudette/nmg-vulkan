@@ -1011,7 +1011,7 @@ impl Manager {
 
         // Solve abstracted constraints
         for _ in 0..ITERATIONS {
-            // Solve joint constraints
+            // Joint constraints
             self.solve_joints();
         }
 

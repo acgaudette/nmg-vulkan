@@ -1132,6 +1132,21 @@ mod tests {
     }
 
     #[test]
+    fn invert_mat3() {
+        let mat = Mat3::new(
+            1.0,  7.0,  3.0,
+            7.0,  4.0, -5.0,
+            3.0, -5.0,  6.0,
+        );
+
+        let id = mat * mat.inverse();
+        let error = mat3_error(Mat3::new_diagonal(1.0, 1.0, 1.0), id);
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
     fn convert_quat() {
         assert!(Quat::id().to_mat() == Mat::id());
 

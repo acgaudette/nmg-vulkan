@@ -1378,6 +1378,24 @@ mod tests {
     }
 
     #[test]
+    fn convert_axis_angle() {
+        let rotation = Quat::axis_angle(
+            Vec3::one().norm(),
+            120f32.to_radians(),
+        );
+
+        let (axis, angle) = rotation.to_axis_angle();
+
+        let error = vec3_error(axis, Vec3::one().norm());
+        eprintln!("Axis Error: {}", error);
+        assert!(error < 0.0001);
+
+        let error = (angle.to_degrees() - 120.0).abs();
+        eprintln!("Angle Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
     fn convert_quat() {
         assert!(Quat::id().to_mat() == Mat::id());
 

@@ -154,6 +154,38 @@ struct ReachCone {
     upper_left:  ReachPlane,
 }
 
+impl ReachCone {
+    fn new(x_limit: Range, y_limit: Range) -> ReachCone {
+        // Build cone
+        let (lower, right, upper, left) = {
+            let x_min = y_limit.min / 90f32.to_radians();
+            let x_max = y_limit.max / 90f32.to_radians();
+            let y_min = x_limit.min / 90f32.to_radians();
+            let y_max = x_limit.max / 90f32.to_radians();
+
+            (
+                alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
+                alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
+                alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
+                alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(),
+            )
+        };
+
+        // Build planes
+        let lower_left = ReachPlane::new(left, lower);
+        let lower_right = ReachPlane::new(lower, right);
+        let upper_right = ReachPlane::new(right, upper);
+        let upper_left = ReachPlane::new(upper, left);
+
+        ReachCone {
+            lower_left,
+            lower_right,
+            upper_right,
+            upper_left,
+        }
+    }
+}
+
 struct Joint {
     child: usize,
     x_limit: Range,

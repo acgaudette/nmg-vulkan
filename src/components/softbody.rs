@@ -357,6 +357,7 @@ impl Instance {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn rotate_start(&mut self, rotation: alg::Quat) {
         let point = self.start();
         self.rotate_around(rotation, point);
@@ -369,6 +370,7 @@ impl Instance {
     }
 
     #[inline]
+    #[allow(dead_code)]
     fn transform_inner(
         &mut self,
         rotation: alg::Quat,

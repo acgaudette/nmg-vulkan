@@ -1186,7 +1186,7 @@ impl Manager {
 
             for i in 0..children.len() {
                 // Correct parent and child
-                self.solve_joint_rotation(
+                Manager::solve_joint_rotation(
                     parent,
                     &mut children[i],
                     &joints[i],
@@ -1196,7 +1196,6 @@ impl Manager {
     }
 
     fn solve_joint_rotation(
-        &self,
         parent: &mut Instance,
         child: &mut Instance,
         joint: &Joint,

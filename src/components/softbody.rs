@@ -1298,22 +1298,6 @@ impl Manager {
                 .to_mat(), // TODO: Fix double conversion
             point,
         );
-
-        // Convert parent correction to vector
-        let torque = {
-            let (dir, mag) = correction.transpose().to_quat()
-                .pow((1. - weight) * JOINT_ANG_RIGID)
-                .to_axis_angle();
-
-            dir * mag
-        };
-
-        // Solve for force at point (T = f x d)
-        let d = parent.extend(joint.offset) - parent.center();
-        let force = d.cross(torque);
-
-        // Return decomposed parent correction
-        (torque, force)
     }
 
     #[allow(unused_variables)]

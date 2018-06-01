@@ -896,26 +896,28 @@ impl Mat {
 impl std::ops::Mul for Mat {
     type Output = Mat;
 
-    fn mul(self, m: Mat) -> Mat {
-        let x0 = self.x0 * m.x0 + self.x1 * m.y0 + self.x2 * m.z0 + self.x3 * m.w0;
-        let x1 = self.x0 * m.x1 + self.x1 * m.y1 + self.x2 * m.z1 + self.x3 * m.w1;
-        let x2 = self.x0 * m.x2 + self.x1 * m.y2 + self.x2 * m.z2 + self.x3 * m.w2;
-        let x3 = self.x0 * m.x3 + self.x1 * m.y3 + self.x2 * m.z3 + self.x3 * m.w3;
+    fn mul(self, other: Mat) -> Mat {
+        let (a, b) = (self, other);
 
-        let y0 = self.y0 * m.x0 + self.y1 * m.y0 + self.y2 * m.z0 + self.y3 * m.w0;
-        let y1 = self.y0 * m.x1 + self.y1 * m.y1 + self.y2 * m.z1 + self.y3 * m.w1;
-        let y2 = self.y0 * m.x2 + self.y1 * m.y2 + self.y2 * m.z2 + self.y3 * m.w2;
-        let y3 = self.y0 * m.x3 + self.y1 * m.y3 + self.y2 * m.z3 + self.y3 * m.w3;
+        let x0 = a.x0 * b.x0 + a.x1 * b.y0 + a.x2 * b.z0 + a.x3 * b.w0;
+        let x1 = a.x0 * b.x1 + a.x1 * b.y1 + a.x2 * b.z1 + a.x3 * b.w1;
+        let x2 = a.x0 * b.x2 + a.x1 * b.y2 + a.x2 * b.z2 + a.x3 * b.w2;
+        let x3 = a.x0 * b.x3 + a.x1 * b.y3 + a.x2 * b.z3 + a.x3 * b.w3;
 
-        let z0 = self.z0 * m.x0 + self.z1 * m.y0 + self.z2 * m.z0 + self.z3 * m.w0;
-        let z1 = self.z0 * m.x1 + self.z1 * m.y1 + self.z2 * m.z1 + self.z3 * m.w1;
-        let z2 = self.z0 * m.x2 + self.z1 * m.y2 + self.z2 * m.z2 + self.z3 * m.w2;
-        let z3 = self.z0 * m.x3 + self.z1 * m.y3 + self.z2 * m.z3 + self.z3 * m.w3;
+        let y0 = a.y0 * b.x0 + a.y1 * b.y0 + a.y2 * b.z0 + a.y3 * b.w0;
+        let y1 = a.y0 * b.x1 + a.y1 * b.y1 + a.y2 * b.z1 + a.y3 * b.w1;
+        let y2 = a.y0 * b.x2 + a.y1 * b.y2 + a.y2 * b.z2 + a.y3 * b.w2;
+        let y3 = a.y0 * b.x3 + a.y1 * b.y3 + a.y2 * b.z3 + a.y3 * b.w3;
 
-        let w0 = self.w0 * m.x0 + self.w1 * m.y0 + self.w2 * m.z0 + self.w3 * m.w0;
-        let w1 = self.w0 * m.x1 + self.w1 * m.y1 + self.w2 * m.z1 + self.w3 * m.w1;
-        let w2 = self.w0 * m.x2 + self.w1 * m.y2 + self.w2 * m.z2 + self.w3 * m.w2;
-        let w3 = self.w0 * m.x3 + self.w1 * m.y3 + self.w2 * m.z3 + self.w3 * m.w3;
+        let z0 = a.z0 * b.x0 + a.z1 * b.y0 + a.z2 * b.z0 + a.z3 * b.w0;
+        let z1 = a.z0 * b.x1 + a.z1 * b.y1 + a.z2 * b.z1 + a.z3 * b.w1;
+        let z2 = a.z0 * b.x2 + a.z1 * b.y2 + a.z2 * b.z2 + a.z3 * b.w2;
+        let z3 = a.z0 * b.x3 + a.z1 * b.y3 + a.z2 * b.z3 + a.z3 * b.w3;
+
+        let w0 = a.w0 * b.x0 + a.w1 * b.y0 + a.w2 * b.z0 + a.w3 * b.w0;
+        let w1 = a.w0 * b.x1 + a.w1 * b.y1 + a.w2 * b.z1 + a.w3 * b.w1;
+        let w2 = a.w0 * b.x2 + a.w1 * b.y2 + a.w2 * b.z2 + a.w3 * b.w2;
+        let w3 = a.w0 * b.x3 + a.w1 * b.y3 + a.w2 * b.z3 + a.w3 * b.w3;
 
         Mat::new(
             x0, x1, x2, x3,

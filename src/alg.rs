@@ -354,6 +354,18 @@ impl Mat3 {
         - self.x1 * ((self.y0 * self.z2) - (self.y2 * self.z0))
         + self.x2 * ((self.y0 * self.z1) - (self.y1 * self.z0))
     }
+
+    pub fn diagonal_sqrt(self) -> Mat3 {
+        debug_assert!(self.x0 >= 0.0);
+        debug_assert!(self.y1 >= 0.0);
+        debug_assert!(self.z2 >= 0.0);
+
+        Mat3::new_diagonal(
+            self.x0.sqrt(),
+            self.y1.sqrt(),
+            self.z2.sqrt(),
+        )
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

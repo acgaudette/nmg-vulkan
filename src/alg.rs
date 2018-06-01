@@ -319,6 +319,14 @@ impl Mat3 {
         && self.y0 == 0.0 && self.y2 == 0.0
         && self.z0 == 0.0 && self.z1 == 0.0
     }
+
+    pub fn transpose(self) -> Mat3 {
+        Mat3::new(
+            self.x0, self.y0, self.z0,
+            self.x1, self.y1, self.z1,
+            self.x2, self.y2, self.z2,
+        )
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

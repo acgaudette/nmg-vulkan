@@ -1057,28 +1057,39 @@ impl Quat {
     }
 
     pub fn to_mat(self) -> Mat {
-        self.norm().to_mat_raw() // Normalize first
-    }
+        let xx = self.x * self.x;
+        let yy = self.y * self.y;
+        let zz = self.z * self.z;
+        let ww = self.w * self.w;
 
-    pub fn to_mat_raw(self) -> Mat {
-        let x0 = 1. - 2. * self.y * self.y - 2. * self.z * self.z;
-        let y0 = 2. * self.x * self.y - 2. * self.z * self.w;
-        let z0 = 2. * self.x * self.z + 2. * self.y * self.w;
+        let inverse = 1.0 / (xx + yy + zz + ww);
 
-        let x1 = 2. * self.x * self.y + 2. * self.z * self.w;
-        let y1 = 1. - 2. * self.x * self.x - 2. * self.z * self.z;
-        let z1 = 2. * self.y * self.z - 2. * self.x * self.w;
+        let x0 = inverse * ( xx - yy - zz + ww);
+        let y1 = inverse * (-xx + yy - zz + ww);
+        let z2 = inverse * (-xx - yy + zz + ww);
 
-        let x2 = 2. * self.x * self.z - 2. * self.y * self.w;
-        let y2 = 2. * self.y * self.z + 2. * self.x * self.w;
-        let z2 = 1. - 2. * self.x * self.x - 2. * self.y * self.y;
+        let (xy, zw) = (self.x * self.y, self.z * self.w);
+        let y0 = 2.0 * inverse * (xy + zw);
+        let x1 = 2.0 * inverse * (xy - zw);
 
-        Mat::new(
-            x0, y0, z0, 0.,
-            x1, y1, z1, 0.,
-            x2, y2, z2, 0.,
-            0., 0., 0., 1.,
-        )
+        let (xz, yw) = (self.x * self.z, self.y * self.w);
+        let z0 = 2.0 * inverse * (xz - yw);
+        let x2 = 2.0 * inverse * (xz + yw);
+
+        let (yz, xw) = (self.y * self.z, self.x * self.w);
+        let z1 = 2.0 * inverse * (yz + xw);
+        let y2 = 2.0 * inverse * (yz - xw);
+
+        // TODO: Move out of Mat
+        let x3 = 0.0; let y3 = 0.0; let z3 = 0.0;
+        let w0 = 0.0; let w1 = 0.0; let w2 = 0.0; let w3 = 1.0;
+
+        Mat {
+            x0, x1, x2, x3,
+            y0, y1, y2, y3,
+            z0, z1, z2, z3,
+            w0, w1, w2, w3,
+        }
     }
 
     pub fn to_axis_angle(self) -> (Vec3, f32) {

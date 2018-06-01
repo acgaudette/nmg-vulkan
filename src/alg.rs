@@ -327,6 +327,33 @@ impl Mat3 {
             self.x2, self.y2, self.z2,
         )
     }
+
+    pub fn inverse(self) -> Mat3 {
+        let reciprocal = 1. / self.det();
+
+        Mat3::new(
+            // Row 0: x0, x1, x2
+            ((self.y1 * self.z2) - (self.z1 * self.y2)) * reciprocal,
+            ((self.x2 * self.z1) - (self.x1 * self.z2)) * reciprocal,
+            ((self.x1 * self.y2) - (self.x2 * self.y1)) * reciprocal,
+
+            // Row 1: y0, y1, y2
+            ((self.y2 * self.z0) - (self.y0 * self.z2)) * reciprocal,
+            ((self.x0 * self.z2) - (self.x2 * self.z0)) * reciprocal,
+            ((self.y0 * self.x2) - (self.x0 * self.y2)) * reciprocal,
+
+            // Row 2: z0, z1, z2
+            ((self.y0 * self.z1) - (self.z0 * self.y1)) * reciprocal,
+            ((self.z0 * self.x1) - (self.x0 * self.z1)) * reciprocal,
+            ((self.x0 * self.y1) - (self.y0 * self.x1)) * reciprocal,
+        )
+    }
+
+    pub fn det(self) -> f32 {
+          self.x0 * ((self.y1 * self.z2) - (self.z1 * self.y2))
+        - self.x1 * ((self.y0 * self.z2) - (self.y2 * self.z0))
+        + self.x2 * ((self.y0 * self.z1) - (self.y1 * self.z0))
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]

@@ -1132,6 +1132,16 @@ mod tests {
     }
 
     #[test]
+    fn mat3_diagonal_sqrt() {
+        let mat = Mat3::new_diagonal(4.0, 4.0, 4.0);
+        let compare = Mat3::new_diagonal(2.0, 2.0, 2.0);
+
+        let error = mat3_error(mat.diagonal_sqrt(), compare);
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
     fn invert_mat3() {
         let mat = Mat3::new(
             1.0,  7.0,  3.0,

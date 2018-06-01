@@ -928,18 +928,6 @@ impl Quat {
         }
     }
 
-    pub fn from_mat(m: Mat) -> Quat {
-        let w = (1.0 + m.x0 + m.y1 + m.z2).sqrt() * 0.5;
-        let x4 = w * 4.0;
-
-        Quat {
-            x: (m.z1 - m.y2) / x4,
-            y: (m.x2 - m.z0) / x4,
-            z: (m.y0 - m.x1) / x4,
-            w: w,
-        }
-    }
-
     pub fn from_vecs(fwd: Vec3, up: Vec3) -> Quat {
         let right = up.cross(fwd);
         let trace = right.x + up.y + fwd.z;

@@ -33,8 +33,8 @@ impl nmg::Update for Demo {
         debug: &mut debug::Handler,
     ) -> render::SharedUBO {
         render::SharedUBO::new(
-            alg::Mat::id(),
-            alg::Mat::id(),
+            alg::Mat4::id(),
+            alg::Mat4::id(),
         )
     }
 }

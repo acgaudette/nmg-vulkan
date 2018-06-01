@@ -61,17 +61,17 @@ impl nmg::Update for Demo {
             let camera_position =
                   alg::Mat3::rotation_y(angle.x as f32)
                 * alg::Mat3::rotation_x(angle.y as f32)
-                * alg::Mat::translation(0.0, 0.0, -2.0)
+                * alg::Mat4::translation(0.0, 0.0, -2.0)
                 * alg::Vec3::zero();
 
-            let view = alg::Mat::look_at_view(
+            let view = alg::Mat4::look_at_view(
                 camera_position,
                 alg::Vec3::zero(), // Target position
                 alg::Vec3::up(),
             );
 
             let projection = {
-                alg::Mat::perspective(
+                alg::Mat4::perspective(
                     60.,
                     screen_width as f32 / screen_height as f32,
                     0.01,

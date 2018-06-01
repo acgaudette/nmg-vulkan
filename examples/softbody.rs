@@ -116,14 +116,14 @@ impl nmg::Update for Demo {
         debug: &mut debug::Handler,
     ) -> render::SharedUBO {
         let shared_ubo = {
-            let view = alg::Mat::look_at_view(
+            let view = alg::Mat4::look_at_view(
                 alg::Vec3::new(-1., 0.5, 2.0), // Camera position
                 alg::Vec3::new(0.0, 0.0, 0.0), // Target position
                 alg::Vec3::up(),
             );
 
             let projection = {
-                alg::Mat::perspective(
+                alg::Mat4::perspective(
                     60.,
                     screen_width as f32 / screen_height as f32,
                     0.01,

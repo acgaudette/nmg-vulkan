@@ -127,7 +127,7 @@ impl nmg::Update for Demo {
         let shared_ubo = {
             let camera_position =
                   alg::Mat3::rotation(0.0, 90_f32.to_radians(), 0.0)
-                * alg::Mat::translation(-3.0, 3.0, -6.0)
+                * alg::Mat4::translation(-3.0, 3.0, -6.0)
                 * alg::Vec3::one();
 
             let target = {
@@ -142,14 +142,14 @@ impl nmg::Update for Demo {
 
             self.last_target = target;
 
-            let view = alg::Mat::look_at_view(
+            let view = alg::Mat4::look_at_view(
                 camera_position,
                 target,
                 alg::Vec3::up(),
             );
 
             let projection = {
-                alg::Mat::perspective(
+                alg::Mat4::perspective(
                     60.0,
                     screen_width as f32 / screen_height as f32,
                     0.01,

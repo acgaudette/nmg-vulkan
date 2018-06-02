@@ -26,6 +26,7 @@ void main() {
   vec3 total_light = vec3(0);
 
   for (int i = 0; i < MAX_INSTANCE_LIGHTS; ++i) {
+    // Ignore lights with no radius
     if (instance.lights[i].radius == 0) continue;
 
     float light = instance.lights[i].intensity;
@@ -39,6 +40,7 @@ void main() {
       vec3 diff = instance.lights[i].vector - fragPosition;
       float dist = length(diff);
 
+      // Compute attenuation
       float atten = max(0, 1 - (dist * dist) / (radius * radius));
       atten *= atten;
 

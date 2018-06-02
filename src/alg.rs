@@ -1476,15 +1476,26 @@ mod tests {
     }
 
     #[test]
-    fn convert_quat() {
-        assert!(Quat::id().to_mat() == Mat3::id());
+    fn convert_quat_mat3() {
+        let half_sqrt = 0.5f32.sqrt();
+        let quat = Quat::new(
+            0.0,
+            0.0,
+            half_sqrt,
+            half_sqrt,
+        );
 
-        let quat = Quat::axis_angle(Vec3::right(), -6.3);
-        let mat = Mat3::rotation_x(-6.3);
+        let mat = Mat3::new(
+            0.0, -1.0, 0.0,
+            1.0,  0.0, 0.0,
+            0.0,  0.0, 1.0,
+        );
 
-        let error = mat3_error(quat.to_mat(), mat);
-        eprintln!("Error: {}", error);
-        assert!(error < 0.0001);
+        assert_eq!(quat, mat.to_quat());
+        assert_eq!(quat, quat.to_mat().to_quat());
+
+        assert_eq!(mat, quat.to_mat());
+        assert_eq!(mat, mat.to_quat().to_mat());
     }
 
     #[test]

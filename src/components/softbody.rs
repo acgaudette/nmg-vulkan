@@ -1228,10 +1228,9 @@ impl Manager {
             * (simple * twist).to_mat()
             * child_orient_inv;
 
-        child.transform_around(
+        child.rotate_around(
             child_correction.to_quat()
-                .pow(weight * JOINT_ANG_RIGID)
-                .to_mat(), // TODO: Fix double conversion
+                .pow(weight * JOINT_ANG_RIGID),
             point,
         );
 
@@ -1244,10 +1243,9 @@ impl Manager {
             * (simple * twist).conjugate().to_mat()
             * joint_global_inv;
 
-        parent.transform_around(
+        parent.rotate_around(
             parent_correction.to_quat()
-                .pow((1. - weight) * JOINT_ANG_RIGID)
-                .to_mat(),
+                .pow((1. - weight) * JOINT_ANG_RIGID),
             point,
         );
 

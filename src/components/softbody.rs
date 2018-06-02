@@ -569,24 +569,6 @@ impl Instance {
     }
 
     #[inline]
-    fn transform_around(&mut self, transform: alg::Mat3, point: alg::Vec3) {
-        // Center axis
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position - point;
-        }
-
-        for i in 0..8 {
-            self.particles[i].position = transform
-                * self.particles[i].position;
-        }
-
-        // Move back to worldspace
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position + point;
-        }
-    }
-
-    #[inline]
     fn translate(&mut self, offset: alg::Vec3) {
         for i in 0..8 {
             let new = self.particles[i].position + offset;

@@ -739,7 +739,7 @@ impl Manager {
                 )),
                 &[],
                 &[],
-                true,
+                true, // Match shape
                 mass,
                 rigidity * 0.5, // Scale rigidity properly
                 self.gravity,

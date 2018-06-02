@@ -1317,34 +1317,29 @@ impl Line {
 mod tests {
     use alg::*;
 
-    #[test]
-    fn mul_mat4() {
-        let translation = Mat4::translation(1.0, 2.0, 3.0);
+    /* Vec3 */
 
-        assert!(translation * Mat4::id() == translation);
-        assert!(Mat4::id() * translation == translation);
+    #[test]
+    fn norm_vec() {
+        // Baseline
+        let error = (Vec3::up().norm().mag() - Vec3::up().mag()).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+
+        let vec = Vec3::new(-1., 3., 5.);
+        let error = (vec.norm().mag() - 1.).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
     }
 
     #[test]
-    fn mul_mat4_vec() {
-        let vec = Vec3::new(9., -4., 0.);
-        let scale = Mat4::scale(-1., 3., 2.);
-
-        assert!(Mat4::id() * vec == vec);
-        assert!(scale * vec == Vec3::new(-9., -12., 0.));
-
-        let mat = Mat4::new(
-            1., 1., 1., 0.,
-            0., 1., 0., 0.,
-            0., 0., 0., 0.,
-            0., 0., 0., 0.,
-        );
-
-        assert!(mat * vec == Vec3::new(5., -4., 0.,));
-
-        let translation = Mat4::translation(2., -7., 0.5);
-        assert!(translation * Vec3::zero() == Vec3::new(2., -7., 0.5));
+    fn cross_vec() {
+        assert!(Vec3::right().cross(Vec3::up()) == Vec3::fwd());
     }
+
+    /* Mat3 */
 
     #[test]
     fn mat3_diagonal_sqrt() {
@@ -1387,6 +1382,39 @@ mod tests {
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
     }
+
+    /* Mat4 */
+
+    #[test]
+    fn mul_mat4() {
+        let translation = Mat4::translation(1.0, 2.0, 3.0);
+
+        assert!(translation * Mat4::id() == translation);
+        assert!(Mat4::id() * translation == translation);
+    }
+
+    #[test]
+    fn mul_mat4_vec() {
+        let vec = Vec3::new(9., -4., 0.);
+        let scale = Mat4::scale(-1., 3., 2.);
+
+        assert!(Mat4::id() * vec == vec);
+        assert!(scale * vec == Vec3::new(-9., -12., 0.));
+
+        let mat = Mat4::new(
+            1., 1., 1., 0.,
+            0., 1., 0., 0.,
+            0., 0., 0., 0.,
+            0., 0., 0., 0.,
+        );
+
+        assert!(mat * vec == Vec3::new(5., -4., 0.,));
+
+        let translation = Mat4::translation(2., -7., 0.5);
+        assert!(translation * Vec3::zero() == Vec3::new(2., -7., 0.5));
+    }
+
+    /* Quaternion */
 
     #[test]
     fn axis_angle() {
@@ -1525,6 +1553,25 @@ mod tests {
         assert_ne!(q2, q3);
     }
 
+    #[test]
+    fn norm_quat() {
+        // Baseline
+        let error = (
+            Quat::id().norm().mag() - Quat::id().mag()
+        ).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+
+        let quat = Quat::new(-1., 3., 5., 0.);
+        let error = (quat.norm().mag() - 1.).abs();
+
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    /* Utility */
+
     fn mat4_error(a: Mat4, b: Mat4) -> f32 {
         let mut total = 0f32;
 
@@ -1605,42 +1652,5 @@ mod tests {
         }
 
         total.sqrt()
-    }
-
-    #[test]
-    fn norm_quat() {
-        // Baseline
-        let error = (
-            Quat::id().norm().mag() - Quat::id().mag()
-        ).abs();
-
-        eprintln!("Error: {}", error);
-        assert!(error < 0.0001);
-
-        let quat = Quat::new(-1., 3., 5., 0.);
-        let error = (quat.norm().mag() - 1.).abs();
-
-        eprintln!("Error: {}", error);
-        assert!(error < 0.0001);
-    }
-
-    #[test]
-    fn norm_vec() {
-        // Baseline
-        let error = (Vec3::up().norm().mag() - Vec3::up().mag()).abs();
-
-        eprintln!("Error: {}", error);
-        assert!(error < 0.0001);
-
-        let vec = Vec3::new(-1., 3., 5.);
-        let error = (vec.norm().mag() - 1.).abs();
-
-        eprintln!("Error: {}", error);
-        assert!(error < 0.0001);
-    }
-
-    #[test]
-    fn cross_vec() {
-        assert!(Vec3::right().cross(Vec3::up()) == Vec3::fwd());
     }
 }

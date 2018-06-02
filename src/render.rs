@@ -1347,8 +1347,7 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         sharing_mode = vd::SharingMode::Concurrent;
     }
 
-    let features = vd::PhysicalDeviceFeatures::builder()
-        .build();
+    let features = instance.get_physical_device_features(&physical_device);
 
     let device = vd::Device::builder()
         .queue_create_infos(&infos)

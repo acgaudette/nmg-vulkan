@@ -551,20 +551,11 @@ impl Instance {
 
     #[inline]
     fn rotate_around(&mut self, rotation: alg::Quat, point: alg::Vec3) {
-        // Center axis of rotation
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position - point;
-        }
-
         // Rotate
         for i in 0..8 {
             self.particles[i].position = rotation
-                * self.particles[i].position;
-        }
-
-        // Move back to world space
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position + point;
+                * (self.particles[i].position - point) // Center rotation axis
+                + point; // Move back to world space
         }
     }
 

@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Library
+
 use std;
 
 pub struct AlignedBuffer<T> {

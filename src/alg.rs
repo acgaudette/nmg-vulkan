@@ -1429,6 +1429,18 @@ mod tests {
         let k = (i * j).z;
 
         assert_eq!(k, 1.0); // -1 would indicate JPL
+
+        let half_sqrt = 0.5f32.sqrt();
+        let quat = Quat::new(0.0, 0.0, half_sqrt, half_sqrt);
+
+        let compare = Mat3::new(
+            0.0, -1.0, 0.0,
+            1.0,  0.0, 0.0,
+            0.0,  0.0, 1.0,
+        );
+
+        assert_eq!(compare.to_quat(), quat);
+        assert_eq!(quat.to_mat(), compare);
     }
 
     #[test]

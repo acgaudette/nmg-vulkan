@@ -29,8 +29,9 @@ void main() {
     if (instance.lights[i].radius == 0) continue;
 
     float light = instance.lights[i].intensity;
+    float radius = instance.lights[i].radius;
 
-    if (instance.lights[i].radius == -1) { // Directional
+    if (radius == -1) { // Directional
       light *= max(0, dot(fragNormal, instance.lights[i].vector));
     }
 
@@ -38,8 +39,11 @@ void main() {
       vec3 diff = instance.lights[i].vector - fragPosition;
       float dist = length(diff);
 
-      light *= (1 - dist / instance.lights[i].radius)
-        * max(0.0, dot(fragNormal, diff / dist));
+      float atten = max(0, 1 - (dist * dist) / (radius * radius));
+      atten *= atten;
+
+      light *= max(0.0, dot(fragNormal, diff / dist))
+        * atten;
     }
 
     total_light += instance.lights[i].color * light;

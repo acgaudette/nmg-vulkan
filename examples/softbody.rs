@@ -93,9 +93,9 @@ impl nmg::Start for Demo {
             light,
             render::Light::new_point(
                 alg::Vec3::fwd() * 2.0,
-                16.0,
+                16.0, // Radius
                 graphics::Color::white(),
-                2.0,
+                2.0, // Intensity
             ),
         );
     }

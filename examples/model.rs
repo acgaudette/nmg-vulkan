@@ -32,7 +32,7 @@ impl nmg::Start for Demo {
             render::Light::new_directional(
                 -alg::Vec3::one(),
                 graphics::Color::white(),
-                1.0,
+                1.0, // Intensity
             ),
         );
     }

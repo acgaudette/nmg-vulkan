@@ -1079,6 +1079,8 @@ impl Quat {
         }
     }
 
+    // Normalizes the quaternion (self) in the process
+    // Conversion satisfies the Hamilton convention
     pub fn to_mat(self) -> Mat3 {
         let xx = self.x * self.x;
         let yy = self.y * self.y;
@@ -1087,9 +1089,13 @@ impl Quat {
 
         let inverse = 1.0 / (xx + yy + zz + ww);
 
+        /* Fill out diagonal */
+
         let x0 = inverse * ( xx - yy - zz + ww);
         let y1 = inverse * (-xx + yy - zz + ww);
         let z2 = inverse * (-xx - yy + zz + ww);
+
+        /* Move across the matrix */
 
         let (xy, zw) = (self.x * self.y, self.z * self.w);
         let y0 = 2.0 * inverse * (xy + zw);

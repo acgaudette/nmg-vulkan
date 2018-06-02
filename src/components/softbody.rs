@@ -900,27 +900,25 @@ impl Manager {
             offset,
         );
 
+        // Initialize new instance in optimal position and orientation
         if expand {
-            let parent = unsafe {
-                let ptr = self.instances.as_ptr().offset(i as isize);
-                (*ptr).as_ref().unwrap()
+            let (parent, child) = unsafe {
+                let p = self.instances.as_ptr().offset(i as isize);
+                let c = self.instances.as_mut_ptr().offset(j as isize);
+
+                (
+                    (*p).as_ref().unwrap(),
+                    (*c).as_mut().unwrap(), // Get child as mutable
+                )
             };
 
-            let rotation = parent.orientation().to_quat()
-                * transform.conjugate();
+            let rotation = parent.orientation().to_quat() * transform;
+            let translation = parent.extend(offset) + rotation * child.end();
 
-            let child = unsafe {
-                let ptr = self.instances.as_mut_ptr().offset(j as isize);
-                (*ptr).as_mut().unwrap()
-            };
-
-            let translation = parent.extend(offset)
-                + rotation * child.end();
-
-            // Align child with joint
+            // Align child with parent and joint transform
             child.transform_outer(rotation, translation);
 
-            // Reset child position
+            // Reset child position for integrator
             for particle in &mut child.particles {
                 particle.last = particle.position;
             }

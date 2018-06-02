@@ -1417,6 +1417,15 @@ mod tests {
     /* Quaternion */
 
     #[test]
+    fn hamilton() {
+        let i = Quat::new(1.0, 0.0, 0.0, 0.0);
+        let j = Quat::new(0.0, 1.0, 0.0, 0.0);
+        let k = (i * j).z;
+
+        assert_eq!(k, 1.0); // -1 would indicate JPL
+    }
+
+    #[test]
     fn axis_angle() {
         let rotation = Mat3::rotation_y(45f32.to_radians()).to_quat();
         let (axis, angle) = rotation.to_axis_angle();

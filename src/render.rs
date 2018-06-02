@@ -1831,8 +1831,8 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
         .depth_clamp_enable(false)
         .rasterizer_discard_enable(false)
         .polygon_mode(vd::PolygonMode::Fill)
+        .front_face(vd::FrontFace::Clockwise) // Cull CCW faces
         .cull_mode(vd::CullModeFlags::BACK)
-        .front_face(vd::FrontFace::Clockwise)
         .depth_bias_enable(false)
         .depth_bias_constant_factor(0f32)
         .depth_bias_clamp(0f32)

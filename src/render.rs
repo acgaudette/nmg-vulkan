@@ -1347,7 +1347,19 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
         sharing_mode = vd::SharingMode::Concurrent;
     }
 
-    let features = instance.get_physical_device_features(&physical_device);
+    let features = {
+        // Get supported physical device features
+        let supported = instance.get_physical_device_features(
+            &physical_device
+        );
+
+        // Set only desired features
+        vd::PhysicalDeviceFeatures::builder()
+            .fill_mode_non_solid(
+                // Debug lines
+                supported.fill_mode_non_solid() && cfg!(debug_assertions)
+            ).build()
+    };
 
     let device = vd::Device::builder()
         .queue_create_infos(&infos)

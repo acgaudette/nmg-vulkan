@@ -1568,17 +1568,17 @@ fn load_models(
             let index_count = data.indices.len() as u32;
             indices.append(&mut data.indices); // Destructive
 
-            models.push(
-                Model::new(
-                    index_count,
-                    index_offset,
-                    vertex_count,
-                    vertex_offset,
-                )
+            let model = Model::new(
+                index_count,
+                index_offset,
+                vertex_count,
+                vertex_offset,
             );
 
-            index_offset += index_count;
-            vertex_offset += vertex_count as i32;
+            index_offset += model.index_count;
+            vertex_offset += model.vertex_count as i32;
+
+            models.push(model);
         }
 
         (vertices, indices, models)

@@ -4,12 +4,12 @@ VK_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
 COMPILER=$VK_PATH/glslangValidator
 
 function compile {
-  $COMPILER -V $1.$2
+  if ! $COMPILER -V $1.$2; then exit 1; fi
   $COMPILER -H $1.$2 > $2.spvasm
 }
 
 function compile_debug {
-  $COMPILER -V debug.$1 -o debug_$1.spv
+  if ! $COMPILER -V debug.$1 -o debug_$1.spv; then exit 1; fi
   $COMPILER -H debug.$1 > debug_$1.spvasm
 }
 

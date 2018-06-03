@@ -52,27 +52,18 @@ impl nmg::Start for Demo {
 
         /* Create joints */
 
-        components.softbodies.add_joint(
-            first, second,
-            (-45.0, 45.0),
-            (-45.0, 45.0),
-            (-45.0, 45.0),
-            alg::Vec3::fwd(),
-            alg::Vec3::up(),
-            alg::Vec3::fwd() * 0.5,
-            true,
-        );
+        components.softbodies.build_joint()
+            .with_parent(first)
+            .offset(alg::Vec3::fwd() * 0.5)
+            .xyz(-45.0, 45.0)
+            .for_child(second);
 
-        components.softbodies.add_joint(
-            first, third,
-            (-45.0, 45.0),
-            (-45.0, 45.0),
-            (-45.0, 45.0),
-            -alg::Vec3::fwd(),
-            alg::Vec3::up(),
-            -alg::Vec3::fwd() * 0.5,
-            true,
-        );
+        components.softbodies.build_joint()
+            .with_parent(first)
+            .fwd(-alg::Vec3::fwd())
+            .offset(-alg::Vec3::fwd() * 0.5)
+            .xyz(-45.0, 45.0)
+            .for_child(third);
 
         /* Add planes */
 

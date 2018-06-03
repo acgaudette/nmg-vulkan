@@ -333,31 +333,23 @@ impl Instance {
     ) -> Vec<alg::Vec3> {
         let mut result = vec![alg::Vec3::zero(); particles.len()];
 
-        let mut i = 0;
-        while i < triangles.len() {
-            let j = i + 1;
-            let k = i + 2;
+        for indices in triangles.chunks(3) {
+            let (i, j, k) = (indices[0], indices[1], indices[2]);
 
             let normal = alg::Vec3::normal(
-                particles[triangles[i]].position,
-                particles[triangles[j]].position,
-                particles[triangles[k]].position,
+                particles[i].position,
+                particles[j].position,
+                particles[k].position,
             );
 
             // Sum normal contributions
-            result[triangles[i]] = result[triangles[i]] + normal;
-            result[triangles[j]] = result[triangles[j]] + normal;
-            result[triangles[k]] = result[triangles[k]] + normal;
-
-            i += 3;
+            result[i] = result[i] + normal;
+            result[j] = result[j] + normal;
+            result[k] = result[k] + normal;
         }
 
         // Rescale
-        for i in 0..result.len() {
-            result[i] = result[i].norm();
-        }
-
-        result
+        result.iter().map(|raw| raw.norm()).collect()
     }
 
     // Get offset from center for specific particle

@@ -230,6 +230,107 @@ impl Joint {
     }
 }
 
+/// Builder pattern for instance joints
+pub struct JointBuilder<'a> {
+    manager: &'a mut Manager,
+    parent: Option<entity::Handle>,
+    fwd: alg::Vec3,
+    up: alg::Vec3,
+    offset: alg::Vec3,
+    x_limit: Option<Range>,
+    y_limit: Option<Range>,
+    z_limit: Option<Range>,
+}
+
+impl<'a> JointBuilder<'a> {
+    pub fn new(manager: &'a mut Manager) -> JointBuilder {
+        JointBuilder {
+            manager,
+            parent: None,
+            fwd: alg::Vec3::fwd(),
+            up: alg::Vec3::up(),
+            offset: alg::Vec3::zero(),
+            x_limit: None,
+            y_limit: None,
+            z_limit: None,
+        }
+    }
+
+    pub fn with_parent(
+        &mut self,
+        parent: entity::Handle,
+    ) -> &'a mut JointBuilder {
+        self.parent = Some(parent);
+        self
+    }
+
+    /// Joint x-axis limit range, in degrees
+    pub fn x(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        let (min, max) = (min.to_radians(), max.to_radians());
+        self.x_limit = Some(Range { min, max });
+        self
+    }
+
+    /// Joint y-axis limit range, in degrees
+    pub fn y(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        let (min, max) = (min.to_radians(), max.to_radians());
+        self.y_limit = Some(Range { min, max });
+        self
+    }
+
+    /// Joint z-axis limit range, in degrees
+    pub fn z(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        let (min, max) = (min.to_radians(), max.to_radians());
+        self.z_limit = Some(Range { min, max });
+        self
+    }
+
+    /* Joint transform */
+
+    pub fn fwd(&mut self, fwd: alg::Vec3) -> &'a mut JointBuilder {
+        self.fwd = fwd;
+        self
+    }
+
+    pub fn up(&mut self, up: alg::Vec3) -> &'a mut JointBuilder {
+        self.up = up;
+        self
+    }
+
+    pub fn offset(&mut self, offset: alg::Vec3) -> &'a mut JointBuilder {
+        self.offset = offset;
+        self
+    }
+
+    /// Finalize
+    pub fn for_child(&mut self, child: entity::Handle) {
+        let parent = if let Some(parent) = self.parent {
+            parent
+        } else {
+            panic!("No parent specified to joint builder");
+        };
+
+        debug_assert!(parent != child);
+        debug_assert!(self.x_limit.is_some());
+        debug_assert!(self.y_limit.is_some());
+        debug_assert!(self.z_limit.is_some());
+
+        let transform = alg::Quat::from_vecs(self.fwd, self.up);
+
+        self.manager.add_joint(
+            parent,
+            child,
+            transform,
+            self.offset,
+            (
+                self.x_limit.unwrap(),
+                self.y_limit.unwrap(),
+                self.z_limit.unwrap()
+            ),
+        );
+    }
+}
+
 struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,

@@ -29,17 +29,26 @@ impl nmg::Start for Demo {
         let first = entities.add();
         components.transforms.register(first);
         components.softbodies.register(first);
-        components.softbodies.init_limb(first, 10.0, 1.0, alg::Vec3::one());
+        components.softbodies.build_instance()
+            .make_limb(alg::Vec3::one())
+            .mass(10.0)
+            .for_entity(first);
 
         let second = entities.add();
         components.transforms.register(second);
         components.softbodies.register(second);
-        components.softbodies.init_limb(second, 10.0, 1.0, alg::Vec3::one());
+        components.softbodies.build_instance()
+            .make_limb(alg::Vec3::one())
+            .mass(10.0)
+            .for_entity(second);
 
         let third = entities.add();
         components.transforms.register(third);
         components.softbodies.register(third);
-        components.softbodies.init_limb(third, 10.0, 1.0, alg::Vec3::one());
+        components.softbodies.build_instance()
+            .make_limb(alg::Vec3::one())
+            .mass(10.0)
+            .for_entity(third);
 
         /* Create joints */
 

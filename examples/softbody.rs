@@ -40,13 +40,12 @@ impl nmg::Start for Demo {
         );
 
         // Initial softbody
-        components.softbodies.init_instance(
-            object,
-            self.mass,
-            self.rigidity,
-            &self.mesh.0,
-            self.mesh.1.clone(),
-            &[
+        components.softbodies.build_instance()
+            .mass(self.mass)
+            .rigidity(self.rigidity)
+            .particles(&self.mesh.0)
+            .indices(&self.mesh.1.clone())
+            .bindings(&[
                 (0, 1),
                 (0, 2),
                 (0, 3),
@@ -57,10 +56,7 @@ impl nmg::Start for Demo {
                 (2, 1),
                 (1, 4), // Crosspiece
                 (2, 3), // Crosspiece
-            ],
-            &[],
-            false,
-        );
+            ]).for_entity(object);
 
         // Initial force
         components.softbodies.set_force(

@@ -24,12 +24,11 @@ impl nmg::Start for Demo {
         components.transforms.register(shape);
         components.softbodies.register(shape);
 
-        components.softbodies.init_limb(
-            shape,
-            10.0, // Mass
-            0.015, // Rigidity (jiggly)
-            alg::Vec3::one(), // Scale
-        );
+        components.softbodies.build_instance()
+            .make_limb(alg::Vec3::one())
+            .mass(10.0)
+            .rigidity(0.015) // Jiggly
+            .for_entity(shape);
 
         /* Add planes */
 

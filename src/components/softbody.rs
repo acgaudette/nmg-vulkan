@@ -794,6 +794,16 @@ impl Manager {
         }
     }
 
+    pub fn build_instance<'a>(&'a mut self) -> InstanceBuilder<'a> {
+        InstanceBuilder::new(self)
+    }
+
+    fn add_instance(&mut self, instance: Instance, entity: entity::Handle) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.instances.len());
+        self.instances[i] = Some(instance);
+    }
+
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let i = entity.get_index() as usize;
         debug_assert!(i < self.instances.len());

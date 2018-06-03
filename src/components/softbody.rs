@@ -1031,6 +1031,10 @@ impl Manager {
         offsets
     }
 
+    pub fn build_joint(&mut self) -> JointBuilder {
+        JointBuilder::new(self)
+    }
+
     fn add_joint(
         &mut self,
         parent: entity::Handle,

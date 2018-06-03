@@ -258,14 +258,14 @@ struct Instance {
 impl Instance {
     fn new(
         points: &[alg::Vec3],
-        triangles: Vec<usize>,
+        indices: &[usize],
         model_override: Option<Vec<alg::Vec3>>,
         bindings: &[(usize, usize)],
         zones: &[(usize, Falloff)],
         match_shape: bool,
         mass: f32,
         rigidity: f32,
-        gravity: alg::Vec3,
+        initial_accel: alg::Vec3,
     ) -> Instance {
         debug_assert!(mass > 0.0);
         debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
@@ -286,8 +286,8 @@ impl Instance {
         };
 
         // Compute base comparison normals for instance
-        debug_assert!(triangles.len() % 3 == 0);
-        let normals = Instance::compute_normals(&particles, &triangles);
+        debug_assert!(indices.len() % 3 == 0);
+        let normals = Instance::compute_normals(&particles, &indices);
 
         /* Initialize rods and magnets */
 
@@ -310,7 +310,7 @@ impl Instance {
             match_shape,
 
             force: alg::Vec3::zero(),
-            accel_dt: gravity * FIXED_DT * FIXED_DT,
+            accel_dt: initial_accel * FIXED_DT * FIXED_DT,
             position: alg::Vec3::zero(),
 
             mass,
@@ -318,7 +318,7 @@ impl Instance {
             rigidity,
             perfect_model,
             model: model_override,
-            triangles,
+            triangles: indices.to_vec(),
             normals,
         }
     }

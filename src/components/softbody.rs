@@ -259,7 +259,7 @@ impl Instance {
     fn new(
         points: &[alg::Vec3],
         indices: &[usize],
-        model_override: Option<Vec<alg::Vec3>>,
+        model_override: Option<&[alg::Vec3]>,
         bindings: &[(usize, usize)],
         zones: &[(usize, Falloff)],
         match_shape: bool,
@@ -317,7 +317,7 @@ impl Instance {
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
             rigidity,
             perfect_model,
-            model: model_override,
+            model: model_override.map(|model| model.to_vec()),
             triangles: indices.to_vec(),
             normals,
         }
@@ -680,7 +680,7 @@ impl Manager {
                     alg::Vec3::new(-scale.x, -scale.y, scale.z), // 7
                 ],
                 // CW triangle indices
-                vec![
+                &[
                     0, 1, 2, // Front face
                     2, 3, 0,
                     4, 7, 6, // Back face
@@ -697,7 +697,7 @@ impl Manager {
                 /* Override scaled input with unit cube.
                  * Enables offsets to work properly with non-matching mesh.
                  */
-                Some(vec!(
+                Some(&[
                     // Front face (CW)
                     alg::Vec3::new(-0.5,  0.5, -0.5),
                     alg::Vec3::new( 0.5,  0.5, -0.5),

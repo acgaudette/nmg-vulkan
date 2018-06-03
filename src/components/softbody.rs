@@ -328,8 +328,8 @@ impl Instance {
      * and/or determining softbody topology.
      */
     fn compute_normals(
-        particles: &Vec<Particle>,
-        triangles: &Vec<usize>,
+        particles: &[Particle],
+        triangles: &[usize],
     ) -> Vec<alg::Vec3> {
         let mut result = vec![alg::Vec3::zero(); particles.len()];
 

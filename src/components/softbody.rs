@@ -560,6 +560,186 @@ impl Instance {
     }
 }
 
+/// Builder pattern for softbody instances
+pub struct InstanceBuilder<'a> {
+    manager: &'a mut Manager,
+    scale: Option<alg::Vec3>, // For optional limb creation
+    mass: f32,
+    rigidity: f32,
+    particles: Option<&'a [alg::Vec3]>,
+    indices: Option<&'a [usize]>,
+    bindings: Option<&'a [(usize, usize)]>,
+    magnets: Option<&'a [(usize, Falloff)]>,
+    match_shape: bool,
+}
+
+impl<'a> InstanceBuilder<'a> {
+    // Initialize with manager
+    pub fn new(manager: &mut Manager) -> InstanceBuilder {
+        InstanceBuilder {
+            manager,
+            scale: None,
+            mass: 1.0, // Default mass
+            rigidity: 1.0, // Default rigidity
+            particles: None,
+            indices: None,
+            bindings: None,
+            magnets: None,
+            match_shape: false,
+        }
+    }
+
+    /// Override general instance creation with limb preset
+    /// Takes in the limb scale as an argument
+    pub fn make_limb(&mut self, scale: alg::Vec3) -> &mut InstanceBuilder<'a> {
+        self.scale = Some(scale);
+        self
+    }
+
+    pub fn mass(&mut self, mass: f32) -> &mut InstanceBuilder<'a> {
+        self.mass = mass;
+        self
+    }
+
+    /// Rigidity is in the range (0, 1]
+    pub fn rigidity(&mut self, rigidity: f32) -> &mut InstanceBuilder<'a> {
+        debug_assert!(rigidity > 0.0 && rigidity <= 1.0);
+        self.rigidity = rigidity;
+        self
+    }
+
+    pub fn particles(
+        &mut self,
+        particles: &'a [alg::Vec3],
+    ) -> &mut InstanceBuilder<'a> {
+        self.particles = Some(particles);
+        self
+    }
+
+    pub fn indices(
+        &mut self,
+        indices: &'a [usize],
+    ) -> &mut InstanceBuilder<'a> {
+        self.indices = Some(indices);
+        self
+    }
+
+    pub fn bindings(
+        &mut self,
+        bindings: &'a [(usize, usize)],
+    ) -> &mut InstanceBuilder<'a> {
+        self.bindings = Some(bindings);
+        self
+    }
+
+    pub fn magnets(
+        &mut self,
+        magnets: &'a [(usize, Falloff)],
+    ) -> &mut InstanceBuilder<'a> {
+        self.magnets = Some(magnets);
+        self
+    }
+
+    pub fn match_shape(&mut self) -> &mut InstanceBuilder<'a> {
+        self.match_shape = true;
+        self
+    }
+
+    /// Finalize
+    pub fn for_entity(&mut self, entity: entity::Handle) {
+        let rigidity = self.rigidity * 0.5; // Scale rigidity properly
+        let initial_accel = self.manager.gravity; // Initialize with gravity
+
+        let magnets = if let Some(zones) = self.magnets
+            { zones } else { &[] };
+
+        /* Limb instance */
+
+        let instance = if let Some(scale) = self.scale {
+            let scale = scale * 0.5;
+
+            // Build 8-particle scaled box
+            Instance::new(
+                &[
+                    // Front face (CW)
+                    alg::Vec3::new(-scale.x,  scale.y, -scale.z), // 0
+                    alg::Vec3::new( scale.x,  scale.y, -scale.z), // 1
+                    alg::Vec3::new( scale.x, -scale.y, -scale.z), // 2
+                    alg::Vec3::new(-scale.x, -scale.y, -scale.z), // 3
+
+                    // Back face (CW)
+                    alg::Vec3::new(-scale.x,  scale.y, scale.z), // 4
+                    alg::Vec3::new( scale.x,  scale.y, scale.z), // 5
+                    alg::Vec3::new( scale.x, -scale.y, scale.z), // 6
+                    alg::Vec3::new(-scale.x, -scale.y, scale.z), // 7
+                ],
+                // CW triangle indices
+                &[
+                    0, 1, 2, // Front face
+                    2, 3, 0,
+                    4, 7, 6, // Back face
+                    6, 5, 4,
+                    0, 4, 5, // Top face
+                    5, 1, 0,
+                    3, 2, 6, // Bottom face
+                    6, 7, 3,
+                    0, 3, 7, // Left face
+                    7, 4, 0,
+                    6, 2, 1, // Right face
+                    1, 5, 6,
+                ],
+                /* Override scaled input with unit cube.
+                 * Enables offsets to work properly with non-matching mesh.
+                 */
+                Some(&[
+                    // Front face (CW)
+                    alg::Vec3::new(-0.5,  0.5, -0.5),
+                    alg::Vec3::new( 0.5,  0.5, -0.5),
+                    alg::Vec3::new( 0.5, -0.5, -0.5),
+                    alg::Vec3::new(-0.5, -0.5, -0.5),
+
+                    // Back face (CW)
+                    alg::Vec3::new(-0.5,  0.5,  0.5),
+                    alg::Vec3::new( 0.5,  0.5,  0.5),
+                    alg::Vec3::new( 0.5, -0.5,  0.5),
+                    alg::Vec3::new(-0.5, -0.5,  0.5),
+                ]),
+                &[], // Ignore bindings
+                magnets,
+                true, // Match shape
+                self.mass,
+                rigidity,
+                initial_accel,
+            )
+        }
+
+        /* Generic instance */
+
+        else {
+            debug_assert!(self.particles.is_some());
+            debug_assert!(self.indices.is_some());
+
+            let bindings = if let Some(rods) = self.bindings
+                { rods } else { &[] };
+
+            Instance::new(
+                self.particles.unwrap(),
+                self.indices.unwrap(),
+                None, // No model override
+                bindings,
+                magnets,
+                self.match_shape,
+                self.mass,
+                rigidity,
+                initial_accel,
+            )
+        };
+
+        // Register with manager
+        self.manager.add_instance(instance, entity);
+    }
+}
+
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     instances: Vec<Option<Instance>>,

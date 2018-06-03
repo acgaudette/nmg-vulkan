@@ -285,6 +285,24 @@ impl<'a> JointBuilder<'a> {
         self
     }
 
+    /* Swizzles */
+
+    pub fn xy(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        self.x(min, max).y(min, max)
+    }
+
+    pub fn xz(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        self.x(min, max).z(min, max)
+    }
+
+    pub fn yz(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        self.y(min, max).z(min, max)
+    }
+
+    pub fn xyz(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
+        self.x(min, max).y(min, max).z(min, max)
+    }
+
     /* Joint transform */
 
     pub fn fwd(&mut self, fwd: alg::Vec3) -> &'a mut JointBuilder {

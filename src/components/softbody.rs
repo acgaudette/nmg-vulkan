@@ -1031,20 +1031,14 @@ impl Manager {
         offsets
     }
 
-    pub fn add_joint(
+    fn add_joint(
         &mut self,
         parent: entity::Handle,
         child: entity::Handle,
-        x_limit: (f32, f32), // Degrees
-        y_limit: (f32, f32), // Degrees
-        z_limit: (f32, f32), // Degrees
-        fwd: alg::Vec3,
-        up: alg::Vec3,
+        transform: alg::Quat,
         offset: alg::Vec3,
-        expand: bool,
+        limits: (Range, Range, Range),
     ) {
-        debug_assert!(parent != child);
-
         let (i, j) = (
             parent.get_index() as usize,
             child.get_index() as usize,
@@ -1052,32 +1046,19 @@ impl Manager {
 
         debug_assert!(i < self.instances.len());
         debug_assert!(j < self.instances.len());
-
-        if self.instances[i].is_none() { return; }
-        if self.instances[j].is_none() { return; }
-
-        let x_min = x_limit.0.to_radians();
-        let x_max = x_limit.1.to_radians();
-
-        let y_min = y_limit.0.to_radians();
-        let y_max = y_limit.1.to_radians();
-
-        let z_min = z_limit.0.to_radians();
-        let z_max = z_limit.1.to_radians();
-
-        let transform = alg::Quat::from_vecs(fwd, up);
+        debug_assert!(self.instances[i].is_some());
+        debug_assert!(self.instances[j].is_some());
 
         let joint = Joint::new(
             j, // Child index
-            Range { min: x_min, max: x_max },
-            Range { min: y_min, max: y_max },
-            Range { min: z_min, max: z_max },
+            limits.0,
+            limits.1,
+            limits.2,
             transform,
             offset,
         );
 
-        // Initialize new instance in optimal position and orientation
-        if expand {
+        { // Initialize new instance in optimal position and orientation
             let (parent, child) = unsafe {
                 let p = self.instances.as_ptr().offset(i as isize);
                 let c = self.instances.as_mut_ptr().offset(j as isize);
@@ -1100,11 +1081,13 @@ impl Manager {
             }
         }
 
+        // Check if this parent already has a joint
         if let Some(entry) = self.joints.get_mut(&i) {
             entry.push(joint);
             return;
         }
 
+        // Otherwise, create a new Vec
         self.joints.insert(i, vec![joint]);
     }
 

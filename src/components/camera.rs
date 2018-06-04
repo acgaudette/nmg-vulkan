@@ -8,7 +8,7 @@ use components::Component;
 
 pub const DEFAULT_FOV: f32 = 60.0;
 pub const DEFAULT_NEAR: f32 = 0.01;
-pub const DEFAULT_FAR: f32 = 4.0;
+pub const DEFAULT_FAR: f32 = 32.0;
 
 #[derive(Copy, Clone)]
 pub struct Camera {

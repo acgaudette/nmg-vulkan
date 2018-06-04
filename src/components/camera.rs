@@ -81,4 +81,37 @@ impl Manager {
             .expect(&format!("Entity {} not found in light manager", entity))
             .1.overrule = Some(shared_ubo);
     }
+
+    /// Build a SharedUBO necessary for rendering from the active camera
+    pub fn compute(
+        &mut self,
+        transforms: &transform::Manager,
+        screen_width: u32,
+        screen_height: u32,
+    ) -> render::SharedUBO {
+        debug_assert!(self.active < self.count());
+
+        // Get active entity and camera
+        let (entity, camera) = self.instances[self.active];
+
+        // Return overridden shared UBO if set
+        if let Some(shared_ubo) = camera.overrule { return shared_ubo }
+
+        // Get transform data for active camera entity
+        let (position, orientation, _) = transforms.get(entity);
+
+        /* Build view and projection matrices */
+
+        let view = orientation.conjugate().to_mat()
+            * alg::Mat4::translation_vec(-position);
+
+        let projection = alg::Mat4::perspective(
+            camera.fov,
+            screen_width as f32 / screen_height as f32,
+            camera.near,
+            camera.far,
+        );
+
+        render::SharedUBO::new(view, projection)
+    }
 }

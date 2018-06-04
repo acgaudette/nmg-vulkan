@@ -6,7 +6,17 @@ use render;
 use components::transform;
 use components::Component;
 
-pub struct Camera { }
+pub const DEFAULT_FOV: f32 = 60.0;
+pub const DEFAULT_NEAR: f32 = 0.01;
+pub const DEFAULT_FAR: f32 = 4.0;
+
+#[derive(Copy, Clone)]
+pub struct Camera {
+    fov: f32,
+    near: f32,
+    far: f32,
+    overrule: Option<render::SharedUBO>,
+}
 
 pub struct Manager {
     active: usize,

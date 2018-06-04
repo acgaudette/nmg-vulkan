@@ -71,6 +71,20 @@ impl Manager {
             .1.fov = fov;
     }
 
+    pub fn set_near(&mut self, entity: entity::Handle, near: f32) {
+        self.instances.iter_mut()
+            .find(|instance| instance.0 == entity)
+            .expect(&format!("Entity {} not found in light manager", entity))
+            .1.near = near;
+    }
+
+    pub fn set_far(&mut self, entity: entity::Handle, far: f32) {
+        self.instances.iter_mut()
+            .find(|instance| instance.0 == entity)
+            .expect(&format!("Entity {} not found in light manager", entity))
+            .1.far = far;
+    }
+
     /// Override a camera with a custom shared UBO
     pub fn overrule(
         &mut self,

@@ -15,7 +15,7 @@ const ITERATIONS: usize = 10;
 
 // Range 0 - 1; 1.0 = cannot be deformed
 // A value of zero nullifies all rods in the instance
-const DEFORM: f32 = 1.000;
+const ROD_DEFORM: f32 = 1.000;
 
 // Range 0 - 1.0; "Rigid" = 1.0
 // A value of zero nullifies the translational constraints of all joints
@@ -1222,7 +1222,7 @@ impl Manager {
                     let right = instance.particles[rod.right].position;
 
                     rod.length = f32::min(
-                        f32::max(left.dist(right), rod.length * DEFORM),
+                        f32::max(left.dist(right), rod.length * ROD_DEFORM),
                         rod.length,
                     );
                 }

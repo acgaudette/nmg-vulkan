@@ -11,6 +11,7 @@ use nmg::debug;
 
 struct Demo {
     objects: Vec<entity::Handle>,
+    light: Option<entity::Handle>,
 }
 
 impl nmg::Start for Demo {
@@ -47,6 +48,8 @@ impl nmg::Start for Demo {
             .point_with_radius(8.0)
             .intensity(2.0)
             .for_entity(light);
+
+        self.light = Some(light);
     }
 }
 
@@ -106,6 +109,16 @@ impl nmg::Update for Demo {
             alg::Vec3::new(0.8, 1.2, 1.),
         );
 
+        // Animate light
+        components.transforms.set_position(
+            self.light.unwrap(),
+            alg::Vec3::new(
+                0.0,
+                1.0 * angle.sin(),
+                1.0 * angle.cos(),
+            ) + alg::Vec3::fwd() * 1.0,
+        );
+
         shared_ubo
     }
 }
@@ -127,7 +140,7 @@ impl nmg::FixedUpdate for Demo {
 }
 
 fn main() {
-    let demo = Demo { objects: Vec::new() };
+    let demo = Demo { objects: Vec::new(), light: None };
     let model_data = get_models();
     nmg::go(model_data, demo)
 }

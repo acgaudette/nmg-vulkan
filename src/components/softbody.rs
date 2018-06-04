@@ -10,6 +10,11 @@ use std;
 use ::FIXED_DT; // Import from lib
 use components::transform;
 
+pub const INST_DEFAULT_MASS: f32 = 1.0;
+pub const INST_DEFAULT_RIGID: f32 = 1.0;
+pub const MNGR_DEFAULT_BOUNCE: f32 = 2.0;
+pub const MNGR_DEFAULT_FRICTION: f32 = 0.02;
+
 // Constraint solver iterations
 const ITERATIONS: usize = 10;
 
@@ -694,8 +699,8 @@ impl<'a> InstanceBuilder<'a> {
         InstanceBuilder {
             manager,
             scale: None,
-            mass: 1.0, // Default mass
-            rigidity: 1.0, // Default rigidity
+            mass: INST_DEFAULT_MASS,
+            rigidity: INST_DEFAULT_RIGID,
             particles: None,
             indices: None,
             bindings: None,
@@ -897,9 +902,9 @@ impl Manager {
             instances: Vec::with_capacity(instance_hint),
             joints: std::collections::HashMap::with_capacity(joint_hint),
             planes: Vec::with_capacity(plane_hint),
-            gravity: alg::Vec3::new(0., -9.8, 0.),
-            bounce: 2.0,
-            friction: 0.02,
+            gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
+            bounce: MNGR_DEFAULT_BOUNCE,
+            friction: MNGR_DEFAULT_FRICTION,
         }
     }
 

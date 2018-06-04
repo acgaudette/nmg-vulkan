@@ -1128,8 +1128,8 @@ impl Default for InstanceUBO {
 pub struct Light {
     pub vector: alg::Vec3,
     pub radius: f32,
-    color: graphics::Color,
-    intensity: f32,
+    pub color: graphics::Color,
+    pub intensity: f32,
 }
 
 impl Light {

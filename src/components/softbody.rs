@@ -1276,8 +1276,12 @@ impl Manager {
             // Update instance position
             instance.position = average;
 
-            // Update transform position
+            // Update transform
             transforms.set_position_i(i, average);
+            transforms.set_orientation_i(
+                i,
+                instance.matched_orientation().to_quat()
+            );
         }
     }
 

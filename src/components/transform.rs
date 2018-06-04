@@ -98,6 +98,36 @@ impl Manager {
         self.scales[i]
     }
 
+    pub fn set_position(
+        &mut self,
+        entity: entity::Handle,
+        position: alg::Vec3,
+    ) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.positions.len());
+        self.positions[i] = position;
+    }
+
+    pub fn set_orientation(
+        &mut self,
+        entity: entity::Handle,
+        orientation: alg::Quat,
+    ) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.orientations.len());
+        self.orientations[i] = orientation;
+    }
+
+    pub fn set_scale(
+        &mut self,
+        entity: entity::Handle,
+        scale: alg::Vec3,
+    ) {
+        let i = entity.get_index() as usize;
+        debug_assert!(i < self.scales.len());
+        self.scales[i] = scale;
+    }
+
     /* "Unsafe" methods for components with similar data layouts.
      * These technically invalidate the ECS model but are used
      * for performance purposes.

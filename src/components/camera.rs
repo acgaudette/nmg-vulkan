@@ -18,6 +18,17 @@ pub struct Camera {
     overrule: Option<render::SharedUBO>,
 }
 
+impl Default for Camera {
+    fn default() -> Camera {
+        Camera {
+            fov: DEFAULT_FOV,
+            near: DEFAULT_NEAR,
+            far: DEFAULT_FAR,
+            overrule: None,
+        }
+    }
+}
+
 pub struct Manager {
     active: usize,
     // There will likely be few cameras
@@ -29,7 +40,7 @@ impl components::Component for Manager {
         self.instances.push(
             (
                 entity,
-                Camera { },
+                Camera::default(),
             )
         );
     }

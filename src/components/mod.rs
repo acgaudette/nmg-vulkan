@@ -1,8 +1,9 @@
 pub mod transform;
-pub mod draw;
+pub mod camera;
 pub mod light;
-pub mod rigidbody;
+pub mod draw;
 pub mod softbody;
+pub mod rigidbody;
 
 use entity;
 
@@ -13,8 +14,9 @@ pub trait Component {
 
 pub struct Container {
     pub transforms:  transform::Manager,
-    pub draws:       draw::Manager,
+    pub cameras:     camera::Manager,
     pub lights:      light::Manager,
-    pub rigidbodies: rigidbody::Manager,
+    pub draws:       draw::Manager,
     pub softbodies:  softbody::Manager,
+    pub rigidbodies: rigidbody::Manager,
 }

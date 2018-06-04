@@ -356,7 +356,8 @@ fn begin_update<T>(
             metadata.fixed_frame += 1;
         }
 
-        // Update core component
+        // Update core components
+        components.lights.update(&components.transforms);
         components.draws.transfer(
             &mut components.transforms,
             &mut components.softbodies,

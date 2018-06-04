@@ -67,25 +67,13 @@ impl nmg::Start for Demo {
 
         /* Add planes */
 
-        components.softbodies.add_plane(
-            alg::Plane::new(alg::Vec3::up(), 0.0)
-        );
-
-        components.softbodies.add_plane(
-            alg::Plane::new(-alg::Vec3::one(), 2.0)
-        );
-
-        components.softbodies.add_plane(
-            alg::Plane::new(alg::Vec3::right(), 3.0)
-        );
-
-        components.softbodies.add_plane(
-            alg::Plane::new(alg::Vec3::fwd(), 3.0)
-        );
-
-        components.softbodies.add_plane(
-            alg::Plane::new(-alg::Vec3::right(), 3.0)
-        );
+        components.softbodies.add_planes(&[
+            alg::Plane::new(alg::Vec3::up(), 0.0),
+            alg::Plane::new(-alg::Vec3::one(), 2.0),
+            alg::Plane::new(alg::Vec3::right(), 3.0),
+            alg::Plane::new(alg::Vec3::fwd(), 3.0),
+            alg::Plane::new(-alg::Vec3::right(), 3.0),
+        ]);
 
         // Set plane bounciness
         components.softbodies.set_bounce(0.04);

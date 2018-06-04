@@ -98,21 +98,32 @@ impl Manager {
         self.scales[i]
     }
 
-    /* Tight coupling--beware */
+    /* "Unsafe" methods for components with similar data layouts.
+     * These technically invalidate the ECS model but are used
+     * for performance purposes.
+     */
 
-    pub fn set_position_i(&mut self, index: usize, value: alg::Vec3) {
-        self.positions[index] = value;
-    }
-
-    pub fn get_position_i(&self, index: usize) -> alg::Vec3 {
+    pub(super) fn get_position_raw(&self, index: usize) -> alg::Vec3 {
         self.positions[index]
     }
 
-    pub fn set_orientation_i(&mut self, index: usize, value: alg::Quat) {
-        self.orientations[index] = value;
+    pub(super) fn get_orientation_raw(&self, index: usize) -> alg::Quat {
+        self.orientations[index]
     }
 
-    pub fn get_orientation_i(&self, index: usize) -> alg::Quat {
-        self.orientations[index]
+    pub(super) fn set_position_raw(
+        &mut self,
+        index: usize,
+        value: alg::Vec3,
+    ) {
+        self.positions[index] = value;
+    }
+
+    pub(super) fn set_orientation_raw(
+        &mut self,
+        index: usize,
+        value: alg::Quat,
+    ) {
+        self.orientations[index] = value;
     }
 }

@@ -58,6 +58,7 @@ impl Manager {
         }
     }
 
+    /// Set the main camera that will be rendered
     pub fn set_active(&mut self, camera_index: usize) {
         debug_assert!(camera_index < self.count());
         self.active = camera_index;

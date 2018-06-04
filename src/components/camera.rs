@@ -57,4 +57,23 @@ impl Manager {
             instances: Vec::with_capacity(hint),
         }
     }
+
+    pub fn set_fov(&mut self, entity: entity::Handle, fov: f32) {
+        self.instances.iter_mut()
+            .find(|instance| instance.0 == entity)
+            .expect(&format!("Entity {} not found in light manager", entity))
+            .1.fov = fov;
+    }
+
+    /// Override a camera with a custom shared UBO
+    pub fn overrule(
+        &mut self,
+        entity: entity::Handle,
+        shared_ubo: render::SharedUBO,
+    ) {
+        self.instances.iter_mut()
+            .find(|instance| instance.0 == entity)
+            .expect(&format!("Entity {} not found in light manager", entity))
+            .1.overrule = Some(shared_ubo);
+    }
 }

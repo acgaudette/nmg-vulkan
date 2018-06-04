@@ -10,9 +10,16 @@ use std;
 use ::FIXED_DT; // Import from lib
 use components::transform;
 
+/// Default instance mass
 pub const INST_DEFAULT_MASS: f32 = 1.0;
+
+/// Default instance rigidity
 pub const INST_DEFAULT_RIGID: f32 = 1.0;
+
+/// Default system (softbody manager) bounce
 pub const MNGR_DEFAULT_BOUNCE: f32 = 2.0;
+
+/// Default system (softbody manager) friction
 pub const MNGR_DEFAULT_FRICTION: f32 = 0.02;
 
 // Constraint solver iterations

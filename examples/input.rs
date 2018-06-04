@@ -26,14 +26,10 @@ impl nmg::Start for Demo {
 
         let light = entities.add();
         components.lights.register(light);
-        components.lights.set(
-            light,
-            render::Light::new_directional(
-                alg::Vec3::fwd(),
-                graphics::Color::white(),
-                2.0, // Intensity
-            ),
-        );
+        components.lights.build()
+            .directional(alg::Vec3::fwd())
+            .intensity(2.0)
+            .for_entity(light);
     }
 }
 

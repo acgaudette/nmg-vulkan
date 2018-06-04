@@ -83,17 +83,16 @@ impl nmg::Start for Demo {
         // Update demo state
         self.objects.push(object);
 
+        // Add point light
         let light = entities.add();
+        components.transforms.register(light);
         components.lights.register(light);
-        components.lights.set(
-            light,
-            render::Light::new_point(
-                alg::Vec3::fwd() * 2.0,
-                16.0, // Radius
-                graphics::Color::white(),
-                2.0, // Intensity
-            ),
-        );
+
+        components.transforms.set_position(light, alg::Vec3::fwd() * 2.0);
+        components.lights.build()
+            .point_with_radius(16.0)
+            .intensity(2.0)
+            .for_entity(light);
     }
 }
 

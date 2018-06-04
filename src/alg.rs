@@ -1006,6 +1006,13 @@ impl Quat {
         }
     }
 
+    pub fn look_at(position: Vec3, target: Vec3, up: Vec3) -> Quat {
+        let fwd = (target - position).norm();
+        let right = up.cross(fwd).norm();
+        let up = fwd.cross(right);
+        Mat3::axes(right, up, fwd).to_quat()
+    }
+
     pub fn from_to(from: Vec3, to: Vec3) -> Quat {
         let cross = from.cross(to);
         let dot = from.dot(to);

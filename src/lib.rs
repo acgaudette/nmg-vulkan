@@ -59,7 +59,7 @@ pub trait Update {
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO;
+    );
 }
 
 pub trait FixedUpdate {

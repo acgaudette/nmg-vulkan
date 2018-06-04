@@ -500,6 +500,13 @@ impl Instance {
             * FIXED_DT * FIXED_DT;
     }
 
+    fn center(&self) -> alg::Vec3 {
+        self.particles.iter().fold(
+            alg::Vec3::zero(),
+            |sum, particle| sum + particle.position
+        ) / self.particles.len() as f32
+    }
+
     /* Limb helper methods */
 
     #[inline]
@@ -547,19 +554,6 @@ impl Instance {
     #[inline]
     fn up_est(&self) -> alg::Vec3 {
         (self.top() - self.bot()).norm()
-    }
-
-    #[inline]
-    fn center(&self) -> alg::Vec3 {
-        (     self.particles[0].position
-            + self.particles[1].position
-            + self.particles[2].position
-            + self.particles[3].position
-            + self.particles[4].position
-            + self.particles[5].position
-            + self.particles[6].position
-            + self.particles[7].position
-        ) * 0.125
     }
 
     #[inline]

@@ -319,8 +319,8 @@ fn begin_update<T>(
         let delta = time - last_time;
         last_time = time;
 
-        // Update scene data
-        let shared_ubo = game.update(
+        // Update game via callback
+        game.update(
             time,
             delta,
             metadata,
@@ -349,7 +349,7 @@ fn begin_update<T>(
                 debug,
             );
 
-            // Update core components
+            // Update physics components
             components.rigidbodies.simulate(&mut components.transforms);
             components.softbodies.simulate(&mut components.transforms);
 
@@ -357,7 +357,7 @@ fn begin_update<T>(
             metadata.fixed_frame += 1;
         }
 
-        // Update core components
+        // Update render-related components
         components.lights.update(&components.transforms);
         components.draws.transfer(
             &components.transforms,

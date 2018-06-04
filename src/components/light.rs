@@ -30,7 +30,7 @@ impl Manager {
         }
     }
 
-    pub fn set(&mut self, entity: entity::Handle, light: render::Light) {
+    fn set(&mut self, entity: entity::Handle, light: render::Light) {
         debug_assert!(self.instances.contains_key(&entity));
         *self.instances.get_mut(&entity).unwrap() = light;
     }

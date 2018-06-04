@@ -5,32 +5,32 @@ use entity;
 use components;
 
 pub struct Manager {
-    lights: std::collections::HashMap<entity::Handle, render::Light>,
+    instances: std::collections::HashMap<entity::Handle, render::Light>,
 }
 
 impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
-        self.lights.insert(
+        self.instances.insert(
             entity,
             render::Light::none(),
         );
     }
 
     fn count(&self) -> usize {
-        self.lights.len()
+        self.instances.len()
     }
 }
 
 impl Manager {
     pub fn new(hint: usize) -> Manager {
         Manager {
-            lights: std::collections::HashMap::with_capacity(hint),
+            instances: std::collections::HashMap::with_capacity(hint),
         }
     }
 
     pub fn set(&mut self, entity: entity::Handle, light: render::Light) {
-        debug_assert!(self.lights.contains_key(&entity));
-        *self.lights.get_mut(&entity).unwrap() = light;
+        debug_assert!(self.instances.contains_key(&entity));
+        *self.instances.get_mut(&entity).unwrap() = light;
     }
 
     // Given a position, return the set of lights affecting it
@@ -45,7 +45,7 @@ impl Manager {
 
         let mut i = 0;
 
-        for (_, light) in &self.lights {
+        for (_, light) in &self.instances {
             // Directional
             if light.radius == -1.0 {
                 instance_lights[i] = *light; // Set light

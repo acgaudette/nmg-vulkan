@@ -365,7 +365,11 @@ struct Instance {
 
     force: alg::Vec3,
     accel_dt: alg::Vec3, // Cached value, dependent on force
-    position: alg::Vec3, // Updated every frame
+
+    /* Updated per-frame */
+
+    frame_position: alg::Vec3,
+    frame_orientation: alg::Quat,
 
     /* "Constants" */
 
@@ -438,7 +442,9 @@ impl Instance {
 
             force: alg::Vec3::zero(),
             accel_dt: initial_accel * FIXED_DT * FIXED_DT,
-            position: alg::Vec3::zero(),
+
+            frame_position: alg::Vec3::zero(),
+            frame_orientation: alg::Quat::id(),
 
             mass,
             inv_pt_mass: 1.0 / (mass / points.len() as f32),

@@ -365,6 +365,13 @@ fn begin_update<T>(
             &components.lights,
         );
 
+        // Get shared UBO from camera component
+        let shared_ubo = components.cameras.compute(
+            &components.transforms,
+            context.swapchain.extent().width(),
+            context.swapchain.extent().height(),
+        );
+
         // Update renderer
         if let Err(e) = context.update(
             &components.draws.instances,

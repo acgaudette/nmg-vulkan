@@ -487,15 +487,10 @@ impl Instance {
 
     // Get offset from center for specific particle
     fn offset(&self, index: usize) -> alg::Vec3 {
-        let model = if let Some(ref model) = self.model {
-            model
-        } else {
-            &self.perfect_model
-        };
-
-        self.particles[index].position
-            - self.position // Aggregate position of instance
-            - model[index]
+        // Compare current transform against model reference
+        self.frame_orientation.conjugate() * (
+            self.particles[index].position - self.frame_position
+        ) - self.model.as_ref().unwrap_or(&self.perfect_model)[index]
     }
 
     #[inline]

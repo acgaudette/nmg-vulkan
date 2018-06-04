@@ -862,9 +862,6 @@ pub struct Manager {
     planes: Vec<alg::Plane>,
     gravity: alg::Vec3,
 
-    // Range 0 - inf; "Realistic" = 2.0
-    // Values < 2 become force zones, values > 2 add impossible force
-    // A value of zero nullifies all collisions
     bounce: f32,
 
     // Range 0 - 1; 0 = no planar friction
@@ -1115,6 +1112,9 @@ impl Manager {
         self.gravity = gravity;
     }
 
+    /// Range 0 - inf; "Realistic" = 2.0 \
+    /// Values < 2 become force zones, values > 2 add impossible force \
+    /// A value of zero nullifies all collisions
     pub fn set_bounce(&mut self, bounce: f32) {
         self.bounce = bounce;
     }

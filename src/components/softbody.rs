@@ -27,11 +27,6 @@ const JOINT_POS_RIGID: f32 = 1.0;
 // A value of zero nullifies the angular constraints of all joints
 const JOINT_ANG_RIGID: f32 = 1.0;
 
-// Range 0 - 1
-// Higher values "kick" the joint at its limits and add velocity to the system
-// A value of one locks all joints
-const JOINT_ANG_BIAS: f32 = 0.0;
-
 // Multiples of std::f32::EPSILON
 // A value > 0 is needed to correctly test for intersection containment
 // Large values will produce spurious intersections, especially with small
@@ -1529,10 +1524,7 @@ impl Manager {
         };
 
         // Calculate rotation midpoint
-        let midpoint = intersection.norm().lerp(
-            alg::Vec3::fwd(),
-            JOINT_ANG_BIAS,
-        );
+        let midpoint = intersection.norm();
 
         // Limit rotation
         alg::Quat::simple(alg::Vec3::fwd(), midpoint)

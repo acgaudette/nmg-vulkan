@@ -1279,15 +1279,16 @@ impl Manager {
                 sum / instance.particles.len() as f32
             };
 
-            // Update instance position
-            instance.position = average;
+            // Compute best fit orientation
+            let orientation = instance.matched_orientation().to_quat();
+
+            // Update instance position and orientation
+            instance.frame_position = average;
+            instance.frame_orientation = orientation;
 
             // Update transform
-            transforms.set_position_i(i, average);
-            transforms.set_orientation_i(
-                i,
-                instance.matched_orientation().to_quat()
-            );
+            transforms.set_position_raw(i, average);
+            transforms.set_orientation_raw(i, orientation);
         }
     }
 

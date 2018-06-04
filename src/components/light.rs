@@ -4,6 +4,8 @@ use render;
 use entity;
 use components;
 
+use components::transform;
+
 pub struct Manager {
     instances: std::collections::HashMap<entity::Handle, render::Light>,
 }
@@ -31,6 +33,15 @@ impl Manager {
     pub fn set(&mut self, entity: entity::Handle, light: render::Light) {
         debug_assert!(self.instances.contains_key(&entity));
         *self.instances.get_mut(&entity).unwrap() = light;
+    }
+
+    // Update point light positions from transform component
+    pub fn update(&mut self, transforms: &transform::Manager) {
+        for (entity, light) in &mut self.instances {
+            if light.radius > 0.0 {
+                light.vector = transforms.get_position(*entity);
+            }
+        }
     }
 
     // Given a position, return the set of lights affecting it

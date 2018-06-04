@@ -83,7 +83,8 @@ impl nmg::Start for Demo {
         // Update demo state
         self.objects.push(object);
 
-        // Add point light
+        /* Add point light */
+
         let light = entities.add();
         components.transforms.register(light);
         components.lights.register(light);
@@ -93,6 +94,26 @@ impl nmg::Start for Demo {
             .point_with_radius(16.0)
             .intensity(2.0)
             .for_entity(light);
+
+        /* Set up camera */
+
+        let camera = entities.add();
+        components.transforms.register(camera);
+        components.cameras.register(camera);
+
+        let camera_position = alg::Vec3::new(-1.0, 0.5, 2.0);
+        let camera_orientation = alg::Quat::look_at(
+            camera_position,
+            alg::Vec3::zero(),
+            alg::Vec3::up(),
+        );
+
+        components.transforms.set(
+            camera,
+            camera_position,
+            camera_orientation,
+            alg::Vec3::zero(),
+        );
     }
 }
 
@@ -109,34 +130,13 @@ impl nmg::Update for Demo {
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO {
-        let shared_ubo = {
-            let view = alg::Mat4::look_at_view(
-                alg::Vec3::new(-1., 0.5, 2.0), // Camera position
-                alg::Vec3::new(0.0, 0.0, 0.0), // Target position
-                alg::Vec3::up(),
-            );
-
-            let projection = {
-                alg::Mat4::perspective(
-                    60.,
-                    screen_width as f32 / screen_height as f32,
-                    0.01,
-                    4.
-                )
-            };
-
-            render::SharedUBO::new(view, projection)
-        };
-
+    ) {
         /* Debug data */
 
         debug.clear_lines();
         debug.add_cross( alg::Vec3::up(), 0.4, graphics::Color::red());
         debug.add_cross(-alg::Vec3::up(), 0.4, graphics::Color::red());
         components.softbodies.draw_debug(self.objects[0], debug);
-
-        shared_ubo
     }
 }
 
@@ -147,8 +147,8 @@ impl nmg::FixedUpdate for Demo {
         time: f64,
         fixed_delta: f32,
         metadata: nmg::Metadata,
-        screen_height: u32,
         screen_width: u32,
+        screen_height: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,

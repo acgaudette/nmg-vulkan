@@ -11,6 +11,7 @@ use nmg::debug;
 struct Demo {
     last_angle: alg::Vec2,
     cube: Option<entity::Handle>,
+    camera: Option<entity::Handle>,
 }
 
 impl nmg::Start for Demo {
@@ -29,6 +30,12 @@ impl nmg::Start for Demo {
         components.lights.build()
             .directional(-alg::Vec3::one())
             .for_entity(light);
+
+        // Add camera
+        let camera = entities.add();
+        components.transforms.register(camera);
+        components.cameras.register(camera);
+        self.camera = Some(camera);
     }
 }
 
@@ -39,43 +46,13 @@ impl nmg::Update for Demo {
         time:  f64,
         delta: f64,
         metadata: nmg::Metadata,
-        screen_height: u32,
         screen_width:  u32,
+        screen_height: u32,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO {
-        let shared_ubo = {
-            // Compute rotation angle using mouse
-            let angle = self.last_angle + input.mouse_delta * 0.005;
-            self.last_angle = angle;
-
-            // Orbit camera
-            let camera_position =
-                  alg::Mat3::rotation_y(angle.x as f32)
-                * alg::Mat3::rotation_x(angle.y as f32)
-                * alg::Mat4::translation(0.0, 0.0, -2.0)
-                * alg::Vec3::zero();
-
-            let view = alg::Mat4::look_at_view(
-                camera_position,
-                alg::Vec3::zero(), // Target position
-                alg::Vec3::up(),
-            );
-
-            let projection = {
-                alg::Mat4::perspective(
-                    60.,
-                    screen_width as f32 / screen_height as f32,
-                    0.01,
-                    4.
-                )
-            };
-
-            render::SharedUBO::new(view, projection)
-        };
-
+    ) {
         components.transforms.set(
             self.cube.unwrap(),
             alg::Vec3::zero(),
@@ -83,7 +60,29 @@ impl nmg::Update for Demo {
             alg::Vec3::one(),
         );
 
-        shared_ubo
+        // Compute rotation angle using mouse
+        let angle = self.last_angle + input.mouse_delta * 0.005;
+        self.last_angle = angle;
+
+        // Orbit camera
+        let camera_position =
+              alg::Mat3::rotation_y(angle.x as f32)
+            * alg::Mat3::rotation_x(angle.y as f32)
+            * alg::Mat4::translation(0.0, 0.0, -2.0)
+            * alg::Vec3::zero();
+
+        let camera_orientation = alg::Quat::look_at(
+            camera_position,
+            alg::Vec3::zero(),
+            alg::Vec3::up(),
+        );
+
+        components.transforms.set(
+            self.camera.unwrap(),
+            camera_position,
+            camera_orientation,
+            alg::Vec3::zero(),
+        );
     }
 }
 
@@ -104,7 +103,12 @@ impl nmg::FixedUpdate for Demo {
 }
 
 fn main() {
-    let demo = Demo { last_angle: alg::Vec2::zero(), cube: None };
+    let demo = Demo {
+        last_angle: alg::Vec2::zero(),
+        cube: None,
+        camera: None,
+    };
+
     let model_data = get_models();
     nmg::go(model_data, demo)
 }

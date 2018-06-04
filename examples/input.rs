@@ -29,6 +29,14 @@ impl nmg::Start for Demo {
             .directional(alg::Vec3::fwd())
             .intensity(2.0)
             .for_entity(light);
+
+        let camera = entities.add();
+        components.transforms.register(camera);
+        components.cameras.register(camera);
+        components.transforms.set_position(
+            camera,
+            alg::Vec3::fwd() * -2.0,
+        );
     }
 }
 
@@ -39,46 +47,27 @@ impl nmg::Update for Demo {
         time:  f64,
         delta: f64,
         metadata: nmg::Metadata,
-        screen_height: u32,
         screen_width:  u32,
+        screen_height: u32,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO {
-        let shared_ubo = {
-            let view = alg::Mat4::look_at_view(
-                alg::Vec3::fwd() * -2.0, // Camera position
-                alg::Vec3::zero(), // Target position
-                alg::Vec3::up(),
-            );
-
-            let projection = {
-                alg::Mat4::perspective(
-                    60.,
-                    screen_width as f32 / screen_height as f32,
-                    0.01,
-                    4.
-                )
-            };
-
-            render::SharedUBO::new(view, projection)
-        };
+    ) {
+        let pyramid = self.pyramid.unwrap();
 
         components.transforms.set(
-            self.pyramid.unwrap(),
+            pyramid,
             alg::Vec3::zero(),
             alg::Quat::axis_angle(alg::Vec3::up(), (time as f32) * 2.),
             alg::Vec3::one(),
         );
 
         if input.key_held(input::Key::Space) {
-            components.draws.unhide(self.pyramid.unwrap());
+            components.draws.unhide(pyramid);
         } else {
-            components.draws.hide(self.pyramid.unwrap());
+            components.draws.hide(pyramid);
         }
-
-        shared_ubo
     }
 }
 

@@ -2,7 +2,6 @@ extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
 use nmg::entity;
-use nmg::render;
 use nmg::graphics;
 use nmg::components;
 use nmg::components::Component;
@@ -17,6 +16,7 @@ struct Demo {
     first:  Option<entity::Handle>,
     second: Option<entity::Handle>,
     third:  Option<entity::Handle>,
+    camera: Option<entity::Handle>,
     last_target: alg::Vec3,
 }
 
@@ -90,9 +90,15 @@ impl nmg::Start for Demo {
         // Set plane bounciness
         components.softbodies.set_bounce(0.04);
 
+        // Add camera
+        let camera = entities.add();
+        components.transforms.register(camera);
+        components.cameras.register(camera);
+
         self.first = Some(first);
         self.second = Some(second);
         self.third = Some(third);
+        self.camera = Some(camera);
     }
 }
 
@@ -103,13 +109,13 @@ impl nmg::Update for Demo {
         time: f64,
         delta: f64,
         metadata: nmg::Metadata,
-        screen_height: u32,
         screen_width: u32,
+        screen_height: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO {
+    ) {
         /* Debug */
 
         debug.clear_lines();
@@ -124,43 +130,31 @@ impl nmg::Update for Demo {
         // Draw softbodies
         components.softbodies.draw_all_debug(debug);
 
-        let shared_ubo = {
-            let camera_position =
-                  alg::Mat3::rotation(0.0, 90_f32.to_radians(), 0.0)
-                * alg::Mat4::translation(-3.0, 3.0, -6.0)
-                * alg::Vec3::one();
+        // Update camera
 
-            let target = {
-                let new_target = (
-                      components.transforms.get_position(self.first.unwrap())
-                    + components.transforms.get_position(self.second.unwrap())
-                    + components.transforms.get_position(self.third.unwrap())
-                ) * 0.33;
+        let camera_position =
+              alg::Mat3::rotation(0.0, 90_f32.to_radians(), 0.0)
+            * alg::Mat4::translation(-3.0, 3.0, -6.0)
+            * alg::Vec3::one();
 
-                self.last_target.lerp(new_target, delta as f32)
-            };
+        let target = {
+            let new_target = (
+                  components.transforms.get_position(self.first.unwrap())
+                + components.transforms.get_position(self.second.unwrap())
+                + components.transforms.get_position(self.third.unwrap())
+            ) * 0.33;
 
-            self.last_target = target;
-
-            let view = alg::Mat4::look_at_view(
-                camera_position,
-                target,
-                alg::Vec3::up(),
-            );
-
-            let projection = {
-                alg::Mat4::perspective(
-                    60.0,
-                    screen_width as f32 / screen_height as f32,
-                    0.01,
-                    8.0,
-                )
-            };
-
-            render::SharedUBO::new(view, projection)
+            self.last_target.lerp(new_target, delta as f32)
         };
 
-        shared_ubo
+        self.last_target = target;
+
+        components.transforms.set(
+            self.camera.unwrap(),
+            camera_position,
+            alg::Quat::look_at(camera_position, target, alg::Vec3::up()),
+            alg::Vec3::zero(),
+        );
     }
 }
 
@@ -185,6 +179,7 @@ fn main() {
         first:  None,
         second: None,
         third:  None,
+        camera: None,
         last_target: alg::Vec3::zero(),
     };
 

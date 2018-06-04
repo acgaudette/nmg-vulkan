@@ -42,6 +42,26 @@ impl nmg::Start for Demo {
             alg::Vec3::right() * -2000.,
         );
 
+        /* Set up camera */
+
+        let camera = entities.add();
+        components.transforms.register(camera);
+        components.cameras.register(camera);
+
+        let camera_position = alg::Vec3::new(-1.0, 0.5, -0.1);
+        let target_position = alg::Vec3::new( 0.0, 0.0,  2.0);
+        let camera_orientation = alg::Quat::look_at(
+            camera_position,
+            target_position,
+            alg::Vec3::up(),
+        );
+
+        components.transforms.set(
+            camera,
+            camera_position,
+            camera_orientation,
+            alg::Vec3::zero(),
+        );
 
         // Update demo state
         self.objects.push(object);
@@ -55,34 +75,13 @@ impl nmg::Update for Demo {
         time:  f64,
         delta: f64,
         metadata: nmg::Metadata,
-        screen_height: u32,
         screen_width:  u32,
+        screen_height: u32,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO {
-        let shared_ubo = {
-            let view = alg::Mat4::look_at_view(
-                alg::Vec3::new(-1.0, 0.5, -0.1), // Camera position
-                alg::Vec3::new( 0.0, 0.0,  2.0), // Target position
-                alg::Vec3::up(),
-            );
-
-            let projection = {
-                alg::Mat4::perspective(
-                    60.,
-                    screen_width as f32 / screen_height as f32,
-                    0.01,
-                    4.
-                )
-            };
-
-            render::SharedUBO::new(view, projection)
-        };
-
-        shared_ubo
-    }
+    ) { }
 }
 
 impl nmg::FixedUpdate for Demo {

@@ -2,7 +2,6 @@ extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
 use nmg::entity;
-use nmg::render;
 use nmg::graphics;
 use nmg::components;
 use nmg::components::Component;
@@ -12,6 +11,7 @@ use nmg::debug;
 struct Demo {
     shape: Option<entity::Handle>,
     last_target: alg::Vec3,
+    camera: Option<entity::Handle>,
 }
 
 impl nmg::Start for Demo {
@@ -44,7 +44,13 @@ impl nmg::Start for Demo {
         components.softbodies.set_bounce(0.015);
         components.softbodies.set_friction(0.0);
 
+        // Add camera
+        let camera = entities.add();
+        components.transforms.register(camera);
+        components.cameras.register(camera);
+
         self.shape = Some(shape);
+        self.camera = Some(camera);
     }
 }
 
@@ -55,13 +61,13 @@ impl nmg::Update for Demo {
         time: f64,
         delta: f64,
         metadata: nmg::Metadata,
-        screen_height: u32,
         screen_width: u32,
+        screen_height: u32,
         entities: &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    ) -> render::SharedUBO {
+    ) {
         /* Debug */
 
         debug.clear_lines();
@@ -86,41 +92,29 @@ impl nmg::Update for Demo {
             else { alg::Vec3::zero() }
         );
 
-        let shared_ubo = {
-            let camera_position =
-                  alg::Mat3::rotation_y(90f32.to_radians())
-                * alg::Mat4::translation(-3.0, 3.0, -6.0)
-                * alg::Vec3::one();
+        /* Update camera */
 
-            let target = {
-                let new_target = components.transforms.get_position(
-                    self.shape.unwrap()
-                );
+        let camera_position =
+              alg::Mat3::rotation_y(90f32.to_radians())
+            * alg::Mat4::translation(-3.0, 3.0, -6.0)
+            * alg::Vec3::one();
 
-                self.last_target.lerp(new_target, delta as f32)
-            };
-
-            self.last_target = target;
-
-            let view = alg::Mat4::look_at_view(
-                camera_position,
-                target,
-                alg::Vec3::up(),
+        let target = {
+            let new_target = components.transforms.get_position(
+                self.shape.unwrap()
             );
 
-            let projection = {
-                alg::Mat4::perspective(
-                    60.0,
-                    screen_width as f32 / screen_height as f32,
-                    0.01,
-                    8.0,
-                )
-            };
-
-            render::SharedUBO::new(view, projection)
+            self.last_target.lerp(new_target, delta as f32)
         };
 
-        shared_ubo
+        self.last_target = target;
+
+        components.transforms.set(
+            self.camera.unwrap(),
+            camera_position,
+            alg::Quat::look_at(camera_position, target, alg::Vec3::up()),
+            alg::Vec3::zero(),
+        );
     }
 }
 
@@ -142,8 +136,9 @@ impl nmg::FixedUpdate for Demo {
 
 fn main() {
     let demo = Demo {
-        shape:  None,
+        shape: None,
         last_target: alg::Vec3::zero(),
+        camera: None,
     };
 
     // Demo only renders anything in debug mode

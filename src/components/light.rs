@@ -24,6 +24,7 @@ impl components::Component for Manager {
     }
 }
 
+/// Builder pattern for lights
 pub struct LightBuilder<'a> {
     manager: &'a mut Manager,
     light: render::Light,
@@ -42,6 +43,8 @@ impl<'a> LightBuilder<'a> {
         }
     }
 
+    /// Create directional light with given vector \
+    /// Not compatible with `point_with_radius(...)`
     pub fn directional(
         &mut self,
         direction: alg::Vec3,
@@ -51,6 +54,9 @@ impl<'a> LightBuilder<'a> {
         self
     }
 
+    /// Create point light with given radius \
+    /// Position is taken from the associated transform component \
+    /// Not compatible with `directional(...)`
     pub fn point_with_radius(
         &mut self,
         radius: f32,
@@ -69,6 +75,7 @@ impl<'a> LightBuilder<'a> {
         self
     }
 
+    /// Finalize
     pub fn for_entity(&mut self, entity: entity::Handle) {
         debug_assert!(self.light.radius != 0.0);
         debug_assert!(

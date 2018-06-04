@@ -93,6 +93,10 @@ impl Manager {
         }
     }
 
+    pub fn build(&mut self) -> LightBuilder {
+        LightBuilder::new(self)
+    }
+
     fn set(&mut self, entity: entity::Handle, light: render::Light) {
         debug_assert!(self.instances.contains_key(&entity));
         *self.instances.get_mut(&entity).unwrap() = light;

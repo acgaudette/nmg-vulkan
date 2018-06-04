@@ -1,6 +1,7 @@
 use std;
 use alg;
 use render;
+use graphics;
 use entity;
 use components;
 
@@ -20,6 +21,61 @@ impl components::Component for Manager {
 
     fn count(&self) -> usize {
         self.instances.len()
+    }
+}
+
+pub struct LightBuilder<'a> {
+    manager: &'a mut Manager,
+    light: render::Light,
+}
+
+impl<'a> LightBuilder<'a> {
+    pub fn new(manager: &'a mut Manager) -> LightBuilder<'a> {
+        LightBuilder {
+            manager,
+            light: render::Light {
+                vector: alg::Vec3::zero(),
+                intensity: 1.0,
+                color: graphics::Color::white(),
+                radius: 0.0,
+            },
+        }
+    }
+
+    pub fn directional(
+        &mut self,
+        direction: alg::Vec3,
+    ) -> &mut LightBuilder<'a> {
+        self.light.vector = -direction.norm();
+        self.light.radius = -1.0; // Sentinel
+        self
+    }
+
+    pub fn point_with_radius(
+        &mut self,
+        radius: f32,
+    ) -> &mut LightBuilder<'a> {
+        self.light.radius = radius;
+        self
+    }
+
+    pub fn color(&mut self, color: graphics::Color) -> &mut LightBuilder<'a> {
+        self.light.color = color;
+        self
+    }
+
+    pub fn intensity(&mut self, intensity: f32) -> &mut LightBuilder<'a> {
+        self.light.intensity = intensity;
+        self
+    }
+
+    pub fn for_entity(&mut self, entity: entity::Handle) {
+        debug_assert!(self.light.radius != 0.0);
+        debug_assert!(
+            self.light.radius > 0.0 || self.light.vector != alg::Vec3::zero()
+        );
+
+        self.manager.set(entity, self.light);
     }
 }
 

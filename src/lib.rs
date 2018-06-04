@@ -359,9 +359,9 @@ fn begin_update<T>(
         // Update core components
         components.lights.update(&components.transforms);
         components.draws.transfer(
-            &mut components.transforms,
-            &mut components.softbodies,
-            &mut components.lights,
+            &components.transforms,
+            &components.softbodies,
+            &components.lights,
         );
 
         // Update renderer

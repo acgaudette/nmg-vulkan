@@ -861,10 +861,7 @@ pub struct Manager {
     joints: std::collections::HashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
     gravity: alg::Vec3,
-
     bounce: f32,
-
-    // Range 0 - 1; 0 = no planar friction
     friction: f32,
 }
 
@@ -1119,6 +1116,7 @@ impl Manager {
         self.bounce = bounce;
     }
 
+    /// Range 0 - 1; 0 = no planar friction
     pub fn set_friction(&mut self, friction: f32) {
         self.friction = friction;
     }

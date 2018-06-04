@@ -58,6 +58,11 @@ impl Manager {
         }
     }
 
+    pub fn set_active(&mut self, camera_index: usize) {
+        debug_assert!(camera_index < self.count());
+        self.active = camera_index;
+    }
+
     pub fn set_fov(&mut self, entity: entity::Handle, fov: f32) {
         self.instances.iter_mut()
             .find(|instance| instance.0 == entity)

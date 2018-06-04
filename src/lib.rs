@@ -98,10 +98,11 @@ where
     // Initialize core components
     let mut components = components::Container {
         transforms:  components::transform::Manager::new(1),
-        draws:       components::draw::Manager::new(1, instances),
+        cameras:     components::camera::Manager::new(1),
         lights:      components::light::Manager::new(8),
-        rigidbodies: components::rigidbody::Manager::new(1),
+        draws:       components::draw::Manager::new(1, instances),
         softbodies:  components::softbody::Manager::new(1, 1, 1),
+        rigidbodies: components::rigidbody::Manager::new(1),
     };
 
     // Create input manager

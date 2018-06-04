@@ -18,8 +18,9 @@ const ITERATIONS: usize = 10;
 const DEFORM: f32 = 1.000;
 
 // Range 0 - 1.0; "Rigid" = 1.0
-// Lower values produce springier joints
 // A value of zero nullifies the translational constraints of all joints
+// However, because other constraints are still in place,
+// values other than zero produce largely undesired behavior
 const JOINT_POS_RIGID: f32 = 1.0;
 
 // Range 0 - 1.0; "Rigid" = 1.0

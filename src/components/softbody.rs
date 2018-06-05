@@ -910,7 +910,7 @@ impl Manager {
         }
     }
 
-    pub fn build_instance<'a>(&'a mut self) -> InstanceBuilder<'a> {
+    pub fn build_instance(&mut self) -> InstanceBuilder {
         InstanceBuilder::new(self)
     }
 

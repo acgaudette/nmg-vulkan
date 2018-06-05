@@ -835,6 +835,15 @@ impl Mat4 {
         )
     }
 
+    pub fn transpose(self) -> Mat4 {
+        Mat4::new(
+            self.x0, self.y0, self.z0, self.w0,
+            self.x1, self.y1, self.z1, self.w1,
+            self.x2, self.y2, self.z2, self.w2,
+            self.x3, self.y3, self.z3, self.w3,
+        )
+    }
+
     pub fn translation(x: f32, y: f32, z: f32) -> Mat4 {
         Mat4::new(
             1.0, 0.0, 0.0,   x,

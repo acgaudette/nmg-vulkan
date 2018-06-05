@@ -237,19 +237,13 @@ fn begin_update<T>(
                     ..
                 } => {
                     if focused {
-                        match window.set_cursor_state(
+                        if let Err(e) = window.set_cursor_state(
                             vdw::winit::CursorState::Grab
-                        ) {
-                            Err(e) => eprintln!("{}", e),
-                            _ => {}
-                        }
+                        ) { eprintln!("{}", e); }
                     } else {
-                        match window.set_cursor_state(
+                        if let Err(e) = window.set_cursor_state(
                             vdw::winit::CursorState::Normal
-                        ) {
-                            Err(e) => eprintln!("{}", e),
-                            _ => {}
-                        };
+                        ) { eprintln!("{}", e); }
                     }
                 },
 

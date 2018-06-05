@@ -79,7 +79,7 @@ impl Manager {
         debug_assert!(self.handles.contains_key(&entity));
 
         self.instances.update_meta(
-            *self.handles.get(&entity).unwrap(),
+            self.handles[&entity],
             render::InstanceMeta::new(true),
         );
     }
@@ -88,7 +88,7 @@ impl Manager {
         debug_assert!(self.handles.contains_key(&entity));
 
         self.instances.update_meta(
-            *self.handles.get(&entity).unwrap(),
+            self.handles[&entity],
             render::InstanceMeta::new(false),
         );
     }

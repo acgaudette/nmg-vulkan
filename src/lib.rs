@@ -20,7 +20,7 @@ mod util;
 use std::thread;
 
 const FIXED_DT: f32 = 1. / 100.;
-const LIMIT_NS: u32 = 100000;
+const LIMIT_NS: u32 = 100_000;
 
 #[derive(Clone, Copy)]
 pub struct Metadata {
@@ -179,7 +179,7 @@ fn begin_update<T>(
 
     // Maximum time allowed to render a frame (ns)
     let frame_limit = if target_fps != 0 {
-        1000000000 / target_fps
+        1_000_000_000 / target_fps
     } else { 0 };
 
     /* Time scaling factor for the fixed timestep;
@@ -308,7 +308,7 @@ fn begin_update<T>(
         let duration = now.duration_since(start);
 
         let time = duration.as_secs() as f64
-            + (duration.subsec_nanos() as f64 / 1000000000.);
+            + (duration.subsec_nanos() as f64 / 1_000_000_000.);
 
         let delta = time - last_time;
         last_time = time;

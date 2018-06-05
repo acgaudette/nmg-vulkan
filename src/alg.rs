@@ -844,6 +844,14 @@ impl Mat4 {
         )
     }
 
+    pub fn to_mat3(self) -> Mat3 {
+        Mat3::new(
+            self.x0, self.x1, self.x2,
+            self.y0, self.y1, self.y2,
+            self.z0, self.z1, self.z2,
+        )
+    }
+
     pub fn translation(x: f32, y: f32, z: f32) -> Mat4 {
         Mat4::new(
             1.0, 0.0, 0.0,   x,

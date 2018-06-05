@@ -57,7 +57,7 @@ impl Manager {
     /* Key states */
 
     pub fn increment_key_states(&mut self) {
-        for key_state in self.key_map.iter_mut() {
+        for key_state in &mut self.key_map {
             key_state.was_pressed = key_state.pressed;
         }
     }

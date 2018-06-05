@@ -1058,7 +1058,7 @@ pub struct PaddedVec3 {
 impl PaddedVec3 {
     pub fn new(value: alg::Vec3) -> PaddedVec3 {
         PaddedVec3 {
-            value: value,
+            value,
             pad: 0.,
         }
     }
@@ -1777,9 +1777,9 @@ fn init_debug(
         .build(device.clone())?;
 
     let data = DebugData {
-        buffer: buffer,
-        memory: memory,
-        pipeline: pipeline,
+        buffer,
+        memory,
+        pipeline,
         _vert: vert_mod,
         _frag: frag_mod,
     };

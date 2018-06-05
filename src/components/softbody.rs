@@ -56,7 +56,7 @@ struct Particle {
 impl Particle {
     fn new(position: alg::Vec3) -> Particle {
         Particle {
-            position: position,
+            position,
             last: position,
             displacement: alg::Vec3::zero(),
         }
@@ -99,8 +99,8 @@ impl Magnet {
     fn new(serf: usize, falloff: Falloff) -> Magnet {
         Magnet {
             target: alg::Vec3::zero(),
-            serf: serf,
-            falloff: falloff,
+            serf,
+            falloff,
         }
     }
 }

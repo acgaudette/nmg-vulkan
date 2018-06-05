@@ -19,7 +19,7 @@ impl Manager {
     pub fn new(hint: usize, instances: render::Instances) -> Manager {
         Manager {
             handles: std::collections::HashMap::with_capacity(hint),
-            instances: instances,
+            instances,
         }
     }
 

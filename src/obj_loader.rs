@@ -18,7 +18,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
         let positions = &model.mesh.positions;
         let count = positions.len();
 
-        let (normals, has_normals) = if model.mesh.normals.len() == 0 {
+        let (normals, has_normals) = if model.mesh.normals.is_empty() {
             let mut normals = Vec::with_capacity(count);
 
             for _ in 0..count {

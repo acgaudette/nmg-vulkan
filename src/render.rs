@@ -1520,7 +1520,7 @@ fn load_models(
      * (really only useful for debugging purposes).
      */
 
-    let model_data = if model_data.len() == 0 {
+    let model_data = if model_data.is_empty() {
         vec![
             ModelData::new(
                 vec![

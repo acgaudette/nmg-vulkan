@@ -1281,7 +1281,7 @@ impl Plane {
     pub fn new(normal: Vec3, offset: f32) -> Plane {
         Plane {
             normal: normal.norm(),
-            offset: offset,
+            offset,
         }
     }
 

@@ -1469,7 +1469,7 @@ impl Manager {
             }
 
             if cone.lower_right.intersects(local_child_fwd) {
-                if candidates.len() == 0 {
+                if candidates.is_empty() {
                     plane = cone.lower_right;
                 }
 
@@ -1479,7 +1479,7 @@ impl Manager {
             }
 
             if cone.upper_right.intersects(local_child_fwd) {
-                if candidates.len() == 0 {
+                if candidates.is_empty() {
                     plane = cone.upper_right;
                 }
 
@@ -1489,7 +1489,7 @@ impl Manager {
             }
 
             if cone.upper_left.intersects(local_child_fwd) {
-                if candidates.len() == 0 {
+                if candidates.is_empty() {
                     plane = cone.upper_left;
                 }
 
@@ -1498,7 +1498,7 @@ impl Manager {
                 );
             }
 
-            debug_assert!(candidates.len() > 0);
+            debug_assert!(!candidates.is_empty());
             let mut result = candidates[0];
 
             if candidates.len() > 1 {

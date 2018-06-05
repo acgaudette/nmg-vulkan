@@ -123,11 +123,11 @@ impl Manager {
 
         let mut i = 0;
 
-        for (_, light) in &self.instances {
+        for light in self.instances.values() {
             // Directional
             if light.radius == -1.0 {
                 instance_lights[i] = *light; // Set light
-                i = i + 1;
+                i += 1;
             }
 
             // Dummy light
@@ -138,7 +138,7 @@ impl Manager {
             // Point light--check radius for containment
             else if light.radius > position.dist(light.vector) {
                 instance_lights[i] = *light; // Set light
-                i = i + 1;
+                i += 1;
             }
 
             // Exit after the number of lights per instance is exceeded

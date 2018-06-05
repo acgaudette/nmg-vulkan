@@ -732,7 +732,7 @@ struct DebugData {
     _frag:    vd::ShaderModule,
 }
 
-#[derive(PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum NormalMode { Flat, Smooth }
 
 #[derive(Clone)]

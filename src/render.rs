@@ -839,10 +839,9 @@ impl Instances {
         match hints {
             Some(hints) => {
                 assert!(model_count == hints.len());
-
-                for i in 0..model_count {
-                    data.push(Vec::with_capacity(hints[i]));
-                }
+                hints.iter().for_each(
+                    |hint| data.push(Vec::with_capacity(*hint))
+                );
             }
 
             None => {
@@ -1416,9 +1415,7 @@ fn get_q_indices(
     let mut graphics_family = None;
     let mut present_family = None;
 
-    let mut i = 0u32;
-
-    for family in q_families {
+    for (i, family) in (0u32..).zip(q_families) {
         if family.queue_count() > 0 {
             if family.queue_flags().contains(vd::QueueFlags::GRAPHICS) {
                 graphics_family = Some(i);
@@ -1432,8 +1429,6 @@ fn get_q_indices(
         if let (Some(g), Some(p)) = (graphics_family, present_family) {
             return Ok((g, p))
         }
-
-        i += 1;
     }
 
     Err("queue families for physical device not found".into())
@@ -2665,9 +2660,9 @@ fn get_memory_type(
     flags:  vd::MemoryPropertyFlags,
     types:  &[vd::MemoryType],
 ) -> vd::Result<u32> {
-    for i in 0..types.len() {
+    for (i, memory_type) in types.iter().enumerate() {
         if filter & (1 << i) > 0
-            && flags.intersects(types[i].property_flags())
+            && flags.intersects(memory_type.property_flags())
         {
             return Ok(i as u32)
         }

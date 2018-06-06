@@ -101,10 +101,8 @@ impl Manager {
             self.lin_velocities[i] = self.lin_velocities[i]
                 + lin_momentum / self.masses[i];
 
-            let position = transforms.get_position_raw(i)
+            let position = transforms.get_local_position_raw(i)
                 + self.lin_velocities[i] * FIXED_DT as f32;
-
-            transforms.set_position_raw(i, position);
 
             /* Angular motion */
 
@@ -128,10 +126,12 @@ impl Manager {
                 0.,
             );
 
-            let last = transforms.get_orientation_raw(i).norm(); // Renormalize
+            // Renormalize
+            let last = transforms.get_local_orientation_raw(i).norm();
             let orientation = last + last * 0.5 * derivative * FIXED_DT as f32;
 
-            transforms.set_orientation_raw(i, orientation);
+            // Update transform component
+            transforms.set_raw(i, position, orientation, alg::Vec3::one());
         }
     }
 }

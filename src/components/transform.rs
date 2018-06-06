@@ -2,6 +2,12 @@ use alg;
 use entity;
 use components;
 
+pub struct Transform {
+          position: alg::Vec3,
+          orientation: alg::Quat,
+          scale: alg::Vec3,
+}
+
 // Data layout assumes that almost all entities will have this component
 pub struct Manager {
     positions: Vec<alg::Vec3>,

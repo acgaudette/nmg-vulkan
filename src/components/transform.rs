@@ -107,6 +107,7 @@ impl Manager {
         }
     }
 
+    /// Set transform parent of `entity` to `parent`
     pub fn parent(&mut self, entity: entity::Handle, parent: entity::Handle) {
         let i = entity.get_index() as usize;
 
@@ -130,10 +131,14 @@ impl Manager {
         transform.parent = Some(j);
         parent.children.push(i);
 
+        // TODO: Potentially update local transform relative to the new parent
+
         transform.update_cached(self);
         transform.update_children(self);
     }
 
+    /// Set transform data \
+    /// Faster than setting the fields individually
     pub fn set(
         &mut self,
         entity: entity::Handle,
@@ -150,6 +155,8 @@ impl Manager {
         self.scales[i] = scale;
     }
 
+    /// Returns tuple of position, rotation, scale \
+    /// Faster than getting the transform fields individually
     pub fn get(&self, entity: entity::Handle) -> (
         alg::Vec3,
         alg::Quat,

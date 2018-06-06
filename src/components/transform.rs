@@ -73,6 +73,7 @@ impl Transform {
 // Data layout assumes that almost all entities will have this component
 pub struct Manager {
     instances: Vec<Option<Transform>>,
+    count: usize,
 }
 
 impl components::Component for Manager {
@@ -90,12 +91,11 @@ impl components::Component for Manager {
         }
 
         self.instances[i] = Some(Transform::blank(0));
+        self.count += 1;
     }
 
-    // TODO: This currently only returns the length of the underlying data
-    // structure, not the count of the registered entities
     fn count(&self) -> usize {
-        self.positions.len()
+        self.count
     }
 }
 
@@ -103,6 +103,7 @@ impl Manager {
     pub fn new(hint: usize) -> Manager {
         Manager {
             instances: Vec::with_capacity(hint),
+            count: 0,
         }
     }
 

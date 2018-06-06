@@ -878,6 +878,11 @@ impl Mat4 {
         Mat4::scale(scale.x, scale.y, scale.z)
     }
 
+    pub fn transform(translation: Vec3, rotation: Quat, scale: Vec3) -> Mat4 {
+        Mat4::translation_vec(translation)
+            * (rotation.to_mat() * Mat4::scale_vec(scale))
+    }
+
     pub fn to_scale(self) -> Vec3 {
         Vec3::new(
             Vec3::new(self.x0, self.y0, self.z0).mag(),

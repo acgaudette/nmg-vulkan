@@ -72,9 +72,7 @@ impl Transform {
 
 // Data layout assumes that almost all entities will have this component
 pub struct Manager {
-    positions: Vec<alg::Vec3>,
-    orientations: Vec<alg::Quat>,
-    scales: Vec<alg::Vec3>,
+    instances: Vec<Option<Transform>>,
 }
 
 impl components::Component for Manager {
@@ -108,9 +106,7 @@ impl components::Component for Manager {
 impl Manager {
     pub fn new(hint: usize) -> Manager {
         Manager {
-            positions: Vec::with_capacity(hint),
-            orientations: Vec::with_capacity(hint),
-            scales: Vec::with_capacity(hint),
+            instances: Vec::with_capacity(hint),
         }
     }
 

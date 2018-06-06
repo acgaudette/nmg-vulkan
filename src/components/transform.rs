@@ -54,6 +54,20 @@ impl Transform {
         self.position = transform * alg::Vec3::zero();
         self.cached_transform = transform;
     }
+
+    /// Recursively call `update_cached()` on all children
+    fn update_children(&self, manager: &mut Manager) {
+        for child_index in &self.children {
+            let child = unsafe {
+                let ptr = manager.instances.as_mut_ptr()
+                    .offset(*child_index as isize);
+                (*ptr).as_mut().unwrap()
+            };
+
+            child.update_cached(manager);
+            child.update_children(manager);
+        }
+    }
 }
 
 // Data layout assumes that almost all entities will have this component

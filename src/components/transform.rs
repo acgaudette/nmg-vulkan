@@ -77,23 +77,19 @@ pub struct Manager {
 
 impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
-        debug_assert!(self.positions.len() == self.orientations.len());
-        debug_assert!(self.orientations.len() == self.scales.len());
-
         let i = entity.get_index() as usize;
 
         // Resize array to fit new entity
         loop {
-            if i >= self.positions.len() {
-                self.positions.push(alg::Vec3::zero());
-                self.orientations.push(alg::Quat::id());
-                self.scales.push(alg::Vec3::one());
-
+            if i >= self.instances.len() {
+                self.instances.push(None);
                 continue;
             }
 
             break;
         }
+
+        self.instances[i] = Some(Transform::blank(0));
     }
 
     // TODO: This currently only returns the length of the underlying data

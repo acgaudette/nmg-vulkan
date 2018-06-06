@@ -238,8 +238,8 @@ impl Manager {
         self.instances[index].as_ref().unwrap().local_position
     }
 
-    pub(super) fn get_orientation_raw(&self, index: usize) -> alg::Quat {
-        self.orientations[index]
+    pub(super) fn get_local_orientation_raw(&self, index: usize) -> alg::Quat {
+        self.instances[index].as_ref().unwrap().local_orientation
     }
 
     pub(super) fn set_position_raw(

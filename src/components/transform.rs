@@ -171,9 +171,12 @@ impl Manager {
 
     pub fn get_position(&self, entity: entity::Handle) -> alg::Vec3 {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.positions.len());
 
-        self.positions[i]
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        self.instances[i].as_ref().unwrap()
+            .position
     }
 
     pub fn get_orientation(&self, entity: entity::Handle) -> alg::Quat {

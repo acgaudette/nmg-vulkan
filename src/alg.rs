@@ -878,6 +878,14 @@ impl Mat4 {
         Mat4::scale(scale.x, scale.y, scale.z)
     }
 
+    pub fn to_scale(self) -> Vec3 {
+        Vec3::new(
+            Vec3::new(self.x0, self.y0, self.z0).mag(),
+            Vec3::new(self.x1, self.y1, self.z1).mag(),
+            Vec3::new(self.x2, self.y2, self.z2).mag(),
+        )
+    }
+
     // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat4 {
         let fwd = (target - position).norm();

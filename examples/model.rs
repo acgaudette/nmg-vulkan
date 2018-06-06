@@ -81,7 +81,7 @@ impl nmg::Update for Demo {
             self.camera.unwrap(),
             camera_position,
             camera_orientation,
-            alg::Vec3::zero(),
+            alg::Vec3::one(),
         );
     }
 }

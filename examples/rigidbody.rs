@@ -60,7 +60,7 @@ impl nmg::Start for Demo {
             camera,
             camera_position,
             camera_orientation,
-            alg::Vec3::zero(),
+            alg::Vec3::one(),
         );
 
         // Update demo state

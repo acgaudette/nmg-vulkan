@@ -141,7 +141,7 @@ impl nmg::Update for Demo {
             self.camera.unwrap(),
             camera_position,
             alg::Quat::look_at(camera_position, target, alg::Vec3::up()),
-            alg::Vec3::zero(),
+            alg::Vec3::one(),
         );
     }
 }

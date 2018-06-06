@@ -30,6 +30,30 @@ impl Transform {
             cached_transform: alg::Mat4::id(),
         }
     }
+
+    /// Set/update transform with respect to parent
+    fn update_cached(&mut self, manager: &Manager) {
+        debug_assert!(self.parent.is_some());
+        let parent = manager.instances[self.parent.unwrap()].as_ref().unwrap();
+
+        // Rebuild cached transform for this instance
+        let transform =
+            parent.cached_transform
+            * alg::Mat4::transform(
+                self.local_position,
+                self.local_orientation,
+                self.local_scale,
+            );
+
+        /* Assign transform data */
+
+        let scale = transform.to_scale();
+        self.scale = scale;
+
+        self.orientation = transform.to_rotation_raw(scale).to_quat();
+        self.position = transform * alg::Vec3::zero();
+        self.cached_transform = transform;
+    }
 }
 
 // Data layout assumes that almost all entities will have this component

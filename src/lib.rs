@@ -374,8 +374,7 @@ fn begin_update<T>(
         // Get shared UBO from camera component
         let shared_ubo = components.cameras.compute(
             &components.transforms,
-            context.swapchain.extent().width(),
-            context.swapchain.extent().height(),
+            screen,
         );
 
         // Update renderer

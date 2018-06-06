@@ -317,13 +317,22 @@ fn begin_update<T>(
         let delta = time - last_time;
         last_time = time;
 
+        // Screen data
+        let screen = {
+            let extent = context.swapchain.extent();
+
+            ScreenData {
+                width: extent.width(),
+                height: extent.height(),
+            }
+        };
+
         // Update game via callback
         game.update(
             time,
             delta,
             metadata,
-            context.swapchain.extent().height(),
-            context.swapchain.extent().width(),
+            screen,
             entities,
             components,
             input,
@@ -339,8 +348,7 @@ fn begin_update<T>(
                 time,
                 FIXED_DT,
                 metadata,
-                context.swapchain.extent().height(),
-                context.swapchain.extent().width(),
+                screen,
                 entities,
                 components,
                 input,

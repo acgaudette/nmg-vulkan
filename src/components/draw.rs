@@ -52,14 +52,16 @@ impl Manager {
 
             // Build uniform buffer object
             let ubo = {
-                let translation = alg::Mat4::translation_vec(transform.0);
-                let rotation = transform.1.to_mat();
-                let scale = alg::Mat4::scale_vec(transform.2);
+                let model = alg::Mat4::transform(
+                    transform.0,
+                    transform.1,
+                    transform.2,
+                );
 
                 let instance_lights = lights.cull(transform.0);
 
                 render::InstanceUBO::new(
-                    translation * (rotation * scale), // Model matrix
+                    model,
                     instance_lights,
                     softbodies.get_position_offsets(*entity),
                     softbodies.get_normal_offsets(*entity),

@@ -207,8 +207,12 @@ impl Manager {
         position: alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.positions.len());
-        self.positions[i] = position;
+
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        self.instances[i].as_mut().unwrap()
+            .position = position;
     }
 
     pub fn set_orientation(

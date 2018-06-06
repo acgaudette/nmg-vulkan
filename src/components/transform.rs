@@ -9,6 +9,10 @@ pub struct Transform {
     local_orientation: alg::Quat,
           scale: alg::Vec3,
     local_scale: alg::Vec3,
+
+    parent: Option<usize>,
+    children: Vec<usize>,
+    cached_transform: alg::Mat4,
 }
 
 // Data layout assumes that almost all entities will have this component

@@ -242,19 +242,46 @@ impl Manager {
         self.instances[index].as_ref().unwrap().local_orientation
     }
 
-    pub(super) fn set_position_raw(
+    pub(super) fn set_raw(
         &mut self,
         index: usize,
-        value: alg::Vec3,
+        position: alg::Vec3,
+        orientation: alg::Quat,
+        scale: alg::Vec3,
     ) {
-        self.positions[index] = value;
-    }
+        debug_assert!(index < self.instances.len());
+        debug_assert!(self.instances[index].is_some());
 
-    pub(super) fn set_orientation_raw(
-        &mut self,
-        index: usize,
-        value: alg::Quat,
-    ) {
-        self.orientations[index] = value;
+        let transform = unsafe {
+            let ptr = self.instances.as_mut_ptr().offset(index as isize);
+            (*ptr).as_mut().unwrap()
+        };
+
+        transform.local_position = position;
+        transform.local_orientation = orientation;
+        transform.local_scale = scale;
+
+        /* Set worldspace transform data */
+
+        // If this transform has a parent, update in chain
+        if transform.parent.is_some() {
+            transform.update_cached(self);
+        }
+
+        // No parent (chain root)--just set data
+        else {
+            transform.position = position;
+            transform.orientation = orientation;
+            transform.scale = scale;
+
+            transform.cached_transform = alg::Mat4::transform(
+                position,
+                orientation,
+                scale,
+            );
+        }
+
+        // Update children transforms
+        transform.update_children(self);
     }
 }

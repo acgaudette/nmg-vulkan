@@ -15,6 +15,23 @@ pub struct Transform {
     cached_transform: alg::Mat4,
 }
 
+impl Transform {
+    fn blank(child_hint: usize) -> Transform {
+        Transform {
+                  position: alg::Vec3::zero(),
+            local_position: alg::Vec3::zero(),
+                  orientation: alg::Quat::id(),
+            local_orientation: alg::Quat::id(),
+                  scale: alg::Vec3::one(),
+            local_scale: alg::Vec3::one(),
+
+            parent: None,
+            children: Vec::with_capacity(child_hint),
+            cached_transform: alg::Mat4::id(),
+        }
+    }
+}
+
 // Data layout assumes that almost all entities will have this component
 pub struct Manager {
     positions: Vec<alg::Vec3>,

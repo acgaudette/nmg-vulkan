@@ -886,6 +886,10 @@ impl Mat4 {
         )
     }
 
+    pub fn to_rotation(self) -> Mat3 {
+        self.to_rotation_raw(self.to_scale())
+    }
+
     pub fn to_rotation_raw(self, scale: Vec3) -> Mat3 {
         Mat3::new(
             self.x0 / scale.x, self.x1 / scale.y, self.x2 / scale.z,

@@ -1278,8 +1278,7 @@ impl Manager {
             instance.frame_orientation = orientation;
 
             // Update transform
-            transforms.set_position_raw(i, average);
-            transforms.set_orientation_raw(i, orientation);
+            transforms.set_raw(i, average, orientation, alg::Vec3::one());
         }
     }
 

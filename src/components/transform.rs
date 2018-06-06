@@ -235,8 +235,12 @@ impl Manager {
         scale: alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.scales.len());
-        self.scales[i] = scale;
+
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        self.instances[i].as_mut().unwrap()
+            .scale = scale;
     }
 
     /* "Unsafe" methods for components with similar data layouts.

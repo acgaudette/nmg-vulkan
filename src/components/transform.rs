@@ -234,8 +234,8 @@ impl Manager {
      * for performance purposes.
      */
 
-    pub(super) fn get_position_raw(&self, index: usize) -> alg::Vec3 {
-        self.positions[index]
+    pub(super) fn get_local_position_raw(&self, index: usize) -> alg::Vec3 {
+        self.instances[index].as_ref().unwrap().local_position
     }
 
     pub(super) fn get_orientation_raw(&self, index: usize) -> alg::Quat {

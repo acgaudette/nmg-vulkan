@@ -156,12 +156,16 @@ impl Manager {
         alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.positions.len());
+
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        let transform = self.instances[i].as_ref().unwrap();
 
         (
-            self.positions[i],
-            self.orientations[i],
-            self.scales[i],
+            transform.position,
+            transform.orientation,
+            transform.scale,
         )
     }
 

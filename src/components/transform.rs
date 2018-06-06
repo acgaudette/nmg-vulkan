@@ -181,9 +181,12 @@ impl Manager {
 
     pub fn get_orientation(&self, entity: entity::Handle) -> alg::Quat {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.positions.len());
 
-        self.orientations[i]
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        self.instances[i].as_ref().unwrap()
+            .orientation
     }
 
     pub fn get_scale(&self, entity: entity::Handle) -> alg::Vec3 {

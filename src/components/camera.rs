@@ -101,8 +101,7 @@ impl Manager {
     pub fn compute(
         &mut self,
         transforms: &transform::Manager,
-        screen_width: u32,
-        screen_height: u32,
+        screen: ::ScreenData,
     ) -> render::SharedUBO {
         debug_assert!(self.active < self.count());
 
@@ -122,7 +121,7 @@ impl Manager {
 
         let projection = alg::Mat4::perspective(
             camera.fov,
-            screen_width as f32 / screen_height as f32,
+            screen.width as f32 / screen.height as f32,
             camera.near,
             camera.far,
         );

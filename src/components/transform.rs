@@ -147,12 +147,7 @@ impl Manager {
         scale: alg::Vec3,
     ) {
         let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.positions.len());
-
-        self.positions[i] = position;
-        self.orientations[i] = orientation;
-        self.scales[i] = scale;
+        self.set_raw(i, position, orientation, scale);
     }
 
     /// Returns tuple of position, rotation, scale \

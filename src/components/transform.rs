@@ -221,8 +221,12 @@ impl Manager {
         orientation: alg::Quat,
     ) {
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.orientations.len());
-        self.orientations[i] = orientation;
+
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        self.instances[i].as_mut().unwrap()
+            .orientation = orientation;
     }
 
     pub fn set_scale(

@@ -4,8 +4,11 @@ use components;
 
 pub struct Transform {
           position: alg::Vec3,
+    local_position: alg::Vec3,
           orientation: alg::Quat,
+    local_orientation: alg::Quat,
           scale: alg::Vec3,
+    local_scale: alg::Vec3,
 }
 
 // Data layout assumes that almost all entities will have this component

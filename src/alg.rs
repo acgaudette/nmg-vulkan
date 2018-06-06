@@ -886,6 +886,14 @@ impl Mat4 {
         )
     }
 
+    pub fn to_rotation_raw(self, scale: Vec3) -> Mat3 {
+        Mat3::new(
+            self.x0 / scale.x, self.x1 / scale.y, self.x2 / scale.z,
+            self.y0 / scale.x, self.y1 / scale.y, self.y2 / scale.z,
+            self.z0 / scale.x, self.z1 / scale.y, self.z2 / scale.z,
+        )
+    }
+
     // Returns view matrix (inverted)
     pub fn look_at_view(position: Vec3, target: Vec3, up: Vec3) -> Mat4 {
         let fwd = (target - position).norm();

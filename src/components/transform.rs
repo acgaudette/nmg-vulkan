@@ -107,6 +107,33 @@ impl Manager {
         }
     }
 
+    pub fn parent(&mut self, entity: entity::Handle, parent: entity::Handle) {
+        let i = entity.get_index() as usize;
+
+        debug_assert!(i < self.instances.len());
+        debug_assert!(self.instances[i].is_some());
+
+        let transform = unsafe {
+            let ptr = self.instances.as_mut_ptr().offset(i as isize);
+            (*ptr).as_mut().unwrap()
+        };
+
+        let j = parent.get_index() as usize;
+        debug_assert!(j < self.instances.len());
+        debug_assert!(self.instances[j].is_some());
+
+        let parent = unsafe {
+            let ptr = self.instances.as_mut_ptr().offset(j as isize);
+            (*ptr).as_mut().unwrap()
+        };
+
+        transform.parent = Some(j);
+        parent.children.push(i);
+
+        transform.update_cached(self);
+        transform.update_children(self);
+    }
+
     pub fn set(
         &mut self,
         entity: entity::Handle,

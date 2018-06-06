@@ -870,6 +870,7 @@ pub struct Manager {
     gravity: alg::Vec3,
     bounce: f32,
     friction: f32,
+    count: usize,
 }
 
 impl components::Component for Manager {
@@ -885,12 +886,12 @@ impl components::Component for Manager {
 
             break;
         }
+
+        self.count += 1;
     }
 
-    // TODO: This currently only returns the length of the underlying data
-    // structure, not the count of the registered entities
     fn count(&self) -> usize {
-        self.instances.len()
+        self.count
     }
 }
 
@@ -907,6 +908,7 @@ impl Manager {
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
             bounce: MNGR_DEFAULT_BOUNCE,
             friction: MNGR_DEFAULT_FRICTION,
+            count: 0,
         }
     }
 

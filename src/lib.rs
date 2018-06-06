@@ -39,6 +39,12 @@ impl Metadata {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct ScreenData {
+    width: u32,
+    height: u32,
+}
+
 pub trait Start {
     fn start(
         &mut self,

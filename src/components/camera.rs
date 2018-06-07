@@ -4,7 +4,6 @@ use components;
 use render;
 
 use components::transform;
-use components::Component;
 
 pub const DEFAULT_FOV: f32 = 60.0;
 pub const DEFAULT_NEAR: f32 = 0.01;
@@ -118,6 +117,7 @@ impl Manager {
         screen: ::ScreenData,
     ) -> render::SharedUBO {
         #[cfg(debug_assertions)] {
+            use components::Component;
             if self.count() == 0 {
                 panic!("There are no cameras registered");
             }

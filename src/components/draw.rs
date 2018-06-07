@@ -16,8 +16,9 @@ macro_rules! get_handle {
         #[cfg(debug_assertions)] {
             if handle.is_none() {
                 panic!(
-                    "Model has not yet been bound to Draw component \
-                    for entity {}",
+                    "Draw instance handle for entity {} is None. \
+                    You probably attempted to use the Draw component \
+                    before binding a model to it.",
                     $entity,
                 );
             }

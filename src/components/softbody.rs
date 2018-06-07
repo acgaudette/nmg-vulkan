@@ -743,8 +743,8 @@ impl<'a> InstanceBuilder<'a> {
         }
     }
 
-    /// Override general instance creation with limb preset
-    /// Takes in the limb scale as an argument
+    /// Override general instance creation with limb preset.
+    /// Takes in the limb scale as an argument.
     pub fn make_limb(&mut self, scale: alg::Vec3) -> &mut InstanceBuilder<'a> {
         self.scale = Some(scale);
         self
@@ -957,6 +957,8 @@ impl Manager {
         }
     }
 
+    /// Get instance builder that can be used to initialize the softbody
+    /// instance for this entity.
     pub fn build_instance(&mut self) -> InstanceBuilder {
         InstanceBuilder::new(self)
     }
@@ -994,7 +996,7 @@ impl Manager {
         instance.particles[index].position
     }
 
-    // Get instance particle offsets from the model
+    /// Get instance particle offsets from the model.
     pub fn get_position_offsets(
         &self,
         entity: entity::Handle,
@@ -1022,7 +1024,7 @@ impl Manager {
         offsets
     }
 
-    // Get instance particle offsets from the normals model
+    /// Get instance particle offsets from the normals model.
     pub fn get_normal_offsets(
         &self,
         entity: entity::Handle,
@@ -1058,6 +1060,8 @@ impl Manager {
         offsets
     }
 
+    /// Get joint builder that can be used to add a joint to the softbody
+    /// instance for this entity.
     pub fn build_joint(&mut self) -> JointBuilder {
         JointBuilder::new(self)
     }
@@ -1131,7 +1135,9 @@ impl Manager {
         planes.iter().for_each(|plane| self.add_plane(*plane));
     }
 
-    // Heavier call, but will force-update all instances
+    /// Set gravity for all instances. \
+    /// Heavier call than `set_gravity_raw(...)`, \
+    /// but will force-update all instances.
     pub fn set_gravity(&mut self, gravity: alg::Vec3) {
         self.gravity = gravity;
 
@@ -1142,14 +1148,15 @@ impl Manager {
         }
     }
 
-    // May not immediately affect all instances
+    /// Set gravity for all instances. \
+    /// May not immediately affect all instances.
     pub fn set_gravity_raw(&mut self, gravity: alg::Vec3) {
         self.gravity = gravity;
     }
 
     /// Range 0 - inf; "Realistic" = 2.0 \
-    /// Values < 2 become force zones, values > 2 add impossible force \
-    /// A value of zero nullifies all collisions
+    /// Values < 2 become force zones, values > 2 add impossible force. \
+    /// A value of zero nullifies all collisions.
     pub fn set_bounce(&mut self, bounce: f32) {
         self.bounce = bounce;
     }

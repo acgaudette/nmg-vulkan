@@ -3,7 +3,7 @@ use entity;
 use components;
 
 macro_rules! get_instance {
-    ($self: ident, $entity: path) => {{
+    ($self: ident, $entity: expr) => {{
         debug_validate_entity!($self, $entity);
         let i = $entity.get_index() as usize;
         $self.instances[i].as_ref().unwrap()
@@ -11,7 +11,7 @@ macro_rules! get_instance {
 }
 
 macro_rules! get_mut_instance {
-    ($self: ident, $entity: path) => {{
+    ($self: ident, $entity: expr) => {{
         debug_validate_entity!($self, $entity);
         let i = $entity.get_index() as usize;
         $self.instances[i].as_mut().unwrap()

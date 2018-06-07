@@ -9,11 +9,12 @@ use components::softbody;
 use components::light;
 
 pub struct Manager {
-    pub instances: render::Instances,
     handles: std::collections::HashMap<
         entity::Handle,
-        render::InstanceHandle,
+        Option<render::InstanceHandle>,
     >,
+    pub instances: render::Instances,
+}
 
 impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
@@ -34,8 +35,8 @@ impl components::Component for Manager {
 impl Manager {
     pub fn new(hint: usize, instances: render::Instances) -> Manager {
         Manager {
-            handles: std::collections::HashMap::with_capacity(hint),
             instances,
+            handles: std::collections::HashMap::with_capacity(hint),
         }
     }
 

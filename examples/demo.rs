@@ -29,10 +29,15 @@ impl nmg::Start for Demo {
         components.transforms.register(object_1);
         components.transforms.register(object_2);
 
-        // Add draw components (using first model)
-        components.draws.register(object_0, 0);
-        components.draws.register(object_1, 0);
-        components.draws.register(object_2, 0);
+        // Add draw components
+        components.draws.register(object_0);
+        components.draws.register(object_1);
+        components.draws.register(object_2);
+
+        // Bind first model to each draw component
+        components.draws.bind_model(object_0, 0);
+        components.draws.bind_model(object_1, 0);
+        components.draws.bind_model(object_2, 0);
 
         // Update demo state
         self.objects.push(object_0);

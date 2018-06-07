@@ -22,7 +22,8 @@ impl nmg::Start for Demo {
     ) {
         let cube = entities.add();
         components.transforms.register(cube);
-        components.draws.register(cube, 0);
+        components.draws.register(cube);
+        components.draws.bind_model(cube, 0);
         self.cube = Some(cube);
 
         let light = entities.add();

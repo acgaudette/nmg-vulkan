@@ -60,13 +60,11 @@ impl Transform {
     }
 
     /// Recursively call `update_cached()` on all children
-    fn update_children(&self, manager: &mut Manager) {
+    unsafe fn update_children(&self, manager: &mut Manager) {
         for child_index in &self.children {
-            let child = unsafe {
-                let ptr = manager.instances.as_mut_ptr()
-                    .offset(*child_index as isize);
-                (*ptr).as_mut().unwrap()
-            };
+            let ptr = manager.instances.as_mut_ptr()
+                .offset(*child_index as isize);
+            let child = (*ptr).as_mut().unwrap();
 
             child.update_cached(manager);
             child.update_children(manager);
@@ -138,7 +136,7 @@ impl Manager {
         // TODO: Potentially update local transform relative to the new parent
 
         transform.update_cached(self);
-        transform.update_children(self);
+        unsafe { transform.update_children(self); }
     }
 
     /// Set transform data \
@@ -301,6 +299,6 @@ impl Manager {
         }
 
         // Update children transforms
-        transform.update_children(self);
+        unsafe { transform.update_children(self); }
     }
 }

@@ -61,6 +61,24 @@ macro_rules! validate_instance {
     }
 }
 
+macro_rules! get_instance {
+    ($self: ident, $entity: expr) => {{
+        debug_validate_entity!($self, $entity);
+        let i = $entity.get_index() as usize;
+        validate_instance!($self.instances[i], $entity);
+        $self.instances[i].as_ref().unwrap()
+    }}
+}
+
+macro_rules! get_mut_instance {
+    ($self: ident, $entity: expr) => {{
+        debug_validate_entity!($self, $entity);
+        let i = $entity.get_index() as usize;
+        validate_instance!($self.instances[i], $entity);
+        $self.instances[i].as_mut().unwrap()
+    }}
+}
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,

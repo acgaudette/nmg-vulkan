@@ -1,9 +1,26 @@
+#![feature(core_intrinsics)]
+
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 extern crate ini;
 
+#[macro_use] extern crate lazy_static;
+
+#[cfg(debug_assertions)]
 #[macro_use]
-extern crate lazy_static;
+macro_rules! fn_name {
+    () => {{
+        // Store the function name as a static string
+        fn name_of<T>(_: T) -> &'static str {
+            extern crate core;
+            unsafe { core::intrinsics::type_name::<T>() }
+        }
+
+        fn f() {} // Declare bogus function to query function chain
+        let name = name_of(f);
+        &name[6..name.len() - 4] // Remove f() from the result
+    }}
+}
 
 pub mod alg;
 pub mod render;

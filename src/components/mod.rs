@@ -24,6 +24,7 @@ use entity;
 
 pub trait Component {
     fn register(&mut self, entity: entity::Handle);
+    fn registered(&self, entity: entity::Handle) -> bool;
     fn count(&self) -> usize;
 }
 

@@ -59,6 +59,8 @@ impl Manager {
         }
     }
 
+    /// Set model that the draw component will render for this entity.
+    /// For now, this can only be done once.
     pub fn bind_model(&mut self, entity: entity::Handle, model_index: usize) {
         debug_validate_entity!(self, entity);
         debug_assert!(self.handles[&entity].is_none());
@@ -71,6 +73,7 @@ impl Manager {
         *self.handles.get_mut(&entity).unwrap() = Some(handle);
     }
 
+    /// Stop entity from being rendered
     pub fn hide(&mut self, entity: entity::Handle) {
         let handle = get_handle!(self, entity);
         self.instances.update_meta(
@@ -79,6 +82,7 @@ impl Manager {
         );
     }
 
+    /// Resume rendering of entity (idempotent)
     pub fn unhide(&mut self, entity: entity::Handle) {
         let handle = get_handle!(self, entity);
         self.instances.update_meta(

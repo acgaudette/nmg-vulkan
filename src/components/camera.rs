@@ -115,7 +115,13 @@ impl Manager {
         transforms: &transform::Manager,
         screen: ::ScreenData,
     ) -> render::SharedUBO {
-        debug_assert!(self.active < self.count());
+        #[cfg(debug_assertions)] {
+            if self.count() == 0 {
+                panic!("There are no cameras registered");
+            }
+        }
+
+        debug_assert!(self.active < self.instances.len());
 
         // Get active entity and camera
         let (entity, camera) = self.instances[self.active];

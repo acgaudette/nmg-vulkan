@@ -1,4 +1,5 @@
-use std;
+extern crate fnv;
+
 use alg;
 use entity;
 use render;
@@ -33,7 +34,7 @@ macro_rules! get_handle {
 }
 
 pub struct Manager {
-    handles: std::collections::HashMap<
+    handles: fnv::FnvHashMap<
         entity::Handle,
         Option<render::InstanceHandle>,
     >,
@@ -60,7 +61,10 @@ impl Manager {
     pub fn new(hint: usize, instances: render::Instances) -> Manager {
         Manager {
             instances,
-            handles: std::collections::HashMap::with_capacity(hint),
+            handles: fnv::FnvHashMap::with_capacity_and_hasher(
+                hint,
+                Default::default(),
+            ),
         }
     }
 

@@ -8,6 +8,25 @@ use components::transform;
 use components::softbody;
 use components::light;
 
+macro_rules! get_handle {
+    ($self: ident, $entity: expr) => {{
+        debug_validate_entity!($self, $entity);
+        let handle = $self.handles[&$entity];
+
+        #[cfg(debug_assertions)] {
+            if handle.is_none() {
+                panic!(
+                    "Model has not yet been bound to Draw component \
+                    for entity {}",
+                    $entity,
+                );
+            }
+        }
+
+        handle.unwrap()
+    }}
+}
+
 pub struct Manager {
     handles: std::collections::HashMap<
         entity::Handle,

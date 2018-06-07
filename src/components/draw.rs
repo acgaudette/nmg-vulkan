@@ -60,6 +60,10 @@ impl Manager {
         lights: &light::Manager,
     ) {
         for (entity, instance) in &self.handles {
+            debug_assert!(instance.is_some());
+            debug_validate_entity!(transforms, *entity);
+            debug_validate_entity!(softbodies, *entity);
+
             // Get transform component data
             let transform = transforms.get(*entity);
 

@@ -132,6 +132,7 @@ impl Manager {
         if let Some(shared_ubo) = camera.overrule { return shared_ubo }
 
         // Get transform data for active camera entity
+        debug_validate_entity!(transforms, entity);
         let (position, orientation, _) = transforms.get(entity);
 
         /* Build view and projection matrices */

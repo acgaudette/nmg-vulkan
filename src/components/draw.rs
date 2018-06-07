@@ -71,6 +71,22 @@ impl Manager {
         *self.handles.get_mut(&entity).unwrap() = Some(handle);
     }
 
+    pub fn hide(&mut self, entity: entity::Handle) {
+        let handle = get_handle!(self, entity);
+        self.instances.update_meta(
+            handle,
+            render::InstanceMeta::new(true),
+        );
+    }
+
+    pub fn unhide(&mut self, entity: entity::Handle) {
+        let handle = get_handle!(self, entity);
+        self.instances.update_meta(
+            handle,
+            render::InstanceMeta::new(false),
+        );
+    }
+
     // Update
     pub fn transfer(
         &mut self,
@@ -113,21 +129,4 @@ impl Manager {
         self.handles.len()
     }
 
-    pub fn hide(&mut self, entity: entity::Handle) {
-        debug_assert!(self.handles.contains_key(&entity));
-
-        self.instances.update_meta(
-            self.handles[&entity],
-            render::InstanceMeta::new(true),
-        );
-    }
-
-    pub fn unhide(&mut self, entity: entity::Handle) {
-        debug_assert!(self.handles.contains_key(&entity));
-
-        self.instances.update_meta(
-            self.handles[&entity],
-            render::InstanceMeta::new(false),
-        );
-    }
 }

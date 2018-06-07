@@ -81,10 +81,19 @@ impl<'a> LightBuilder<'a> {
 
     /// Finalize
     pub fn for_entity(&mut self, entity: entity::Handle) {
-        debug_assert!(self.light.radius != 0.0);
-        debug_assert!(
-            self.light.radius > 0.0 || self.light.vector != alg::Vec3::zero()
-        );
+        #[cfg(debug_assertions)] {
+            if self.light.radius == 0.0 {
+                eprintln!("Warning: Light created with radius of zero");
+            }
+        }
+
+        #[cfg(debug_assertions)] {
+            if self.light.radius == -1.0
+                && self.light.vector == alg::Vec3::zero()
+            {
+                panic!("Directional light has no direction");
+            }
+        }
 
         self.manager.set(entity, self.light);
     }

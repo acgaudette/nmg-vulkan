@@ -1,5 +1,5 @@
 macro_rules! debug_validate_entity {
-    ($component: path, $entity: path) => {
+    ($component: path, $entity: expr) => {
         #[cfg(debug_assertions)] {
             use components::Component;
 

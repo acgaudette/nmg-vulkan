@@ -964,8 +964,8 @@ impl Manager {
     }
 
     fn add_instance(&mut self, instance: Instance, entity: entity::Handle) {
+        debug_validate_entity!(self, entity);
         let i = entity.get_index() as usize;
-        debug_assert!(i < self.instances.len());
         self.instances[i] = Some(instance);
     }
 

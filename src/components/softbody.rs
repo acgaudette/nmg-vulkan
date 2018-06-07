@@ -921,7 +921,10 @@ impl components::Component for Manager {
             break;
         }
 
+        self.handles[i] = Some(entity);
         self.count += 1;
+
+        debug_assert!(self.handles.len() == self.instances.len());
     }
 
     fn registered(&self, entity: entity::Handle) -> bool {

@@ -212,33 +212,18 @@ impl Manager {
     }
 
     pub fn get_position(&self, entity: entity::Handle) -> alg::Vec3 {
-        let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        self.instances[i].as_ref().unwrap()
-            .position
+        let transform = get_instance!(self, entity);
+        transform.position
     }
 
     pub fn get_orientation(&self, entity: entity::Handle) -> alg::Quat {
-        let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        self.instances[i].as_ref().unwrap()
-            .orientation
+        let transform = get_instance!(self, entity);
+        transform.orientation
     }
 
     pub fn get_scale(&self, entity: entity::Handle) -> alg::Vec3 {
-        let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        self.instances[i].as_ref().unwrap()
-            .scale
+        let transform = get_instance!(self, entity);
+        transform.scale
     }
 
     pub fn set_position(

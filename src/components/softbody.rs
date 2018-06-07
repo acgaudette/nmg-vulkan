@@ -1307,6 +1307,7 @@ impl Manager {
             instance.frame_orientation = orientation;
 
             // Update transform
+            debug_validate_entity!(transforms, self.handles[i].unwrap());
             transforms.set_raw(i, average, orientation, alg::Vec3::one());
         }
     }

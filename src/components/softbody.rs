@@ -1070,15 +1070,16 @@ impl Manager {
         offset: alg::Vec3,
         limits: (Range, Range, Range),
     ) {
+        debug_validate_entity!(self, parent);
+        debug_validate_entity!(self, child);
+
         let (i, j) = (
             parent.get_index() as usize,
             child.get_index() as usize,
         );
 
-        debug_assert!(i < self.instances.len());
-        debug_assert!(j < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-        debug_assert!(self.instances[j].is_some());
+        validate_instance!(self.instances[i], parent);
+        validate_instance!(self.instances[j], child);
 
         let joint = Joint::new(
             j, // Child index

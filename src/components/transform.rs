@@ -171,9 +171,13 @@ impl Manager {
         }
 
         transform.parent = Some(parent_index);
-        parent_transform.children.push(transform_index);
 
-        // TODO: Potentially update local transform relative to the new parent
+        if !parent_transform.children.contains(&transform_index) {
+            parent_transform.children.push(transform_index);
+        }
+
+        // TODO: Potentially update local transform
+        // relative to the new parent
 
         transform.update_cached(self);
         unsafe { transform.update_children(self); }

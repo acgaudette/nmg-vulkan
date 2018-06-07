@@ -1,11 +1,10 @@
+use std;
 use alg;
 use entity;
 use render;
 use graphics;
 use components;
 use debug;
-
-use std;
 
 use ::FIXED_DT; // Import from lib
 use components::transform;

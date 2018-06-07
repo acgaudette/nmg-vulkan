@@ -31,8 +31,12 @@ impl Transform {
         }
     }
 
-    /// Set/update transform with respect to parent
+    /// Set/update transform with respect to parent. \
+    /// Note that the mutable reference to self could only have been obtained
+    /// unsafely.
     fn update_cached(&mut self, manager: &Manager) {
+        // This method is only called internally,
+        // so we can assume this will succeed
         debug_assert!(self.parent.is_some());
         let parent = manager.instances[self.parent.unwrap()].as_ref().unwrap();
 
@@ -256,6 +260,7 @@ impl Manager {
         self.instances[index].as_ref().unwrap().local_orientation
     }
 
+    /// Set transform data and update chain
     pub(super) fn set_raw(
         &mut self,
         index: usize,

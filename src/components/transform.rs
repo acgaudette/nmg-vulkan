@@ -226,13 +226,9 @@ impl Manager {
         entity: entity::Handle,
         position: alg::Vec3,
     ) {
-        let i = entity.get_index() as usize;
 
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        self.instances[i].as_mut().unwrap()
-            .position = position;
+        let transform = get_mut_instance!(self, entity);
+        transform.position = position;
     }
 
     pub fn set_orientation(
@@ -240,13 +236,8 @@ impl Manager {
         entity: entity::Handle,
         orientation: alg::Quat,
     ) {
-        let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        self.instances[i].as_mut().unwrap()
-            .orientation = orientation;
+        let transform = get_mut_instance!(self, entity);
+        transform.orientation = orientation;
     }
 
     pub fn set_scale(
@@ -254,13 +245,8 @@ impl Manager {
         entity: entity::Handle,
         scale: alg::Vec3,
     ) {
-        let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        self.instances[i].as_mut().unwrap()
-            .scale = scale;
+        let transform = get_mut_instance!(self, entity);
+        transform.scale = scale;
     }
 
     /* "Unsafe" methods for components with similar data layouts.

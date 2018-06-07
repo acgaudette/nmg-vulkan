@@ -125,12 +125,7 @@ impl Manager {
             };
 
             // Update renderer
-            self.instances.update(*instance, ubo);
+            self.instances.update(instance.unwrap(), ubo);
         }
     }
-
-    pub fn count(&self) -> usize {
-        self.handles.len()
-    }
-
 }

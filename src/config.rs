@@ -56,3 +56,19 @@ pub fn load_section<'a>(
             )
         )
 }
+
+pub fn load_setting<T: std::str::FromStr> (
+    section: &ini::ini::Properties,
+    setting: &str,
+) -> T
+where <T as std::str::FromStr>::Err: std::error::Error {
+    let raw = section.get(setting)
+        .unwrap_or_else(
+            || panic!("Failed to load setting \"{}\"", setting)
+        );
+
+    match raw.parse::<T>() {
+        Ok(result) => result,
+        Err(e) => panic!("{}", e.description()),
+    }
+}

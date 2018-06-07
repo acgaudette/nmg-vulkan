@@ -108,6 +108,8 @@ impl Manager {
         }
     }
 
+    /// Get light builder that can be used to initialize the light instance
+    /// for this entity
     pub fn build(&mut self) -> LightBuilder {
         LightBuilder::new(self)
     }

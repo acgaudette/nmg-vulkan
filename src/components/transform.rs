@@ -152,14 +152,14 @@ impl Manager {
             }
         }
 
-        let i = entity.get_index() as usize;
-        let j = parent.get_index() as usize;
+        let transform_index = entity.get_index() as usize;
+        let transform = get_mut_instance_raw!(self, transform_index);
 
-        let transform = get_mut_instance_raw!(self, i);
-        let parent_transform = get_mut_instance_raw!(self, i);
+        let parent_index = parent.get_index() as usize;
+        let parent_transform = get_mut_instance_raw!(self, parent_index);
 
         #[cfg(debug_assertions)] {
-            if transform.children.contains(&j) {
+            if transform.children.contains(&parent_index) {
                 panic!(
                     "Attemped to parent entity {} to its child {}",
                     entity,
@@ -168,8 +168,8 @@ impl Manager {
             }
         }
 
-        transform.parent = Some(j);
-        parent_transform.children.push(i);
+        transform.parent = Some(parent_index);
+        parent_transform.children.push(transform_index);
 
         // TODO: Potentially update local transform relative to the new parent
 

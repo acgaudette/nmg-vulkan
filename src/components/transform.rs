@@ -2,6 +2,22 @@ use alg;
 use entity;
 use components;
 
+macro_rules! get_instance {
+    ($self: ident, $entity: path) => {{
+        debug_validate_entity!($self, $entity);
+        let i = $entity.get_index() as usize;
+        $self.instances[i].as_ref().unwrap()
+    }}
+}
+
+macro_rules! get_mut_instance {
+    ($self: ident, $entity: path) => {{
+        debug_validate_entity!($self, $entity);
+        let i = $entity.get_index() as usize;
+        $self.instances[i].as_mut().unwrap()
+    }}
+}
+
 pub struct Transform {
           position: alg::Vec3,
     local_position: alg::Vec3,

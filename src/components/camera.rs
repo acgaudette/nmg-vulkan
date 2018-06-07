@@ -77,23 +77,23 @@ impl Manager {
     }
 
     pub fn set_fov(&mut self, entity: entity::Handle, fov: f32) {
+        debug_validate_entity!(self, entity);
         self.instances.iter_mut()
-            .find(|instance| instance.0 == entity)
-            .expect(&format!("Entity {} not found in light manager", entity))
+            .find(|instance| instance.0 == entity).unwrap()
             .1.fov = fov;
     }
 
     pub fn set_near(&mut self, entity: entity::Handle, near: f32) {
+        debug_validate_entity!(self, entity);
         self.instances.iter_mut()
-            .find(|instance| instance.0 == entity)
-            .expect(&format!("Entity {} not found in light manager", entity))
+            .find(|instance| instance.0 == entity).unwrap()
             .1.near = near;
     }
 
     pub fn set_far(&mut self, entity: entity::Handle, far: f32) {
+        debug_validate_entity!(self, entity);
         self.instances.iter_mut()
-            .find(|instance| instance.0 == entity)
-            .expect(&format!("Entity {} not found in light manager", entity))
+            .find(|instance| instance.0 == entity).unwrap()
             .1.far = far;
     }
 
@@ -103,9 +103,9 @@ impl Manager {
         entity: entity::Handle,
         shared_ubo: render::SharedUBO,
     ) {
+        debug_validate_entity!(self, entity);
         self.instances.iter_mut()
-            .find(|instance| instance.0 == entity)
-            .expect(&format!("Entity {} not found in light manager", entity))
+            .find(|instance| instance.0 == entity).unwrap()
             .1.overrule = Some(shared_ubo);
     }
 

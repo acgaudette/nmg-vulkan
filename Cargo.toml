@@ -6,6 +6,7 @@ authors = ["Aaron C Gaudette <gaudetteaaron@gmail.com>"]
 [dependencies]
 voodoo = "0.3.0"
 voodoo_winit = "0.1.1"
+fnv = "1.0.3"
 rust-ini = "0.10.0"
 lazy_static = "1.0.0"
 tobj = "0.1.6"

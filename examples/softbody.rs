@@ -28,7 +28,12 @@ impl nmg::Start for Demo {
     ) {
         let object = entities.add();
         components.transforms.register(object);
-        #[cfg(not(debug_assertions))] { components.draws.register(object, 0); }
+
+        #[cfg(not(debug_assertions))] {
+            components.draws.register(object);
+            components.draws.bind_model(object, 0);
+        }
+
         components.softbodies.register(object);
 
         // Initial position

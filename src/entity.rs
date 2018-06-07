@@ -1,3 +1,4 @@
+extern crate fnv;
 use std;
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
@@ -24,18 +25,19 @@ impl std::fmt::Display for Handle {
 }
 
 pub struct Manager {
-    data:  std::collections::HashSet<Handle>,
+    data: fnv::FnvHashSet<Handle>,
     index: u32,
     count: u32,
 }
 
 impl Manager {
     pub fn new(hint: usize) -> Manager {
-        Manager {
-            data:  std::collections::HashSet::with_capacity(hint),
-            index: 0,
-            count: 0,
-        }
+        let data = fnv::FnvHashSet::with_capacity_and_hasher(
+            hint,
+            Default::default(),
+        );
+
+        Manager { data, index: 0, count: 0 }
     }
 
     pub fn add(&mut self) -> Handle {

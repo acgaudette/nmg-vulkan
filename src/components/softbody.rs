@@ -46,6 +46,21 @@ const JOINT_ANG_RIGID: f32 = 1.0;
 // joints
 const JOINT_CONTAINS_BIAS: f32 = 8.0;
 
+macro_rules! validate_instance {
+    ($instance: expr, $entity: expr) => {
+        #[cfg(debug_assertions)] {
+            if $instance.is_none() {
+                panic!(
+                    "Softbody instance for entity {} is None. \
+                    You probably attempted to use the Softbody component \
+                    before building its instance.",
+                    $entity,
+                );
+            }
+        }
+    }
+}
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,

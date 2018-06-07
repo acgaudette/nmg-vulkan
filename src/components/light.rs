@@ -1,4 +1,5 @@
-use std;
+extern crate fnv;
+
 use alg;
 use render;
 use graphics;
@@ -79,7 +80,7 @@ impl<'a> LightBuilder<'a> {
 }
 
 pub struct Manager {
-    instances: std::collections::HashMap<entity::Handle, render::Light>,
+    instances: fnv::FnvHashMap<entity::Handle, render::Light>,
 }
 
 impl components::Component for Manager {
@@ -104,7 +105,10 @@ impl components::Component for Manager {
 impl Manager {
     pub fn new(hint: usize) -> Manager {
         Manager {
-            instances: std::collections::HashMap::with_capacity(hint),
+            instances: fnv::FnvHashMap::with_capacity_and_hasher(
+                hint,
+                Default::default(),
+            ),
         }
     }
 

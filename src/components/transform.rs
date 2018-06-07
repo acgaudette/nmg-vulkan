@@ -255,11 +255,19 @@ impl Manager {
      */
 
     pub(super) fn get_local_position_raw(&self, index: usize) -> alg::Vec3 {
-        self.instances[index].as_ref().unwrap().local_position
+        debug_assert!(index < self.instances.len());
+        debug_assert!(self.instances[index].is_some());
+
+        let transform = self.instances[index].as_ref().unwrap();
+        transform.local_position
     }
 
     pub(super) fn get_local_orientation_raw(&self, index: usize) -> alg::Quat {
-        self.instances[index].as_ref().unwrap().local_orientation
+        debug_assert!(index < self.instances.len());
+        debug_assert!(self.instances[index].is_some());
+
+        let transform = self.instances[index].as_ref().unwrap();
+        transform.local_orientation
     }
 
     /// Set transform data and update chain

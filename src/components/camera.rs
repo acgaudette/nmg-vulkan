@@ -45,6 +45,10 @@ impl components::Component for Manager {
         );
     }
 
+    fn registered(&self, entity: entity::Handle) -> bool {
+        self.instances.iter().find(|instance| instance.0 == entity).is_some()
+    }
+
     fn count(&self) -> usize {
         self.instances.len()
     }

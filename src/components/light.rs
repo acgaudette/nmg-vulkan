@@ -19,6 +19,10 @@ impl components::Component for Manager {
         );
     }
 
+    fn registered(&self, entity: entity::Handle) -> bool {
+        self.instances.contains_key(&entity)
+    }
+
     fn count(&self) -> usize {
         self.instances.len()
     }

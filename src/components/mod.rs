@@ -7,7 +7,8 @@ macro_rules! debug_validate_entity {
                 let call = fn_name!();
 
                 panic!(
-                    "Component not found for entity {} in {}(...)",
+                    "{} component not found for entity {} in {}(...)",
+                    $component.debug_name(),
                     $entity,
                     &call[12..call.len()]
                 );

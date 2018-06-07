@@ -177,19 +177,6 @@ impl Manager {
         unsafe { transform.update_children(self); }
     }
 
-    /// Set transform data \
-    /// Faster than setting the fields individually
-    pub fn set(
-        &mut self,
-        entity: entity::Handle,
-        position: alg::Vec3,
-        orientation: alg::Quat,
-        scale: alg::Vec3,
-    ) {
-        let i = entity.get_index() as usize;
-        self.set_raw(i, position, orientation, scale);
-    }
-
     /// Returns tuple of position, rotation, scale \
     /// Faster than getting the transform fields individually
     pub fn get(&self, entity: entity::Handle) -> (
@@ -221,12 +208,25 @@ impl Manager {
         transform.scale
     }
 
+    /// Set transform data \
+    /// Faster than setting the fields individually
+    pub fn set(
+        &mut self,
+        entity: entity::Handle,
+        position: alg::Vec3,
+        orientation: alg::Quat,
+        scale: alg::Vec3,
+    ) {
+        debug_validate_entity!(self, entity);
+        let i = entity.get_index() as usize;
+        self.set_raw(i, position, orientation, scale);
+    }
+
     pub fn set_position(
         &mut self,
         entity: entity::Handle,
         position: alg::Vec3,
     ) {
-
         let transform = get_mut_instance!(self, entity);
         transform.position = position;
     }

@@ -64,7 +64,15 @@ impl Manager {
 
     /// Set the main camera that will be rendered
     pub fn set_active(&mut self, camera_index: usize) {
-        debug_assert!(camera_index < self.count());
+        #[cfg(debug_assertions)] {
+            if camera_index >= self.instances.len() {
+                panic!(
+                    "Attempted to set active camera to invalid index {}",
+                    camera_index,
+                );
+            }
+        }
+
         self.active = camera_index;
     }
 

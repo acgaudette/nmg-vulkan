@@ -278,13 +278,7 @@ impl Manager {
         orientation: alg::Quat,
         scale: alg::Vec3,
     ) {
-        debug_assert!(index < self.instances.len());
-        debug_assert!(self.instances[index].is_some());
-
-        let transform = unsafe {
-            let ptr = self.instances.as_mut_ptr().offset(index as isize);
-            (*ptr).as_mut().unwrap()
-        };
+        let transform = get_mut_instance_raw!(self, index);
 
         transform.local_position = position;
         transform.local_orientation = orientation;

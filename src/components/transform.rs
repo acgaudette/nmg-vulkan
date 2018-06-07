@@ -90,9 +90,8 @@ impl Transform {
     /// Recursively call `update_cached()` on all children
     unsafe fn update_children(&self, manager: &mut Manager) {
         for child_index in &self.children {
-            let ptr = manager.instances.as_mut_ptr()
-                .offset(*child_index as isize);
-            let child = (*ptr).as_mut().unwrap();
+            #[allow(unused_unsafe)]
+            let child = get_mut_instance_raw!(manager, *child_index);
 
             child.update_cached(manager);
             child.update_children(manager);

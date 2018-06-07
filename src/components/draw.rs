@@ -93,7 +93,7 @@ impl Manager {
     }
 
     // Update
-    pub fn transfer(
+    pub(crate) fn transfer(
         &mut self,
         transforms: &transform::Manager,
         softbodies: &softbody::Manager,

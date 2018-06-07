@@ -111,7 +111,7 @@ impl Manager {
     }
 
     /// Build a SharedUBO necessary for rendering from the active camera
-    pub fn compute(
+    pub(crate) fn compute(
         &mut self,
         transforms: &transform::Manager,
         screen: ::ScreenData,

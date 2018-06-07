@@ -998,7 +998,7 @@ impl Manager {
     }
 
     /// Get instance particle offsets from the model.
-    pub fn get_position_offsets(
+    pub(super) fn get_position_offsets(
         &self,
         entity: entity::Handle,
     ) -> [render::PaddedVec3; render::MAX_SOFTBODY_VERT] {
@@ -1026,7 +1026,7 @@ impl Manager {
     }
 
     /// Get instance particle offsets from the normals model.
-    pub fn get_normal_offsets(
+    pub(super) fn get_normal_offsets(
         &self,
         entity: entity::Handle,
     ) -> [render::PaddedVec3; render::MAX_SOFTBODY_VERT] {
@@ -1167,7 +1167,7 @@ impl Manager {
         self.friction = friction;
     }
 
-    pub fn simulate(&mut self, transforms: &mut transform::Manager) {
+    pub(crate) fn simulate(&mut self, transforms: &mut transform::Manager) {
         // Update instance particles
         for i in 0..self.instances.len() {
             let mut instance = match self.instances[i] {

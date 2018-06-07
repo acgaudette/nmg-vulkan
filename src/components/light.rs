@@ -120,7 +120,7 @@ impl Manager {
     }
 
     // Update point light positions from transform component
-    pub fn update(&mut self, transforms: &transform::Manager) {
+    pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         for (entity, light) in &mut self.instances {
             if light.radius > 0.0 {
                 debug_validate_entity!(transforms, *entity);
@@ -130,7 +130,7 @@ impl Manager {
     }
 
     // Given a position, return the set of lights affecting it
-    pub fn cull(
+    pub(super) fn cull(
         &self,
         position: alg::Vec3,
     ) -> [render::Light; render::MAX_INSTANCE_LIGHTS] {

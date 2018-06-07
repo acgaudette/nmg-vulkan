@@ -18,6 +18,18 @@ macro_rules! get_mut_instance {
     }}
 }
 
+macro_rules! get_mut_instance_raw {
+    ($self: expr, $index: expr) => {
+        unsafe {
+            debug_assert!($index < $self.instances.len());
+            debug_assert!($self.instances[$index].is_some());
+
+            let ptr = $self.instances.as_mut_ptr().offset($index as isize);
+            (*ptr).as_mut().unwrap()
+        }
+    }
+}
+
 pub struct Transform {
           position: alg::Vec3,
     local_position: alg::Vec3,

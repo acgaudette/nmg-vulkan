@@ -2,9 +2,10 @@ use std;
 use alg;
 use entity;
 use render;
-use graphics;
 use components;
 use debug;
+
+#[cfg(debug_assertions)] use graphics;
 
 use ::FIXED_DT; // Import from lib
 use components::transform;

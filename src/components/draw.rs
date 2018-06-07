@@ -8,13 +8,10 @@ use components::transform;
 use components::softbody;
 use components::light;
 
-macro_rules! get_handle {
-    ($self: ident, $entity: expr) => {{
-        debug_validate_entity!($self, $entity);
-        let handle = $self.handles[&$entity];
-
+macro_rules! debug_validate_handle {
+    ($self: ident, $handle: expr, $entity: expr) => {
         #[cfg(debug_assertions)] {
-            if handle.is_none() {
+            if $handle.is_none() {
                 panic!(
                     "Draw instance handle for entity {} is None. \
                     You probably attempted to use the Draw component \
@@ -23,7 +20,14 @@ macro_rules! get_handle {
                 );
             }
         }
+    }
+}
 
+macro_rules! get_handle {
+    ($self: ident, $entity: expr) => {{
+        debug_validate_entity!($self, $entity);
+        let handle = $self.handles[&$entity];
+        debug_validate_handle!($self, handle, $entity);
         handle.unwrap()
     }}
 }

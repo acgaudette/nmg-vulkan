@@ -121,6 +121,7 @@ impl Manager {
     pub fn update(&mut self, transforms: &transform::Manager) {
         for (entity, light) in &mut self.instances {
             if light.radius > 0.0 {
+                debug_validate_entity!(transforms, *entity);
                 light.vector = transforms.get_position(*entity);
             }
         }

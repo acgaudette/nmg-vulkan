@@ -1,3 +1,19 @@
+macro_rules! debug_validate_entity {
+    ($component: path, $entity: path) => {
+        #[cfg(debug_assertions)] {
+            if !$component.registered($entity) {
+                let call = fn_name!();
+
+                panic!(
+                    "Component not found for entity {} in {}(...)",
+                    $entity,
+                    &call[12..call.len()]
+                );
+            }
+        }
+    }
+}
+
 pub mod transform;
 pub mod camera;
 pub mod light;

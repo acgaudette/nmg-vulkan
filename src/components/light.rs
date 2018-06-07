@@ -7,29 +7,6 @@ use components;
 
 use components::transform;
 
-pub struct Manager {
-    instances: std::collections::HashMap<entity::Handle, render::Light>,
-}
-
-impl components::Component for Manager {
-    fn register(&mut self, entity: entity::Handle) {
-        self.instances.insert(
-            entity,
-            render::Light::none(),
-        );
-    }
-
-    fn registered(&self, entity: entity::Handle) -> bool {
-        self.instances.contains_key(&entity)
-    }
-
-    fn count(&self) -> usize {
-        self.instances.len()
-    }
-
-    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Light" }
-}
-
 /// Builder pattern for lights
 pub struct LightBuilder<'a> {
     manager: &'a mut Manager,
@@ -99,6 +76,29 @@ impl<'a> LightBuilder<'a> {
 
         self.manager.set(entity, self.light);
     }
+}
+
+pub struct Manager {
+    instances: std::collections::HashMap<entity::Handle, render::Light>,
+}
+
+impl components::Component for Manager {
+    fn register(&mut self, entity: entity::Handle) {
+        self.instances.insert(
+            entity,
+            render::Light::none(),
+        );
+    }
+
+    fn registered(&self, entity: entity::Handle) -> bool {
+        self.instances.contains_key(&entity)
+    }
+
+    fn count(&self) -> usize {
+        self.instances.len()
+    }
+
+    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Light" }
 }
 
 impl Manager {

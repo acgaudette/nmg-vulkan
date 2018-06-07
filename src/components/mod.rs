@@ -1,6 +1,8 @@
 macro_rules! debug_validate_entity {
     ($component: path, $entity: path) => {
         #[cfg(debug_assertions)] {
+            use components::Component;
+
             if !$component.registered($entity) {
                 let call = fn_name!();
 

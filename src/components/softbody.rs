@@ -1,3 +1,5 @@
+extern crate fnv;
+
 use std;
 use alg;
 use entity;
@@ -899,7 +901,7 @@ impl<'a> InstanceBuilder<'a> {
 pub struct Manager {
     handles: Vec<Option<entity::Handle>>,
     instances: Vec<Option<Instance>>,
-    joints: std::collections::HashMap<usize, Vec<Joint>>,
+    joints: fnv::FnvHashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
     gravity: alg::Vec3,
     bounce: f32,
@@ -946,10 +948,15 @@ impl Manager {
         joint_hint: usize,
         plane_hint: usize,
     ) -> Manager {
+        let joint_map = fnv::FnvHashMap::with_capacity_and_hasher(
+            joint_hint,
+            Default::default(),
+        );
+
         Manager {
             handles: Vec::with_capacity(instance_hint),
             instances: Vec::with_capacity(instance_hint),
-            joints: std::collections::HashMap::with_capacity(joint_hint),
+            joints: joint_map,
             planes: Vec::with_capacity(plane_hint),
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
             bounce: MNGR_DEFAULT_BOUNCE,

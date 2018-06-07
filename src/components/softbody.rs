@@ -896,6 +896,7 @@ impl<'a> InstanceBuilder<'a> {
 
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
+    handles: Vec<Option<entity::Handle>>,
     instances: Vec<Option<Instance>>,
     joints: std::collections::HashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
@@ -912,6 +913,7 @@ impl components::Component for Manager {
         // Resize array to fit new entity
         loop {
             if i >= self.instances.len() {
+                self.handles.push(None);
                 self.instances.push(None);
                 continue;
             }
@@ -941,6 +943,7 @@ impl Manager {
         plane_hint: usize,
     ) -> Manager {
         Manager {
+            handles: Vec::with_capacity(instance_hint),
             instances: Vec::with_capacity(instance_hint),
             joints: std::collections::HashMap::with_capacity(joint_hint),
             planes: Vec::with_capacity(plane_hint),

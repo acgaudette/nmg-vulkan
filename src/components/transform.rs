@@ -143,27 +143,33 @@ impl Manager {
 
     /// Set transform parent of `entity` to `parent`
     pub fn parent(&mut self, entity: entity::Handle, parent: entity::Handle) {
+        debug_validate_entity!(self, entity);
+        debug_validate_entity!(self, parent);
+
+        #[cfg(debug_assertions)] {
+            if entity == parent {
+                panic!("Attempted to parent entity {} to itself", entity);
+            }
+        }
+
         let i = entity.get_index() as usize;
-
-        debug_assert!(i < self.instances.len());
-        debug_assert!(self.instances[i].is_some());
-
-        let transform = unsafe {
-            let ptr = self.instances.as_mut_ptr().offset(i as isize);
-            (*ptr).as_mut().unwrap()
-        };
-
         let j = parent.get_index() as usize;
-        debug_assert!(j < self.instances.len());
-        debug_assert!(self.instances[j].is_some());
 
-        let parent = unsafe {
-            let ptr = self.instances.as_mut_ptr().offset(j as isize);
-            (*ptr).as_mut().unwrap()
-        };
+        let transform = get_mut_instance_raw!(self, i);
+        let parent_transform = get_mut_instance_raw!(self, i);
+
+        #[cfg(debug_assertions)] {
+            if transform.children.contains(&j) {
+                panic!(
+                    "Attemped to parent entity {} to its child {}",
+                    entity,
+                    parent,
+                );
+            }
+        }
 
         transform.parent = Some(j);
-        parent.children.push(i);
+        parent_transform.children.push(i);
 
         // TODO: Potentially update local transform relative to the new parent
 

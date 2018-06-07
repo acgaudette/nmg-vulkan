@@ -47,7 +47,7 @@ const JOINT_ANG_RIGID: f32 = 1.0;
 // joints
 const JOINT_CONTAINS_BIAS: f32 = 8.0;
 
-macro_rules! validate_instance {
+macro_rules! debug_validate_instance {
     ($instance: expr, $entity: expr) => {
         #[cfg(debug_assertions)] {
             if $instance.is_none() {
@@ -66,7 +66,7 @@ macro_rules! get_instance {
     ($self: ident, $entity: expr) => {{
         debug_validate_entity!($self, $entity);
         let i = $entity.get_index() as usize;
-        validate_instance!($self.instances[i], $entity);
+        debug_validate_instance!($self.instances[i], $entity);
         $self.instances[i].as_ref().unwrap()
     }}
 }
@@ -75,7 +75,7 @@ macro_rules! get_mut_instance {
     ($self: ident, $entity: expr) => {{
         debug_validate_entity!($self, $entity);
         let i = $entity.get_index() as usize;
-        validate_instance!($self.instances[i], $entity);
+        debug_validate_instance!($self.instances[i], $entity);
         $self.instances[i].as_mut().unwrap()
     }}
 }
@@ -1083,8 +1083,8 @@ impl Manager {
             child.get_index() as usize,
         );
 
-        validate_instance!(self.instances[i], parent);
-        validate_instance!(self.instances[j], child);
+        debug_validate_instance!(self.instances[i], parent);
+        debug_validate_instance!(self.instances[j], child);
 
         let joint = Joint::new(
             j, // Child index

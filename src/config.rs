@@ -43,3 +43,16 @@ where <T as std::str::FromStr>::Err: std::error::Error {
         Err(e) => panic!("{}", e.description()),
     }
 }
+
+pub fn load_section<'a>(
+    config: &'a ini::Ini,
+    section: &str,
+) -> &'a ini::ini::Properties {
+    config.section(Some(section))
+        .unwrap_or_else(
+            || panic!(
+                "Failed to load section \"{}\"",
+                section,
+            )
+        )
+}

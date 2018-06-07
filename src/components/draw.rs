@@ -104,7 +104,7 @@ impl Manager {
         lights: &light::Manager,
     ) {
         for (entity, instance) in &self.handles {
-            debug_assert!(instance.is_some());
+            debug_validate_handle!(self, instance, entity);
 
             // Get transform component data
             debug_validate_entity!(transforms, *entity);

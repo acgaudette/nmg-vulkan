@@ -968,13 +968,9 @@ impl Manager {
     }
 
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
-        let i = entity.get_index() as usize;
-        debug_assert!(i < self.instances.len());
-
-        if let Some(ref mut instance) = self.instances[i] {
-            instance.force = force;
-            instance.update_cache(self.gravity);
-        }
+        let instance = get_mut_instance!(self, entity);
+        instance.force = force;
+        instance.update_cache(self.gravity);
     }
 
     pub fn set_magnet(
@@ -983,14 +979,9 @@ impl Manager {
         index: usize,
         target: alg::Vec3,
     ) {
-        let i = entity.get_index() as usize;
-        debug_assert!(i < self.instances.len());
-
-        if let Some(ref mut instance) = self.instances[i] {
-            debug_assert!(index < instance.magnets.len());
-
-            instance.magnets[index].target = target;
-        }
+        let instance = get_mut_instance!(self, entity);
+        debug_assert!(index < instance.magnets.len());
+        instance.magnets[index].target = target;
     }
 
     pub fn get_particle(
@@ -998,17 +989,9 @@ impl Manager {
         entity: entity::Handle,
         index: usize,
     ) -> alg::Vec3 {
-        let i = entity.get_index() as usize;
-        debug_assert!(i < self.instances.len());
-
-        let mut position = alg::Vec3::zero();
-
-        if let Some(ref instance) = self.instances[i] {
-            debug_assert!(index < instance.particles.len());
-            position = instance.particles[index].position;
-        }
-
-        position
+        let instance = get_instance!(self, entity);
+        debug_assert!(index < instance.particles.len());
+        instance.particles[index].position
     }
 
     // Get instance particle offsets from the model

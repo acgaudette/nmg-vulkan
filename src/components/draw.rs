@@ -100,10 +100,9 @@ impl Manager {
     ) {
         for (entity, instance) in &self.handles {
             debug_assert!(instance.is_some());
-            debug_validate_entity!(transforms, *entity);
-            debug_validate_entity!(softbodies, *entity);
 
             // Get transform component data
+            debug_validate_entity!(transforms, *entity);
             let transform = transforms.get(*entity);
 
             // Build uniform buffer object

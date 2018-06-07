@@ -28,6 +28,9 @@ pub trait Component {
     fn register(&mut self, entity: entity::Handle);
     fn registered(&self, entity: entity::Handle) -> bool;
     fn count(&self) -> usize;
+
+    #[cfg(debug_assertions)]
+    fn debug_name(&self) -> &str;
 }
 
 pub struct Container {

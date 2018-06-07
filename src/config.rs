@@ -1,4 +1,5 @@
-use ini;
+extern crate ini;
+
 use std;
 use std::error::Error;
 

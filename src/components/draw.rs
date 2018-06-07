@@ -40,20 +40,16 @@ impl Manager {
         }
     }
 
-    pub fn register(
-        &mut self,
-        entity: entity::Handle,
-        model_index: usize,
-    ) {
+    pub fn bind_model(&mut self, entity: entity::Handle, model_index: usize) {
+        debug_validate_entity!(self, entity);
+        debug_assert!(self.handles[&entity].is_none());
+
         let handle = self.instances.add(
             render::InstanceUBO::default(),
             model_index,
         );
 
-        self.handles.insert(
-            entity,
-            handle,
-        );
+        *self.handles.get_mut(&entity).unwrap() = Some(handle);
     }
 
     // Update

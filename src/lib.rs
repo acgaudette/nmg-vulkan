@@ -2,6 +2,7 @@
 
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
+extern crate fnv;
 extern crate ini;
 
 #[macro_use] extern crate lazy_static;

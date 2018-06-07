@@ -929,7 +929,7 @@ impl components::Component for Manager {
 
     fn registered(&self, entity: entity::Handle) -> bool {
         let i = entity.get_index() as usize;
-        i < self.instances.len() && self.instances[i].is_some()
+        i < self.instances.len() && self.handles[i].is_some()
     }
 
     fn count(&self) -> usize {

@@ -2,6 +2,7 @@ use std;
 use alg;
 use entity;
 use render;
+use components;
 
 use components::transform;
 use components::softbody;
@@ -13,6 +14,21 @@ pub struct Manager {
         entity::Handle,
         render::InstanceHandle,
     >,
+
+impl components::Component for Manager {
+    fn register(&mut self, entity: entity::Handle) {
+        self.handles.insert(entity, None);
+    }
+
+    fn registered(&self, entity: entity::Handle) -> bool {
+        self.handles.contains_key(&entity)
+    }
+
+    fn count(&self) -> usize {
+        self.handles.len()
+    }
+
+    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Draw" }
 }
 
 impl Manager {

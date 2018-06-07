@@ -131,6 +131,8 @@ impl components::Component for Manager {
     fn count(&self) -> usize {
         self.count
     }
+
+    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Transform" }
 }
 
 impl Manager {

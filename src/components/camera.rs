@@ -52,6 +52,8 @@ impl components::Component for Manager {
     fn count(&self) -> usize {
         self.instances.len()
     }
+
+    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Camera" }
 }
 
 impl Manager {

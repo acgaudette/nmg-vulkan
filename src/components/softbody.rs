@@ -438,9 +438,8 @@ impl Instance {
 
         /* Initialize particles and base comparison model */
 
-        let mut particles = Vec::with_capacity(points.len());
-
-        let perfect_model = {
+        let (particles, perfect_model) = {
+            let mut particles = Vec::with_capacity(points.len());
             let mut perfect_model = Vec::with_capacity(points.len());
 
             for point in points {
@@ -448,7 +447,7 @@ impl Instance {
                 perfect_model.push(*point);
             }
 
-            perfect_model
+            (particles, perfect_model)
         };
 
         // Compute base comparison normals for instance
@@ -468,6 +467,7 @@ impl Instance {
         }
 
         debug_assert!(points.len() == particles.len());
+        debug_assert!(particles.len() == perfect_model.len());
 
         Instance {
             particles,

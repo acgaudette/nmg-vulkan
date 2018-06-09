@@ -617,8 +617,7 @@ impl Instance {
     }
 
     // Determine instance orientation using least squares fit
-    fn matched_orientation(&self) -> alg::Mat3 {
-        let center = self.center();
+    fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
         let mut transform = alg::Mat3::zero();
 
         // Sum multiplication of actual and model particle positions
@@ -1260,8 +1259,8 @@ impl Manager {
 
                 // Shape matching
                 if instance.match_shape {
-                    let orientation = instance.matched_orientation();
                     let center = instance.center();
+                    let orientation = instance.matched_orientation(center);
 
                     for (particle, model_point) in instance.particles.iter_mut()
                         .zip(instance.perfect_model.iter())

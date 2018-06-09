@@ -1309,27 +1309,17 @@ impl Manager {
                 None => continue,
             };
 
-            // Compute average position
-            let average = {
-                let mut sum = alg::Vec3::zero();
-
-                for particle in &instance.particles {
-                    sum = sum + particle.position;
-                }
-
-                sum / instance.particles.len() as f32
-            };
-
-            // Compute best fit orientation
-            let orientation = instance.matched_orientation().to_quat();
+            // Compute average position and best fit orientation
+            let center = instance.center();
+            let orientation = instance.matched_orientation(center).to_quat();
 
             // Update instance position and orientation
-            instance.frame_position = average;
+            instance.frame_position = center;
             instance.frame_orientation = orientation;
 
             // Update transform
             debug_validate_entity!(transforms, self.handles[i].unwrap());
-            transforms.set_raw(i, average, orientation, alg::Vec3::one());
+            transforms.set_raw(i, center, orientation, alg::Vec3::one());
         }
     }
 

@@ -1260,19 +1260,17 @@ impl Manager {
 
                 // Shape matching
                 if instance.match_shape {
-                    let orient = instance.matched_orientation();
-                    let inverse = orient.transpose();
+                    let orientation = instance.matched_orientation();
+                    let center = instance.center();
 
-                    for i in 0..instance.particles.len() {
-                        let base = inverse * (
-                            instance.particles[i].position - instance.center()
-                        );
+                    for (particle, model_point) in instance.particles.iter_mut()
+                        .zip(instance.perfect_model.iter())
+                    {
+                        let target = orientation * (*model_point) + center;
+                        let offset = target - particle.position;
 
-                        let offset = orient * (instance.perfect_model[i] - base)
-                            * instance.rigidity;
-
-                        instance.particles[i].position =
-                            instance.particles[i].position + offset;
+                        particle.position = particle.position
+                            + offset * instance.rigidity;
                     }
                 }
 

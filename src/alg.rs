@@ -578,6 +578,7 @@ impl Mat3 {
                                 theta.abs() + (1.0 + theta * theta).sqrt()
                             );
 
+                            let t = if t.is_nan() { 0.0 } else { t };
                             if theta < 0.0 { -t } else { t }
                         };
 

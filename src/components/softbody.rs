@@ -411,6 +411,7 @@ struct Instance {
     mass: f32,
     inv_pt_mass: f32, // Inverse mass per particle
     perfect_model: Vec<alg::Vec3>, // Vertices reference
+    perfect_com: alg::Vec3, // Center of mass reference
     model: Option<Vec<alg::Vec3>>, // Optional override
     triangles: Vec<usize>, // Indices reference, for normals
     normals: Vec<alg::Vec3>, // Normals reference

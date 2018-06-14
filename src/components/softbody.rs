@@ -451,6 +451,11 @@ impl Instance {
             (particles, perfect_model)
         };
 
+        let perfect_com = perfect_model.iter().fold(
+            alg::Vec3::zero(),
+            |sum, position| sum + *position
+        ) / perfect_model.len() as f32;
+
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);
         let normals = Instance::compute_normals(&particles, &indices);
@@ -486,6 +491,7 @@ impl Instance {
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
             rigidity,
             perfect_model,
+            perfect_com,
             model: model_override.map(|model| model.to_vec()),
             triangles: indices.to_vec(),
             normals,

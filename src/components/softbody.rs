@@ -470,15 +470,6 @@ impl Instance {
         debug_assert!(points.len() == particles.len());
         debug_assert!(particles.len() == perfect_model.len());
 
-        // For now, mandate that initial model has a CoM at origin
-        debug_assert!(
-            perfect_model.iter().fold(
-                alg::Vec3::zero(),
-                |sum, position| sum + *position
-            ) / perfect_model.len() as f32
-            == alg::Vec3::zero()
-        );
-
         Instance {
             particles,
             rods,

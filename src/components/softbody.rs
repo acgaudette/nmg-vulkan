@@ -456,6 +456,16 @@ impl Instance {
             |sum, position| sum + *position
         ) / perfect_model.len() as f32;
 
+        if let Some(model) = model_override {
+            debug_assert!(
+                model.iter().fold(
+                    alg::Vec3::zero(),
+                    |sum, position| sum + *position
+                ) / perfect_model.len() as f32
+                == perfect_com
+            );
+        }
+
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);
         let normals = Instance::compute_normals(&particles, &indices);

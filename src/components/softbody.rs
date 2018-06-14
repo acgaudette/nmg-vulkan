@@ -1219,12 +1219,17 @@ impl Manager {
                         continue;
                     }
 
-                    let factor = particle.displacement.norm()
-                        .dot(plane.normal).abs();
+                    let direction = particle.displacement.norm();
+                    let tangent = direction
+                        .cross(plane.normal)
+                        .cross(plane.normal);
+
+                    let factor = tangent.dot(direction);
+                    let projected = tangent
+                        * particle.displacement.mag() * factor;
 
                     particle.position = particle.position
-                        - particle.displacement * self.friction
-                        * (1.0 - factor);
+                        - projected * self.friction;
                 }
             }
         }

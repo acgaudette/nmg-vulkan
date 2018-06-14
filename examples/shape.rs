@@ -42,7 +42,7 @@ impl nmg::Start for Demo {
 
         // Set bounciness and friction
         components.softbodies.set_bounce(0.015);
-        components.softbodies.set_friction(0.0);
+        components.softbodies.set_friction(0.02);
 
         // Add camera
         let camera = entities.add();

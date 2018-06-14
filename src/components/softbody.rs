@@ -451,19 +451,17 @@ impl Instance {
             (particles, perfect_model)
         };
 
-        let perfect_com = perfect_model.iter().fold(
+        let center = |model: &[alg::Vec3]| model.iter().fold(
             alg::Vec3::zero(),
             |sum, position| sum + *position
-        ) / perfect_model.len() as f32;
+        ) / model.len() as f32;
 
-        if let Some(model) = model_override {
-            debug_assert!(
-                model.iter().fold(
-                    alg::Vec3::zero(),
-                    |sum, position| sum + *position
-                ) / perfect_model.len() as f32
-                == perfect_com
-            );
+        let perfect_com = center(&perfect_model);
+
+        #[cfg(debug_assertions)] {
+            if let Some(model) = model_override {
+                assert_eq!(center(model), perfect_com);
+            }
         }
 
         // Compute base comparison normals for instance

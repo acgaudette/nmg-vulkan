@@ -1274,7 +1274,10 @@ impl Manager {
                     for (particle, model_point) in instance.particles.iter_mut()
                         .zip(instance.perfect_model.iter())
                     {
-                        let target = orientation * (*model_point) + center;
+                        let target = orientation
+                            * (*model_point - instance.perfect_com)
+                            + center;
+
                         let offset = target - particle.position;
 
                         particle.position = particle.position

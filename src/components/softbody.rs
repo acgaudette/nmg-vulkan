@@ -631,7 +631,8 @@ impl Instance {
         // Sum multiplication of actual and model particle positions
         for i in 0..self.particles.len() {
             let actual = self.particles[i].position - center;
-            transform = transform + (actual * self.perfect_model[i]);
+            let model = self.perfect_model[i] - self.perfect_com;
+            transform = transform + (actual * model);
         }
 
         // Compute rotation component using polar decomposition

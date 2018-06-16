@@ -411,7 +411,6 @@ impl Instance {
         indices: &[usize],
         model_override: Option<&[alg::Vec3]>,
         bindings: &[(usize, usize)],
-        zones: &[Falloff],
         match_shape: bool,
         mass: f32,
         rigidity: f32,

@@ -124,20 +124,6 @@ impl Rod {
 
 type Falloff = fn(alg::Vec3, alg::Vec3) -> alg::Vec3;
 
-struct Magnet {
-    target: alg::Vec3,
-    falloff: Falloff,
-}
-
-impl Magnet {
-    fn new(falloff: Falloff) -> Magnet {
-        Magnet {
-            target: alg::Vec3::zero(),
-            falloff,
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 struct Range {
     min: f32,
@@ -393,7 +379,6 @@ impl<'a> JointBuilder<'a> {
 struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
-    magnets: Vec<Magnet>,
     match_shape: bool,
 
     force: alg::Vec3,
@@ -466,16 +451,10 @@ impl Instance {
         debug_assert!(indices.len() % 3 == 0);
         let normals = Instance::compute_normals(&particles, &indices);
 
-        /* Initialize rods and magnets */
-
+        // Initialize rods
         let mut rods = Vec::with_capacity(bindings.len());
         for binding in bindings {
             rods.push(Rod::new(binding.0, binding.1, &particles));
-        }
-
-        let mut magnets = Vec::with_capacity(zones.len());
-        for zone in zones {
-            magnets.push(Magnet::new(*zone));
         }
 
         debug_assert!(points.len() == particles.len());
@@ -484,7 +463,6 @@ impl Instance {
         Instance {
             particles,
             rods,
-            magnets,
             match_shape,
 
             force: alg::Vec3::zero(),
@@ -739,7 +717,6 @@ pub struct InstanceBuilder<'a> {
     particles: Option<&'a [alg::Vec3]>,
     indices: Option<&'a [usize]>,
     bindings: Option<&'a [(usize, usize)]>,
-    magnets: Option<&'a [Falloff]>,
     match_shape: bool,
 }
 
@@ -754,7 +731,6 @@ impl<'a> InstanceBuilder<'a> {
             particles: None,
             indices: None,
             bindings: None,
-            magnets: None,
             match_shape: false,
         }
     }
@@ -802,14 +778,6 @@ impl<'a> InstanceBuilder<'a> {
         self
     }
 
-    pub fn magnets(
-        &mut self,
-        magnets: &'a [Falloff],
-    ) -> &mut InstanceBuilder<'a> {
-        self.magnets = Some(magnets);
-        self
-    }
-
     pub fn match_shape(&mut self) -> &mut InstanceBuilder<'a> {
         self.match_shape = true;
         self
@@ -819,9 +787,6 @@ impl<'a> InstanceBuilder<'a> {
     pub fn for_entity(&mut self, entity: entity::Handle) {
         let rigidity = self.rigidity * 0.5; // Scale rigidity properly
         let initial_accel = self.manager.gravity; // Initialize with gravity
-
-        let magnets = if let Some(zones) = self.magnets
-            { zones } else { &[] };
 
         /* Limb instance */
 
@@ -875,7 +840,6 @@ impl<'a> InstanceBuilder<'a> {
                     alg::Vec3::new(-0.5, -0.5,  0.5),
                 ]),
                 &[], // Ignore bindings
-                magnets,
                 true, // Match shape
                 self.mass,
                 rigidity,
@@ -897,7 +861,6 @@ impl<'a> InstanceBuilder<'a> {
                 self.indices.unwrap(),
                 None, // No model override
                 bindings,
-                magnets,
                 self.match_shape,
                 self.mass,
                 rigidity,
@@ -994,17 +957,6 @@ impl Manager {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;
         instance.update_cache(self.gravity);
-    }
-
-    pub fn set_magnet(
-        &mut self,
-        entity: entity::Handle,
-        index: usize,
-        target: alg::Vec3,
-    ) {
-        let instance = get_mut_instance!(self, entity);
-        debug_assert!(index < instance.magnets.len());
-        instance.magnets[index].target = target;
     }
 
     pub fn get_particle(
@@ -1301,23 +1253,6 @@ impl Manager {
 
         // Solve abstracted constraints
         for _ in 0..ITERATIONS {
-            for instance in &mut self.instances {
-                let mut instance = if instance.is_some()
-                    { instance.as_mut().unwrap() } else { continue; };
-
-                // Magnets
-                for magnet in &instance.magnets {
-                    let center = instance.center();
-
-                    let new_position = (magnet.falloff)(
-                        center,
-                        magnet.target,
-                    );
-
-                    instance.translate(new_position - center);
-                }
-            }
-
             // Joint constraints
             self.solve_joints();
         }

@@ -122,8 +122,6 @@ impl Rod {
     }
 }
 
-type Falloff = fn(alg::Vec3, alg::Vec3) -> alg::Vec3;
-
 #[derive(Clone, Copy)]
 struct Range {
     min: f32,

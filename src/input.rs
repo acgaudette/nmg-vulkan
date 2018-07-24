@@ -103,4 +103,15 @@ impl Manager {
         let key_state = self.key_map[key as usize];
         key_state.was_pressed && !key_state.pressed
     }
+
+    // Expose key pressed array, created on call
+    pub fn pressed(&self) -> [bool; KEY_COUNT] {
+        let mut keys = [false; KEY_COUNT];
+
+        for i in 0..self.key_map.len() {
+            keys[i] = self.key_map[i].pressed;
+        }
+
+        keys
+    }
 }

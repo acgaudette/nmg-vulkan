@@ -25,7 +25,7 @@ impl Default for KeyState {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Key {
     W = 0,
     A = 1,
@@ -41,11 +41,6 @@ pub enum Key {
     LShift = 11,
 }
 
-impl PartialEq for Key {
-    fn eq(&self, other: &Key) -> bool {
-        self == other
-    }
-}
 
 impl Manager {
     pub fn new() -> Manager {

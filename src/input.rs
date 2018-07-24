@@ -45,6 +45,29 @@ pub enum Key {
     LShift,
 }
 
+impl Key {
+    pub fn from_usize(input: usize) -> Option<Key> {
+        match input {
+            0 => Some(Key::W),
+            1 => Some(Key::A),
+            2 => Some(Key::S),
+            3 => Some(Key::D),
+            4 => Some(Key::H),
+            5 => Some(Key::J),
+            6 => Some(Key::K),
+            7 => Some(Key::L),
+            8 => Some(Key::Up),
+            9 => Some(Key::Down),
+            10 => Some(Key::Left),
+            11 => Some(Key::Right),
+            12 => Some(Key::Space),
+            13 => Some(Key::Enter),
+            14 => Some(Key::LCtrl),
+            15 => Some(Key::LShift),
+            _ => None,
+        }
+    }
+}
 
 impl Manager {
     pub fn new() -> Manager {

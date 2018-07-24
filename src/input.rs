@@ -27,18 +27,22 @@ impl Default for KeyState {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Key {
-    W = 0,
-    A = 1,
-    S = 2,
-    D = 3,
-    Up = 4,
-    Down = 5,
-    Left = 6,
-    Right = 7,
-    Space = 8,
-    Enter = 9,
-    LCtrl = 10,
-    LShift = 11,
+    W,
+    A,
+    S,
+    D,
+    H,
+    J,
+    K,
+    L,
+    Up,
+    Down,
+    Left,
+    Right,
+    Space,
+    Enter,
+    LCtrl,
+    LShift,
 }
 
 

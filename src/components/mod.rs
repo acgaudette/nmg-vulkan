@@ -22,6 +22,8 @@ pub mod camera;
 pub mod light;
 pub mod draw;
 pub mod softbody;
+pub mod text;
+pub mod text3d;
 
 use entity;
 
@@ -40,4 +42,5 @@ pub struct Container {
     pub lights:     light::Manager,
     pub draws:      draw::Manager,
     pub softbodies: softbody::Manager,
+    pub text3ds:    text3d::Manager,
 }

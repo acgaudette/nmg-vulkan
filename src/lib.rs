@@ -39,6 +39,7 @@ pub mod config;
 pub mod input;
 pub mod obj_loader;
 pub mod debug;
+pub mod font;
 mod statics;
 mod util;
 
@@ -138,6 +139,7 @@ where
         lights:     components::light::Manager::new(8),
         draws:      components::draw::Manager::new(1, instances),
         softbodies: components::softbody::Manager::new(1, 1, 1),
+        text3ds:     components::text3d::Manager::new(8),
     };
 
     // Create input manager
@@ -414,6 +416,7 @@ fn begin_update<T>(
             &components.transforms,
             screen,
         );
+        components.text3ds.update(&components.transforms);
 
         // Update renderer
         if let Err(e) = context.update(
@@ -458,6 +461,7 @@ fn begin_update<T>(
         if let Err(e) = context.draw(
             &parameters,
             &components.draws.instances,
+            &mut components.text3ds,
         ) {
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {

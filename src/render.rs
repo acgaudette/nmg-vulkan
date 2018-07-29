@@ -441,7 +441,11 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    pub fn draw(&self, instances: &Instances) -> vd::Result<()> {
+    pub fn draw(
+        &self,
+        parameters: &Parameters,
+        instances: &Instances,
+    ) -> vd::Result<()> {
         // Note: will most likely return an image index that is still in use
         let index = self.swapchain.acquire_next_image_khr(
             u64::max_value(), // Disable timeout
@@ -456,7 +460,12 @@ impl<'a> Context<'a> {
             // Clear color
             vd::ClearValue {
                 color: vd::ClearColorValue {
-                    float32: [0f32, 0f32, 0f32, 1f32]
+                    float32: [
+                        parameters.clear_color.r,
+                        parameters.clear_color.g,
+                        parameters.clear_color.b,
+                        1f32,
+                    ]
                 }
             },
 

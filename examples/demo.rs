@@ -1,8 +1,8 @@
 extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
-use nmg::entity;
 use nmg::render;
+use nmg::entity;
 use nmg::components;
 use nmg::components::Component;
 use nmg::input;
@@ -88,6 +88,7 @@ impl nmg::Update for Demo {
         delta: f64,
         metadata: nmg::Metadata,
         screen: nmg::ScreenData,
+        parameters: &mut render::Parameters,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
@@ -138,6 +139,7 @@ impl nmg::FixedUpdate for Demo {
         fixed_delta: f32,
         metadata: nmg::Metadata,
         screen: nmg::ScreenData,
+        parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,

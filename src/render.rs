@@ -723,6 +723,18 @@ impl<'a> Drop for Context<'a> {
     }
 }
 
+pub struct Parameters {
+    pub clear_color: graphics::Color,
+}
+
+impl Parameters {
+    pub fn new() -> Parameters {
+        Parameters {
+            clear_color: graphics::Color::black(),
+        }
+    }
+}
+
 #[allow(dead_code)]
 struct DebugData {
     buffer:   vd::BufferHandle,

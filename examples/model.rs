@@ -1,8 +1,9 @@
 extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
-use nmg::entity;
 use nmg::render;
+use nmg::graphics;
+use nmg::entity;
 use nmg::components;
 use nmg::components::Component;
 use nmg::input;
@@ -48,11 +49,18 @@ impl nmg::Update for Demo {
         delta: f64,
         metadata: nmg::Metadata,
         screen: nmg::ScreenData,
+        parameters: &mut render::Parameters,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
     ) {
+        parameters.clear_color = graphics::Color::lerp(
+            graphics::Color::white(),
+            graphics::Color::blue(),
+            0.3,
+        );
+
         components.transforms.set(
             self.cube.unwrap(),
             alg::Vec3::zero(),
@@ -94,6 +102,7 @@ impl nmg::FixedUpdate for Demo {
         fixed_delta: f32,
         metadata: nmg::Metadata,
         screen: nmg::ScreenData,
+        parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,

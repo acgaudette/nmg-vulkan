@@ -13,6 +13,11 @@ function compile_debug {
   $COMPILER -H debug.$1 > debug_$1.spvasm
 }
 
+function compile_font3d {
+  if ! $COMPILER -V font3d.$1 -o font3d_$1.spv; then exit 1; fi
+  $COMPILER -H font3d.$1 > font3d_$1.spvasm
+}
+
 ./clean
 
 compile_debug vert
@@ -20,3 +25,6 @@ compile_debug frag
 
 compile shader vert
 compile shader frag
+
+compile_font3d vert
+compile_font3d frag

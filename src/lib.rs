@@ -114,6 +114,7 @@ where
         Err(e) => panic!("Could not create Vulkan context: {}", e)
     };
 
+    let mut parameters = render::Parameters::new();
     let instances = render::Instances::new(context.models.len(), None);
 
     // Create entities container
@@ -143,6 +144,7 @@ where
         &window,
         events,
         &mut context,
+        &mut parameters,
         &mut entities,
         &mut components,
         &mut input,
@@ -172,6 +174,7 @@ fn begin_update<T>(
     window:     &vdw::winit::Window,
     mut events: vdw::winit::EventsLoop,
     context:    &mut render::Context,
+    parameters: &mut render::Parameters,
     entities:   &mut entity::Manager,
     components: &mut components::Container,
     input:      &mut input::Manager,
@@ -352,6 +355,7 @@ fn begin_update<T>(
             delta,
             metadata,
             screen,
+            parameters,
             entities,
             components,
             input,
@@ -368,6 +372,7 @@ fn begin_update<T>(
                 FIXED_DT,
                 metadata,
                 screen,
+                parameters,
                 entities,
                 components,
                 input,
@@ -435,7 +440,10 @@ fn begin_update<T>(
         last_updated_renderer = now;
 
         // Render frame
-        if let Err(e) = context.draw(&components.draws.instances) {
+        if let Err(e) = context.draw(
+            &parameters,
+            &components.draws.instances,
+        ) {
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {
                 // Rebuild the swapchain if it becomes out of date

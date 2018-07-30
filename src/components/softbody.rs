@@ -126,15 +126,13 @@ type Falloff = fn(alg::Vec3, alg::Vec3) -> alg::Vec3;
 
 struct Magnet {
     target: alg::Vec3,
-    serf: usize,
     falloff: Falloff,
 }
 
 impl Magnet {
-    fn new(serf: usize, falloff: Falloff) -> Magnet {
+    fn new(falloff: Falloff) -> Magnet {
         Magnet {
             target: alg::Vec3::zero(),
-            serf,
             falloff,
         }
     }
@@ -428,7 +426,7 @@ impl Instance {
         indices: &[usize],
         model_override: Option<&[alg::Vec3]>,
         bindings: &[(usize, usize)],
-        zones: &[(usize, Falloff)],
+        zones: &[Falloff],
         match_shape: bool,
         mass: f32,
         rigidity: f32,
@@ -477,7 +475,7 @@ impl Instance {
 
         let mut magnets = Vec::with_capacity(zones.len());
         for zone in zones {
-            magnets.push(Magnet::new(zone.0, zone.1));
+            magnets.push(Magnet::new(*zone));
         }
 
         debug_assert!(points.len() == particles.len());
@@ -741,7 +739,7 @@ pub struct InstanceBuilder<'a> {
     particles: Option<&'a [alg::Vec3]>,
     indices: Option<&'a [usize]>,
     bindings: Option<&'a [(usize, usize)]>,
-    magnets: Option<&'a [(usize, Falloff)]>,
+    magnets: Option<&'a [Falloff]>,
     match_shape: bool,
 }
 
@@ -806,7 +804,7 @@ impl<'a> InstanceBuilder<'a> {
 
     pub fn magnets(
         &mut self,
-        magnets: &'a [(usize, Falloff)],
+        magnets: &'a [Falloff],
     ) -> &mut InstanceBuilder<'a> {
         self.magnets = Some(magnets);
         self
@@ -1298,21 +1296,28 @@ impl Manager {
                         rod.length,
                     );
                 }
-
-                // Magnets
-                for magnet in &instance.magnets {
-                    let serf = &mut instance.particles[magnet.serf];
-
-                    serf.position = (magnet.falloff)(
-                        serf.position,
-                        magnet.target,
-                    );
-                }
             }
         }
 
         // Solve abstracted constraints
         for _ in 0..ITERATIONS {
+            for instance in &mut self.instances {
+                let mut instance = if instance.is_some()
+                    { instance.as_mut().unwrap() } else { continue; };
+
+                // Magnets
+                for magnet in &instance.magnets {
+                    let center = instance.center();
+
+                    let new_position = (magnet.falloff)(
+                        center,
+                        magnet.target,
+                    );
+
+                    instance.translate(new_position - center);
+                }
+            }
+
             // Joint constraints
             self.solve_joints();
         }

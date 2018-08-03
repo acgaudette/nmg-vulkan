@@ -82,6 +82,11 @@ macro_rules! get_mut_instance {
     }}
 }
 
+pub trait Iterate {
+    #[allow(unused_variables)]
+    fn iterate(&mut self, fixed_delta: f32, &mut Manager) { }
+}
+
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,

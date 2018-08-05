@@ -1034,6 +1034,18 @@ impl Manager {
         )
     }
 
+    pub fn com(&self, entities: &[entity::Handle]) -> alg::Vec3 {
+        let sum = entities.iter()
+            .map(|handle| get_instance!(self, *handle))
+            .map(|instance| (instance.center(), instance.mass))
+            .fold(
+                (alg::Vec3::zero(), 0f32),
+                |sum, (center, mass)| (sum.0 + center * mass, sum.1 + mass)
+            );
+
+        sum.0 / sum.1
+    }
+
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;

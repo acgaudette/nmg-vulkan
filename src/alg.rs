@@ -1101,6 +1101,14 @@ impl Quat {
         }
     }
 
+    #[inline]
+    pub fn dot(self, other: Quat) -> f32 {
+        self.x * other.x
+            + self.y * other.y
+            + self.z * other.z
+            + self.w * other.w
+    }
+
     pub fn norm(self) -> Quat {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

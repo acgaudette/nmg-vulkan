@@ -983,6 +983,23 @@ impl Manager {
         get_mut_instance!(self, entity)
     }
 
+    pub fn closest_point(
+        &self,
+        entity: entity::Handle,
+        direction: alg::Vec3,
+    ) -> alg::Vec3 {
+        let instance = get_instance!(self, entity);
+        let center = instance.center();
+
+        instance.particles.iter().fold(
+            (std::f32::MIN, alg::Vec3::zero()),
+            |result, particle| {
+                let dot = (particle.position - center).dot(direction);
+                if dot > result.0 { (dot, particle.position) } else { result }
+            }
+        ).1
+    }
+
     pub fn pivot(
         &self,
         parent: entity::Handle,

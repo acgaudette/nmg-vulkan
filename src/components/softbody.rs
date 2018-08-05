@@ -544,6 +544,19 @@ impl Instance {
         ) / self.particles.len() as f32
     }
 
+    // Center is a parameter for optional caching
+    pub fn ang_velocity(&self, center: alg::Vec3) -> alg::Quat {
+        let torque = self.particles.iter().fold(
+            alg::Vec3::zero(),
+            |sum, particle| {
+                sum + (particle.position - center)
+                    .cross(particle.displacement)
+            },
+        );
+
+        alg::Quat::axis_angle(torque.norm(), torque.mag())
+    }
+
     /* Limb methods */
 
     #[inline]

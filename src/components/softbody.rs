@@ -1141,7 +1141,11 @@ impl Manager {
         self.friction = friction;
     }
 
-    pub(crate) fn simulate(&mut self, transforms: &mut transform::Manager) {
+    pub(crate) fn simulate<T>(
+        &mut self,
+        game: &mut T,
+        transforms: &mut transform::Manager
+    ) where T: Iterate {
         // Update instance particles
         for i in 0..self.instances.len() {
             let mut instance = match self.instances[i] {

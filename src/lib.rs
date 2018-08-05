@@ -107,6 +107,7 @@ pub trait FixedUpdate {
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)
 where
     T: Start + Update + FixedUpdate
+        + components::softbody::Iterate
 {
     // Initialize window
     let (events, window) = init_window();
@@ -184,6 +185,7 @@ fn begin_update<T>(
     debug:      &mut debug::Handler,
 ) where
     T: Start + Update + FixedUpdate
+        + components::softbody::Iterate
 {
     let mut running = true;
 

@@ -64,14 +64,16 @@ pub struct ScreenData {
 }
 
 pub trait Start {
+    #[allow(unused_variables)]
     fn start(
         &mut self,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
-    );
+    ) { }
 }
 
 pub trait Update {
+    #[allow(unused_variables)]
     fn update(
         &mut self,
         time:  f64,
@@ -83,10 +85,11 @@ pub trait Update {
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    );
+    ) { }
 }
 
 pub trait FixedUpdate {
+    #[allow(unused_variables)]
     fn fixed_update(
         &mut self,
         time: f64,
@@ -98,7 +101,7 @@ pub trait FixedUpdate {
         components: &mut components::Container,
         input: &input::Manager,
         debug: &mut debug::Handler,
-    );
+    ) { }
 }
 
 pub fn go<T>(model_data: Vec<render::ModelData>, mut game: T)

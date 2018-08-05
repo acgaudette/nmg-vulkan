@@ -714,8 +714,9 @@ impl Instance {
         }
     }
 
+    // Call with point == center for a general rotate method
     #[inline]
-    fn rotate_around(&mut self, rotation: alg::Quat, point: alg::Vec3) {
+    pub fn rotate_around(&mut self, rotation: alg::Quat, point: alg::Vec3) {
         // Rotate
         for i in 0..8 {
             self.particles[i].position = rotation
@@ -725,7 +726,7 @@ impl Instance {
     }
 
     #[inline]
-    fn translate(&mut self, offset: alg::Vec3) {
+    pub fn translate(&mut self, offset: alg::Vec3) {
         for i in 0..8 {
             let new = self.particles[i].position + offset;
             self.particles[i].position = new;

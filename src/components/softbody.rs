@@ -597,7 +597,7 @@ impl Instance {
 
     // Orientation relies on forward vector calculation
     #[inline]
-    fn fwd(&self) -> alg::Vec3 {
+    pub fn fwd(&self) -> alg::Vec3 {
         (self.end() - self.start()).norm()
     }
 

@@ -23,6 +23,13 @@ macro_rules! fn_name {
     }}
 }
 
+#[macro_export]
+macro_rules! default_traits {
+    ($t: ty, [$($trait: ty),* $(,)*]) => {
+        $(impl $trait for $t { })*
+    }
+}
+
 pub mod alg;
 pub mod render;
 pub mod graphics;

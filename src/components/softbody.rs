@@ -623,7 +623,8 @@ impl Instance {
     }
 
     // Determine instance orientation using least squares fit
-    fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
+    // Center is a parameter for optional caching
+    pub fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
         let mut transform = alg::Mat3::zero();
 
         // Sum multiplication of actual and model particle positions

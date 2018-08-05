@@ -979,6 +979,10 @@ impl Manager {
         self.instances[i] = Some(instance);
     }
 
+    pub fn get_instance(&mut self, entity: entity::Handle) -> &mut Instance {
+        get_mut_instance!(self, entity)
+    }
+
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;

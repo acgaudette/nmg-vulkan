@@ -537,7 +537,14 @@ impl Instance {
         ) / self.particles.len() as f32
     }
 
-    /* Limb helper methods */
+    pub fn velocity(&self) -> alg::Vec3 {
+        self.particles.iter().fold(
+            alg::Vec3::zero(),
+            |sum, particle| sum + particle.displacement,
+        ) / self.particles.len() as f32
+    }
+
+    /* Limb methods */
 
     #[inline]
     fn start(&self) -> alg::Vec3 {

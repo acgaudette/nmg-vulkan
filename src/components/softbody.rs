@@ -379,7 +379,7 @@ impl<'a> JointBuilder<'a> {
     }
 }
 
-struct Instance {
+pub struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
     match_shape: bool,

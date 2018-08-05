@@ -528,7 +528,9 @@ impl Instance {
             * FIXED_DT * FIXED_DT;
     }
 
-    fn center(&self) -> alg::Vec3 {
+    /* General instance methods */
+
+    pub fn center(&self) -> alg::Vec3 {
         self.particles.iter().fold(
             alg::Vec3::zero(),
             |sum, particle| sum + particle.position

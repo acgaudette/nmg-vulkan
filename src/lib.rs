@@ -385,7 +385,10 @@ fn begin_update<T>(
             );
 
             // Update physics component
-            components.softbodies.simulate(&mut components.transforms);
+            components.softbodies.simulate(
+                &mut game,
+                &mut components.transforms,
+            );
 
             accumulator -= fixed_step;
             metadata.fixed_frame += 1;

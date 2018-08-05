@@ -98,6 +98,13 @@ impl Manager {
             .1.far = far;
     }
 
+    pub fn get_far(&self, entity: entity::Handle) -> f32 {
+        debug_validate_entity!(self, entity);
+        self.instances.iter()
+            .find(|instance| instance.0 == entity).unwrap()
+            .1.far
+    }
+
     /// Override a camera with a custom shared UBO
     pub fn overrule(
         &mut self,

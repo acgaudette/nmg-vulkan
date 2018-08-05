@@ -1,4 +1,4 @@
-extern crate nmg_vulkan as nmg;
+#[macro_use] extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
 use nmg::render;
@@ -20,6 +20,8 @@ struct Demo {
     camera: Option<entity::Handle>,
     last_target: alg::Vec3,
 }
+
+default_traits!(Demo, [nmg::FixedUpdate, components::softbody::Iterate]);
 
 impl nmg::Start for Demo {
     fn start(
@@ -145,22 +147,6 @@ impl nmg::Update for Demo {
             alg::Vec3::one(),
         );
     }
-}
-
-impl nmg::FixedUpdate for Demo {
-    #[allow(unused_variables)]
-    fn fixed_update(
-        &mut self,
-        time: f64,
-        fixed_delta: f32,
-        metadata: nmg::Metadata,
-        screen: nmg::ScreenData,
-        parameters: &mut render::Parameters,
-        entities: &mut entity::Manager,
-        components: &mut components::Container,
-        input: &input::Manager,
-        debug: &mut debug::Handler,
-    ) { }
 }
 
 fn main() {

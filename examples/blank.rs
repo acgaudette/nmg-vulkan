@@ -1,4 +1,4 @@
-extern crate nmg_vulkan as nmg;
+#[macro_use] extern crate nmg_vulkan as nmg;
 
 use nmg::render;
 use nmg::entity;
@@ -8,6 +8,8 @@ use nmg::input;
 use nmg::debug;
 
 struct Demo { }
+
+default_traits!(Demo, [components::softbody::Iterate]);
 
 impl nmg::Start for Demo {
     #[allow(unused_variables)]

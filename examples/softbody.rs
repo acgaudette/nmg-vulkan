@@ -1,4 +1,4 @@
-extern crate nmg_vulkan as nmg;
+#[macro_use] extern crate nmg_vulkan as nmg;
 
 use nmg::alg;
 use nmg::render;
@@ -19,6 +19,8 @@ struct Demo {
     rigidity: f32,
     mesh: (Vec<alg::Vec3>, Vec<usize>),
 }
+
+default_traits!(Demo, [components::softbody::Iterate]);
 
 impl nmg::Start for Demo {
     fn start(

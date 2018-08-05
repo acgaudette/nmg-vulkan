@@ -1259,6 +1259,9 @@ impl Manager {
 
         // Solve abstracted constraints
         for _ in 0..ITERATIONS {
+            // External constraints
+            game.iterate(FIXED_DT, self);
+
             // Joint constraints
             self.solve_joints();
         }

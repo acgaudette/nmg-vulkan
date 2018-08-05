@@ -983,6 +983,40 @@ impl Manager {
         get_mut_instance!(self, entity)
     }
 
+    pub fn pivot(
+        &self,
+        parent: entity::Handle,
+        child: entity::Handle,
+    ) -> alg::Vec3 {
+        debug_validate_entity!(self, parent);
+        debug_validate_entity!(self, child);
+
+        let i = parent.get_index() as usize;
+        debug_validate_instance!(self.instances[i], parent);
+
+        let j = child.get_index() as usize;
+        debug_validate_instance!(self.instances[j], child);
+
+        let parent_instance = self.instances[i].as_ref().unwrap();
+
+        match self.joints.get(&i) {
+            Some(joints) => for joint in joints {
+                if joint.child == j {
+                    return parent_instance.extend(joint.offset);
+                }
+            },
+            None => panic!(
+                "Softbody instance for entity {} is not a joint parent.",
+                parent,
+            ),
+        }
+
+        panic!(
+            "Softbody instance for entity {} does not have a joint child {}",
+            parent, child,
+        )
+    }
+
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;

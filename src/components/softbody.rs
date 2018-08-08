@@ -1191,15 +1191,19 @@ impl Manager {
             };
 
             let rotation = parent.orientation().to_quat() * transform;
-            let translation = parent.extend(offset) + rotation * child.end();
+            let end = (child.end() - child.start()) * 0.5;
+            let position = parent.extend(offset) + rotation * end;
 
-            // Align child with parent and joint transform
-            child.transform_outer(rotation, translation);
+            /* Align child with parent and joint transform */
+
+            let center = child.center();
+            child.translate(position - center);
+
+            let center = child.center(); // Recompute center
+            child.rotate_around(rotation, center);
 
             // Reset child position for integrator
-            for particle in &mut child.particles {
-                particle.last = particle.position;
-            }
+            child.lock();
         }
 
         // Check if this parent already has a joint

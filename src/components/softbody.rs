@@ -750,6 +750,7 @@ pub struct InstanceBuilder<'a> {
     particles: Option<&'a [alg::Vec3]>,
     indices: Option<&'a [usize]>,
     bindings: Option<&'a [(usize, usize)]>,
+    initial_pos: alg::Vec3,
     match_shape: bool,
 }
 
@@ -764,6 +765,7 @@ impl<'a> InstanceBuilder<'a> {
             particles: None,
             indices: None,
             bindings: None,
+            initial_pos: alg::Vec3::zero(),
             match_shape: false,
         }
     }
@@ -808,6 +810,14 @@ impl<'a> InstanceBuilder<'a> {
         bindings: &'a [(usize, usize)],
     ) -> &mut InstanceBuilder<'a> {
         self.bindings = Some(bindings);
+        self
+    }
+
+    pub fn initial_pos(
+        &mut self,
+        position: alg::Vec3,
+    ) -> &mut InstanceBuilder<'a> {
+        self.initial_pos = position;
         self
     }
 
@@ -876,6 +886,7 @@ impl<'a> InstanceBuilder<'a> {
                 true, // Match shape
                 self.mass,
                 rigidity,
+                self.initial_pos,
                 initial_accel,
             )
         }
@@ -897,6 +908,7 @@ impl<'a> InstanceBuilder<'a> {
                 self.match_shape,
                 self.mass,
                 rigidity,
+                self.initial_pos,
                 initial_accel,
             )
         };

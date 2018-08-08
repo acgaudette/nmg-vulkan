@@ -417,6 +417,7 @@ impl Instance {
         match_shape: bool,
         mass: f32,
         rigidity: f32,
+        initial_pos: alg::Vec3,
         initial_accel: alg::Vec3,
     ) -> Instance {
         debug_assert!(mass > 0.0);
@@ -429,7 +430,7 @@ impl Instance {
             let mut perfect_model = Vec::with_capacity(points.len());
 
             for point in points {
-                particles.push(Particle::new(*point));
+                particles.push(Particle::new(initial_pos + *point));
                 perfect_model.push(*point);
             }
 

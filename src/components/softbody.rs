@@ -703,6 +703,7 @@ impl Instance {
         }
     }
 
+    // Nullify velocity by setting particle last positions to current positions
     #[inline]
     pub fn lock(&mut self) {
         self.particles.iter_mut()

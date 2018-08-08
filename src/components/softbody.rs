@@ -733,6 +733,12 @@ impl Instance {
             self.particles[i].position = new;
         }
     }
+
+    #[inline]
+    pub fn lock(&mut self) {
+        self.particles.iter_mut()
+            .for_each(|particle| particle.last = particle.position);
+    }
 }
 
 /// Builder pattern for softbody instances

@@ -685,36 +685,6 @@ impl Instance {
         }
     }
 
-    fn transform_outer(
-        &mut self,
-        rotation: alg::Quat,
-        translation: alg::Vec3,
-    ) {
-        // Translate
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position
-                + translation;
-        }
-
-        let point = self.center();
-
-        // Center axis of rotation
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position - point;
-        }
-
-        // Rotate
-        for i in 0..8 {
-            self.particles[i].position = rotation
-                * self.particles[i].position;
-        }
-
-        // Move back to world space
-        for i in 0..8 {
-            self.particles[i].position = self.particles[i].position + point;
-        }
-    }
-
     // Call with point == center for a general rotate method
     #[inline]
     pub fn rotate_around(&mut self, rotation: alg::Quat, point: alg::Vec3) {

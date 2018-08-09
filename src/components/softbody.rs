@@ -603,7 +603,7 @@ impl Instance {
     }
 
     #[inline]
-    fn up_est(&self) -> alg::Vec3 {
+    pub fn up_est(&self) -> alg::Vec3 {
         (self.top() - self.bot()).norm()
     }
 

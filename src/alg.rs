@@ -1316,6 +1316,19 @@ impl std::ops::Add for Quat {
     }
 }
 
+impl std::ops::Sub for Quat {
+    type Output = Quat;
+
+    fn sub(self, other: Quat) -> Quat {
+        Quat {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.y,
+            w: self.w - other.w,
+        }
+    }
+}
+
 impl std::fmt::Display for Quat {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(out, "( {}, {}, {}, {} )", self.x, self.y, self.z, self.w)

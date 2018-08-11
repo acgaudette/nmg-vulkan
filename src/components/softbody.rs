@@ -84,7 +84,12 @@ macro_rules! get_mut_instance {
 
 pub trait Iterate {
     #[allow(unused_variables)]
-    fn iterate(&mut self, fixed_delta: f32, &mut Manager) { }
+    fn iterate(
+        &mut self,
+        fixed_delta: f32,
+        iterations: usize,
+        &mut Manager,
+    ) { }
 }
 
 struct Particle {
@@ -1346,7 +1351,7 @@ impl Manager {
         // Solve abstracted constraints
         for _ in 0..ITERATIONS {
             // External constraints
-            game.iterate(FIXED_DT, self);
+            game.iterate(FIXED_DT, ITERATIONS, self);
 
             // Joint constraints
             self.solve_joints();

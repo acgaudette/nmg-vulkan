@@ -1204,6 +1204,11 @@ impl Quat {
     }
 
     #[inline]
+    pub fn abs_angle(self) -> f32 {
+        self.w.abs().acos() * 2.0
+    }
+
+    #[inline]
     pub fn angle(self) -> f32 {
         self.w.acos() * 2.0
     }

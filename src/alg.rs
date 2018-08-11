@@ -1310,7 +1310,7 @@ impl std::ops::Add for Quat {
         Quat {
             x: self.x + other.x,
             y: self.y + other.y,
-            z: self.z + other.y,
+            z: self.z + other.z,
             w: self.w + other.w,
         }
     }
@@ -1323,7 +1323,7 @@ impl std::ops::Sub for Quat {
         Quat {
             x: self.x - other.x,
             y: self.y - other.y,
-            z: self.z - other.y,
+            z: self.z - other.z,
             w: self.w - other.w,
         }
     }

@@ -1234,6 +1234,11 @@ impl Quat {
             w: wexp * mag.cos(),
         }
     }
+
+    /// Linearly interpolate from self to target and normalize
+    pub fn nlerp(self, target: Quat, t: f32) -> Quat {
+        (self + (target - self) * t).norm()
+    }
 }
 
 impl std::cmp::PartialEq for Quat {

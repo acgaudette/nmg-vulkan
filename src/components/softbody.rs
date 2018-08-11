@@ -545,17 +545,19 @@ impl Instance {
         ) / self.particles.len() as f32
     }
 
-    // Center is a parameter for optional caching
+    /// Returns angular velocity of instance in radians per second. \
+    /// Center is a parameter for optional caching.
     pub fn ang_velocity(&self, center: alg::Vec3) -> alg::Quat {
         let torque = self.particles.iter().fold(
             alg::Vec3::zero(),
             |sum, particle| {
-                sum + (particle.position - center)
-                    .cross(particle.displacement)
+                let diff = particle.position - center;
+                sum + diff.cross(particle.displacement) // m^2/s
+                    / diff.mag() // m/s
             },
         );
 
-        alg::Quat::axis_angle(torque.norm(), torque.mag())
+        alg::Quat::axis_angle(torque.norm(), torque.mag()) // rad/s
     }
 
     /* Limb methods */

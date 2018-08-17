@@ -92,15 +92,13 @@ impl Manager {
         *self.instances.get_mut(&entity).unwrap() = text;
     }
 
-    // Update point light positions from transform component
+    // Update text positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         for (entity, text3d) in &mut self.instances {
             text3d.position = transforms.get_position(*entity);
         }
     }
 
-    //TODO: Implement add_text functionality from render
-    // Add parameters here instead of just self
     pub fn prepare_bitmap_text(
         &mut self,
         font_data: &Font,
@@ -109,6 +107,7 @@ impl Manager {
         framebuffer_height: u32,
         num_letters: *mut u64,
     ) {
+        // Calls function that shares functionality with other types of text
         text::prepare_bitmap_text(
             &mut self.instances,
             font_data,

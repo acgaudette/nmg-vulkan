@@ -7,6 +7,20 @@ use std::io::BufReader;
 use std::io::BufRead;
 use std::fs::File;
 
+macro_rules! get_float_from_pair {
+    ($( $x:expr ),* ) => {
+        {$(
+            get_value_from_pair(
+                $x.next().unwrap_or_else(
+                    || panic!(
+                        "Found None value instead of Some"
+                    )
+                )
+            ).parse::<f32>().unwrap()
+        )*}
+    };
+}
+
 // AngelCode .fnt format structs and classes
 #[derive(Copy)]
 pub struct Bmchar {
@@ -46,16 +60,16 @@ fn get_value_from_pair<'a> (pair: &'a str) -> &'a str {
 fn parse_bmchar<'a>(full_str: &'a str) -> Bmchar {
     let mut iter = full_str.split_whitespace();
     iter.next(); // Skip
-    let id = get_value_from_pair(iter.next().unwrap()).parse::<i32>().unwrap();
-    let x = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let y = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let width = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let height = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let xoffset = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let yoffset = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let xadvance = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-    let page = get_value_from_pair(iter.next().unwrap()).parse::<i32>().unwrap();
-    //let chnl = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
+    let id = get_float_from_pair!(iter) as i32;
+    let x = get_float_from_pair!(iter);
+    let y = get_float_from_pair!(iter);
+    let width = get_float_from_pair!(iter);
+    let height = get_float_from_pair!(iter);
+    let xoffset = get_float_from_pair!(iter);
+    let yoffset = get_float_from_pair!(iter);
+    let xadvance = get_float_from_pair!(iter);
+    let page = get_float_from_pair!(iter) as i32;
+    //let chnl = get_float_from_pair!(iter);
     Bmchar {
         id,
         x,
@@ -92,29 +106,40 @@ impl Font {
         let mut line_height = 0f32;
 
         for line in file.lines() {
-            let line_string = line.unwrap();
+            let line_string = line.unwrap_or_else(
+                |err| panic!(
+                    "Could not unwrap line: \"{}\"", err
+            ));
             let clone = line_string.clone();
             let mut iter = clone.split_whitespace();
             match iter.next() {
                 Some("info") => {
                     // Currently do not care
-                    //face="Cambria Math" size=27 bold=0 italic=0 charset="" unicode=0 stretchH=100 smooth=1 aa=1 padding=1,1,1,1 spacing=-2,-2
                     continue;
                 },
                 Some("common") => {
-                    let clone2 = line_string.clone();
-                    let mut iter2 = clone2.split_whitespace();
-                    iter2.next();
-                    line_height = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-                    base_width = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-                    uv_width = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
-                    uv_height = get_value_from_pair(iter.next().unwrap()).parse::<f32>().unwrap();
+                    line_height = get_float_from_pair!(iter);
+                    base_width = get_float_from_pair!(iter);
+                    uv_width = get_float_from_pair!(iter);
+                    uv_height = get_float_from_pair!(iter);
                     continue;
                 },
                 Some("page") => {
                     iter.next(); //skip
-                    let path = get_value_from_pair(iter.next().unwrap()).replace("\"", "");
-                    let borrow = image::open(path).unwrap().as_rgba8().unwrap().clone();
+                    let pair = iter.next().unwrap_or_else(
+                        || panic!(
+                            "Found None value instead of Some"
+                    ));
+                    let path = get_value_from_pair(pair).replace("\"", "");
+                    let borrow = image::open(path)
+                        .unwrap_or_else(
+                            |err| panic!(
+                                "Could not unwrap image option: \"{}\"", err
+                        )).as_rgba8()
+                        .unwrap_or_else(
+                            || panic!(
+                                "Found None instead of Some for rgba8"
+                        )).clone();
                     pixels = borrow.into_raw();
                 },
                 Some("char") => {

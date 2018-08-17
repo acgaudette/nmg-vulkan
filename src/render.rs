@@ -140,7 +140,7 @@ impl<'a> Context<'a> {
             _frag_mod,
             shader_stages,
         ) = load_shaders(device.clone())?;
-		
+
         let (
             vertex_buffer,
             vertex_memory,
@@ -1325,17 +1325,15 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
     /* Instance */
 
     //TODO: Change to setting for use with RenderDoc
-    let _arr = [
+    let _render_arr = [
         std::ffi::CStr::from_bytes_with_nul(b"VK_KHR_surface\0").unwrap(),
         std::ffi::CStr::from_bytes_with_nul(b"VK_KHR_win32_surface\0").unwrap()
-        ];
-    
-    
-    
+    ];
+
     let instance = vd::Instance::builder()
         .application_info(&app_info)
         .enabled_extensions(&extensions)
-        //.enabled_extension_names(&_arr[..])
+        //.enabled_extension_names(&_render_arr[..])
         .enabled_layer_names(layers)
         .print_debug_report(cfg!(debug_assertions))
         .build(loader)?;
@@ -3008,7 +3006,7 @@ fn init_text_pipeline_resources(
             | vd::ColorComponentFlags::A
         ).build()
     ];
-    
+
     let viewport = vd::Viewport::builder()
         .x(0.0f32)
         .y(0.0f32)
@@ -3017,8 +3015,6 @@ fn init_text_pipeline_resources(
         .min_depth(0.0f32)
         .max_depth(1.0f32)
         .build();
-        
-    //eprintln!("Width: {}", extent2d.width());
 
     let scissor = vd::Rect2d::builder()
         .offset(vd::Offset2d::builder().x(0).y(0).build())
@@ -3070,9 +3066,8 @@ fn init_text_pipeline_builder(
     //Begin image preparation
     let properties = vulkan_device.physical_device().memory_properties();
 
-    //TODO: size of struct
     let (buffer_3d, memory_3d) = create_buffer(
-        TEXTOVERLAY_MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontData>() as u64 * 4u64,
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontData>() as u64 * 4u64,
         vd::BufferUsageFlags::VERTEX_BUFFER,
         &vulkan_device,
         vd::MemoryPropertyFlags::HOST_VISIBLE,
@@ -3182,7 +3177,6 @@ fn init_text_pipeline_builder(
 
     copy_cmd.end()?;
 
-    //TODO: Clean up buffers
     let cmd_buffer_handles = [copy_cmd.handle()];
 
     let info = vd::SubmitInfo::builder()
@@ -3382,7 +3376,7 @@ struct TextDisplay {
     is_3d: bool,
 }
 
-const TEXTOVERLAY_MAX_CHAR_COUNT:u32 =  2048;
+const MAX_CHAR_COUNT:u32 =  2048;
 
 fn create_text(
     vulkan_device: vd::Device,

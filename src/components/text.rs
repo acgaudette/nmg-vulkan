@@ -5,8 +5,9 @@ use entity;
 
 use font::*;
 
-// TODO: Implement add_text functionality from render
-// Add parameters here instead of just self
+/**
+ * Shared method for preparing and rendering text isntances, whether 3d or not
+ */
 pub fn prepare_bitmap_text(
     instances: &mut fnv::FnvHashMap<entity::Handle, render::Text>,
     font_data: &Font,
@@ -20,11 +21,18 @@ pub fn prepare_bitmap_text(
     let fb_h = framebuffer_height as f32;
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
+    
+    //Iterating through text instances for rendering
     for (_, text_instance) in (*instances).iter() {
         let x = text_instance.position.x;
         let y = text_instance.position.y;
         let z = text_instance.position.z;
 
+        /*
+          Determines scaling for text depending on type of text
+          e.g. 3D text dependent on position versus label text
+          viewable on screen at all times
+         */
         let mut char_w = text_instance.scale_factor;
         let mut char_h = text_instance.scale_factor;
 
@@ -40,6 +48,10 @@ pub fn prepare_bitmap_text(
             }
         }
 
+        /*
+          Determines appropriate horizontal and vertical divisors dependent
+          on text type
+         */
         let xo_divisor =
             if text_instance.scale == render::TextScale::ScreenSpace {
                 fb_w
@@ -62,11 +74,15 @@ pub fn prepare_bitmap_text(
                 }
             };
 
-        let _starting_x = x;
+        // Starting positions for current text instance being rendered
         let mut curr_line_start_x = x;
         let mut curr_line_start_y = y + common_data.line_height / yo_divisor;
+
+        // Rendering quads for each individual character
         for c in text_instance.text.chars() {
+            // Aliasing for character data from character map
             let char_data = &common_data.char_map[&(c as i32)];
+            // UV coordinates
             let us = char_data.x / uv_width;
             let ue = (char_data.x + char_data.width) / uv_width;
             let vs = char_data.y / uv_height;
@@ -77,10 +93,13 @@ pub fn prepare_bitmap_text(
                 (us, ue, ve, vs)
             };
 
-            let xoffset = (char_data.xoffset / xo_divisor) * text_instance.scale_factor;
+            // Applying transformations based on scale factor and divisors
+            let xoffset =
+                (char_data.xoffset / xo_divisor) * text_instance.scale_factor;
             curr_line_start_x += xoffset;
 
-            let yoffset = (char_data.yoffset / yo_divisor) * text_instance.scale_factor;
+            let yoffset =
+                (char_data.yoffset / yo_divisor) * text_instance.scale_factor;
             let curr_line_start_y_box = curr_line_start_y - yoffset;
 
             let mut height_of_char = char_data.height / yo_divisor;
@@ -88,6 +107,7 @@ pub fn prepare_bitmap_text(
                 text_instance.scale == render::TextScale::ScreenSpace ||
                 !text_instance.is_2d;
 
+            // Sends data to the GPU for the positions of the character quad
             unsafe {
                 let mut char_data_width = text_instance.scale_factor * 
                     (if normalize_glyphs { 1f32 }
@@ -171,6 +191,7 @@ pub fn prepare_bitmap_text(
     }
 }
 
+// Helper function for reducing amount of code written; may consider rewriting
 unsafe fn send_point_to_buffer(
     mapped: *mut *mut render::FontData,
     x: f32,

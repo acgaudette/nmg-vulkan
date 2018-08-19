@@ -543,6 +543,7 @@ impl Instance {
         ) / self.particles.len() as f32
     }
 
+    /// Returns velocity of instance in meters per second.
     pub fn velocity(&self) -> alg::Vec3 {
         self.particles.iter().fold(
             alg::Vec3::zero(),
@@ -630,8 +631,8 @@ impl Instance {
         alg::Mat3::axes(right, up, fwd)
     }
 
-    // Determine instance orientation using least squares fit
-    // Center is a parameter for optional caching
+    /// Returns instance orientation using least squares fit
+    /// `center` is a parameter for optional caching
     pub fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
         let mut transform = alg::Mat3::zero();
 

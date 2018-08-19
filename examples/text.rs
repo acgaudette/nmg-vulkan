@@ -24,7 +24,7 @@ impl nmg::Start for Demo {
         /* Add text 3d */
         let text_0 = entities.add();
         components.transforms.register(text_0);
-        
+
         components.texts.register(text_0);
         components.texts.build()
             .text("QUICK BROWN FOX JUMPS OVER THE LAZY COW")
@@ -39,7 +39,7 @@ impl nmg::Start for Demo {
 
         let text_1 = entities.add();
         components.transforms.register(text_1);
-        
+
         components.texts.register(text_1);
         components.texts.build()
             .text("quick brown fox jumps over the lazy cow")
@@ -96,6 +96,7 @@ impl nmg::Update for Demo {
         delta: f64,
         metadata: nmg::Metadata,
         screen: nmg::ScreenData,
+        parameters: &mut render::Parameters,
         entities:   &mut entity::Manager,
         components: &mut components::Container,
         input: &input::Manager,

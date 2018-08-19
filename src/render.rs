@@ -3329,8 +3329,8 @@ fn init_text_pipeline_builder(
 
 #[derive(Clone, PartialEq)]
 pub enum TextScale {
-    ScreenSpace,
-    ScaleFactor,
+    PixelScale,
+    AspectScale,
 }
 
 #[derive(Clone)]
@@ -3349,7 +3349,7 @@ impl Text {
 			text: "".to_string(),
 			position: alg::Vec3::zero(),
             align: TextAlign::AlignCenter,
-            scale: TextScale::ScreenSpace,
+            scale: TextScale::PixelScale,
             scale_factor: 1f32,
             is_2d: true,
 		}
@@ -3360,7 +3360,7 @@ impl Text {
             text: "".to_string(),
             position: alg::Vec3::zero(),
             align: TextAlign::AlignRight,
-            scale: TextScale::ScaleFactor,
+            scale: TextScale::AspectScale,
             scale_factor: 1f32,
             is_2d: false,
         }

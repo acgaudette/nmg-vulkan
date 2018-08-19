@@ -26,7 +26,7 @@ impl<'a> TextBuilder<'a> {
         self.text.text = text.into();
         self
     }
-    
+
     pub fn alignment(&mut self, alignment: render::TextAlign) -> &mut TextBuilder<'a> {
         self.text.align = alignment;
         self
@@ -108,13 +108,15 @@ impl Manager {
         num_letters: *mut u64,
     ) {
         // Calls function that shares functionality with other types of text
-        text::prepare_bitmap_text(
-            &mut self.instances,
-            font_data,
-            ptr,
-            framebuffer_width,
-            framebuffer_height,
-            num_letters,
-        );
+        for (_, text_instance) in self.instances.iter() {
+            text::prepare_text(
+                text_instance,
+                font_data,
+                ptr,
+                framebuffer_width,
+                framebuffer_height,
+                num_letters,
+            );
+        }
     }
 }

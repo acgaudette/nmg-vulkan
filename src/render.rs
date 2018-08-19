@@ -747,7 +747,6 @@ impl<'a> Context<'a> {
                             .image_indices(&indices)
                             .build();
 
-
                         unsafe {
                             // Present
                             self.device.queue_present_khr(pq, &info)?;
@@ -3383,7 +3382,7 @@ fn create_text(
     is_3d: bool,
 ) -> vd::Result<TextDisplay> {
     let resources = &text_meta.resources;
-    
+
     // Loading shaders
     let path = {
         let mut path = &config::load_section_setting::<String>(
@@ -3480,7 +3479,7 @@ fn create_text(
         .stages(&stages)
         .base_pipeline_index(-1)
         .build(vulkan_device.clone())?;
-    
+
     let num_letters = 0u64;
 
     Ok(
@@ -3499,6 +3498,7 @@ impl TextDisplay {
         memory: &vd::DeviceMemoryHandle,
     )-> vd::Result<*mut FontData> {
         self.num_letters = 0u64;
+
         unsafe {
             self.device.map_memory(
                 *memory,
@@ -3510,7 +3510,7 @@ impl TextDisplay {
     }
 
     pub fn end_text_update(
-        &mut self,
+        &self,
         vulkan_device: &vd::Device,
         cmd_buffer: &vd::CommandBuffer,
         text_meta: TextMeta,
@@ -3518,6 +3518,7 @@ impl TextDisplay {
         unsafe {
             vulkan_device.unmap_memory(text_meta.memory_3d);
         }
+
         self.update_command_buffer(
             vulkan_device,
             cmd_buffer,
@@ -3525,6 +3526,7 @@ impl TextDisplay {
             &text_meta.descriptor_set,
             &text_meta.pipeline_layout,
         )?;
+
         Ok(())
     }
 
@@ -3536,7 +3538,6 @@ impl TextDisplay {
         descriptor_set: &vd::DescriptorSet,
         pipeline_layout: &vd::PipelineLayout,
     ) -> vd::Result<()> {
-    
         cmd_buffer.bind_pipeline(
             vd::PipelineBindPoint::Graphics,
             &self.pipeline.handle()
@@ -3549,7 +3550,9 @@ impl TextDisplay {
             &[descriptor_set],
             &[],
         );
+
         let offsets: vd::DeviceSize = 0;
+
         unsafe {
             vulkan_device.cmd_bind_vertex_buffers(
                 cmd_buffer.handle(),
@@ -3564,7 +3567,7 @@ impl TextDisplay {
                 &[offsets],
             );
         }
-        
+
         for j in 0..self.num_letters {
             cmd_buffer.draw(
                 6,
@@ -3573,7 +3576,7 @@ impl TextDisplay {
                 0
             );
         }
-        
+
         Ok(())
     }
 }

@@ -17,6 +17,7 @@ pub fn prepare_bitmap_text(
     let common_data = &font.common_font_data;
     let fb_w = framebuffer_width as f32;
     let fb_h = framebuffer_height as f32;
+    let aspect_ratio = fb_w / fb_h;
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
     
@@ -31,54 +32,29 @@ pub fn prepare_bitmap_text(
           e.g. 3D text dependent on position versus label text
           viewable on screen at all times
          */
-        let mut char_w = text_instance.scale_factor;
-        let mut char_h = text_instance.scale_factor;
 
-        if text_instance.scale == render::TextScale::ScreenSpace {
-            char_w /= fb_w;
-            char_h /= fb_h;
-        } else if text_instance.scale == render::TextScale::ScaleFactor {
+        let (char_width_scale, char_height_scale) = {
             if text_instance.is_2d {
-                char_w /= fb_w;
-                char_h /= fb_h;
+                if text_instance.scale == render::TextScale::PixelScale {
+                    (text_instance.scale_factor / fb_w,
+                     text_instance.scale_factor / fb_h)
+                } else {
+                    (text_instance.scale_factor / (aspect_ratio * common_data.base_width),
+                     text_instance.scale_factor / common_data.base_width)
+                }
             } else {
-                char_h /= common_data.line_height;
+                (text_instance.scale_factor / common_data.base_width,
+                 text_instance.scale_factor / common_data.base_width)
             }
-        }
-
-        /*
-          Determines appropriate horizontal and vertical divisors dependent
-          on text type
-         */
-        let xo_divisor =
-            if text_instance.scale == render::TextScale::ScreenSpace {
-                fb_w
-            } else {
-                if text_instance.is_2d {
-                    fb_w
-                } else {
-                    common_data.base_width
-                }
-            };
-
-        let yo_divisor = 
-            if text_instance.scale == render::TextScale::ScreenSpace {
-                fb_h
-            } else {
-                if text_instance.is_2d {
-                    fb_h
-                } else {
-                    common_data.line_height
-                }
-            };
+        };
 
         // Starting positions for current text instance being rendered
         let mut curr_line_start_x = x;
-        let mut curr_line_start_y = y + common_data.line_height / yo_divisor;
+        let mut curr_line_start_y = y + common_data.line_height * char_height_scale;
 
-        // Rendering quads for each individual character
+        // Render quads for each individual character
         for c in text_instance.text.chars() {
-            // Aliasing for character data from character map
+            // Alias for character data from character map
             let char_data = &common_data.char_map[&(c as i32)];
             // UV coordinates
             let us = char_data.x / uv_width;
@@ -86,124 +62,73 @@ pub fn prepare_bitmap_text(
             let vs = char_data.y / uv_height;
             let ve = (char_data.y + char_data.height) / uv_height;
 
-            // Flipping vertical UV coordinates
-            let (u_start, u_end, v_start, v_end) = {
-                (us, ue, ve, vs)
-            };
+            // Flip vertical UV coordinates
+            let (u_start, u_end, v_start, v_end) = (
+                us as f32,
+                ue as f32,
+                ve as f32,
+                vs as f32,
+            );
 
-            // Applying transformations based on scale factor and divisors
+            // Apply transformations based on scale factor and divisors
             let xoffset =
-                (char_data.xoffset / xo_divisor) * text_instance.scale_factor;
+                char_data.xoffset * char_width_scale * text_instance.scale_factor;
             curr_line_start_x += xoffset;
 
             let yoffset =
-                (char_data.yoffset / yo_divisor) * text_instance.scale_factor;
-            let curr_line_start_y_box = curr_line_start_y - yoffset;
+                char_data.yoffset * char_height_scale * text_instance.scale_factor;
 
-            let mut height_of_char = char_data.height / yo_divisor;
-            let normalize_glyphs = 
-                text_instance.scale == render::TextScale::ScreenSpace ||
-                !text_instance.is_2d;
+            // Send data to the GPU for the positions of the character quad
+            let curr_x_advance = char_data.xadvance * char_width_scale;
+            let left_x = curr_line_start_x;
+            let right_x = curr_line_start_x + curr_x_advance;
+            let bottom_y = curr_line_start_y - yoffset;
+            let top_y = bottom_y - (char_height_scale * char_data.height);
 
-            // Sends data to the GPU for the positions of the character quad
-            unsafe {
-                let mut char_data_width = text_instance.scale_factor * 
-                    (if normalize_glyphs { 1f32 }
-                     else { char_data.width as f32 });
+            let top_left = render::FontData::new_raw(
+                left_x,
+                top_y,
+                z,
+                u_start,
+                v_start,
+            );
 
-                let mut height_scale = if normalize_glyphs { 1f32 }
-                     else { char_data.height as f32 };
-
-                let mut curr_x_advance = char_data.xadvance * char_w * char_data_width;
-                let mut _x = curr_line_start_x;
-                let mut _y = curr_line_start_y_box - (height_scale * char_h + height_of_char);
-                let mut _s = u_start as f32;
-                let mut _t = v_start as f32;
-
-                let top_left = render::FontData::new_raw(
-                    _x,
-                    _y,
-                    z,
-                    _s,
-                    _t,
-                    );
-                (**ptr) = top_left;
-                (*ptr) = (*ptr).offset(1);
-
-                if !text_instance.is_2d {
-                    curr_x_advance /= common_data.base_width;
-                }
-                _x = curr_line_start_x + curr_x_advance;
-                _y = curr_line_start_y_box;
-                _s = u_end;
-                _t = v_end;
-
-                let bottom_right = render::FontData::new_raw(
-                    _x,
-                    _y,
-                    z,
-                    _s,
-                    _t,
-                    );
-                (**ptr) = bottom_right;
-                (*ptr) = (*ptr).offset(1);
-
-                // Bottom left
-                _x = curr_line_start_x;
-                _y = curr_line_start_y_box;
-                _s = u_start;
-                _t = v_end;
-                send_point_to_buffer(
-                    ptr,
-                    _x,
-                    _y,
-                    z,
-                    _s,
-                    _t,
-                    );
-
-                (**ptr) = top_left;
-                (*ptr) = (*ptr).offset(1);
-
-                _x = curr_line_start_x + curr_x_advance;
-                _y = curr_line_start_y_box - (height_scale * char_h + height_of_char);
-                _s = u_end;
-                _t = v_start;
-                
-                send_point_to_buffer(
-                    ptr,
-                    _x,
-                    _y,
-                    z,
-                    _s,
-                    _t,
+            let bottom_right = render::FontData::new_raw(
+                right_x,
+                bottom_y,
+                z,
+                u_end,
+                v_end,
                 );
 
-                (**ptr) = bottom_right;
-                (*ptr) = (*ptr).offset(1);
+            let bottom_left = render::FontData::new_raw(
+                left_x,
+                bottom_y,
+                z,
+                u_start,
+                v_end,
+            );
 
-                curr_line_start_x += curr_x_advance;
-                (*num_letters) += 1;
+            let top_right = render::FontData::new_raw(
+                right_x,
+                top_y,
+                z,
+                u_end,
+                v_start,
+            );
+
+            for vertex in [
+                top_left, top_right, bottom_right,
+                top_left, bottom_right, bottom_left,
+            ].iter() {
+                unsafe {
+                    (**ptr) = *vertex;
+                    (*ptr) = (*ptr).offset(1);
+                }
             }
+
+            curr_line_start_x += curr_x_advance;
+            unsafe { (*num_letters) += 1; }
         }
     }
-}
-
-// Helper function for reducing amount of code written; may consider rewriting
-unsafe fn send_point_to_buffer(
-    mapped: *mut *mut render::FontData,
-    x: f32,
-    y: f32,
-    z: f32,
-    s: f32,
-    t: f32,
-) {
-    (**mapped) = render::FontData::new_raw(
-        x,
-        y,
-        z,
-        s,
-        t,
-        );
-    (*mapped) = (*mapped).offset(1);
 }

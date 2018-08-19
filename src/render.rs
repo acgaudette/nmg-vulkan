@@ -100,7 +100,7 @@ pub struct Context<'a> {
 
     /* Text data */
 
-    text_3d:          TextDisplay,
+    text_display:     TextDisplay,
     font_data:        font::Data,
     text_meta:        TextMeta,
 
@@ -249,7 +249,7 @@ impl<'a> Context<'a> {
             &font_data,
         )?;
 
-        let text_3d = create_text(
+        let text_display = create_text(
             device.clone(),
             assembly.clone(),
             multisampling.clone(),
@@ -298,7 +298,7 @@ impl<'a> Context<'a> {
                 ubo_memory,
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
-                text_3d,
+                text_display,
                 font_data,
                 text_meta,
                 debug_data,
@@ -407,7 +407,7 @@ impl<'a> Context<'a> {
 
         self.text_meta = text_meta;
 
-        self.text_3d = create_text(
+        self.text_display = create_text(
             self.device.clone(),
             self.assembly.clone(),
             self.multisampling.clone(),
@@ -652,19 +652,18 @@ impl<'a> Context<'a> {
         let framebuffer_width = self.swapchain.extent().width();
         let framebuffer_height = self.swapchain.extent().height();
 
-        let mut text_ptr_3d = self.text_3d.begin_text_update::<*mut FontData>(
-            &self.text_meta.memory_3d,
-        )?;
+        let mut text_ptr_3d = self.text_display
+            .begin_text_update::<*mut FontData>(&self.text_meta.memory_3d)?;
 
         texts.prepare_bitmap_text(
             &self.font_data,
             &mut text_ptr_3d,
             framebuffer_width,
             framebuffer_height,
-            &mut self.text_3d.num_letters,
+            &mut self.text_display.num_letters,
         );
 
-        self.text_3d.end_text_update(
+        self.text_display.end_text_update(
             &self.device,
             &cmd_buffer,
             self.text_meta.clone(),

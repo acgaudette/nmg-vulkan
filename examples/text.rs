@@ -47,7 +47,7 @@ impl nmg::Start for Demo {
 
         components.transforms.set_position(
             text_1,
-            alg::Vec3::new(-1., 0., 1.),
+            alg::Vec3::new(-1., 0., 3.),
         );
 
         /* Add point light */

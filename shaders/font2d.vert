@@ -19,7 +19,7 @@ const float PERSPECTIVE_TRANSFORM = -1.0;
 
 void main(void)
 {
-	gl_Position = vec4(inPos, 1.0);
-  gl_Position.y = gl_Position.y * PERSPECTIVE_TRANSFORM;
-	outUV = inUV;
+    gl_Position = vec4(inPos, 1.0);
+    gl_Position.y = gl_Position.y * PERSPECTIVE_TRANSFORM;
+    outUV = inUV;
 }

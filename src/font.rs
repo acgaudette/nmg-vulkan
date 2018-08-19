@@ -21,14 +21,14 @@ macro_rules! get_float_from_pair {
 #[derive(Copy)]
 pub struct Bmchar {
     pub id: i32,
-	pub x: f32,
+    pub x: f32,
     pub y: f32,
-	pub width: f32,
-	pub height: f32,
-	pub xoffset: f32,
-	pub yoffset: f32,
-	pub xadvance: f32,
-	pub page: i32,
+    pub width: f32,
+    pub height: f32,
+    pub xoffset: f32,
+    pub yoffset: f32,
+    pub xadvance: f32,
+    pub page: i32,
 }
 
 impl Clone for Bmchar {
@@ -46,6 +46,7 @@ pub struct CommonFont {
     pub uv_width: f32,
     pub uv_height: f32,
     pub char_map: fnv::FnvHashMap<i32, Bmchar>,
+    pub font_face: String,
 }
 
 fn get_value_from_pair<'a> (pair: &'a str) -> &'a str {
@@ -100,6 +101,7 @@ impl Data {
         let mut uv_height = 0f32;
         let mut base_width = 0f32;
         let mut line_height = 0f32;
+        let mut font_face = "".into();
 
         for line in file.lines() {
             let line_string = line.unwrap_or_else(
@@ -110,7 +112,8 @@ impl Data {
             let mut iter = clone.split_whitespace();
             match iter.next() {
                 Some("info") => {
-                    // Currently do not care
+                    let pair = iter.next().expect("Could not find font face");
+                    font_face = get_value_from_pair(pair).replace("\"", "");
                     continue;
                 },
                 Some("common") => {
@@ -154,6 +157,7 @@ impl Data {
                 uv_width,
                 uv_height,
                 char_map,
+                font_face,
             }
         }
     }

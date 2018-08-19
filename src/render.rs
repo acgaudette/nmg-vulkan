@@ -1,6 +1,5 @@
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
-extern crate rand;
 
 use std;
 use alg;
@@ -47,6 +46,8 @@ pub const MAX_SOFTBODY_VERT: usize = (
   / 2; // There are two offset arrays
 
 pub const MAX_INSTANCE_LIGHTS: usize = 4;
+
+const MAX_CHAR_COUNT: u32 = 2048;
 
 #[allow(dead_code)]
 pub struct Context<'a> {
@@ -97,6 +98,12 @@ pub struct Context<'a> {
     dyn_ubo_buffer: vd::BufferHandle,
     dyn_ubo_memory: vd::DeviceMemoryHandle,
 
+    /* Text data */
+
+    text_3d:          TextDisplay,
+    font_data:        font::Data,
+    text_meta:        TextMeta,
+
     /* Debug data */
 
     debug_data: Option<DebugData>,
@@ -109,16 +116,13 @@ pub struct Context<'a> {
     _depth_image:     vd::Image,
     _views:           Vec<vd::ImageView>,
     _descriptor_pool: vd::DescriptorPool,
-    text_3d:          TextDisplay,
-    font_data:        font::Data,
-    text_meta:        TextMeta,
 }
 
 impl<'a> Context<'a> {
     pub fn new(
         window:     &vdw::winit::Window,
         model_data: Vec<ModelData>,
-    ) -> vd::Result<Context<'a>> {
+    ) -> vd::Result<Context> {
         let (
             surface,
             graphics_family,
@@ -225,6 +229,9 @@ impl<'a> Context<'a> {
         )?;
 
         let command_buffers = init_commands(&drawing_pool, &framebuffers)?;
+
+        /* Text data */
+
         let font_path = config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
             "settings",
@@ -239,7 +246,7 @@ impl<'a> Context<'a> {
             &transient_pool,
             &ubo_buffer,
             shared_alignment,
-            &font_data.pixels,
+            &font_data,
         )?;
 
         let text_3d = create_text(
@@ -291,6 +298,9 @@ impl<'a> Context<'a> {
                 ubo_memory,
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
+                text_3d,
+                font_data,
+                text_meta,
                 debug_data,
                 debug_line_count,
                 _vert_mod,
@@ -298,9 +308,6 @@ impl<'a> Context<'a> {
                 _depth_image,
                 _views,
                 _descriptor_pool,
-                text_3d,
-                font_data,
-                text_meta,
             }
         )
     }
@@ -395,7 +402,7 @@ impl<'a> Context<'a> {
             &self.transient_pool,
             &ubo_buffer,
             shared_alignment,
-            &self.font_data.pixels,
+            &self.font_data,
         )?;
 
         self.text_meta = text_meta;
@@ -503,7 +510,7 @@ impl<'a> Context<'a> {
         parameters: &Parameters,
         instances: &Instances,
         texts: &mut components::text::Manager,
-        ) -> vd::Result<()> {
+    ) -> vd::Result<()> {
         // Note: will most likely return an image index that is still in use
         let index = self.swapchain.acquire_next_image_khr(
             u64::max_value(), // Disable timeout
@@ -1323,16 +1330,9 @@ fn init_vulkan(window: &vdw::winit::Window) -> vd::Result<(
 
     /* Instance */
 
-    //TODO: Change to setting for use with RenderDoc
-    let _render_arr = [
-        std::ffi::CStr::from_bytes_with_nul(b"VK_KHR_surface\0").unwrap(),
-        std::ffi::CStr::from_bytes_with_nul(b"VK_KHR_win32_surface\0").unwrap()
-    ];
-
     let instance = vd::Instance::builder()
         .application_info(&app_info)
         .enabled_extensions(&extensions)
-        //.enabled_extension_names(&_render_arr[..])
         .enabled_layer_names(layers)
         .print_debug_report(cfg!(debug_assertions))
         .build(loader)?;
@@ -1763,6 +1763,8 @@ fn init_debug(
 
         [path, "/"].concat()
     };
+
+    println!("Loading debug shaders from \"{}\"", path);
 
     let vert_buffer = vd::util::read_spir_v_file(
         format!("{}{}", path, "debug_vert.spv")
@@ -2540,6 +2542,7 @@ fn init_drawing(
         .offset(0)
         .range(shared_alignment)
         .build();
+
     /* Dynamic */
 
     debug_assert!(std::mem::size_of::<InstanceUBO>() == DYNAMIC_UBO_WIDTH);
@@ -3057,12 +3060,12 @@ fn init_text_pipeline_builder(
     transient_pool: & vd::CommandPool,
     ubo_buffer: &vd::BufferHandle,
     shared_alignment: u64,
-    pixels: &Vec<u8>,
+    font_data: &font::Data,
 ) -> vd::Result<TextMeta> {
 
-    //Prepare Resources
+    /* Prepare Resources */
 
-    //Begin image preparation
+    // Begin image preparation
     let properties = vulkan_device.physical_device().memory_properties();
 
     let (buffer_3d, memory_3d) = create_buffer(
@@ -3074,8 +3077,8 @@ fn init_text_pipeline_builder(
     )?;
 
     let extent = vd::Extent3d::builder()
-        .width(512) //TODO: FONT_WIDTH replaced with constant; find right one
-        .height(512)
+        .width(font_data.common_font_data.uv_width as u32)
+        .height(font_data.common_font_data.uv_height as u32)
         .depth(1)
         .build();
 
@@ -3123,7 +3126,7 @@ fn init_text_pipeline_builder(
         )?
     }
 
-    let size = pixels.len() * std::mem::size_of::<u8>();
+    let size = font_data.pixels.len() * std::mem::size_of::<u8>();
     let (host_buffer, host_memory) = create_buffer(
         size as u64,
         vd::BufferUsageFlags::TRANSFER_SRC,
@@ -3134,7 +3137,7 @@ fn init_text_pipeline_builder(
     )?;
 
     unsafe {
-        copy_buffer(&vulkan_device, host_memory, size as u64, &pixels)?;
+        copy_buffer(&vulkan_device, host_memory, size as u64, &font_data.pixels)?;
     }
 
     let copy_cmd = get_transfer_buffer(
@@ -3182,14 +3185,14 @@ fn init_text_pipeline_builder(
         .command_buffers(&cmd_buffer_handles)
         .build();
 
-    //TODO: Verify queue_submit is correct
     match vulkan_device.get_device_queue(graphics_family, 0) {
         Some(gq) => {
             unsafe {
                 vulkan_device.queue_submit(
                     gq,
                     &[info],
-                    None)?;
+                    None
+                )?;
             }
         },
         None => return Err("no present queue".into())
@@ -3223,7 +3226,6 @@ fn init_text_pipeline_builder(
         .min_lod(0.)
         .max_lod(1.)
         .border_color(vd::BorderColor::FloatOpaqueWhite)
-        //TODO: Potentially query vulkan device to get rid of following call
         .anisotropy_enable(false)
         .max_anisotropy(1.0f32)
         .build(vulkan_device.clone())?;
@@ -3343,16 +3345,16 @@ pub struct Text {
 }
 
 impl Text {
-	pub fn empty_2d_instance() -> Text {
-		Text {
-			text: "".to_string(),
-			position: alg::Vec3::zero(),
+    pub fn empty_2d_instance() -> Text {
+        Text {
+            text: "".to_string(),
+            position: alg::Vec3::zero(),
             align: TextAlign::AlignCenter,
             scale: TextScale::PixelScale,
             scale_factor: 1f32,
             is_2d: true,
-		}
-	}
+        }
+    }
 
     pub fn empty_3d_instance() -> Text {
         Text {
@@ -3367,15 +3369,11 @@ impl Text {
 }
 
 struct TextDisplay {
-    _framebuffer_width: u32,
-    _framebuffer_height: u32,
     device: vd::Device,
     pipeline: vd::GraphicsPipeline,
-	num_letters: u64,
+    num_letters: u64,
     is_3d: bool,
 }
-
-const MAX_CHAR_COUNT:u32 =  2048;
 
 fn create_text(
     vulkan_device: vd::Device,
@@ -3384,9 +3382,7 @@ fn create_text(
     render_pass: &vd::RenderPass,
     text_meta: &TextMeta,
     is_3d: bool,
-) -> vd::Result<
-        TextDisplay,
-    > {
+) -> vd::Result<TextDisplay> {
     let resources = &text_meta.resources;
     
     // Loading shaders
@@ -3400,30 +3396,16 @@ fn create_text(
         [path, "/"].concat()
     };
 
-    let type_shader = if is_3d {"3"} else {"2"};
-    
-    println!("Loading {}d text shaders from \"{}\"", type_shader, path);
-    //TODO: Cleanup shaders
+    let shader_type = if is_3d {'3'} else {'2'};
+
+    println!("Loading {}d font shaders from \"{}\"", shader_type, path);
+
     let vert_buffer = vd::util::read_spir_v_file(
-        format!(
-            "{}{}",
-            path,
-            if is_3d {
-                "font3d_vert.spv"
-            } else {
-                "font2d_vert.spv"
-            })
+        format!("{}font{}d_vert.spv", path, shader_type)
     )?;
 
     let frag_buffer = vd::util::read_spir_v_file(
-        format!(
-            "{}{}",
-            path,
-            if is_3d {
-                "font3d_frag.spv"
-            } else {
-                "font2d_frag.spv"
-            })
+        format!("{}font{}d_frag.spv", path, shader_type)
     )?;
 
     let vert_mod = vd::ShaderModule::new(
@@ -3485,7 +3467,6 @@ fn create_text(
         .line_width(1f32)
         .build();
 
-
     let pipeline = vd::GraphicsPipeline::builder()
         .vertex_input_state(&vert_info)
         .input_assembly_state(&assembly)
@@ -3505,8 +3486,6 @@ fn create_text(
 
     Ok(
         TextDisplay {
-            _framebuffer_width: 1080u32,
-            _framebuffer_height: 720u32,
             device: vulkan_device,
             pipeline,
             num_letters,
@@ -3516,7 +3495,7 @@ fn create_text(
 }
 
 impl TextDisplay {
-	pub fn begin_text_update<T>(
+    pub fn begin_text_update<T>(
         &mut self,
         memory: &vd::DeviceMemoryHandle,
     )-> vd::Result<*mut FontData> {
@@ -3529,7 +3508,7 @@ impl TextDisplay {
                 vd::MemoryMapFlags::empty()
             )
         }
-	}
+    }
 
     pub fn end_text_update(
         &mut self,
@@ -3557,7 +3536,7 @@ impl TextDisplay {
         buffer: &vd::BufferHandle,
         descriptor_set: &vd::DescriptorSet,
         pipeline_layout: &vd::PipelineLayout,
-        ) -> vd::Result<()> {
+    ) -> vd::Result<()> {
     
         cmd_buffer.bind_pipeline(
             vd::PipelineBindPoint::Graphics,

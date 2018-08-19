@@ -5,24 +5,22 @@ use entity;
 
 use font::*;
 
-/**
- * Shared method for preparing and rendering text isntances, whether 3d or not
- */
+// Shared method for preparing and rendering text instances, whether 3d or not
 pub fn prepare_bitmap_text(
     instances: &mut fnv::FnvHashMap<entity::Handle, render::Text>,
-    font_data: &Font,
+    font: &Font,
     ptr: *mut *mut render::FontData,
     framebuffer_width:  u32,
     framebuffer_height: u32,
     num_letters: *mut u64,
 ) {
-    let common_data = &font_data.common_font_data;
+    let common_data = &font.common_font_data;
     let fb_w = framebuffer_width as f32;
     let fb_h = framebuffer_height as f32;
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
     
-    //Iterating through text instances for rendering
+    // Iterating through text instances for rendering
     for (_, text_instance) in (*instances).iter() {
         let x = text_instance.position.x;
         let y = text_instance.position.y;

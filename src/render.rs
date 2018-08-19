@@ -9,8 +9,7 @@ use graphics;
 use config;
 use statics;
 use util;
-
-use font::*;
+use font;
 
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
@@ -111,7 +110,7 @@ pub struct Context<'a> {
     _views:           Vec<vd::ImageView>,
     _descriptor_pool: vd::DescriptorPool,
     text_3d:          TextDisplay,
-    font_data:        Font,
+    font_data:        font::Data,
     text_meta:        TextMeta,
 }
 
@@ -231,7 +230,7 @@ impl<'a> Context<'a> {
             "settings",
             "font_path",
         );
-        let font_data = Font::new(&font_path);
+        let font_data = font::Data::new(&font_path);
 
         let text_meta = init_text_pipeline_builder(
             &swapchain.extent(),

@@ -22,7 +22,7 @@ pub mod camera;
 pub mod light;
 pub mod draw;
 pub mod softbody;
-pub mod text;
+pub mod bitmap;
 pub mod text3d;
 
 use entity;

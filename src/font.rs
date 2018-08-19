@@ -11,11 +11,7 @@ macro_rules! get_float_from_pair {
     ($( $x:expr ),* ) => {
         {$(
             get_value_from_pair(
-                $x.next().unwrap_or_else(
-                    || panic!(
-                        "Found None value instead of Some"
-                    )
-                )
+                $x.next().expect("Found None value instead of Some")
             ).parse::<f32>().unwrap()
         )*}
     };
@@ -39,7 +35,7 @@ impl Clone for Bmchar {
     fn clone(&self) -> Bmchar { *self }
 }
 
-pub struct Font {
+pub struct Data {
     pub pixels: Vec<u8>,
     pub common_font_data: CommonFont,
 }
@@ -83,10 +79,10 @@ fn parse_bmchar<'a>(full_str: &'a str) -> Bmchar {
     }
 }
 
-impl Font {
+impl Data {
     pub fn new(
         font_data_path: &str
-    ) -> Font {
+    ) -> Data {
         let file_handle = File::open(font_data_path).unwrap_or_else(
             |err| panic!(
                 "Could not load font data file: \"{}\"", err
@@ -99,7 +95,7 @@ impl Font {
                 255,
                 Default::default(),
             );
-            
+
         let mut uv_width = 0f32;
         let mut uv_height = 0f32;
         let mut base_width = 0f32;
@@ -126,20 +122,18 @@ impl Font {
                 },
                 Some("page") => {
                     iter.next(); //skip
-                    let pair = iter.next().unwrap_or_else(
-                        || panic!(
-                            "Found None value instead of Some"
-                    ));
+                    let pair = iter.next().expect(
+                        "Found None value instead of Some"
+                    );
                     let path = get_value_from_pair(pair).replace("\"", "");
                     let borrow = image::open(path)
                         .unwrap_or_else(
                             |err| panic!(
                                 "Could not unwrap image option: \"{}\"", err
                         )).as_rgba8()
-                        .unwrap_or_else(
-                            || panic!(
-                                "Found None instead of Some for rgba8"
-                        )).clone();
+                        .expect(
+                            "Found None instead of Some for rgba8"
+                        ).clone();
                     pixels = borrow.into_raw();
                 },
                 Some("char") => {
@@ -151,8 +145,8 @@ impl Font {
                 },
             }
         }
-        
-        Font {
+
+        Data {
             pixels,
             common_font_data: CommonFont {
                 line_height,

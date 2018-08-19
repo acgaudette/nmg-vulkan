@@ -3,11 +3,11 @@ extern crate fnv;
 use render;
 use entity;
 use components;
+use font;
 
 use components::transform;
-use components::text;
+use components::bitmap;
 
-use font::*;
 /// Builder pattern for text
 pub struct TextBuilder<'a> {
     manager: &'a mut Manager,
@@ -101,7 +101,7 @@ impl Manager {
 
     pub fn prepare_bitmap_text(
         &mut self,
-        font_data: &Font,
+        font_data: &font::Data,
         ptr: *mut *mut render::FontData,
         framebuffer_width:  u32,
         framebuffer_height: u32,
@@ -109,7 +109,7 @@ impl Manager {
     ) {
         // Calls function that shares functionality with other types of text
         for (_, text_instance) in self.instances.iter() {
-            text::prepare_text(
+            bitmap::prepare_text(
                 text_instance,
                 font_data,
                 ptr,

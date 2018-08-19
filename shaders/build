@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 VK_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
-COMPILER=$VK_PATH/glslangValidator
+COMPILER=glslangValidator
 
 function compile {
   if ! $COMPILER -V $1.$2; then exit 1; fi
@@ -20,11 +20,11 @@ function compile_font3d {
 
 ./clean
 
-compile_debug vert
-compile_debug frag
-
 compile shader vert
 compile shader frag
 
 compile_font3d vert
 compile_font3d frag
+
+compile_debug vert
+compile_debug frag

@@ -506,7 +506,7 @@ impl<'a> Context<'a> {
     }
 
     pub fn draw(
-        &self,
+        &mut self,
         parameters: &Parameters,
         instances: &Instances,
         texts: &mut components::text::Manager,

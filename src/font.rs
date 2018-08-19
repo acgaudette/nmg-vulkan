@@ -114,6 +114,7 @@ impl Data {
                 Some("info") => {
                     let pair = iter.next().expect("Could not find font face");
                     font_face = get_value_from_pair(pair).replace("\"", "");
+                    println!("Reading font \"{}\"", font_face);
                     continue;
                 },
                 Some("common") => {

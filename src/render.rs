@@ -502,7 +502,7 @@ impl<'a> Context<'a> {
         &self,
         parameters: &Parameters,
         instances: &Instances,
-        text3d_manager: &mut components::text3d::Manager,
+        texts: &mut components::text::Manager,
         ) -> vd::Result<()> {
         // Note: will most likely return an image index that is still in use
         let index = self.swapchain.acquire_next_image_khr(
@@ -649,7 +649,7 @@ impl<'a> Context<'a> {
             &self.text_meta.memory_3d,
         )?;
 
-        text3d_manager.prepare_bitmap_text(
+        texts.prepare_bitmap_text(
             &self.font_data,
             &mut text_ptr_3d,
             framebuffer_width,

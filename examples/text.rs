@@ -19,37 +19,12 @@ impl nmg::Start for Demo {
         entities:   &mut entity::Manager,
         components: &mut components::Container,
     ) {
-        // Instantiate three entities
-        let object_0 = entities.add();
-        let object_1 = entities.add();
-        let object_2 = entities.add();
-
-        // Add transform components
-        components.transforms.register(object_0);
-        components.transforms.register(object_1);
-        components.transforms.register(object_2);
-
-        // Add draw components
-        components.draws.register(object_0);
-        components.draws.register(object_1);
-        components.draws.register(object_2);
-
-        // Bind first model to each draw component
-        components.draws.bind_model(object_0, 0);
-        components.draws.bind_model(object_1, 0);
-        components.draws.bind_model(object_2, 0);
-
-        // Update demo state
-        self.objects.push(object_0);
-        self.objects.push(object_1);
-        self.objects.push(object_2);
-
         /* Add text 3d */
         let text_0 = entities.add();
         components.transforms.register(text_0);
         
-        components.text3ds.register(text_0);
-        components.text3ds.build()
+        components.texts.register(text_0);
+        components.texts.build()
             .text("QUICK BROWN FOX JUMPS OVER THE LAZY COW")
             .scale_factor(1f32)
             .for_entity(text_0);
@@ -63,8 +38,8 @@ impl nmg::Start for Demo {
         let text_1 = entities.add();
         components.transforms.register(text_1);
         
-        components.text3ds.register(text_1);
-        components.text3ds.build()
+        components.texts.register(text_1);
+        components.texts.build()
             .text("quick brown fox jumps over the lazy cow")
             .scale_factor(1f32)
             .for_entity(text_1);
@@ -72,7 +47,7 @@ impl nmg::Start for Demo {
 
         components.transforms.set_position(
             text_1,
-            alg::Vec3::new(-1., 0., 2.),
+            alg::Vec3::new(-1., 0., 1.),
         );
 
         /* Add point light */
@@ -125,30 +100,6 @@ impl nmg::Update for Demo {
         debug: &mut debug::Handler,
     ) {
         let angle = time as f32;
-
-        /* Animate objects */
-
-        components.transforms.set(
-            self.objects[0],
-            //alg::Vec3::new(0., 0., 2.),
-            alg::Vec3::new(0., 0., 0.),
-            alg::Quat::axis_angle(alg::Vec3::new(-0.5, 1.0, 0.5), angle * 2.),
-            alg::Vec3::one(),
-        );
-
-        components.transforms.set(
-            self.objects[1],
-            alg::Vec3::new(-0.8, -1.1, 3.),
-            alg::Quat::axis_angle_raw(alg::Vec3::up(), angle),
-            alg::Vec3::new(0.9, 0.9, 1.),
-        );
-
-        components.transforms.set(
-            self.objects[2],
-            alg::Vec3::new(1.6, 0.8, 4.),
-            alg::Quat::axis_angle_raw(alg::Vec3::fwd(), angle),
-            alg::Vec3::new(0.8, 1.2, 1.),
-        );
 
         // Animate light
         components.transforms.set_position(

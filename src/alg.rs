@@ -819,7 +819,7 @@ impl std::fmt::Display for Mat3 {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Mat4 {
 

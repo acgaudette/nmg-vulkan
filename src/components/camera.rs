@@ -98,6 +98,13 @@ impl Manager {
             .1.near = near;
     }
 
+    pub fn get_near(&self, entity: entity::Handle) -> f32 {
+        debug_validate_entity!(self, entity);
+        self.instances.iter()
+            .find(|instance| instance.0 == entity).unwrap()
+            .1.near
+    }
+
     pub fn set_far(&mut self, entity: entity::Handle, far: f32) {
         debug_validate_entity!(self, entity);
         self.instances.iter_mut()

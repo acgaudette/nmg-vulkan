@@ -114,6 +114,16 @@ impl std::ops::Mul<f32> for Vec2 {
     }
 }
 
+impl std::fmt::Display for Vec2 {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            out,
+            "( {}, {} )",
+            self.x, self.y,
+        )
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vec3 {

@@ -92,6 +92,17 @@ impl std::ops::Add for Vec2 {
     }
 }
 
+impl std::ops::Sub for Vec2 {
+    type Output = Vec2;
+
+    fn sub(self, other: Vec2) -> Vec2 {
+        Vec2::new(
+            self.x - other.x,
+            self.y - other.y,
+        )
+    }
+}
+
 impl std::ops::Mul<f32> for Vec2 {
     type Output = Vec2;
 

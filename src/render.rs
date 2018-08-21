@@ -2801,7 +2801,7 @@ unsafe fn copy_buffer<T: std::marker::Copy>(
     )?;
 
     debug_assert!(data.len() * std::mem::size_of::<T>() == size as usize);
-    
+
     let destination = std::slice::from_raw_parts_mut(
         ptr,
         data.len()
@@ -2880,7 +2880,7 @@ fn set_image_layout_helper(
         },
         _ => {}
     }
-    
+
     let mut dst_access_mask = vd::AccessFlags::NONE;
     match new_image_layout {
         layout::ColorAttachmentOptimal => {
@@ -2890,7 +2890,7 @@ fn set_image_layout_helper(
             dst_access_mask = vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE;
         },
         layout::TransferSrcOptimal => {
-            dst_access_mask = vd::AccessFlags::TRANSFER_READ;        
+            dst_access_mask = vd::AccessFlags::TRANSFER_READ;
         },
         layout::TransferDstOptimal => {
             dst_access_mask = vd::AccessFlags::TRANSFER_WRITE;
@@ -2905,7 +2905,7 @@ fn set_image_layout_helper(
         },
         _ => {}
     }
-    
+
     let image_memory_barrier = image_memory_barrier_builder
         .src_access_mask(src_access_mask)
         .dst_access_mask(dst_access_mask)
@@ -3025,7 +3025,7 @@ fn init_text_pipeline_resources(
     let scissors = [scissor];
     let binding_description = [FontData::binding_description()];
     let attribute_descriptions = FontData::attribute_descriptions();
-    
+
     let resources = TextPipelineResources {
         attachments,
         viewports,
@@ -3115,7 +3115,7 @@ fn init_text_pipeline_builder(
             None,
         )?
     };
-    
+
     unsafe {
         vulkan_device.bind_image_memory(
             _image.handle(),
@@ -3149,7 +3149,7 @@ fn init_text_pipeline_builder(
         vd::ImageLayout::Undefined,
         vd::ImageLayout::TransferDstOptimal,
         vd::PipelineStageFlags::ALL_COMMANDS,
-        vd::PipelineStageFlags::ALL_COMMANDS,            
+        vd::PipelineStageFlags::ALL_COMMANDS,
     );
 
     let image_subresource_layers = vd::ImageSubresourceLayers::builder()

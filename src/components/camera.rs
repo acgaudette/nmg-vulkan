@@ -84,6 +84,13 @@ impl Manager {
             .1.fov = fov;
     }
 
+    pub fn get_fov(&self, entity: entity::Handle) -> f32 {
+        debug_validate_entity!(self, entity);
+        self.instances.iter()
+            .find(|instance| instance.0 == entity).unwrap()
+            .1.fov
+    }
+
     pub fn set_near(&mut self, entity: entity::Handle, near: f32) {
         debug_validate_entity!(self, entity);
         self.instances.iter_mut()

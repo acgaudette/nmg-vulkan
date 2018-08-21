@@ -67,8 +67,8 @@ impl Metadata {
 
 #[derive(Clone, Copy)]
 pub struct ScreenData {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
 }
 
 pub trait Start {

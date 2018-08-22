@@ -519,6 +519,15 @@ impl Mat3 {
         }
     }
 
+    pub fn to_mat4(self) -> Mat4 {
+        Mat4::new(
+            self.x0, self.y0, self.z0, 0.0,
+            self.x1, self.y1, self.z1, 0.0,
+            self.x2, self.y2, self.z2, 0.0,
+                0.0,     0.0,     0.0, 1.0,
+        )
+    }
+
     pub fn diagonal_sqrt(self) -> Mat3 {
         debug_assert!(self.x0 >= 0.0);
         debug_assert!(self.y1 >= 0.0);

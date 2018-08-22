@@ -20,11 +20,11 @@ function compile_font3d {
 
 ./clean
 
-compile shader vert
-compile shader frag
-
 compile_font3d vert
 compile_font3d frag
 
 compile_debug vert
 compile_debug frag
+
+compile shader vert
+compile shader frag

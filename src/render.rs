@@ -1584,11 +1584,11 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     println!("Loading shaders from \"{}\"", path);
 
     let vert_buffer = vd::util::read_spir_v_file(
-        format!("{}{}", path, "vert.spv")
+        format!("{}{}", path, "base_vert.spv")
     )?;
 
     let frag_buffer = vd::util::read_spir_v_file(
-        format!("{}{}", path, "frag.spv")
+        format!("{}{}", path, "base_frag.spv")
     )?;
 
     let vert_mod = vd::ShaderModule::new(device.clone(), &vert_buffer)?;

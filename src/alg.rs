@@ -212,6 +212,12 @@ impl Vec3 {
     pub fn lerp(self, other: Vec3, t: f32) -> Vec3 {
         self * (1. - t) + other * t
     }
+
+    #[inline]
+    pub fn is_uniform(self) -> bool {
+        ((self.x - self.y) + (self.y - self.z)).abs()
+            < 2.0 * std::f32::EPSILON
+    }
 }
 
 impl std::ops::Add for Vec3 {

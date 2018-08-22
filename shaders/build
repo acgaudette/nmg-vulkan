@@ -18,12 +18,13 @@ function compile {
 }
 
 ./clean
+mkdir -p out
 
-compile_font3d vert
-compile_font3d frag
+compile font3d vert font3d_
+compile font3d frag font3d_
 
-compile_debug vert
-compile_debug frag
+compile debug vert debug_
+compile debug frag debug_
 
 compile shader vert
 compile shader frag

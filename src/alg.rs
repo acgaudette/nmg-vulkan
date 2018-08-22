@@ -892,6 +892,12 @@ impl Mat4 {
         Mat4::translation(translation.x, translation.y, translation.z)
     }
 
+    pub fn set_translation(&mut self, translation: Vec3) {
+        self.x3 = translation.x;
+        self.y3 = translation.y;
+        self.z3 = translation.z;
+    }
+
     pub fn to_position(&self) -> Vec3 {
         Vec3::new(self.x3, self.y3, self.z3)
     }

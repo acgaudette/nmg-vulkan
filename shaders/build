@@ -17,14 +17,14 @@ function compile {
     > out/$prefix$extension.spvasm
 }
 
+function compile_all {
+  compile $1 vert
+  compile $1 frag
+}
+
 ./clean
 mkdir -p out
 
-compile font3d vert font3d_
-compile font3d frag font3d_
-
-compile debug vert debug_
-compile debug frag debug_
-
-compile shader vert
-compile shader frag
+compile_all font3d
+compile_all debug
+compile_all base

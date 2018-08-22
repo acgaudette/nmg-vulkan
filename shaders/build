@@ -5,11 +5,16 @@ COMPILER=$VK_PATH/glslangValidator
 
 function compile {
   name=$1; extension=$2; prefix=$3
-  if ! $COMPILER -H $name.$extension \
-    -o out/$prefix$extension.spv \
-    > out/$prefix$extension.spvasm
+
+  # Check for syntax errors
+  if ! $COMPILER --target-env vulkan1.0 $name.$extension
     then exit 1
   fi
+
+  # Generate binary and disassembly
+  $COMPILER -H $name.$extension \
+    -o out/$prefix$extension.spv \
+    > out/$prefix$extension.spvasm
 }
 
 ./clean

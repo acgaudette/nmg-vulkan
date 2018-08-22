@@ -300,6 +300,7 @@ impl std::fmt::Display for Vec3 {
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Mat3 {
+
     /* GLSL/SPIR-V expects matrices in column-major order
      * Here I format methods transposed for conventional readability:
      * [ x0 ] [ x1 ] [ x2 ]

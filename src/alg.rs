@@ -892,6 +892,10 @@ impl Mat4 {
         Mat4::translation(translation.x, translation.y, translation.z)
     }
 
+    pub fn to_position(&self) -> Vec3 {
+        Vec3::new(self.x3, self.y3, self.z3)
+    }
+
     pub fn scale(x: f32, y: f32, z: f32) -> Mat4 {
         Mat4::new(
               x, 0.0, 0.0, 0.0,

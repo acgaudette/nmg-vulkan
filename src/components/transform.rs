@@ -10,6 +10,7 @@ macro_rules! get_instance {
     }}
 }
 
+#[allow(unused_macros)]
 macro_rules! get_mut_instance {
     ($self: ident, $entity: expr) => {{
         debug_validate_entity!($self, $entity);

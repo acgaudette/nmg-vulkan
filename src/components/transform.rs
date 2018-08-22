@@ -63,7 +63,7 @@ impl Transform {
     /// Note that the mutable reference to self could only have been obtained
     /// unsafely.
     fn update_cached(&mut self, manager: &Manager) {
-        // This method is only called internally,
+        // The method is only called internally,
         // so we can assume this will succeed
         debug_assert!(self.parent.is_some());
         let parent = manager.instances[self.parent.unwrap()].as_ref().unwrap();
@@ -80,10 +80,10 @@ impl Transform {
         /* Assign transform data */
 
         let scale = transform.to_scale();
-        self.scale = scale;
 
+        self.scale = scale;
         self.orientation = transform.to_rotation_raw(scale).to_quat();
-        self.position = transform * alg::Vec3::zero();
+        self.position = transform.to_position();
         self.cached_transform = transform;
     }
 
@@ -145,7 +145,7 @@ impl Manager {
 
     /// Set transform parent of `entity` to `parent`
     pub fn parent(&mut self, entity: entity::Handle, parent: entity::Handle) {
-        debug_validate_entity!(self, entity);
+        debug_validate_entity!(self, entity); // Child
         debug_validate_entity!(self, parent);
 
         #[cfg(debug_assertions)] {
@@ -177,7 +177,7 @@ impl Manager {
         }
 
         // TODO: Potentially update local transform
-        // relative to the new parent
+        // relative to the new parent at the time of assignment
 
         transform.update_cached(self);
         unsafe { transform.update_children(self); }
@@ -228,6 +228,7 @@ impl Manager {
         self.set_raw(i, position, orientation, scale);
     }
 
+    /// Set transform position
     pub fn set_position(
         &mut self,
         entity: entity::Handle,
@@ -237,6 +238,7 @@ impl Manager {
         transform.position = position;
     }
 
+    /// Set transform orientation
     pub fn set_orientation(
         &mut self,
         entity: entity::Handle,
@@ -246,6 +248,7 @@ impl Manager {
         transform.orientation = orientation;
     }
 
+    /// Set transform scale
     pub fn set_scale(
         &mut self,
         entity: entity::Handle,

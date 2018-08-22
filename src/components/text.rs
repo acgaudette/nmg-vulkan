@@ -54,7 +54,6 @@ pub struct Manager {
 }
 
 impl components::Component for Manager {
-
     fn register(&mut self, entity: entity::Handle) {
         self.instances.insert(
             entity,
@@ -94,8 +93,8 @@ impl Manager {
 
     // Update text positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
-        for (entity, text3d) in &mut self.instances {
-            text3d.position = transforms.get_position(*entity);
+        for (entity, text) in &mut self.instances {
+            text.position = transforms.get_position(*entity);
         }
     }
 

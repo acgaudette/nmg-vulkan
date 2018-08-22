@@ -1537,6 +1537,66 @@ mod tests {
         assert!(translation * Vec3::zero() == Vec3::new(2., -7., 0.5));
     }
 
+    #[test]
+    fn mat4_to_pos() {
+        let vec = Vec3::new(1.0, 2.0, 3.0);
+        let mat = Mat4::translation_vec(vec);
+
+        assert_eq!(mat.to_position(), vec);
+
+        // Test `set_translation`
+        let mut mat = Mat4::id();
+        mat.set_translation(vec);
+
+        assert_eq!(mat.to_position(), vec);
+
+        let mat = Mat4::transform(
+            vec,
+            Quat::axis_angle(Vec3::new(7.0, 8.0, 9.0), 10.0),
+            Vec3::new(4.0, 5.0, 6.0),
+        );
+
+        assert_eq!(mat.to_position(), vec);
+    }
+
+    #[test]
+    fn mat4_to_scale() {
+        let vec = Vec3::new(1.0, 2.0, 3.0);
+        let mat = Mat4::scale_vec(vec);
+
+        assert_eq!(mat.to_scale(), vec);
+
+        let mat = Mat4::transform(
+            Vec3::new(4.0, 5.0, 6.0),
+            Quat::axis_angle(Vec3::new(7.0, 8.0, 9.0), 10.0),
+            vec,
+        );
+
+        let error = vec3_error(mat.to_scale(), vec);
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
+    #[test]
+    fn mat4_to_rot() {
+        let rot = Quat::axis_angle(Vec3::new(7.0, 8.0, 9.0), 10.0).to_mat();
+        let mat = rot * Mat4::id();
+
+        let error = mat3_error(mat.to_rotation(), rot);
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+
+        let mat = Mat4::transform(
+            Vec3::new(4.0, 5.0, 6.0),
+            Quat::axis_angle(Vec3::new(7.0, 8.0, 9.0), 10.0),
+            Vec3::new(1.0, 2.0, 3.0),
+        );
+
+        let error = mat3_error(mat.to_rotation(), rot);
+        eprintln!("Error: {}", error);
+        assert!(error < 0.0001);
+    }
+
     /* Quaternion */
 
     #[test]

@@ -245,8 +245,26 @@ impl Manager {
         entity: entity::Handle,
         position: alg::Vec3,
     ) {
-        let transform = get_mut_instance!(self, entity);
-        transform.position = position;
+        debug_validate_entity!(self, entity);
+        let i = entity.get_index() as usize;
+        let transform = get_mut_instance_raw!(self, i);
+        transform.local_position = position;
+
+        /* Set worldspace transform data */
+
+        // If this transform has a parent, update in chain
+        if transform.parent.is_some() {
+            transform.update_cached(self);
+        }
+
+        // No parent (chain root)--just set data
+        else {
+            transform.position = position;
+            transform.cached_transform.set_translation(position);
+        }
+
+        // Update children transforms
+        unsafe { transform.update_children(self); }
     }
 
     /// Set transform orientation
@@ -255,8 +273,30 @@ impl Manager {
         entity: entity::Handle,
         orientation: alg::Quat,
     ) {
-        let transform = get_mut_instance!(self, entity);
-        transform.orientation = orientation;
+        debug_validate_entity!(self, entity);
+        let i = entity.get_index() as usize;
+        let transform = get_mut_instance_raw!(self, i);
+        transform.local_orientation = orientation;
+
+        /* Set worldspace transform data */
+
+        // If this transform has a parent, update in chain
+        if transform.parent.is_some() {
+            transform.update_cached(self);
+        }
+
+        // No parent (chain root)--just set data
+        else {
+            transform.orientation = orientation;
+            transform.cached_transform = alg::Mat4::transform(
+                transform.position,
+                transform.orientation,
+                transform.scale,
+            );
+        }
+
+        // Update children transforms
+        unsafe { transform.update_children(self); }
     }
 
     /// Set transform scale
@@ -265,8 +305,30 @@ impl Manager {
         entity: entity::Handle,
         scale: alg::Vec3,
     ) {
-        let transform = get_mut_instance!(self, entity);
-        transform.scale = scale;
+        debug_validate_entity!(self, entity);
+        let i = entity.get_index() as usize;
+        let transform = get_mut_instance_raw!(self, i);
+        transform.local_scale = scale;
+
+        /* Set worldspace transform data */
+
+        // If this transform has a parent, update in chain
+        if transform.parent.is_some() {
+            transform.update_cached(self);
+        }
+
+        // No parent (chain root)--just set data
+        else {
+            transform.scale = scale;
+            transform.cached_transform = alg::Mat4::transform(
+                transform.position,
+                transform.orientation,
+                transform.scale,
+            );
+        }
+
+        // Update children transforms
+        unsafe { transform.update_children(self); }
     }
 
     /* "Unsafe" methods for components with similar data layouts.

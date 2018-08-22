@@ -69,6 +69,17 @@ impl Transform {
         debug_assert!(self.parent.is_some());
         let parent = manager.instances[self.parent.unwrap()].as_ref().unwrap();
 
+        // Check for non-uniform scale at runtime
+        #[cfg(debug_assertions)] {
+            let parent_scale = parent.cached_transform.to_scale();
+            if !parent_scale.is_uniform() {
+                eprintln!(
+                    "Warning: Non-uniform scale is not supported \
+                    in transform hierarchy"
+                );
+            }
+        }
+
         // Rebuild cached transform for this instance
         let transform =
             parent.cached_transform

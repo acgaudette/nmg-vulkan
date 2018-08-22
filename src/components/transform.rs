@@ -199,6 +199,17 @@ impl Manager {
         )
     }
 
+    /// Returns transform data as alg::Mat4
+    pub fn get_mat(&self, entity: entity::Handle) -> alg::Mat4 {
+        let transform = get_instance!(self, entity);
+
+        alg::Mat4::transform(
+            transform.position,
+            transform.orientation,
+            transform.scale,
+        )
+    }
+
     pub fn get_position(&self, entity: entity::Handle) -> alg::Vec3 {
         let transform = get_instance!(self, entity);
         transform.position

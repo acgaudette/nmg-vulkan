@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
+rm -rf out
 rm -f *.spv
 rm -f *.spvasm

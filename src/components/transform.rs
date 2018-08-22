@@ -320,6 +320,17 @@ impl Manager {
         debug_validate_entity!(self, entity);
         let i = entity.get_index() as usize;
         let transform = get_mut_instance_raw!(self, i);
+
+        // Check for non-uniform scale at assignment-time
+        #[cfg(debug_assertions)] {
+            if !transform.children.is_empty() && !scale.is_uniform() {
+                panic!(
+                    "Non-uniform scale is not supported \
+                    in transform hierarchy"
+                );
+            }
+        }
+
         transform.local_scale = scale;
 
         /* Set worldspace transform data */
@@ -357,6 +368,16 @@ impl Manager {
         scale: alg::Vec3,
     ) {
         let transform = get_mut_instance_raw!(self, index);
+
+        // Check for non-uniform scale at assignment-time
+        #[cfg(debug_assertions)] {
+            if !transform.children.is_empty() && !scale.is_uniform() {
+                panic!(
+                    "Non-uniform scale is not supported \
+                    in transform hierarchy"
+                );
+            }
+        }
 
         transform.local_position = position;
         transform.local_orientation = orientation;

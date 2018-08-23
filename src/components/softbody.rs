@@ -1004,6 +1004,19 @@ impl Manager {
         ).1
     }
 
+    /// Returns closest point on bounding box in specified direction. \
+    /// `center` is a parameter for optional caching.
+    pub fn closest_point_bounded(
+        &self,
+        entity: entity::Handle,
+        direction: alg::Vec3,
+        center: alg::Vec3,
+    ) -> alg::Vec3 {
+        let point = self.closest_point(entity, direction, center);
+        let direction_norm = direction.norm();
+        center + direction_norm * direction_norm.dot(point - center)
+    }
+
     pub fn pivot(
         &self,
         parent: entity::Handle,

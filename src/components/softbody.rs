@@ -990,11 +990,10 @@ impl Manager {
     pub fn closest_point(
         &self,
         entity: entity::Handle,
-        direction: alg::Vec3,
+        direction: alg::Vec3, // Does not need to be normalized
+        center: alg::Vec3,
     ) -> alg::Vec3 {
         let instance = get_instance!(self, entity);
-        let center = instance.center();
-
         instance.particles.iter().fold(
             (std::f32::MIN, alg::Vec3::zero()),
             |result, particle| {

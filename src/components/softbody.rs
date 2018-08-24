@@ -638,8 +638,8 @@ impl Instance {
         alg::Mat3::axes(right, up, fwd)
     }
 
-    /// Returns instance orientation using least squares fit
-    /// `center` is a parameter for optional caching
+    /// Returns instance orientation using least squares fit. \
+    /// `center` is a parameter for optional caching.
     pub fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
         let mut transform = alg::Mat3::zero();
 
@@ -987,6 +987,8 @@ impl Manager {
         get_mut_instance!(self, entity)
     }
 
+    /// Returns closest particle in specified direction. \
+    /// `center` is a parameter for optional caching.
     pub fn closest_point(
         &self,
         entity: entity::Handle,

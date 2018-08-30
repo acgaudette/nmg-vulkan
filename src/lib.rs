@@ -517,6 +517,7 @@ fn vdw_key_to_key(keycode: vdw::winit::VirtualKeyCode) -> Option<input::Key> {
         VirtualKeyCode::J =>        Some(Key::J),
         VirtualKeyCode::K =>        Some(Key::K),
         VirtualKeyCode::L =>        Some(Key::L),
+        VirtualKeyCode::Z =>        Some(Key::Z),
         VirtualKeyCode::Up =>       Some(Key::Up),
         VirtualKeyCode::Down =>     Some(Key::Down),
         VirtualKeyCode::Left =>     Some(Key::Left),

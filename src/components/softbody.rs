@@ -759,6 +759,16 @@ impl Instance {
         self.particles.iter_mut()
             .for_each(|particle| particle.last = particle.position);
     }
+
+    /// Pin instance position to target. \
+    /// Equivalent to calling `translate(target - center)` and `lock()`. \
+    /// `center` is a parameter for optional caching.
+    pub fn pin(&mut self, target: alg::Vec3, center: alg::Vec3) {
+        for particle in self.particles.iter_mut() {
+            particle.position = particle.position - center + target;
+            particle.last = particle.position;
+        }
+    }
 }
 
 /// Builder pattern for softbody instances

@@ -1,6 +1,6 @@
 #![allow(dead_code)] // Library
 
-extern crate image;
+extern crate png;
 extern crate fnv;
 
 use std::io::BufReader;
@@ -130,15 +130,19 @@ impl Data {
                         "Found None value instead of Some"
                     );
                     let path = get_value_from_pair(pair).replace("\"", "");
-                    let borrow = image::open(path)
-                        .unwrap_or_else(
-                            |err| panic!(
-                                "Could not unwrap image option: \"{}\"", err
-                        )).as_rgba8()
-                        .expect(
-                            "Found None instead of Some for rgba8"
-                        ).clone();
-                    pixels = borrow.into_raw();
+                    let decoder = png::Decoder::new(
+                        File::open(path)
+                            .unwrap_or_else(
+                                |err| panic!("Could not find file: \"{}\"", err)
+                    ));
+                    let (info, mut reader) = decoder.read_info().unwrap_or_else(
+                        |err| panic!("Could not decode path: \"{}\"", err)
+                    );
+                    let mut buf = vec![0; info.buffer_size()];
+                    reader.next_frame(&mut buf).unwrap_or_else(
+                        |err| panic!("Could not write frame: \"{}\"", err)
+                    );
+                    pixels = buf.clone();
                 },
                 Some("char") => {
                     let bmchar_instance = parse_bmchar(&line_string.clone());

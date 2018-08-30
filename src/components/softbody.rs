@@ -232,6 +232,7 @@ struct Joint {
     x_limit: Range,
     y_limit: Range,
     z_limit: Range,
+    unlocked: bool,
     transform: alg::Quat,
     offset: alg::Vec3,
     cone: ReachCone,
@@ -243,6 +244,7 @@ impl Joint {
         x_limit: Range,
         y_limit: Range,
         z_limit: Range,
+        unlocked: bool,
         transform: alg::Quat,
         offset: alg::Vec3,
     ) -> Joint {
@@ -256,6 +258,7 @@ impl Joint {
             x_limit,
             y_limit,
             z_limit,
+            unlocked,
             transform,
             offset,
             cone,

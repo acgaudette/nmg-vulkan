@@ -349,6 +349,13 @@ impl<'a> JointBuilder<'a> {
         self.x(min, max).y(min, max).z(min, max)
     }
 
+    /* Locking */
+
+    pub fn unlock(&mut self) -> &'a mut JointBuilder {
+        self.unlocked = true;
+        self
+    }
+
     /* Joint transform */
 
     pub fn fwd(&mut self, fwd: alg::Vec3) -> &'a mut JointBuilder {
@@ -386,11 +393,8 @@ impl<'a> JointBuilder<'a> {
             child,
             transform,
             self.offset,
-            (
-                self.x_limit.unwrap(),
-                self.y_limit.unwrap(),
-                self.z_limit.unwrap()
-            ),
+            limits,
+            self.unlocked,
         );
     }
 }

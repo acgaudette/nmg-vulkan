@@ -1527,6 +1527,9 @@ impl Manager {
         child: &mut Instance,
         joint: &Joint,
     ) {
+        // Ignore unlocked joints
+        if joint.unlocked { return }
+
         // If all limits are equal, then the joint is unlimited
         debug_assert!(!(
                joint.x_limit.min == joint.x_limit.max

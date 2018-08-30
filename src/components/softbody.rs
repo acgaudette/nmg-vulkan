@@ -375,16 +375,36 @@ impl<'a> JointBuilder<'a> {
 
     /// Finalize
     pub fn for_child(&mut self, child: entity::Handle) {
-        let parent = if let Some(parent) = self.parent {
-            parent
-        } else {
-            panic!("No parent specified to joint builder");
-        };
+        let parent = self.parent.expect(
+            "No parent specified to joint builder"
+        );
 
         debug_assert!(parent != child);
-        debug_assert!(self.x_limit.is_some());
-        debug_assert!(self.y_limit.is_some());
-        debug_assert!(self.z_limit.is_some());
+
+        let expected = !self.unlocked
+            || self.x_limit.is_some()
+            || self.y_limit.is_some()
+            || self.z_limit.is_some();
+
+        let limits = if expected {
+            (
+                self.x_limit.expect(
+                    "No x-axis limit range specified in joint builder"
+                ),
+                self.y_limit.expect(
+                    "No y-axis limit range specified in joint builder"
+                ),
+                self.z_limit.expect(
+                    "No z-axis limit range specified in joint builder"
+                ),
+            )
+        } else {
+            (
+                Range::zero(),
+                Range::zero(),
+                Range::zero(),
+            )
+        };
 
         let transform = alg::Quat::from_vecs(self.fwd, self.up);
 

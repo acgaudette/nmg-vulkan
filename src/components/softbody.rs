@@ -138,6 +138,12 @@ struct Range {
     max: f32,
 }
 
+impl Range {
+    fn zero() -> Range {
+        Range { min: 0.0, max: 0.0 }
+    }
+}
+
 #[derive(Clone, Copy)]
 struct ReachPlane {
     normal: alg::Vec3,

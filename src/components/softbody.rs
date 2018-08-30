@@ -278,12 +278,13 @@ impl Joint {
 pub struct JointBuilder<'a> {
     manager: &'a mut Manager,
     parent: Option<entity::Handle>,
-    fwd: alg::Vec3,
-    up: alg::Vec3,
-    offset: alg::Vec3,
     x_limit: Option<Range>,
     y_limit: Option<Range>,
     z_limit: Option<Range>,
+    unlocked: bool,
+    fwd: alg::Vec3,
+    up: alg::Vec3,
+    offset: alg::Vec3,
 }
 
 impl<'a> JointBuilder<'a> {
@@ -291,12 +292,13 @@ impl<'a> JointBuilder<'a> {
         JointBuilder {
             manager,
             parent: None,
-            fwd: alg::Vec3::fwd(),
-            up: alg::Vec3::up(),
-            offset: alg::Vec3::zero(),
             x_limit: None,
             y_limit: None,
             z_limit: None,
+            unlocked: false,
+            fwd: alg::Vec3::fwd(),
+            up: alg::Vec3::up(),
+            offset: alg::Vec3::zero(),
         }
     }
 

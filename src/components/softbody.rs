@@ -1172,6 +1172,7 @@ impl Manager {
         transform: alg::Quat,
         offset: alg::Vec3,
         limits: (Range, Range, Range),
+        unlocked: bool,
     ) {
         debug_validate_entity!(self, parent);
         debug_validate_entity!(self, child);
@@ -1189,6 +1190,7 @@ impl Manager {
             limits.0,
             limits.1,
             limits.2,
+            unlocked,
             transform,
             offset,
         );

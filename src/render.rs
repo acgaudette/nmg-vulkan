@@ -3488,6 +3488,7 @@ impl Text {
     }
 }
 
+// Contains data for making indexed draws
 pub struct TextInstance {
     pub index_count:  u32,
     pub index_offset: u32,
@@ -3495,6 +3496,7 @@ pub struct TextInstance {
     pub vertex_offset: i32,
 }
 
+// Reference to the pipeline for drawing text; used for 3d and non-3d text
 struct TextDisplay {
     device: vd::Device,
     pipeline: vd::GraphicsPipeline,

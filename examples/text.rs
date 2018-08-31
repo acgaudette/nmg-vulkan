@@ -11,6 +11,8 @@ use nmg::debug;
 struct Demo {
     objects: Vec<entity::Handle>,
     light: Option<entity::Handle>,
+    text_0: Option<entity::Handle>,
+    text_1: Option<entity::Handle>,
 }
 
 default_traits!(Demo, [nmg::FixedUpdate, components::softbody::Iterate]);
@@ -24,6 +26,7 @@ impl nmg::Start for Demo {
         /* Add text 3d */
         let text_0 = entities.add();
         components.transforms.register(text_0);
+        self.text_0 = Some(text_0);
 
         components.texts.register(text_0);
         components.texts.build()
@@ -39,6 +42,7 @@ impl nmg::Start for Demo {
 
         let text_1 = entities.add();
         components.transforms.register(text_1);
+        self.text_1 = Some(text_1);
 
         components.texts.register(text_1);
         components.texts.build()
@@ -50,6 +54,10 @@ impl nmg::Start for Demo {
         components.transforms.set_position(
             text_1,
             alg::Vec3::new(-1., 0., 3.),
+        );
+        components.transforms.parent(
+            text_0,
+            text_1,
         );
 
         /* Add point light */
@@ -113,11 +121,20 @@ impl nmg::Update for Demo {
                 1.0 * angle.cos(),
             ) + alg::Vec3::fwd() * 1.0,
         );
+        components.transforms.set_orientation(
+            self.text_1.unwrap(),
+            alg::Quat::axis_angle_raw(alg::Vec3::up(), angle),
+        );
     }
 }
 
 fn main() {
-    let demo = Demo { objects: Vec::new(), light: None };
+    let demo = Demo {
+        objects: Vec::new(),
+        light: None,
+        text_0: None,
+        text_1: None,
+    };
     let model_data = get_models();
     nmg::go(model_data, demo)
 }

@@ -5,10 +5,12 @@ use font;
 pub fn prepare_text(
     text_instance: &render::Text,
     font: &font::Data,
-    ptr: *mut *mut render::FontData,
+    vertex_ptr: *mut *mut render::FontData,
+    idx_ptr: *mut *mut u32,
+    idx_offset: &mut &mut u32,
     framebuffer_width:  u32,
     framebuffer_height: u32,
-    num_letters: *mut u64,
+    text_instances: &mut Vec<render::TextInstance>,
 ) {
     let common_data = &font.common_font_data;
     let fb_w = framebuffer_width as f32;
@@ -17,16 +19,15 @@ pub fn prepare_text(
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
 
-    let x = text_instance.position.x;
-    let y = text_instance.position.y;
-    let z = text_instance.position.z;
+    let x = 0f32;
+    let y = 0f32;
+    let z = 0f32;
 
     /*
       Determines scaling for text depending on type of text
       e.g. 3D text dependent on position versus label text
       viewable on screen at all times
      */
-
     let (char_width_scale, char_height_scale) = {
         if text_instance.is_2d {
             if text_instance.scale == render::TextScale::PixelScale {
@@ -46,6 +47,7 @@ pub fn prepare_text(
     let mut curr_line_start_x = x;
     let mut curr_line_start_y = y + common_data.line_height * char_height_scale;
 
+    let mut num_letters = 0;
     // Render quads for each individual character
     for c in text_instance.text.chars() {
         // Alias for character data from character map
@@ -112,16 +114,46 @@ pub fn prepare_text(
         );
 
         for vertex in [
-            top_left, top_right, bottom_right,
-            top_left, bottom_right, bottom_left,
+            top_left, top_right, bottom_left, bottom_right,
         ].iter() {
             unsafe {
-                (**ptr) = *vertex;
-                (*ptr) = (*ptr).offset(1);
+                (**vertex_ptr) = *vertex;
+                (*vertex_ptr) = (*vertex_ptr).offset(1);
+            }
+        }
+
+        /*
+            top_left, top_right, bottom_right,
+            top_left, bottom_right, bottom_left,
+        */
+        for index in [
+            0, 1, 3,
+            0, 3, 2,
+        ].iter() {
+            unsafe {
+                (**idx_ptr) = *index as u32 + **idx_offset as u32;
+                (*idx_ptr) = (*idx_ptr).offset(1);
             }
         }
 
         curr_line_start_x += curr_x_advance;
-        unsafe { (*num_letters) += 1; }
+        num_letters += 1;
+        **idx_offset = **idx_offset + 4;
     }
+
+    let mut text_instance = render::TextInstance {
+        index_count: num_letters as u32 * 6 as u32,
+        index_offset: 0,
+        vertex_count: num_letters as usize * 4 as usize,
+        vertex_offset: 0,
+    };
+
+    if text_instances.len() > 0 {
+        let last_instance = text_instances.last().unwrap();
+        text_instance.index_offset =
+            last_instance.index_offset as u32 + last_instance.index_count;
+        text_instance.vertex_offset =
+            last_instance.vertex_count as i32 + last_instance.vertex_offset as i32;
+    }
+    text_instances.push(text_instance);
 }

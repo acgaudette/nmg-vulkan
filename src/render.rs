@@ -48,6 +48,7 @@ pub const MAX_SOFTBODY_VERT: usize = (
 pub const MAX_INSTANCE_LIGHTS: usize = 4;
 
 const MAX_CHAR_COUNT: u32 = 2048;
+const MAX_INSTANCE_TEXTS: usize = 64;
 
 #[allow(dead_code)]
 pub struct Context<'a> {
@@ -103,6 +104,7 @@ pub struct Context<'a> {
     text_display:     TextDisplay,
     font_data:        font::Data,
     text_meta:        TextMeta,
+    font_alignment:   u64,
 
     /* Debug data */
 
@@ -217,6 +219,7 @@ impl<'a> Context<'a> {
             descriptor_sets,
             _descriptor_pool,
             shared_alignment,
+            font_alignment,
         ) = init_drawing(
             &swapchain,
             depth_format,
@@ -246,6 +249,7 @@ impl<'a> Context<'a> {
             &transient_pool,
             &ubo_buffer,
             shared_alignment,
+            font_alignment,
             &font_data,
         )?;
 
@@ -301,6 +305,7 @@ impl<'a> Context<'a> {
                 text_display,
                 font_data,
                 text_meta,
+                font_alignment,
                 debug_data,
                 debug_line_count,
                 _vert_mod,
@@ -363,6 +368,7 @@ impl<'a> Context<'a> {
             descriptor_sets,
             _descriptor_pool,
             shared_alignment,
+            font_alignment,
         ) = init_drawing(
             &swapchain,
             self.depth_format,
@@ -402,6 +408,7 @@ impl<'a> Context<'a> {
             &self.transient_pool,
             &ubo_buffer,
             shared_alignment,
+            font_alignment,
             &self.font_data,
         )?;
 
@@ -423,6 +430,8 @@ impl<'a> Context<'a> {
         self.ubo_memory = ubo_memory;
         self.dyn_ubo_buffer = dyn_ubo_buffer;
         self.dyn_ubo_memory = dyn_ubo_memory;
+
+        self.font_alignment = font_alignment;
 
         self._depth_image = _depth_image;
         self._views = _views;
@@ -652,21 +661,46 @@ impl<'a> Context<'a> {
         let framebuffer_width = self.swapchain.extent().width();
         let framebuffer_height = self.swapchain.extent().height();
 
-        let mut text_ptr_3d = self.text_display
-            .begin_text_update::<*mut FontData>(&self.text_meta.memory_3d)?;
+        // Not optimal: requires copies and a heap allocation
+        let mut dynamic_buffer = util::AlignedBuffer::<FontUBO>::new(
+            self.font_alignment as usize,
+            texts.model_matrices.len(),
+        );
+
+        for model in &texts.model_matrices {
+            dynamic_buffer.push(model.clone());
+        }
+
+        unsafe {
+            copy_buffer(
+                &self.device,
+                self.text_meta.font_ubo_memory,
+                dynamic_buffer.size() as u64,
+                &dynamic_buffer.finalize(),
+            )?;
+        }
+
+        let (mut vertex_ptr_3d, mut idx_ptr_3d) =
+            self.text_display
+                .begin_text_update::<*mut FontData>(
+                    &self.text_meta.vertex_memory_3d,
+                    &self.text_meta.index_memory_3d,
+                );
 
         texts.prepare_bitmap_text(
             &self.font_data,
-            &mut text_ptr_3d,
+            &mut vertex_ptr_3d,
+            &mut idx_ptr_3d,
             framebuffer_width,
             framebuffer_height,
-            &mut self.text_display.num_letters,
+            &mut self.text_display.text_instances,
         );
 
         self.text_display.end_text_update(
             &self.device,
             &cmd_buffer,
             self.text_meta.clone(),
+            self.font_alignment,
         )?;
 
         #[cfg(debug_assertions)] {
@@ -792,9 +826,13 @@ impl<'a> Context<'a> {
         self.device.free_memory(self.dyn_ubo_memory, None);
 
         // Text resources
-        self.device.destroy_buffer(self.text_meta.buffer_3d, None);
-        self.device.free_memory(self.text_meta.memory_3d, None);
+        self.device.destroy_buffer(self.text_meta.vertex_buffer_3d, None);
+        self.device.free_memory(self.text_meta.vertex_memory_3d, None);
         self.device.free_memory(self.text_meta.image_memory, None);
+        self.device.destroy_buffer(self.text_meta.index_buffer_3d, None);
+        self.device.free_memory(self.text_meta.index_memory_3d, None);
+        self.device.destroy_buffer(self.text_meta.font_ubo_buffer, None);
+        self.device.free_memory(self.text_meta.font_ubo_memory, None);
 
         #[cfg(debug_assertions)] {
             /* Debug buffer */
@@ -1228,6 +1266,30 @@ impl Default for InstanceUBO {
             lights: [Light::none(); MAX_INSTANCE_LIGHTS],
             position_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
             normal_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct FontUBO {
+    pub model: alg::Mat4,
+}
+
+impl FontUBO {
+    pub fn new(
+        model: alg::Mat4,
+    ) -> FontUBO {
+        FontUBO {
+            model,
+        }
+    }
+}
+
+impl Default for FontUBO {
+    fn default() -> FontUBO {
+        FontUBO {
+            model: alg::Mat4::id(),
         }
     }
 }
@@ -2342,6 +2404,7 @@ fn init_drawing(
     Vec<vd::DescriptorSet>,
     vd::DescriptorPool,
     u64,
+    u64,
 )> {
     /* Depth buffer */
 
@@ -2525,6 +2588,8 @@ fn init_drawing(
         std::mem::size_of::<SharedUBO>() as u64
     );
 
+    let font_alignment = ubo_alignment(std::mem::size_of::<FontUBO>() as u64);
+
     // Allocate a buffer for the shared UBO
     let (ubo_buffer, ubo_memory) = create_buffer(
         shared_alignment, // Contains single UBO
@@ -2601,6 +2666,7 @@ fn init_drawing(
         sets.into_vec(),
         descriptor_pool,
         shared_alignment,
+        font_alignment,
     ))
 }
 
@@ -3038,10 +3104,14 @@ fn init_text_pipeline_resources(
 
 #[derive(Clone)]
 struct TextMeta {
-    pub buffer_3d: vd::BufferHandle,
-    pub memory_3d: vd::DeviceMemoryHandle,
+    pub vertex_buffer_3d: vd::BufferHandle,
+    pub vertex_memory_3d: vd::DeviceMemoryHandle,
+    pub index_buffer_3d: vd::BufferHandle,
+    pub index_memory_3d: vd::DeviceMemoryHandle,
     pub _image: vd::Image,
     pub image_memory: vd::DeviceMemoryHandle,
+    pub font_ubo_buffer: vd::BufferHandle,
+    pub font_ubo_memory: vd::DeviceMemoryHandle,
     pub _view: vd::ImageView,
     pub _descriptor_pool: vd::DescriptorPool,
     pub _descriptor_set_layout: vd::DescriptorSetLayout,
@@ -3058,6 +3128,7 @@ fn init_text_pipeline_builder(
     transient_pool: & vd::CommandPool,
     ubo_buffer: &vd::BufferHandle,
     shared_alignment: u64,
+    font_alignment: u64,
     font_data: &font::Data,
 ) -> vd::Result<TextMeta> {
 
@@ -3066,9 +3137,17 @@ fn init_text_pipeline_builder(
     // Begin image preparation
     let properties = vulkan_device.physical_device().memory_properties();
 
-    let (buffer_3d, memory_3d) = create_buffer(
+    let (vertex_buffer_3d, vertex_memory_3d) = create_buffer(
         MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontData>() as u64 * 4u64,
         vd::BufferUsageFlags::VERTEX_BUFFER,
+        &vulkan_device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
+        &properties,
+    )?;
+
+    let (index_buffer_3d, index_memory_3d) = create_buffer(
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<u32>() as u64 * 6u64,
+        vd::BufferUsageFlags::INDEX_BUFFER,
         &vulkan_device,
         vd::MemoryPropertyFlags::HOST_VISIBLE,
         &properties,
@@ -3236,7 +3315,11 @@ fn init_text_pipeline_builder(
         vd::DescriptorPoolSize::builder()
             .type_of(vd::DescriptorType::CombinedImageSampler)
             .descriptor_count(1)
-            .build()
+            .build(),
+        vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1)
+            .build(),
         ];
 
     let _descriptor_pool = vd::DescriptorPool::builder()
@@ -3248,7 +3331,7 @@ fn init_text_pipeline_builder(
         vd::DescriptorSetLayoutBinding::builder()
             .binding(0)
             .descriptor_type(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(1) // Single descriptor (UBO)
+            .descriptor_count(1)
             .stage_flags(vd::ShaderStageFlags::VERTEX)
             .build(),
         vd::DescriptorSetLayoutBinding::builder()
@@ -3256,6 +3339,12 @@ fn init_text_pipeline_builder(
             .descriptor_type(vd::DescriptorType::CombinedImageSampler)
             .descriptor_count(1)
             .stage_flags(vd::ShaderStageFlags::FRAGMENT)
+            .build(),
+        vd::DescriptorSetLayoutBinding::builder()
+            .binding(2)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1)
+            .stage_flags(vd::ShaderStageFlags::VERTEX)
             .build()
         ];
 
@@ -3286,6 +3375,22 @@ fn init_text_pipeline_builder(
         .range(shared_alignment)
         .build();
 
+    let font_ubo_size = MAX_INSTANCE_TEXTS as u64 * font_alignment;
+
+    let (font_ubo_buffer, font_ubo_memory) = create_buffer(
+        font_ubo_size,
+        vd::BufferUsageFlags::UNIFORM_BUFFER,
+        &vulkan_device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
+        &properties,
+    )?;
+
+    let font_ubo_info = vd::DescriptorBufferInfo::builder()
+        .buffer(font_ubo_buffer)
+        .offset(0)
+        .range(font_alignment)
+        .build();
+
     let descriptor_writes = [
         vd::WriteDescriptorSet::builder()
             .dst_set(descriptor_set)
@@ -3302,19 +3407,36 @@ fn init_text_pipeline_builder(
             .descriptor_count(1)
             .descriptor_type(vd::DescriptorType::CombinedImageSampler)
             .image_info(&tex_descriptor)
-            .build()
+            .build(),
+        vd::WriteDescriptorSet::builder()
+            .dst_set(descriptor_set)
+            .dst_binding(2)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .buffer_info(&font_ubo_info)
+            .build(),
     ];
 
     _descriptor_pool.update_descriptor_sets(&descriptor_writes, &[]);
 
     let resources = init_text_pipeline_resources(extent2d);
 
+    unsafe {
+        vulkan_device.destroy_buffer(host_buffer, None);
+        vulkan_device.free_memory(host_memory, None);
+    }
+
     Ok(
         TextMeta{
-            buffer_3d,
-            memory_3d,
+            vertex_buffer_3d,
+            vertex_memory_3d,
+            index_buffer_3d,
+            index_memory_3d,
             _image,
             image_memory,
+            font_ubo_buffer,
+            font_ubo_memory,
             _view,
             _descriptor_pool,
             _descriptor_set_layout,
@@ -3366,10 +3488,17 @@ impl Text {
     }
 }
 
+pub struct TextInstance {
+    pub index_count:  u32,
+    pub index_offset: u32,
+    pub vertex_count: usize,
+    pub vertex_offset: i32,
+}
+
 struct TextDisplay {
     device: vd::Device,
     pipeline: vd::GraphicsPipeline,
-    num_letters: u64,
+    text_instances: Vec<TextInstance>,
     is_3d: bool,
 }
 
@@ -3480,13 +3609,13 @@ fn create_text(
         .base_pipeline_index(-1)
         .build(vulkan_device.clone())?;
 
-    let num_letters = 0u64;
+    let text_instances = Vec::with_capacity(MAX_CHAR_COUNT as usize);
 
     Ok(
         TextDisplay {
             device: vulkan_device,
             pipeline,
-            num_letters,
+            text_instances,
             is_3d,
         },
     )
@@ -3496,16 +3625,24 @@ impl TextDisplay {
     pub fn begin_text_update<T>(
         &mut self,
         memory: &vd::DeviceMemoryHandle,
-    )-> vd::Result<*mut FontData> {
-        self.num_letters = 0u64;
+        idx_memory: &vd::DeviceMemoryHandle,
+    )-> (*mut FontData, *mut u32) {
+        self.text_instances.clear();
 
         unsafe {
-            self.device.map_memory(
+            let vertex_ptr = self.device.map_memory(
                 *memory,
                 0,
                 vd::WHOLE_SIZE,
-                vd::MemoryMapFlags::empty()
-            )
+                vd::MemoryMapFlags::empty(),
+            ).unwrap();
+            let idx_ptr = self.device.map_memory(
+                *idx_memory,
+                0,
+                vd::WHOLE_SIZE,
+                vd::MemoryMapFlags::empty(),
+            ).unwrap();
+            (vertex_ptr, idx_ptr)
         }
     }
 
@@ -3514,17 +3651,21 @@ impl TextDisplay {
         vulkan_device: &vd::Device,
         cmd_buffer: &vd::CommandBuffer,
         text_meta: TextMeta,
+        font_alignment: u64,
     ) -> vd::Result<()> {
         unsafe {
-            vulkan_device.unmap_memory(text_meta.memory_3d);
+            vulkan_device.unmap_memory(text_meta.vertex_memory_3d);
+            vulkan_device.unmap_memory(text_meta.index_memory_3d);
         }
 
         self.update_command_buffer(
             vulkan_device,
             cmd_buffer,
-            &text_meta.buffer_3d,
+            &text_meta.vertex_buffer_3d,
             &text_meta.descriptor_set,
             &text_meta.pipeline_layout,
+            &text_meta.index_buffer_3d,
+            font_alignment,
         )?;
 
         Ok(())
@@ -3537,18 +3678,12 @@ impl TextDisplay {
         buffer: &vd::BufferHandle,
         descriptor_set: &vd::DescriptorSet,
         pipeline_layout: &vd::PipelineLayout,
+        index_buffer: &vd::BufferHandle,
+        font_alignment: u64,
     ) -> vd::Result<()> {
         cmd_buffer.bind_pipeline(
             vd::PipelineBindPoint::Graphics,
             &self.pipeline.handle()
-        );
-
-        cmd_buffer.bind_descriptor_sets(
-            vd::PipelineBindPoint::Graphics,
-            pipeline_layout,
-            0,
-            &[descriptor_set],
-            &[],
         );
 
         let offsets: vd::DeviceSize = 0;
@@ -3566,14 +3701,28 @@ impl TextDisplay {
                 &[*buffer],
                 &[offsets],
             );
+            vulkan_device.cmd_bind_index_buffer(
+                cmd_buffer.handle(),
+                *index_buffer,
+                0,
+                vd::IndexType::Uint32,
+            );
         }
 
-        for j in 0..self.num_letters {
-            cmd_buffer.draw(
-                6,
+        for j in 0..self.text_instances.len() {
+            cmd_buffer.bind_descriptor_sets(
+                vd::PipelineBindPoint::Graphics,
+                pipeline_layout,
+                0,
+                &[descriptor_set],
+                &[font_alignment as u32 * j as u32],
+            );
+            cmd_buffer.draw_indexed(
+                self.text_instances[j].index_count,
                 1,
-                j as u32 * 6,
-                0
+                self.text_instances[j].index_offset,
+                self.text_instances[j].vertex_offset,
+                0,
             );
         }
 

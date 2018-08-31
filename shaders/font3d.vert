@@ -5,6 +5,10 @@ layout(binding = 0) uniform shared_ubo {
   mat4 projection;
 } shared_data;
 
+layout(binding = 2) uniform font_ubo {
+  mat4 model;
+} model_data;
+
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec2 inUV;
 layout (location = 0) out vec2 outUV;
@@ -15,6 +19,6 @@ out gl_PerVertex {
 
 void main(void) {
   gl_Position = shared_data.projection * shared_data.view
-      * vec4(inPosition, 1.0);
+      * model_data.model * vec4(inPosition, 1.0);
   outUV = inUV;
 }

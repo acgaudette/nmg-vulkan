@@ -51,6 +51,7 @@ impl<'a> TextBuilder<'a> {
 
 pub struct Manager {
     instances: fnv::FnvHashMap<entity::Handle, render::Text>,
+    pub model_matrices: Vec<render::FontUBO>,
 }
 
 impl components::Component for Manager {
@@ -79,6 +80,7 @@ impl Manager {
                 hint,
                 Default::default(),
             ),
+            model_matrices: Vec::with_capacity(hint),
         }
     }
 
@@ -93,28 +95,37 @@ impl Manager {
 
     // Update text positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
-        for (entity, text) in &mut self.instances {
-            text.position = transforms.get_position(*entity);
+        self.model_matrices.clear();
+        for (entity, _) in &mut self.instances {
+            let font_ubo = render::FontUBO {
+                model: transforms.get_mat(*entity)
+            };
+            self.model_matrices.push(font_ubo);
         }
     }
 
     pub fn prepare_bitmap_text(
         &mut self,
         font_data: &font::Data,
-        ptr: *mut *mut render::FontData,
+        vertex_ptr: *mut *mut render::FontData,
+        idx_ptr: *mut *mut u32,
         framebuffer_width:  u32,
         framebuffer_height: u32,
-        num_letters: *mut u64,
+        text_instances: &mut Vec<render::TextInstance>,
     ) {
         // Calls function that shares functionality with other types of text
+        
         for (_, text_instance) in self.instances.iter() {
+            let mut idx_offset = 0u32;
             bitmap::prepare_text(
                 text_instance,
                 font_data,
-                ptr,
+                vertex_ptr,
+                idx_ptr,
+                &mut &mut idx_offset,
                 framebuffer_width,
                 framebuffer_height,
-                num_letters,
+                text_instances,
             );
         }
     }

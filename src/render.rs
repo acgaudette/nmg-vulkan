@@ -3695,12 +3695,6 @@ impl TextDisplay {
                 &[*buffer],
                 &[offsets],
             );
-            vulkan_device.cmd_bind_vertex_buffers(
-                cmd_buffer.handle(),
-                1,
-                &[*buffer],
-                &[offsets],
-            );
             vulkan_device.cmd_bind_index_buffer(
                 cmd_buffer.handle(),
                 *index_buffer,

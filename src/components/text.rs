@@ -107,7 +107,7 @@ impl Manager {
     pub fn prepare_bitmap_text(
         &mut self,
         font_data: &font::Data,
-        vertex_ptr: *mut *mut render::FontData,
+        vertex_ptr: *mut *mut render::FontVertex,
         idx_ptr: *mut *mut u32,
         framebuffer_width:  u32,
         framebuffer_height: u32,

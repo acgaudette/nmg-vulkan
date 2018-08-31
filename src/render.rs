@@ -682,7 +682,7 @@ impl<'a> Context<'a> {
 
         let (mut vertex_ptr_3d, mut idx_ptr_3d) =
             self.text_display
-                .begin_text_update::<*mut FontData>(
+                .begin_text_update::<*mut FontVertex>(
                     &self.text_meta.vertex_memory_3d,
                     &self.text_meta.index_memory_3d,
                 );
@@ -2992,17 +2992,17 @@ pub enum TextAlign { AlignLeft, AlignCenter, AlignRight }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
-pub struct FontData {
+pub struct FontVertex {
     pub position: alg::Vec3,
     pub st: alg::Vec2,
 }
 
-impl FontData {
+impl FontVertex {
     pub fn new(
         position: alg::Vec3,
         st: alg::Vec2
-    ) -> FontData {
-        FontData {
+    ) -> FontVertex {
+        FontVertex {
             position,
             st,
         }
@@ -3011,8 +3011,8 @@ impl FontData {
     pub fn new_raw(
         px: f32, py: f32, pz: f32,
         s: f32, t: f32,
-    ) -> FontData {
-        FontData {
+    ) -> FontVertex {
+        FontVertex {
             position: alg::Vec3::new(px, py, pz),
             st: alg::Vec2::new(s, t),
         }
@@ -3021,7 +3021,7 @@ impl FontData {
     fn binding_description() -> vd::VertexInputBindingDescription {
         vd::VertexInputBindingDescription::builder()
             .binding(0)
-            .stride(std::mem::size_of::<FontData>() as u32)
+            .stride(std::mem::size_of::<FontVertex>() as u32)
             .input_rate(vd::VertexInputRate::Vertex)
             .build()
     }
@@ -3032,13 +3032,13 @@ impl FontData {
                 .binding(0)
                 .location(0)
                 .format(vd::Format::R32G32B32Sfloat)
-                .offset(offset_of!(FontData, position))
+                .offset(offset_of!(FontVertex, position))
                 .build(),
             vd::VertexInputAttributeDescription::builder()
                 .binding(0)
                 .location(1)
                 .format(vd::Format::R32G32Sfloat)
-                .offset(offset_of!(FontData, st))
+                .offset(offset_of!(FontVertex, st))
                 .build(),
         ]
     }
@@ -3089,8 +3089,8 @@ fn init_text_pipeline_resources(
 
     let viewports = [viewport];
     let scissors = [scissor];
-    let binding_description = [FontData::binding_description()];
-    let attribute_descriptions = FontData::attribute_descriptions();
+    let binding_description = [FontVertex::binding_description()];
+    let attribute_descriptions = FontVertex::attribute_descriptions();
 
     let resources = TextPipelineResources {
         attachments,
@@ -3138,7 +3138,7 @@ fn init_text_pipeline_builder(
     let properties = vulkan_device.physical_device().memory_properties();
 
     let (vertex_buffer_3d, vertex_memory_3d) = create_buffer(
-        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontData>() as u64 * 4u64,
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontVertex>() as u64 * 4u64,
         vd::BufferUsageFlags::VERTEX_BUFFER,
         &vulkan_device,
         vd::MemoryPropertyFlags::HOST_VISIBLE,
@@ -3609,7 +3609,7 @@ fn create_text(
         .base_pipeline_index(-1)
         .build(vulkan_device.clone())?;
 
-    let text_instances = Vec::with_capacity(MAX_CHAR_COUNT as usize);
+    let text_instances = Vec::with_capacity(MAX_INSTANCE_TEXTS as usize);
 
     Ok(
         TextDisplay {
@@ -3626,7 +3626,7 @@ impl TextDisplay {
         &mut self,
         memory: &vd::DeviceMemoryHandle,
         idx_memory: &vd::DeviceMemoryHandle,
-    )-> (*mut FontData, *mut u32) {
+    )-> (*mut FontVertex, *mut u32) {
         self.text_instances.clear();
 
         unsafe {

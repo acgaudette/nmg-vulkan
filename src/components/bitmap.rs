@@ -5,7 +5,7 @@ use font;
 pub fn prepare_text(
     text_instance: &render::Text,
     font: &font::Data,
-    vertex_ptr: *mut *mut render::FontData,
+    vertex_ptr: *mut *mut render::FontVertex,
     idx_ptr: *mut *mut u32,
     idx_offset: &mut &mut u32,
     framebuffer_width:  u32,
@@ -81,7 +81,7 @@ pub fn prepare_text(
         let bottom_y = curr_line_start_y - yoffset;
         let top_y = bottom_y - (char_height_scale * char_data.height);
 
-        let top_left = render::FontData::new_raw(
+        let top_left = render::FontVertex::new_raw(
             left_x,
             top_y,
             z,
@@ -89,7 +89,7 @@ pub fn prepare_text(
             v_start,
         );
 
-        let bottom_right = render::FontData::new_raw(
+        let bottom_right = render::FontVertex::new_raw(
             right_x,
             bottom_y,
             z,
@@ -97,7 +97,7 @@ pub fn prepare_text(
             v_end,
             );
 
-        let bottom_left = render::FontData::new_raw(
+        let bottom_left = render::FontVertex::new_raw(
             left_x,
             bottom_y,
             z,
@@ -105,7 +105,7 @@ pub fn prepare_text(
             v_end,
         );
 
-        let top_right = render::FontData::new_raw(
+        let top_right = render::FontVertex::new_raw(
             right_x,
             top_y,
             z,

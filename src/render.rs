@@ -661,23 +661,25 @@ impl<'a> Context<'a> {
         let framebuffer_width = self.swapchain.extent().width();
         let framebuffer_height = self.swapchain.extent().height();
 
-        // Not optimal: requires copies and a heap allocation
-        let mut dynamic_buffer = util::AlignedBuffer::<FontUBO>::new(
-            self.font_alignment as usize,
-            texts.model_matrices.len(),
-        );
+        if texts.model_matrices.len() > 0 {
+            // Not optimal: requires copies and a heap allocation
+            let mut dynamic_buffer = util::AlignedBuffer::<FontUBO>::new(
+                self.font_alignment as usize,
+                texts.model_matrices.len(),
+            );
 
-        for model in &texts.model_matrices {
-            dynamic_buffer.push(model.clone());
-        }
+            for model in &texts.model_matrices {
+                dynamic_buffer.push(model.clone());
+            }
 
-        unsafe {
-            copy_buffer(
-                &self.device,
-                self.text_meta.font_ubo_memory,
-                dynamic_buffer.size() as u64,
-                &dynamic_buffer.finalize(),
-            )?;
+            unsafe {
+                copy_buffer(
+                    &self.device,
+                    self.text_meta.font_ubo_memory,
+                    dynamic_buffer.size() as u64,
+                    &dynamic_buffer.finalize(),
+                )?;
+            }
         }
 
         let (mut vertex_ptr_3d, mut idx_ptr_3d) =

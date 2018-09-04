@@ -3293,8 +3293,8 @@ fn init_text_pipeline_builder(
         ).build(vulkan_device.clone(), None)?;
 
     let _sampler = vd::Sampler::builder()
-        .mag_filter(vd::Filter::Linear)
-        .min_filter(vd::Filter::Linear)
+        .mag_filter(vd::Filter::Nearest)
+        .min_filter(vd::Filter::Nearest)
         .address_mode_u(vd::SamplerAddressMode::Repeat)
         .address_mode_v(vd::SamplerAddressMode::Repeat)
         .address_mode_w(vd::SamplerAddressMode::Repeat)

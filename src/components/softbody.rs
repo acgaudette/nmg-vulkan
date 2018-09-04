@@ -1064,6 +1064,7 @@ impl Manager {
         center + direction_norm * direction_norm.dot(point - center)
     }
 
+    /// Returns joint pivot point in worldspace between two instances.
     pub fn pivot(
         &self,
         parent: entity::Handle,
@@ -1098,6 +1099,7 @@ impl Manager {
         )
     }
 
+    /// Returns weighted center of mass of a slice of instances.
     pub fn com(&self, entities: &[entity::Handle]) -> alg::Vec3 {
         let sum = entities.iter()
             .map(|handle| get_instance!(self, *handle))

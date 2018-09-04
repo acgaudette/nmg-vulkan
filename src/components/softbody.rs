@@ -1110,6 +1110,19 @@ impl Manager {
         sum.0 / sum.1
     }
 
+    /// Returns weighted velocity of a slice of instances.
+    pub fn velocity(&self, entities: &[entity::Handle]) -> alg::Vec3 {
+        let sum = entities.iter()
+            .map(|handle| get_instance!(self, *handle))
+            .map(|instance| (instance.velocity(), instance.mass))
+            .fold(
+                (alg::Vec3::zero(), 0f32),
+                |sum, (v, mass)| (sum.0 + v * mass, sum.1 + mass)
+            );
+
+        sum.0 / sum.1
+    }
+
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;

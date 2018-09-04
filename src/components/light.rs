@@ -123,6 +123,16 @@ impl Manager {
         *self.instances.get_mut(&entity).unwrap() = light;
     }
 
+    pub fn set_color(
+        &mut self,
+        entity: entity::Handle,
+        color: graphics::Color,
+    ) {
+        debug_validate_entity!(self, entity);
+        let instance = self.instances.get_mut(&entity).unwrap();
+        instance.color = color;
+    }
+
     // Update point light positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         for (entity, light) in &mut self.instances {

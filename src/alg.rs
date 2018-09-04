@@ -1292,7 +1292,9 @@ impl Quat {
         }
     }
 
-    /// Linearly interpolate from self to target and normalize
+    /// Linearly interpolate from self to target and normalize. \
+    /// Will likely give unexpected behavior for quaternions with differences
+    /// of greater than 90 degrees.
     pub fn nlerp(self, target: Quat, t: f32) -> Quat {
         (self + (target - self) * t).norm()
     }

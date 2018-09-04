@@ -682,12 +682,11 @@ impl<'a> Context<'a> {
             }
         }
 
-        let (mut vertex_ptr_3d, mut idx_ptr_3d) =
-            self.text_display
-                .begin_text_update::<*mut FontVertex>(
-                    &self.text_meta.vertex_memory_3d,
-                    &self.text_meta.index_memory_3d,
-                );
+        let (mut vertex_ptr_3d, mut idx_ptr_3d) = self.text_display
+            .begin_text_update::<*mut FontVertex>(
+                &self.text_meta.vertex_memory_3d,
+                &self.text_meta.index_memory_3d,
+            );
 
         texts.prepare_bitmap_text(
             &self.font_data,
@@ -2899,6 +2898,7 @@ fn set_image_layout(
         .base_array_layer(0)
         .layer_count(1)
         .build();
+
     set_image_layout_helper(
         cmd_buffer,
         image,
@@ -2926,24 +2926,23 @@ fn set_image_layout_helper(
         .subresource_range(subresource_range);
 
     let mut src_access_mask = vd::AccessFlags::NONE;
-    use vd::ImageLayout as layout;
     match old_image_layout {
-        layout::Preinitialized => {
+        vd::ImageLayout::Preinitialized => {
             src_access_mask = vd::AccessFlags::HOST_WRITE;
         },
-        layout::ColorAttachmentOptimal => {
+        vd::ImageLayout::ColorAttachmentOptimal => {
             src_access_mask = vd::AccessFlags::COLOR_ATTACHMENT_WRITE;
         },
-        layout::DepthStencilAttachmentOptimal => {
+        vd::ImageLayout::DepthStencilAttachmentOptimal => {
             src_access_mask = vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE;
         },
-        layout::TransferSrcOptimal => {
+        vd::ImageLayout::TransferSrcOptimal => {
             src_access_mask = vd::AccessFlags::TRANSFER_READ;
         },
-        layout::TransferDstOptimal => {
+        vd::ImageLayout::TransferDstOptimal => {
             src_access_mask = vd::AccessFlags::TRANSFER_WRITE;
         },
-        layout::ShaderReadOnlyOptimal => {
+        vd::ImageLayout::ShaderReadOnlyOptimal => {
             src_access_mask = vd::AccessFlags::SHADER_READ;
         },
         _ => {}
@@ -2951,23 +2950,22 @@ fn set_image_layout_helper(
 
     let mut dst_access_mask = vd::AccessFlags::NONE;
     match new_image_layout {
-        layout::ColorAttachmentOptimal => {
+        vd::ImageLayout::ColorAttachmentOptimal => {
             dst_access_mask = vd::AccessFlags::COLOR_ATTACHMENT_WRITE;
         },
-        layout::DepthStencilAttachmentOptimal => {
+        vd::ImageLayout::DepthStencilAttachmentOptimal => {
             dst_access_mask = vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE;
         },
-        layout::TransferSrcOptimal => {
+        vd::ImageLayout::TransferSrcOptimal => {
             dst_access_mask = vd::AccessFlags::TRANSFER_READ;
         },
-        layout::TransferDstOptimal => {
+        vd::ImageLayout::TransferDstOptimal => {
             dst_access_mask = vd::AccessFlags::TRANSFER_WRITE;
         },
-        layout::ShaderReadOnlyOptimal => {
+        vd::ImageLayout::ShaderReadOnlyOptimal => {
             if src_access_mask == vd::AccessFlags::NONE {
-                src_access_mask =
-                    vd::AccessFlags::HOST_WRITE |
-                    vd::AccessFlags::TRANSFER_WRITE;
+                src_access_mask = vd::AccessFlags::HOST_WRITE
+                    | vd::AccessFlags::TRANSFER_WRITE;
             }
             dst_access_mask = vd::AccessFlags::SHADER_READ;
         },
@@ -3068,7 +3066,7 @@ fn init_text_pipeline_resources(
         .dst_alpha_blend_factor(vd::BlendFactor::Zero)
         .alpha_blend_op(vd::BlendOp::Add)
         .color_write_mask(
-            vd::ColorComponentFlags::R
+              vd::ColorComponentFlags::R
             | vd::ColorComponentFlags::G
             | vd::ColorComponentFlags::B
             | vd::ColorComponentFlags::A
@@ -3094,14 +3092,13 @@ fn init_text_pipeline_resources(
     let binding_description = [FontVertex::binding_description()];
     let attribute_descriptions = FontVertex::attribute_descriptions();
 
-    let resources = TextPipelineResources {
+    TextPipelineResources {
         attachments,
         viewports,
         scissors,
         binding_description,
         attribute_descriptions,
-    };
-    resources
+    }
 }
 
 #[derive(Clone)]
@@ -3140,7 +3137,7 @@ fn init_text_pipeline_builder(
     let properties = vulkan_device.physical_device().memory_properties();
 
     let (vertex_buffer_3d, vertex_memory_3d) = create_buffer(
-        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontVertex>() as u64 * 4u64,
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontVertex>() as u64 * 4,
         vd::BufferUsageFlags::VERTEX_BUFFER,
         &vulkan_device,
         vd::MemoryPropertyFlags::HOST_VISIBLE,
@@ -3148,7 +3145,7 @@ fn init_text_pipeline_builder(
     )?;
 
     let (index_buffer_3d, index_memory_3d) = create_buffer(
-        MAX_CHAR_COUNT as u64 * std::mem::size_of::<u32>() as u64 * 6u64,
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<u32>() as u64 * 6,
         vd::BufferUsageFlags::INDEX_BUFFER,
         &vulkan_device,
         vd::MemoryPropertyFlags::HOST_VISIBLE,
@@ -3171,9 +3168,10 @@ fn init_text_pipeline_builder(
         .array_layers(1)
         .samples(vd::SampleCountFlags::COUNT_1)
         .tiling(vd::ImageTiling::Optimal)
-        .usage(vd::ImageUsageFlags::SAMPLED |
-            vd::ImageUsageFlags::TRANSFER_DST)
-        .sharing_mode(vd::SharingMode::Exclusive)
+        .usage(
+              vd::ImageUsageFlags::SAMPLED
+            | vd::ImageUsageFlags::TRANSFER_DST
+        ).sharing_mode(vd::SharingMode::Exclusive)
         .initial_layout(vd::ImageLayout::Undefined)
         .build(vulkan_device.clone())?;
 
@@ -3182,10 +3180,10 @@ fn init_text_pipeline_builder(
     };
 
     let memory_type = get_memory_type(
-                requirements.memory_type_bits(),
-                vd::MemoryPropertyFlags::DEVICE_LOCAL,
-                properties.memory_types(),
-            )?;
+        requirements.memory_type_bits(),
+        vd::MemoryPropertyFlags::DEVICE_LOCAL,
+        properties.memory_types(),
+    )?;
 
     let image_memory = unsafe {
          vulkan_device.allocate_memory(
@@ -3211,7 +3209,7 @@ fn init_text_pipeline_builder(
         vd::BufferUsageFlags::TRANSFER_SRC,
         &vulkan_device,
         vd::MemoryPropertyFlags::HOST_VISIBLE
-        | vd::MemoryPropertyFlags::HOST_COHERENT,
+            | vd::MemoryPropertyFlags::HOST_COHERENT,
         &properties
     )?;
 
@@ -3358,10 +3356,9 @@ fn init_text_pipeline_builder(
         .set_layouts(&[_descriptor_set_layout.handle()])
         .build(vulkan_device.clone())?;
 
-    let descriptor_sets = _descriptor_pool
-        .allocate_descriptor_sets(
-            &[_descriptor_set_layout.handle()]
-        )?;
+    let descriptor_sets = _descriptor_pool.allocate_descriptor_sets(
+        &[_descriptor_set_layout.handle()]
+    )?;
 
     let descriptor_set = descriptor_sets[0];
 
@@ -3492,7 +3489,7 @@ impl Text {
 
 // Contains data for making indexed draws
 pub struct TextInstance {
-    pub index_count:  u32,
+    pub index_count: u32,
     pub index_offset: u32,
     pub vertex_count: usize,
     pub vertex_offset: i32,
@@ -3543,6 +3540,7 @@ fn create_text(
         vulkan_device.clone(),
         &vert_buffer
     )?;
+
     let frag_mod = vd::ShaderModule::new(
         vulkan_device.clone(),
         &frag_buffer
@@ -3640,12 +3638,14 @@ impl TextDisplay {
                 vd::WHOLE_SIZE,
                 vd::MemoryMapFlags::empty(),
             ).unwrap();
+
             let idx_ptr = self.device.map_memory(
                 *idx_memory,
                 0,
                 vd::WHOLE_SIZE,
                 vd::MemoryMapFlags::empty(),
             ).unwrap();
+
             (vertex_ptr, idx_ptr)
         }
     }
@@ -3699,6 +3699,7 @@ impl TextDisplay {
                 &[*buffer],
                 &[offsets],
             );
+
             vulkan_device.cmd_bind_index_buffer(
                 cmd_buffer.handle(),
                 *index_buffer,
@@ -3707,19 +3708,20 @@ impl TextDisplay {
             );
         }
 
-        for j in 0..self.text_instances.len() {
+        for i in 0..self.text_instances.len() {
             cmd_buffer.bind_descriptor_sets(
                 vd::PipelineBindPoint::Graphics,
                 pipeline_layout,
                 0,
                 &[descriptor_set],
-                &[font_alignment as u32 * j as u32],
+                &[font_alignment as u32 * i as u32],
             );
+
             cmd_buffer.draw_indexed(
-                self.text_instances[j].index_count,
+                self.text_instances[i].index_count,
                 1,
-                self.text_instances[j].index_offset,
-                self.text_instances[j].vertex_offset,
+                self.text_instances[i].index_offset,
+                self.text_instances[i].vertex_offset,
                 0,
             );
         }

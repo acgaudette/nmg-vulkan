@@ -1197,7 +1197,8 @@ impl Manager {
             // Compute offsets
             for i in 0..new.len() {
                 offsets[i] = render::PaddedVec3::new(
-                    new[i] - instance.normals[i]
+                    instance.frame_orientation.conjugate() * new[i]
+                        - instance.normals[i]
                 );
             }
         }

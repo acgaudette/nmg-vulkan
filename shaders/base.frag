@@ -1,6 +1,5 @@
 #version 450
 
-#define MAX_SOFTBODY_VERT 10
 #define MAX_INSTANCE_LIGHTS 4
 #define AMBIENT 0.1
 

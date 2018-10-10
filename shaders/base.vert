@@ -38,6 +38,7 @@ void main() {
     instance.model
       * vec4(inNormal + instance.normal_offsets[gl_VertexIndex], 0)
   ).xyz;
+  fragNormal = normalize(fragNormal);
 
   gl_Position = shared_data.projection * shared_data.view * position;
 }

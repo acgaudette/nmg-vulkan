@@ -1157,6 +1157,17 @@ impl Vertex {
         }
     }
 
+    pub fn new_position_color(
+        px: f32, py: f32, pz: f32,
+         r: f32,  g: f32,  b: f32,
+    ) -> Vertex {
+        Vertex {
+            position: alg::Vec3::new(px, py, pz),
+            color: graphics::Color::new(r, g, b),
+            .. Default::default()
+        }
+    }
+
     fn binding_description() -> vd::VertexInputBindingDescription {
         vd::VertexInputBindingDescription::builder()
             .binding(0)
@@ -1219,8 +1230,15 @@ pub struct DebugLine {
 impl DebugLine {
     pub fn new(line: alg::Line, color: graphics::Color) -> DebugLine {
         DebugLine {
-            start: VertexBuilder::new(line.start).color(color).build(),
-            end: VertexBuilder::new(line.end).color(color).build(),
+            start: Vertex {
+                position: line.start,
+                color,
+                .. Default::default()
+            }, end: Vertex {
+                position: line.end,
+                color,
+                .. Default::default()
+            },
         }
     }
 }

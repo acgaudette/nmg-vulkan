@@ -469,12 +469,13 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
+    /// Update rendering data and transfer to GPU
     pub fn update(
         &mut self,
         instances: &Instances,
         shared_ubo: SharedUBO,
     ) -> vd::Result<()> {
-        /* Copy UBOs to GPU */
+        /* Copy shared UBO to GPU */
 
         unsafe {
             copy_buffer(
@@ -484,6 +485,8 @@ impl<'a> Context<'a> {
                 &[shared_ubo],
             )?;
         }
+
+        /* Copy instance UBOs to GPU */
 
         let count = instances.count();
 
@@ -514,6 +517,7 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
+    /// Execute command buffers and render frame
     pub fn draw(
         &mut self,
         parameters: &Parameters,
@@ -860,6 +864,7 @@ impl<'a> Drop for Context<'a> {
     }
 }
 
+/// High-level control settings for drawing
 pub struct Parameters {
     pub clear_color: graphics::Color,
 }
@@ -884,6 +889,7 @@ struct DebugData {
 #[derive(Copy, Clone, PartialEq)]
 pub enum NormalMode { Flat, Smooth }
 
+/// Raw model data structure
 #[derive(Clone)]
 pub struct ModelData {
     pub vertices: Vec<Vertex>,
@@ -954,6 +960,7 @@ impl ModelData {
     }
 }
 
+/// Model reference values used at runtime
 pub struct Model {
     index_count:  u32,
     index_offset: u32,
@@ -977,6 +984,7 @@ impl Model {
     }
 }
 
+/// Dynamic collection of instance data
 pub struct Instances {
     data: Vec<Vec<(InstanceUBO, InstanceMeta)>>,
 }
@@ -1003,7 +1011,7 @@ impl Instances {
         Instances { data }
     }
 
-    // Returns handle to new instance
+    /// Returns handle to new instance
     pub fn add(
         &mut self,
         instance_data: InstanceUBO,
@@ -1021,7 +1029,7 @@ impl Instances {
         )
     }
 
-    // Modify data for an existing instance
+    /// Modify data for an existing instance
     pub fn update(
         &mut self,
         handle: InstanceHandle,
@@ -1035,7 +1043,7 @@ impl Instances {
         self.data[m][i].0 = ubo;
     }
 
-    // Modify metadata for an existing instance
+    /// Modify metadata for an existing instance
     pub fn update_meta(&mut self, handle: InstanceHandle, meta: InstanceMeta) {
         let (m, i) = (
             handle.model_index() as usize,
@@ -1045,7 +1053,7 @@ impl Instances {
         self.data[m][i].1 = meta;
     }
 
-    // Count instances (O(model_count))
+    /// Count instances (linear time)
     pub fn count(&self) -> usize {
         let mut count = 0;
 
@@ -1098,6 +1106,7 @@ impl std::fmt::Debug for InstanceHandle {
     }
 }
 
+/// Additional instance data used in rendering logic
 #[derive(Clone, Copy)]
 pub struct InstanceMeta {
     hide: bool,
@@ -1219,6 +1228,7 @@ impl Default for PaddedVec3 {
     }
 }
 
+/// Uniform data shared across all instances
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct SharedUBO {
@@ -1235,6 +1245,7 @@ impl SharedUBO {
     }
 }
 
+/// Uniform data sent to each individual instance
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct InstanceUBO {
@@ -1271,6 +1282,7 @@ impl Default for InstanceUBO {
     }
 }
 
+/// Uniform data sent to each individual font instance
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct FontUBO {
@@ -1629,6 +1641,7 @@ fn get_swapchain_details(
     Ok((formats.into_vec(), present_modes.into_vec()))
 }
 
+/// Load base vertex and fragment shaders
 fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     vd::ShaderModule,
     vd::ShaderModule,
@@ -1678,6 +1691,7 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     ))
 }
 
+/// Convert model data to concatenated vertex and index buffers
 fn load_models(
     model_data:      Vec<ModelData>,
     device:          &vd::Device,
@@ -1889,7 +1903,7 @@ fn init_debug(
         vd::PipelineColorBlendAttachmentState::builder()
             .blend_enable(false)
             .color_write_mask(
-                vd::ColorComponentFlags::R
+                  vd::ColorComponentFlags::R
                 | vd::ColorComponentFlags::G
                 | vd::ColorComponentFlags::B
             ).build()
@@ -1963,6 +1977,7 @@ fn init_debug(
     Ok(Some(data))
 }
 
+/// Initialize fixed-function data, including the descriptor set layout
 fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
     vd::Format,
     vd::PipelineInputAssemblyStateCreateInfo<'a>,
@@ -2046,8 +2061,10 @@ fn init_fixed<'a>(device: vd::Device) -> vd::Result<(
             .binding(1) // Second binding
             .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
             .descriptor_count(1) // Single descriptor (UBO)
-            .stage_flags(vd::ShaderStageFlags::VERTEX | vd::ShaderStageFlags::FRAGMENT)
-            .build();
+            .stage_flags(
+                  vd::ShaderStageFlags::VERTEX
+                | vd::ShaderStageFlags::FRAGMENT
+            ).build();
 
         vd::DescriptorSetLayout::builder()
             .bindings(&[shared_binding, dynamic_binding])
@@ -2265,7 +2282,7 @@ fn init_render_pass(
         .src_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
         .dst_stage_mask(vd::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
         .dst_access_mask(
-            vd::AccessFlags::COLOR_ATTACHMENT_READ
+              vd::AccessFlags::COLOR_ATTACHMENT_READ
             | vd::AccessFlags::COLOR_ATTACHMENT_WRITE
         ).build();
 
@@ -2288,7 +2305,6 @@ fn init_pipeline(
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
 ) -> vd::Result<(vd::GraphicsPipeline)> {
-
     /*
      * Fixed functions (these will be allocated on the heap later,
      * inside the graphics pipeline)
@@ -2313,7 +2329,7 @@ fn init_pipeline(
             .src_alpha_blend_factor(vd::BlendFactor::Zero)
             .alpha_blend_op(vd::BlendOp::Add)
             .color_write_mask(
-                vd::ColorComponentFlags::R
+                  vd::ColorComponentFlags::R
                 | vd::ColorComponentFlags::G
                 | vd::ColorComponentFlags::B
                 | vd::ColorComponentFlags::A
@@ -2384,6 +2400,7 @@ fn init_pipeline(
     )
 }
 
+/// Initialize drawing data, including uniform buffers
 fn init_drawing(
     swapchain:       &vd::SwapchainKhr,
     depth_format:    vd::Format,
@@ -2496,7 +2513,7 @@ fn init_drawing(
     let barrier = vd::ImageMemoryBarrier::builder()
         .src_access_mask(vd::AccessFlags::empty())
         .dst_access_mask(
-            vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ
+              vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_READ
             | vd::AccessFlags::DEPTH_STENCIL_ATTACHMENT_WRITE
         ).old_layout(vd::ImageLayout::Undefined)
         .new_layout(vd::ImageLayout::DepthStencilAttachmentOptimal)
@@ -2596,7 +2613,7 @@ fn init_drawing(
         shared_alignment, // Contains single UBO
         vd::BufferUsageFlags::UNIFORM_BUFFER,
         device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE
+          vd::MemoryPropertyFlags::HOST_VISIBLE
         | vd::MemoryPropertyFlags::HOST_COHERENT,
         &properties,
     )?;
@@ -2699,8 +2716,8 @@ fn get_transfer_buffer(
 }
 
 fn end_transfer_buffer(
-    buffer:          &vd::CommandBuffer,
-    device:          &vd::Device,
+    buffer: &vd::CommandBuffer,
+    device: &vd::Device,
     graphics_family: u32,
 ) -> vd::Result<()> {
     buffer.end()?;
@@ -2725,6 +2742,8 @@ fn end_transfer_buffer(
     Ok(())
 }
 
+/// Transfer data to the GPU via host and device buffers; \
+/// return buffer created on GPU
 fn create_buffers<T: std::marker::Copy>(
     data:            &[T],
     properties:      &vd::PhysicalDeviceMemoryProperties,
@@ -2744,7 +2763,7 @@ fn create_buffers<T: std::marker::Copy>(
         size,
         vd::BufferUsageFlags::TRANSFER_SRC,
         device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE
+          vd::MemoryPropertyFlags::HOST_VISIBLE
         | vd::MemoryPropertyFlags::HOST_COHERENT,
         properties,
     )?;
@@ -2792,7 +2811,7 @@ fn create_buffers<T: std::marker::Copy>(
     Ok((device_buffer, device_memory))
 }
 
-// Allocate (empty) buffer on the GPU
+/// Allocate (empty) buffer on the GPU
 fn create_buffer(
     size:       u64,
     usage:      vd::BufferUsageFlags,
@@ -2853,12 +2872,12 @@ fn get_memory_type(
     Err("no valid memory type available on GPU".into())
 }
 
-// Memory-mapped IO
+/// Transfer buffer to destination via memory-mapped IO
 unsafe fn copy_buffer<T: std::marker::Copy>(
     device: &vd::Device,
     memory: vd::DeviceMemoryHandle,
-    size:   u64,
-    data:   &[T],
+    size: u64,
+    data: &[T],
 ) -> vd::Result<()> {
     let ptr = device.map_memory(
         memory,

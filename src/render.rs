@@ -1134,8 +1134,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    /// Zero vertex
-    pub fn blank() -> Vertex {
+    pub fn zero() -> Vertex {
         Vertex {
             position: alg::Vec3::zero(),
             normal: alg::Vec3::zero(),
@@ -1754,7 +1753,7 @@ fn load_models(
      */
 
     let model_data = if model_data.is_empty() {
-        vec![ModelData::new(vec![Vertex::blank()], vec![0])]
+        vec![ModelData::new(vec![Vertex::zero()], vec![0])]
     } else { model_data };
 
     /* Concatenate model data */

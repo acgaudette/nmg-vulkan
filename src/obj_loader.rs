@@ -39,6 +39,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
                     positions[v3], positions[v3 + 1], positions[v3 + 2],
                       normals[v3],   normals[v3 + 1],   normals[v3 + 2],
                     1.0, 1.0, 1.0, // White
+                    0.0, 0.0,
                 )
             );
         }

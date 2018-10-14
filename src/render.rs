@@ -1168,7 +1168,7 @@ impl Vertex {
             .build()
     }
 
-    fn attribute_descriptions() -> [vd::VertexInputAttributeDescription; 3] {
+    fn attribute_descriptions() -> [vd::VertexInputAttributeDescription; 4] {
         [
             vd::VertexInputAttributeDescription::builder()
                 .binding(0)
@@ -1187,6 +1187,12 @@ impl Vertex {
                 .location(2)
                 .format(vd::Format::R32G32B32Sfloat)
                 .offset(offset_of!(Vertex, color))
+                .build(),
+            vd::VertexInputAttributeDescription::builder()
+                .binding(0)
+                .location(3)
+                .format(vd::Format::R32G32Sfloat)
+                .offset(offset_of!(Vertex, uv))
                 .build(),
         ]
     }

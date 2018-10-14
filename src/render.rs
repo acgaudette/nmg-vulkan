@@ -1134,15 +1134,13 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    pub fn new(position: alg::Vec3, color: graphics::Color) -> Vertex {
-        // Initialize without a normal by default
-        // (useful for automatic normal computation)
-        let normal = alg::Vec3::zero();
-
+    /// Zero vertex
+    pub fn blank() -> Vertex {
         Vertex {
-            position,
-            normal,
-            color,
+            position: alg::Vec3::zero(),
+            normal: alg::Vec3::zero(),
+            color: graphics::Color::black(),
+            uv: alg::Vec2::zero(),
         }
     }
 
@@ -1718,17 +1716,7 @@ fn load_models(
      */
 
     let model_data = if model_data.is_empty() {
-        vec![
-            ModelData::new(
-                vec![
-                    Vertex::new(
-                        alg::Vec3::zero(),
-                        graphics::Color::black()
-                    ),
-                ],
-                vec![0],
-            ),
-        ]
+        vec![ModelData::new(vec![Vertex::blank()], vec![0])]
     } else { model_data };
 
     /* Concatenate model data */

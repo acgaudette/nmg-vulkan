@@ -1195,42 +1195,17 @@ impl Vertex {
     }
 }
 
-/// Builder pattern for Vertex
-pub struct VertexBuilder {
-    vertex: Vertex,
-}
-
-impl VertexBuilder {
+impl Default for Vertex {
     /// Defaults to zero normal (useful for automatic normal computation) \
     /// and white color (for models, white is more common than black).
-    pub fn new(position: alg::Vec3) -> VertexBuilder {
-        VertexBuilder {
-            vertex: Vertex {
-                position,
-                normal: alg::Vec3::zero(),
-                color: graphics::Color::white(),
-                uv: alg::Vec2::zero(),
-            },
+    fn default() -> Vertex {
+        Vertex {
+            position: alg::Vec3::zero(),
+            normal: alg::Vec3::zero(),
+            color: graphics::Color::white(),
+            uv: alg::Vec2::zero(),
         }
     }
-
-    pub fn normal(&mut self, normal: alg::Vec3) -> &mut VertexBuilder {
-        self.vertex.normal = normal;
-        self
-    }
-
-    pub fn color(&mut self, color: graphics::Color) -> &mut VertexBuilder {
-        self.vertex.color = color;
-        self
-    }
-
-    pub fn uv(&mut self, uv: alg::Vec2) -> &mut VertexBuilder {
-        self.vertex.uv = uv;
-        self
-    }
-
-    /// Finalize
-    pub fn build(&self) -> Vertex { self.vertex }
 }
 
 #[cfg(debug_assertions)]

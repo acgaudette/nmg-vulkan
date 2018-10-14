@@ -2606,8 +2606,6 @@ fn init_drawing(
         std::mem::size_of::<SharedUBO>() as u64
     );
 
-    let font_alignment = ubo_alignment(std::mem::size_of::<FontUBO>() as u64);
-
     // Allocate a buffer for the shared UBO
     let (ubo_buffer, ubo_memory) = create_buffer(
         shared_alignment, // Contains single UBO
@@ -2671,6 +2669,9 @@ fn init_drawing(
 
     // No copies (causes segfault?)
     descriptor_pool.update_descriptor_sets(&writes, &[]);
+
+    // Compute font alignment
+    let font_alignment = ubo_alignment(std::mem::size_of::<FontUBO>() as u64);
 
     Ok((
         depth_image,

@@ -112,40 +112,40 @@ fn get_models() -> Vec<render::ModelData> {
     let cube = render::ModelData::new_with_normals(
         vec![
             // Front Face
-            render::Vertex::new_raw(-0.5,  0.5, -0.5, 0., 0., 0., 1., 1., 1.),
-            render::Vertex::new_raw( 0.5,  0.5, -0.5, 0., 0., 0., 1., 1., 1.),
-            render::Vertex::new_raw( 0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 1.),
-            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_position_color(-0.5,  0.5, -0.5, 1., 1., 1.),
+            render::Vertex::new_position_color( 0.5,  0.5, -0.5, 1., 1., 1.),
+            render::Vertex::new_position_color( 0.5, -0.5, -0.5, 1., 1., 1.),
+            render::Vertex::new_position_color(-0.5, -0.5, -0.5, 1., 1., 1.),
 
             // Back Face
-            render::Vertex::new_raw(-0.5,  0.5, 0.5, 0., 0., 0., 1., 1., 1.),
-            render::Vertex::new_raw(-0.5, -0.5, 0.5, 0., 0., 0., 1., 1., 1.),
-            render::Vertex::new_raw( 0.5, -0.5, 0.5, 0., 0., 0., 1., 1., 1.),
-            render::Vertex::new_raw( 0.5,  0.5, 0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_position_color(-0.5,  0.5, 0.5, 1., 1., 1.),
+            render::Vertex::new_position_color(-0.5, -0.5, 0.5, 1., 1., 1.),
+            render::Vertex::new_position_color( 0.5, -0.5, 0.5, 1., 1., 1.),
+            render::Vertex::new_position_color( 0.5,  0.5, 0.5, 1., 1., 1.),
 
             // Top Face
-            render::Vertex::new_raw(-0.5, 0.5, -0.5, 0., 0., 0., 1., 0., 1.),
-            render::Vertex::new_raw(-0.5, 0.5,  0.5, 0., 0., 0., 1., 0., 1.),
-            render::Vertex::new_raw( 0.5, 0.5,  0.5, 0., 0., 0., 1., 0., 1.),
-            render::Vertex::new_raw( 0.5, 0.5, -0.5, 0., 0., 0., 1., 0., 1.),
+            render::Vertex::new_position_color(-0.5, 0.5, -0.5, 1., 0., 1.),
+            render::Vertex::new_position_color(-0.5, 0.5,  0.5, 1., 0., 1.),
+            render::Vertex::new_position_color( 0.5, 0.5,  0.5, 1., 0., 1.),
+            render::Vertex::new_position_color( 0.5, 0.5, -0.5, 1., 0., 1.),
 
             // Bottom Face
-            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 0.),
-            render::Vertex::new_raw( 0.5, -0.5, -0.5, 0., 0., 0., 1., 1., 0.),
-            render::Vertex::new_raw( 0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 0.),
-            render::Vertex::new_raw(-0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 0.),
+            render::Vertex::new_position_color(-0.5, -0.5, -0.5, 1., 1., 0.),
+            render::Vertex::new_position_color( 0.5, -0.5, -0.5, 1., 1., 0.),
+            render::Vertex::new_position_color( 0.5, -0.5,  0.5, 1., 1., 0.),
+            render::Vertex::new_position_color(-0.5, -0.5,  0.5, 1., 1., 0.),
 
             // Left Face
-            render::Vertex::new_raw(-0.5,  0.5, -0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw(-0.5, -0.5,  0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw(-0.5,  0.5,  0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_position_color(-0.5,  0.5, -0.5, 1., 0., 0.),
+            render::Vertex::new_position_color(-0.5, -0.5, -0.5, 1., 0., 0.),
+            render::Vertex::new_position_color(-0.5, -0.5,  0.5, 1., 0., 0.),
+            render::Vertex::new_position_color(-0.5,  0.5,  0.5, 1., 0., 0.),
 
             // Right Face
-            render::Vertex::new_raw(0.5,  0.5, -0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw(0.5,  0.5,  0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw(0.5, -0.5,  0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw(0.5, -0.5, -0.5, 0., 0., 0., 1., 0., 0.),
+            render::Vertex::new_position_color(0.5,  0.5, -0.5, 1., 0., 0.),
+            render::Vertex::new_position_color(0.5,  0.5,  0.5, 1., 0., 0.),
+            render::Vertex::new_position_color(0.5, -0.5,  0.5, 1., 0., 0.),
+            render::Vertex::new_position_color(0.5, -0.5, -0.5, 1., 0., 0.),
         ], vec![
              0,  1,  2,
              2,  3,  0,

@@ -142,18 +142,18 @@ fn main() {
 fn get_models() -> Vec<render::ModelData> {
     let pyramid = render::ModelData::new_with_normals(
         vec![
-            render::Vertex::new_raw( 0.0,  0.5,  0.0, 0., 0., 0., 1., 1., 0.),
-            render::Vertex::new_raw(-0.5, -0.5, -0.5, 0., 0., 0., 1., 0., 1.),
-            render::Vertex::new_raw( 0.5, -0.5, -0.5, 0., 0., 0., 1., 0., 0.),
-            render::Vertex::new_raw( 0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 0.),
-            render::Vertex::new_raw(-0.5, -0.5,  0.5, 0., 0., 0., 1., 1., 1.),
+            render::Vertex::new_position_color( 0.0,  0.5,  0.0, 1., 1., 0.),
+            render::Vertex::new_position_color(-0.5, -0.5, -0.5, 1., 0., 1.),
+            render::Vertex::new_position_color( 0.5, -0.5, -0.5, 1., 0., 0.),
+            render::Vertex::new_position_color( 0.5, -0.5,  0.5, 1., 1., 0.),
+            render::Vertex::new_position_color(-0.5, -0.5,  0.5, 1., 1., 1.),
         ], vec![
-            0u32, 2u32, 1u32,
-            0u32, 3u32, 2u32,
-            0u32, 4u32, 3u32,
-            0u32, 1u32, 4u32,
-            2u32, 4u32, 1u32,
-            3u32, 4u32, 2u32,
+            0, 2, 1,
+            0, 3, 2,
+            0, 4, 3,
+            0, 1, 4,
+            2, 4, 1,
+            3, 4, 2,
         ],
         render::NormalMode::Smooth,
     );

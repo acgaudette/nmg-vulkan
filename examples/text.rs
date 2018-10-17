@@ -26,7 +26,8 @@ impl nmg::Start for Demo {
         entities:   &mut entity::Manager,
         components: &mut components::Container,
     ) {
-        /* Add text 3d */
+        /* 3d texts */
+
         let text_0 = entities.add();
         components.transforms.register(text_0);
         self.text_0 = Some(text_0);
@@ -63,14 +64,15 @@ impl nmg::Start for Demo {
             text_1,
         );
 
-        /* Add labels */
+        /* Labels */
+
         let label_0 = entities.add();
         components.transforms.register(label_0);
         self.label_0 = Some(label_0);
 
         components.labels.register(label_0);
         components.labels.build()
-            .text("initiating rusty mech engine")
+            .text("nmg_vulkan")
             .pixel_scale_factor(1f32)
             .for_entity(label_0);
         self.objects.push(label_0);
@@ -87,11 +89,12 @@ impl nmg::Start for Demo {
         components.labels.register(label_1);
         components.labels.build()
             .text("FOR YOUR CONSIDERATION")
-            .pixel_scale_factor(1f32)
+            .pixel_scale_factor(2f32)
             .for_entity(label_1);
         self.objects.push(label_1);
 
-        /* Add point light */
+        /* Point light */
+
         let light = entities.add();
         components.transforms.register(light);
 
@@ -116,7 +119,7 @@ impl nmg::Start for Demo {
             target_position,
             alg::Vec3::up(),
         );
-        
+
         self.camera = Some(camera);
 
         components.transforms.set(
@@ -142,7 +145,7 @@ impl nmg::Update for Demo {
         input: &input::Manager,
         debug: &mut debug::Handler,
     ) {
-        let angle = time as f32;
+        let angle = 0.5 * time as f32;
 
         // Animate light
         components.transforms.set_position(
@@ -155,7 +158,6 @@ impl nmg::Update for Demo {
         );
 
         // Rotate text
-
         components.transforms.set_orientation(
             self.text_1.unwrap(),
             alg::Quat::axis_angle_raw(alg::Vec3::fwd(), angle),
@@ -164,8 +166,8 @@ impl nmg::Update for Demo {
         // Rotate label
         components.transforms.set_orientation(
             self.label_1.unwrap(),
-            alg::Quat::axis_angle_raw(alg::Vec3::up(), angle) * 
-            alg::Quat::axis_angle_raw(alg::Vec3::fwd(), angle),
+            alg::Quat::axis_angle_raw(alg::Vec3::up(), -angle)
+            * alg::Quat::axis_angle_raw(alg::Vec3::fwd(), -angle),
         );
 
         // Rotate camera

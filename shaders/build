@@ -27,5 +27,6 @@ function compile_all {
 mkdir -p out
 
 compile_all font3d
+compile_all font2d
 compile_all debug
 compile_all base

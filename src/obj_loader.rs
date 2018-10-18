@@ -60,5 +60,11 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
         );
     }
 
+    println!(
+        "Loaded model from \"{}\" with {} submesh(es)",
+        filename,
+        result.len(),
+    );
+
     result
 }

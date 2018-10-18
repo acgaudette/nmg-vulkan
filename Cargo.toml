@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = ["Aaron C Gaudette <gaudetteaaron@gmail.com>"]
 
 [dependencies]
-voodoo = "0.3.1"
-voodoo_winit = "0.1.1"
+voodoo = { git = "https://github.com/acgaudette/voodoo" }
+voodoo_winit = { git = "https://github.com/acgaudette/voodoo" }
 fnv = "1.0.3"
 rust-ini = "0.10.0"
 lazy_static = "1.0.0"
 tobj = "0.1.6"
-png = "0.12.0"
+png = { git = "https://github.com/acgaudette/image-png" }

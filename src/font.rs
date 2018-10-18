@@ -57,6 +57,7 @@ fn get_value_from_pair<'a> (pair: &'a str) -> &'a str {
 fn parse_bmchar<'a>(full_str: &'a str) -> Bmchar {
     let mut iter = full_str.split_whitespace();
     iter.next(); // Skip
+
     let id = get_float_from_pair!(iter) as i32;
     let x = get_float_from_pair!(iter);
     let y = get_float_from_pair!(iter);
@@ -67,6 +68,7 @@ fn parse_bmchar<'a>(full_str: &'a str) -> Bmchar {
     let xadvance = get_float_from_pair!(iter);
     let page = get_float_from_pair!(iter) as i32;
     //let chnl = get_float_from_pair!(iter);
+
     Bmchar {
         id,
         x,
@@ -85,17 +87,15 @@ impl Data {
         font_data_path: &str
     ) -> Data {
         let file_handle = File::open(font_data_path).unwrap_or_else(
-            |err| panic!(
-                "Could not load font data file: \"{}\"", err
-        ));
-        let mut pixels = Vec::new();
+            |err| panic!("Could not load font data file: \"{}\"", err)
+        );
 
+        let mut pixels = Vec::new();
         let file = BufReader::new(&file_handle);
-        
         let mut char_map = fnv::FnvHashMap::with_capacity_and_hasher(
-                255,
-                Default::default(),
-            );
+            255,
+            Default::default(),
+        );
 
         let mut uv_width = 0f32;
         let mut uv_height = 0f32;
@@ -105,11 +105,12 @@ impl Data {
 
         for line in file.lines() {
             let line_string = line.unwrap_or_else(
-                |err| panic!(
-                    "Could not unwrap line: \"{}\"", err
-            ));
+                |err| panic!("Could not unwrap line: \"{}\"", err)
+            );
+
             let clone = line_string.clone();
             let mut iter = clone.split_whitespace();
+
             match iter.next() {
                 Some("info") => {
                     let pair = iter.next().expect("Could not find font face");
@@ -117,6 +118,7 @@ impl Data {
                     println!("Reading font \"{}\"", font_face);
                     continue;
                 },
+
                 Some("common") => {
                     line_height = get_float_from_pair!(iter);
                     base_width = get_float_from_pair!(iter);
@@ -124,30 +126,40 @@ impl Data {
                     uv_height = get_float_from_pair!(iter);
                     continue;
                 },
+
                 Some("page") => {
-                    iter.next(); //skip
+                    iter.next(); // Skip
+
                     let pair = iter.next().expect(
                         "Found None value instead of Some"
                     );
+
                     let path = get_value_from_pair(pair).replace("\"", "");
+
                     let decoder = png::Decoder::new(
-                        File::open(path)
-                            .unwrap_or_else(
-                                |err| panic!("Could not find file: \"{}\"", err)
-                    ));
-                    let (info, mut reader) = decoder.read_info().unwrap_or_else(
-                        |err| panic!("Could not decode path: \"{}\"", err)
+                        File::open(path).unwrap_or_else(
+                            |err| panic!("Could not find file: \"{}\"", err)
+                        )
                     );
+
+                    let (info, mut reader) = decoder.read_info()
+                        .unwrap_or_else(
+                            |err| panic!("Could not decode path: \"{}\"", err)
+                        );
+
                     let mut buf = vec![0; info.buffer_size()];
                     reader.next_frame(&mut buf).unwrap_or_else(
-                        |err| panic!("Could not write frame: \"{}\"", err)
+                        |err| panic!("Could not read frame: \"{}\"", err)
                     );
+
                     pixels = buf.clone();
                 },
+
                 Some("char") => {
                     let bmchar_instance = parse_bmchar(&line_string.clone());
                     char_map.insert(bmchar_instance.id, bmchar_instance);
                 },
+
                 _ => {
                     continue;
                 },

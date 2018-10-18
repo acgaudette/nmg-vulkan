@@ -248,11 +248,10 @@ fn begin_update<T>(
             match event {
                 // Rebuild the swapchain if the window changes size
                 vdw::winit::Event::WindowEvent {
-                    event: vdw::winit::WindowEvent::Resized(
-                        width, height
-                    ),
+                    event: vdw::winit::WindowEvent::Resized(size),
                     ..
                 } => {
+                    let (width, height) = size.into();
                     if width == 0 || height == 0 { return; }
 
                     if let Err(e) = context.refresh_swapchain(width, height) {
@@ -262,28 +261,19 @@ fn begin_update<T>(
 
                 // Stop the application if the window was closed
                 vdw::winit::Event::WindowEvent {
-                    event: vdw::winit::WindowEvent::Closed,
+                    event: vdw::winit::WindowEvent::CloseRequested,
                     ..
                 } => {
                     running = false;
                 },
 
-                // Grab mouse cursor if window is focused; otherwise release
-                // TODO: potentially do something with set_cursor_state error
+                // Grab mouse cursor if window is focused; release otherwise
                 vdw::winit::Event::WindowEvent {
-                    event: vdw::winit::WindowEvent::Focused(
-                        focused
-                    ),
+                    event: vdw::winit::WindowEvent::Focused(focused),
                     ..
                 } => {
-                    if focused {
-                        if let Err(e) = window.set_cursor_state(
-                            vdw::winit::CursorState::Grab
-                        ) { eprintln!("{}", e); }
-                    } else {
-                        if let Err(e) = window.set_cursor_state(
-                            vdw::winit::CursorState::Normal
-                        ) { eprintln!("{}", e); }
+                    if let Err(e) = window.grab_cursor(focused) {
+                        eprintln!("{}", e);
                     }
                 },
 
@@ -319,8 +309,8 @@ fn begin_update<T>(
                     ..
                 } => {
                     input.cursor_coords = alg::Vec2::new(
-                        position.0 as f32,
-                        position.1 as f32,
+                        position.x as f32,
+                        position.y as f32,
                     );
                 },
 
@@ -472,7 +462,10 @@ fn begin_update<T>(
                 {
                     // Use existing window size
                     if let Some(size) = window.get_inner_size() {
-                        match context.refresh_swapchain(size.0, size.1) {
+                        match context.refresh_swapchain(
+                            size.width as u32,
+                            size.height as u32,
+                        ) {
                             Ok(()) => continue,
                             Err(e) => eprintln!("{}", e) // Fall through
                         }

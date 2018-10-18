@@ -98,21 +98,24 @@ impl Manager {
         self.key_map[key].pressed = pressed;
     }
 
+    /// Check if key was held this frame
     pub fn key_held(&self, key: Key) -> bool {
         self.key_map[key as usize].pressed
     }
 
+    /// Check if key was pressed down this frame
     pub fn key_pressed(&self, key: Key) -> bool {
         let key_state = self.key_map[key as usize];
         !key_state.was_pressed && key_state.pressed
     }
 
+    /// Check if key was released this frame
     pub fn key_released(&self, key: Key) -> bool {
         let key_state = self.key_map[key as usize];
         key_state.was_pressed && !key_state.pressed
     }
 
-    // Expose key pressed array, created on call
+    /// Expose key pressed array, created on call
     pub fn pressed(&self) -> [bool; KEY_COUNT] {
         let mut keys = [false; KEY_COUNT];
 

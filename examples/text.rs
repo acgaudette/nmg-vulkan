@@ -34,7 +34,7 @@ impl nmg::Start for Demo {
 
         components.texts.register(text_0);
         components.texts.build()
-            .text("the medium is the massage")
+            .text("the medium is the\nmassage")
             .scale_factor(1f32)
             .for_entity(text_0);
         self.objects.push(text_0);

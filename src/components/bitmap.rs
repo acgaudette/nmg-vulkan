@@ -45,11 +45,17 @@ pub fn prepare_text(
 
     // Starting positions for current text instance being rendered
     let mut curr_line_start_x = x;
+    let x_starting = x;
     let mut curr_line_start_y = y + common_data.line_height * char_height_scale;
 
     let mut num_letters = 0;
     // Render quads for each individual character
     for c in text_instance.text.chars() {
+        if c == '\n' {
+            curr_line_start_y -= common_data.line_height * char_height_scale;
+            curr_line_start_x = x_starting;
+            continue;
+        }
         // Alias for character data from character map
         let char_data = &common_data.char_map[&(c as i32)];
         // UV coordinates

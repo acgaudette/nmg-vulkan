@@ -3,15 +3,15 @@ extern crate tobj;
 use std;
 use render;
 
+/// Load obj meshes from path to vector of `render::ModelData`
 pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
-
     let tobj_models = tobj::load_obj(&std::path::Path::new(filename));
-
     let (models, _) = tobj_models.unwrap_or_else(
         |err| panic!(
             "Could not load obj file: \"{}\"", err
         )
     );
+
     let mut result = Vec::new();
 
     for model in models {

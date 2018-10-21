@@ -10,7 +10,6 @@ use nmg::debug;
 
 struct Demo {
     objects: Vec<entity::Handle>,
-    light: Option<entity::Handle>,
     text_0: Option<entity::Handle>,
     text_1: Option<entity::Handle>,
     label_0: Option<entity::Handle>,
@@ -93,19 +92,6 @@ impl nmg::Start for Demo {
             .for_entity(label_1);
         self.objects.push(label_1);
 
-        /* Point light */
-
-        let light = entities.add();
-        components.transforms.register(light);
-
-        components.lights.register(light);
-        components.lights.build()
-            .point_with_radius(8.0)
-            .intensity(2.0)
-            .for_entity(light);
-
-        self.light = Some(light);
-
         /* Set up camera */
 
         let camera = entities.add();
@@ -147,16 +133,6 @@ impl nmg::Update for Demo {
     ) {
         let angle = 0.5 * time as f32;
 
-        // Animate light
-        components.transforms.set_position(
-            self.light.unwrap(),
-            alg::Vec3::new(
-                0.0,
-                1.0 * angle.sin(),
-                1.0 * angle.cos(),
-            ) + alg::Vec3::fwd() * 1.0,
-        );
-
         // Rotate text
         components.transforms.set_orientation(
             self.text_1.unwrap(),
@@ -166,8 +142,7 @@ impl nmg::Update for Demo {
         // Rotate label
         components.transforms.set_orientation(
             self.label_1.unwrap(),
-            alg::Quat::axis_angle_raw(alg::Vec3::up(), -angle)
-            * alg::Quat::axis_angle_raw(alg::Vec3::fwd(), -angle),
+            alg::Quat::axis_angle_raw(alg::Vec3::fwd(), -angle),
         );
 
         // Rotate camera
@@ -181,7 +156,6 @@ impl nmg::Update for Demo {
 fn main() {
     let demo = Demo {
         objects: Vec::new(),
-        light: None,
         text_0: None,
         text_1: None,
         label_0: None,

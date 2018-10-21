@@ -26,18 +26,24 @@ impl<'a> TextBuilder<'a> {
         self.text.text = text.into();
         self
     }
-    
+
     pub fn alignment(&mut self, alignment: render::TextAlign) -> &mut TextBuilder<'a> {
         self.text.align = alignment;
         self
     }
 
+    /**
+     * Scaling with reference to each pixel of texture
+     */
     pub fn pixel_scale_factor(&mut self, scale_factor: f32) -> &mut TextBuilder<'a> {
         self.text.scale = render::TextScale::PixelScale;
         self.text.scale_factor = scale_factor;
         self
     }
 
+    /**
+     * Scaling with respect to aspect ratio
+     */
     pub fn aspect_scale_factor(&mut self, scale_factor: f32) -> &mut TextBuilder<'a> {
         self.text.scale = render::TextScale::AspectScale;
         self.text.scale_factor = scale_factor;
@@ -58,11 +64,10 @@ impl<'a> TextBuilder<'a> {
 
 pub struct Manager {
     instances: fnv::FnvHashMap<entity::Handle, render::Text>,
-    pub model_matrices: Vec<render::FontUBO>,
+    pub instance_data: Vec<render::FontUBO>,
 }
 
 impl components::Component for Manager {
-
     fn register(&mut self, entity: entity::Handle) {
         self.instances.insert(
             entity,
@@ -78,7 +83,7 @@ impl components::Component for Manager {
         self.instances.len()
     }
 
-    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Text" }
+    #[cfg(debug_assertions)] fn debug_name(&self) -> &str { "Label" }
 }
 
 impl Manager {
@@ -88,7 +93,7 @@ impl Manager {
                 hint,
                 Default::default(),
             ),
-            model_matrices: Vec::with_capacity(hint),
+            instance_data: Vec::with_capacity(hint),
         }
     }
 
@@ -102,19 +107,19 @@ impl Manager {
     }
 
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
-        self.model_matrices.clear();
+        self.instance_data.clear();
         for (entity, _) in &mut self.instances {
             let font_ubo = render::FontUBO {
                 model: transforms.get_mat(*entity)
             };
-            self.model_matrices.push(font_ubo);
+            self.instance_data.push(font_ubo);
         }
     }
 
     pub fn prepare_bitmap_text(
         &mut self,
         font_data: &font::Data,
-        vertex_ptr: *mut *mut render::FontVertex,
+        vertex_ptr: *mut *mut *mut render::FontVertex_2d,
         idx_ptr: *mut *mut u32,
         framebuffer_width:  u32,
         framebuffer_height: u32,

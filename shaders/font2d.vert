@@ -2,9 +2,9 @@
 
 layout(binding = 0) uniform font_ubo {
   mat4 model;
-} model_data;
+} instance;
 
-layout (location = 0) in vec3 inPos;
+layout (location = 0) in vec2 inPos;
 layout (location = 1) in vec2 inUV;
 layout (location = 0) out vec2 outUV;
 
@@ -16,8 +16,9 @@ const float PERSPECTIVE_TRANSFORM = -1.0;
 
 void main(void)
 {
-    gl_Position = model_data.model * vec4(inPos, 1.0);
+    // Apply 3d transformations in 2d space
+    gl_Position = instance.model * vec4(inPos, 0.0, 1.0);
+    // Flips UV textures as text will look upside down without transform
     gl_Position.y = gl_Position.y * PERSPECTIVE_TRANSFORM;
-    gl_Position.z = 0;
     outUV = inUV;
 }

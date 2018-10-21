@@ -691,14 +691,14 @@ impl<'a> Context<'a> {
         let framebuffer_width = self.swapchain.extent().width();
         let framebuffer_height = self.swapchain.extent().height();
 
-        if texts.model_matrices.len() > 0 {
+        if texts.instance_data.len() > 0 {
             // Not optimal: requires copies and a heap allocation
             let mut dynamic_buffer = util::AlignedBuffer::<FontUBO>::new(
                 self.font_alignment as usize,
-                texts.model_matrices.len(),
+                texts.instance_data.len(),
             );
 
-            for model in &texts.model_matrices {
+            for model in &texts.instance_data {
                 dynamic_buffer.push(model.clone());
             }
 
@@ -713,7 +713,7 @@ impl<'a> Context<'a> {
         }
 
         let (mut vertex_ptr_3d, mut idx_ptr_3d) = self.text_display
-            .begin_text_update::<*mut FontVertex>();
+            .begin_text_update::<*mut FontVertex_3d>();
 
         texts.prepare_bitmap_text(
             &self.font_data,
@@ -729,15 +729,15 @@ impl<'a> Context<'a> {
             self.font_alignment,
         )?;
 
-        if labels.model_matrices.len() > 0 {
+        if labels.instance_data.len() > 0 {
             // Not optimal: requires copies and a heap allocation
             let mut dynamic_buffer = util::AlignedBuffer::<FontUBO>::new(
                 self.font_alignment as usize,
-                labels.model_matrices.len(),
+                labels.instance_data.len(),
             );
 
-            for model in &labels.model_matrices {
-                dynamic_buffer.push(model.clone());
+            for instance_data in &labels.instance_data {
+                dynamic_buffer.push(instance_data.clone());
             }
 
             unsafe {
@@ -751,7 +751,7 @@ impl<'a> Context<'a> {
         }
 
         let (mut vertex_ptr_2d, mut idx_ptr_2d) = self.label_display
-            .begin_text_update::<*mut FontVertex>();
+            .begin_text_update::<*mut FontVertex_2d>();
 
         labels.prepare_bitmap_text(
             &self.font_data,
@@ -891,20 +891,22 @@ impl<'a> Context<'a> {
 
         // Text resources
         self.device.free_memory(self.text_meta.image_memory, None);
+
+        // 3d text resources
         self.device.destroy_buffer(self.text_display.index_buffer, None);
         self.device.destroy_buffer(self.text_display.vertex_buffer, None);
         self.device.free_memory(self.text_display.index_memory, None);
         self.device.free_memory(self.text_display.vertex_memory, None);
         self.device.destroy_buffer(self.text_display.font_ubo_buffer, None);
         self.device.free_memory(self.text_display.font_ubo_memory, None);
-        /*
+
+        // Label resources
         self.device.destroy_buffer(self.label_display.index_buffer, None);
         self.device.free_memory(self.label_display.index_memory, None);
         self.device.destroy_buffer(self.label_display.vertex_buffer, None);
         self.device.free_memory(self.label_display.vertex_memory, None);
         self.device.destroy_buffer(self.label_display.font_ubo_buffer, None);
-        self.device.free_memory(self.label_display.font_ubo_memory, None);*/
-
+        self.device.free_memory(self.label_display.font_ubo_memory, None);
 
         #[cfg(debug_assertions)] {
             /* Debug buffer */
@@ -3095,6 +3097,7 @@ fn set_image_layout_helper(
         image_memory_barrier_builder = image_memory_barrier_builder
             .dst_access_mask(dst_access_mask)
     }
+
     let image_memory_barrier = image_memory_barrier_builder
         .build();
 
@@ -3113,17 +3116,71 @@ pub enum TextAlign { AlignLeft, AlignCenter, AlignRight }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
-pub struct FontVertex {
+pub struct FontVertex_2d {
+    pub position: alg::Vec2,
+    pub st: alg::Vec2,
+}
+
+impl FontVertex_2d {
+    pub fn new(
+        position: alg::Vec2,
+        st: alg::Vec2
+    ) -> FontVertex_2d {
+        FontVertex_2d {
+            position,
+            st,
+        }
+    }
+
+    pub fn new_raw(
+        px: f32, py: f32,
+        s: f32, t: f32,
+    ) -> FontVertex_2d {
+        FontVertex_2d {
+            position: alg::Vec2::new(px, py),
+            st: alg::Vec2::new(s, t),
+        }
+    }
+
+    fn binding_description() -> vd::VertexInputBindingDescription {
+        vd::VertexInputBindingDescription::builder()
+            .binding(0)
+            .stride(std::mem::size_of::<FontVertex_2d>() as u32)
+            .input_rate(vd::VertexInputRate::Vertex)
+            .build()
+    }
+
+    fn attribute_descriptions() -> [vd::VertexInputAttributeDescription; 2] {
+        [
+            vd::VertexInputAttributeDescription::builder()
+                .binding(0)
+                .location(0)
+                .format(vd::Format::R32G32Sfloat)
+                .offset(offset_of!(FontVertex_2d, position))
+                .build(),
+            vd::VertexInputAttributeDescription::builder()
+                .binding(0)
+                .location(1)
+                .format(vd::Format::R32G32Sfloat)
+                .offset(offset_of!(FontVertex_2d, st))
+                .build(),
+        ]
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+#[repr(C)]
+pub struct FontVertex_3d {
     pub position: alg::Vec3,
     pub st: alg::Vec2,
 }
 
-impl FontVertex {
+impl FontVertex_3d {
     pub fn new(
         position: alg::Vec3,
         st: alg::Vec2
-    ) -> FontVertex {
-        FontVertex {
+    ) -> FontVertex_3d {
+        FontVertex_3d {
             position,
             st,
         }
@@ -3132,8 +3189,8 @@ impl FontVertex {
     pub fn new_raw(
         px: f32, py: f32, pz: f32,
         s: f32, t: f32,
-    ) -> FontVertex {
-        FontVertex {
+    ) -> FontVertex_3d {
+        FontVertex_3d {
             position: alg::Vec3::new(px, py, pz),
             st: alg::Vec2::new(s, t),
         }
@@ -3142,7 +3199,7 @@ impl FontVertex {
     fn binding_description() -> vd::VertexInputBindingDescription {
         vd::VertexInputBindingDescription::builder()
             .binding(0)
-            .stride(std::mem::size_of::<FontVertex>() as u32)
+            .stride(std::mem::size_of::<FontVertex_3d>() as u32)
             .input_rate(vd::VertexInputRate::Vertex)
             .build()
     }
@@ -3153,13 +3210,13 @@ impl FontVertex {
                 .binding(0)
                 .location(0)
                 .format(vd::Format::R32G32B32Sfloat)
-                .offset(offset_of!(FontVertex, position))
+                .offset(offset_of!(FontVertex_3d, position))
                 .build(),
             vd::VertexInputAttributeDescription::builder()
                 .binding(0)
                 .location(1)
                 .format(vd::Format::R32G32Sfloat)
-                .offset(offset_of!(FontVertex, st))
+                .offset(offset_of!(FontVertex_3d, st))
                 .build(),
         ]
     }
@@ -3174,8 +3231,6 @@ struct TextMeta {
     pub attachments: [vd::PipelineColorBlendAttachmentState; 1],
     pub viewports: [vd::Viewport; 1],
     pub scissors: [vd::Rect2d; 1],
-    pub binding_description: [vd::VertexInputBindingDescription; 1],
-    pub attribute_descriptions: [vd::VertexInputAttributeDescription; 2],
 }
 
 fn init_text_pipeline_builder(
@@ -3379,8 +3434,6 @@ fn init_text_pipeline_builder(
 
     let viewports = [viewport];
     let scissors = [scissor];
-    let binding_description = [FontVertex::binding_description()];
-    let attribute_descriptions = FontVertex::attribute_descriptions();
 
     unsafe {
         vulkan_device.destroy_buffer(host_buffer, None);
@@ -3396,8 +3449,6 @@ fn init_text_pipeline_builder(
             attachments,
             viewports,
             scissors,
-            binding_description,
-            attribute_descriptions,
         }
     )
 }
@@ -3459,6 +3510,8 @@ struct TextDisplay {
     index_memory: vd::DeviceMemoryHandle,
     font_ubo_buffer: vd::BufferHandle,
     font_ubo_memory: vd::DeviceMemoryHandle,
+    //binding_description: [vd::VertexInputBindingDescription; 1],
+    //attribute_descriptions: [vd::VertexInputAttributeDescription; 2],
     _descriptor_pool: vd::DescriptorPool,
     _descriptor_set_layout: vd::DescriptorSetLayout,
     descriptor_set: vd::DescriptorSet,
@@ -3478,6 +3531,14 @@ fn create_text(
     text_meta: &TextMeta,
     is_2d: bool,
 ) -> vd::Result<TextDisplay> {
+    let (binding_description, attribute_descriptions) =
+        if is_2d {
+            ([FontVertex_2d::binding_description()],
+            FontVertex_2d::attribute_descriptions())
+        } else {
+            ([FontVertex_3d::binding_description()],
+            FontVertex_3d::attribute_descriptions())
+        };
     // Loading shaders
     let path = {
         let mut path = &config::load_section_setting::<String>(
@@ -3528,8 +3589,8 @@ fn create_text(
     let stages = [vert_stage, frag_stage];
 
     let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
-        .vertex_binding_descriptions(&text_meta.binding_description)
-        .vertex_attribute_descriptions(&text_meta.attribute_descriptions)
+        .vertex_binding_descriptions(&binding_description)
+        .vertex_attribute_descriptions(&attribute_descriptions)
         .build();
 
     let blending = vd::PipelineColorBlendStateCreateInfo::builder()
@@ -3564,7 +3625,12 @@ fn create_text(
     let properties = device.physical_device().memory_properties();
 
     let (vertex_buffer, vertex_memory) = create_buffer(
-        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontVertex>() as u64 * 4,
+        MAX_CHAR_COUNT as u64 * 
+            if is_2d {
+                std::mem::size_of::<FontVertex_2d>() as u64 * 4
+            } else {
+                std::mem::size_of::<FontVertex_3d>() as u64 * 4
+            },
         vd::BufferUsageFlags::VERTEX_BUFFER,
         &device,
         vd::MemoryPropertyFlags::HOST_VISIBLE,
@@ -3756,6 +3822,8 @@ fn create_text(
             index_memory,
             font_ubo_buffer,
             font_ubo_memory,
+            //binding_description,
+            //attribute_descriptions,
             _descriptor_pool,
             _descriptor_set_layout,
             descriptor_set,
@@ -3769,7 +3837,7 @@ fn create_text(
 impl TextDisplay {
     pub fn begin_text_update<T>(
         &mut self,
-    )-> (*mut FontVertex, *mut u32) {
+    )-> (*mut T, *mut u32) {
         self.text_instances.clear();
 
         unsafe {

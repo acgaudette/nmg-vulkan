@@ -51,7 +51,7 @@ impl<'a> TextBuilder<'a> {
 
 pub struct Manager {
     instances: fnv::FnvHashMap<entity::Handle, render::Text>,
-    pub model_matrices: Vec<render::FontUBO>,
+    pub instance_data: Vec<render::FontUBO>,
 }
 
 impl components::Component for Manager {
@@ -80,7 +80,7 @@ impl Manager {
                 hint,
                 Default::default(),
             ),
-            model_matrices: Vec::with_capacity(hint),
+            instance_data: Vec::with_capacity(hint),
         }
     }
 
@@ -95,19 +95,19 @@ impl Manager {
 
     // Update text positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
-        self.model_matrices.clear();
+        self.instance_data.clear();
         for (entity, _) in &mut self.instances {
             let font_ubo = render::FontUBO {
                 model: transforms.get_mat(*entity)
             };
-            self.model_matrices.push(font_ubo);
+            self.instance_data.push(font_ubo);
         }
     }
 
     pub fn prepare_bitmap_text(
         &mut self,
         font_data: &font::Data,
-        vertex_ptr: *mut *mut render::FontVertex,
+        vertex_ptr: *mut *mut *mut render::FontVertex_3d,
         idx_ptr: *mut *mut u32,
         framebuffer_width:  u32,
         framebuffer_height: u32,

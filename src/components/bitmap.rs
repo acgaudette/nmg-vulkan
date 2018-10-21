@@ -2,10 +2,10 @@ use render;
 use font;
 
 // Shared method for preparing and rendering text instances, whether 3d or not
-pub fn prepare_text(
+pub fn prepare_text<T>(
     text_instance: &render::Text,
     font: &font::Data,
-    vertex_ptr: *mut *mut render::FontVertex,
+    vertex_ptr: *mut *mut T,
     idx_ptr: *mut *mut u32,
     idx_offset: &mut &mut u32,
     framebuffer_width:  u32,
@@ -87,46 +87,82 @@ pub fn prepare_text(
         let bottom_y = curr_line_start_y - yoffset;
         let top_y = bottom_y - (char_height_scale * char_data.height);
 
-        let top_left = render::FontVertex::new_raw(
-            left_x,
-            top_y,
-            z,
-            u_start,
-            v_start,
-        );
 
-        let bottom_right = render::FontVertex::new_raw(
-            right_x,
-            bottom_y,
-            z,
-            u_end,
-            v_end,
-            );
-
-        let bottom_left = render::FontVertex::new_raw(
-            left_x,
-            bottom_y,
-            z,
-            u_start,
-            v_end,
-        );
-
-        let top_right = render::FontVertex::new_raw(
-            right_x,
-            top_y,
-            z,
-            u_end,
-            v_start,
-        );
-
-        for vertex in [
-            top_left, top_right, bottom_left, bottom_right,
-        ].iter() {
-            unsafe {
-                (**vertex_ptr) = *vertex;
-                (*vertex_ptr) = (*vertex_ptr).offset(1);
+        if text_instance.is_2d {
+            let (top_left, bottom_right, bottom_left, top_right,) =
+                (render::FontVertex_2d::new_raw(
+                        left_x,
+                        top_y,
+                        u_start,
+                        v_start,
+                    ),
+                render::FontVertex_2d::new_raw(
+                        right_x,
+                        bottom_y,
+                        u_end,
+                        v_end,
+                    ),
+                render::FontVertex_2d::new_raw(
+                        left_x,
+                        bottom_y,
+                        u_start,
+                        v_end,
+                    ),
+                render::FontVertex_2d::new_raw(
+                        right_x,
+                        top_y,
+                        u_end,
+                        v_start,
+                    ));
+            for vertex in [
+                top_left, top_right, bottom_left, bottom_right,
+            ].iter() {
+                unsafe {
+                    let vp = vertex_ptr as *mut *mut render::FontVertex_2d;
+                    (**vp) = *vertex;
+                    (*vertex_ptr) = (*vp).offset(1) as *mut T;
+                }
             }
-        }
+        } else {
+            let (top_left, bottom_right, bottom_left, top_right,) =
+                (render::FontVertex_3d::new_raw(
+                    left_x,
+                    top_y,
+                    z,
+                    u_start,
+                    v_start,
+                    ),
+                render::FontVertex_3d::new_raw(
+                        right_x,
+                        bottom_y,
+                        z,
+                        u_end,
+                        v_end,
+                    ),
+                render::FontVertex_3d::new_raw(
+                        left_x,
+                        bottom_y,
+                        z,
+                        u_start,
+                        v_end,
+                    ),
+                render::FontVertex_3d::new_raw(
+                        right_x,
+                        top_y,
+                        z,
+                        u_end,
+                        v_start,
+                    ));
+            for vertex in [
+                top_left, top_right, bottom_left, bottom_right,
+            ].iter() {
+                unsafe {
+                    let vp = vertex_ptr as *mut *mut render::FontVertex_3d;
+                    (**vp) = *vertex;
+                    (*vertex_ptr) = (*vp).offset(1) as *mut T;
+                }
+            }
+        };
 
         /*
             top_left, top_right, bottom_right,

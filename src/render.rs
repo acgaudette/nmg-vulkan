@@ -3510,8 +3510,6 @@ struct TextDisplay {
     index_memory: vd::DeviceMemoryHandle,
     font_ubo_buffer: vd::BufferHandle,
     font_ubo_memory: vd::DeviceMemoryHandle,
-    //binding_description: [vd::VertexInputBindingDescription; 1],
-    //attribute_descriptions: [vd::VertexInputAttributeDescription; 2],
     _descriptor_pool: vd::DescriptorPool,
     _descriptor_set_layout: vd::DescriptorSetLayout,
     descriptor_set: vd::DescriptorSet,
@@ -3539,7 +3537,7 @@ fn create_text(
             ([FontVertex_3d::binding_description()],
             FontVertex_3d::attribute_descriptions())
         };
-    // Loading shaders
+    // Load shaders
     let path = {
         let mut path = &config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
@@ -3822,8 +3820,6 @@ fn create_text(
             index_memory,
             font_ubo_buffer,
             font_ubo_memory,
-            //binding_description,
-            //attribute_descriptions,
             _descriptor_pool,
             _descriptor_set_layout,
             descriptor_set,

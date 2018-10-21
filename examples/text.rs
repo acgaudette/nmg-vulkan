@@ -13,6 +13,9 @@ struct Demo {
     light: Option<entity::Handle>,
     text_0: Option<entity::Handle>,
     text_1: Option<entity::Handle>,
+    label_0: Option<entity::Handle>,
+    label_1: Option<entity::Handle>,
+    camera: Option<entity::Handle>,
 }
 
 default_traits!(Demo, [nmg::FixedUpdate, components::softbody::Iterate]);
@@ -30,7 +33,7 @@ impl nmg::Start for Demo {
 
         components.texts.register(text_0);
         components.texts.build()
-            .text("QUICK BROWN FOX JUMPS OVER THE LAZY COW")
+            .text("the medium is the massage")
             .scale_factor(1f32)
             .for_entity(text_0);
         self.objects.push(text_0);
@@ -46,22 +49,49 @@ impl nmg::Start for Demo {
 
         components.texts.register(text_1);
         components.texts.build()
-            .text("quick brown fox jumps over the lazy cow")
+            .text("silence is the product")
             .scale_factor(1f32)
             .for_entity(text_1);
         self.objects.push(text_1);
 
         components.transforms.set_position(
             text_1,
-            alg::Vec3::new(-1., 0., 3.),
+            alg::Vec3::new(-1., 0., 10.),
         );
         components.transforms.parent(
             text_0,
             text_1,
         );
 
-        /* Add point light */
+        /* Add labels */
+        let label_0 = entities.add();
+        components.transforms.register(label_0);
+        self.label_0 = Some(label_0);
 
+        components.labels.register(label_0);
+        components.labels.build()
+            .text("initiating rusty mech engine")
+            .pixel_scale_factor(1f32)
+            .for_entity(label_0);
+        self.objects.push(label_0);
+
+        components.transforms.set_position(
+            label_0,
+            alg::Vec3::new(0.45, 0.95 , 0.0),
+        );
+
+        let label_1 = entities.add();
+        components.transforms.register(label_1);
+        self.label_1 = Some(label_1);
+
+        components.labels.register(label_1);
+        components.labels.build()
+            .text("FOR YOUR CONSIDERATION")
+            .pixel_scale_factor(1f32)
+            .for_entity(label_1);
+        self.objects.push(label_1);
+
+        /* Add point light */
         let light = entities.add();
         components.transforms.register(light);
 
@@ -79,13 +109,15 @@ impl nmg::Start for Demo {
         components.transforms.register(camera);
         components.cameras.register(camera);
 
-        let camera_position = alg::Vec3::new(-1.0, 0.5, -0.1);
+        let camera_position = alg::Vec3::new(-1.0, 0.5, -0.5);
         let target_position = alg::Vec3::new( 0.0, 0.0,  2.0);
         let camera_orientation = alg::Quat::look_at(
             camera_position,
             target_position,
             alg::Vec3::up(),
         );
+        
+        self.camera = Some(camera);
 
         components.transforms.set(
             camera,
@@ -121,8 +153,24 @@ impl nmg::Update for Demo {
                 1.0 * angle.cos(),
             ) + alg::Vec3::fwd() * 1.0,
         );
+
+        // Rotate text
+
         components.transforms.set_orientation(
             self.text_1.unwrap(),
+            alg::Quat::axis_angle_raw(alg::Vec3::fwd(), angle),
+        );
+
+        // Rotate label
+        components.transforms.set_orientation(
+            self.label_1.unwrap(),
+            alg::Quat::axis_angle_raw(alg::Vec3::up(), angle) * 
+            alg::Quat::axis_angle_raw(alg::Vec3::fwd(), angle),
+        );
+
+        // Rotate camera
+        components.transforms.set_orientation(
+            self.camera.unwrap(),
             alg::Quat::axis_angle_raw(alg::Vec3::up(), angle),
         );
     }
@@ -134,6 +182,9 @@ fn main() {
         light: None,
         text_0: None,
         text_1: None,
+        label_0: None,
+        label_1: None,
+        camera: None,
     };
 
     nmg::go(vec![], demo)

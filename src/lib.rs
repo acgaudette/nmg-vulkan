@@ -140,6 +140,7 @@ where
         draws:      components::draw::Manager::new(1, instances),
         softbodies: components::softbody::Manager::new(1, 1, 1),
         texts:      components::text::Manager::new(8),
+        labels:     components::label::Manager::new(8),
     };
 
     // Create input manager
@@ -407,6 +408,7 @@ fn begin_update<T>(
             screen,
         );
         components.texts.update(&components.transforms);
+        components.labels.update(&components.transforms);
 
         // Update renderer
         if let Err(e) = context.update(
@@ -452,6 +454,7 @@ fn begin_update<T>(
             &parameters,
             &components.draws.instances,
             &mut components.texts,
+            &mut components.labels,
         ) {
             // Handle render errors
             if let vd::ErrorKind::ApiCall(result, _) = e.kind {

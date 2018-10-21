@@ -102,6 +102,7 @@ pub struct Context<'a> {
     /* Text data */
 
     text_display:     TextDisplay,
+    label_display:    TextDisplay,
     font_data:        font::Data,
     text_meta:        TextMeta,
     font_alignment:   u64,
@@ -247,9 +248,6 @@ impl<'a> Context<'a> {
             device.clone(),
             graphics_family,
             &transient_pool,
-            &ubo_buffer,
-            shared_alignment,
-            font_alignment,
             &font_data,
         )?;
 
@@ -257,6 +255,21 @@ impl<'a> Context<'a> {
             device.clone(),
             assembly.clone(),
             multisampling.clone(),
+            shared_alignment,
+            font_alignment,
+            &ubo_buffer,
+            &render_pass,
+            &text_meta,
+            false,
+        )?;
+
+        let label_display = create_text(
+            device.clone(),
+            assembly.clone(),
+            multisampling.clone(),
+            shared_alignment,
+            font_alignment,
+            &ubo_buffer,
             &render_pass,
             &text_meta,
             true,
@@ -303,6 +316,7 @@ impl<'a> Context<'a> {
                 dyn_ubo_buffer,
                 dyn_ubo_memory,
                 text_display,
+                label_display,
                 font_data,
                 text_meta,
                 font_alignment,
@@ -394,6 +408,7 @@ impl<'a> Context<'a> {
         self.pipeline = pipeline;
         self.framebuffers = framebuffers;
         self.ubo_alignment = ubo_alignment;
+        self.font_alignment = font_alignment;
         self.descriptor_sets = descriptor_sets;
         self.command_buffers = command_buffers;
 
@@ -406,9 +421,6 @@ impl<'a> Context<'a> {
             self.device.clone(),
             self.graphics_family,
             &self.transient_pool,
-            &ubo_buffer,
-            shared_alignment,
-            font_alignment,
             &self.font_data,
         )?;
 
@@ -418,6 +430,21 @@ impl<'a> Context<'a> {
             self.device.clone(),
             self.assembly.clone(),
             self.multisampling.clone(),
+            shared_alignment,
+            self.font_alignment,
+            &ubo_buffer,
+            &render_pass,
+            &self.text_meta,
+            false,
+        )?;
+        
+        self.label_display = create_text(
+            self.device.clone(),
+            self.assembly.clone(),
+            self.multisampling.clone(),
+            shared_alignment,
+            self.font_alignment,
+            &ubo_buffer,
             &render_pass,
             &self.text_meta,
             true,
@@ -430,8 +457,6 @@ impl<'a> Context<'a> {
         self.ubo_memory = ubo_memory;
         self.dyn_ubo_buffer = dyn_ubo_buffer;
         self.dyn_ubo_memory = dyn_ubo_memory;
-
-        self.font_alignment = font_alignment;
 
         self._depth_image = _depth_image;
         self._views = _views;
@@ -523,6 +548,7 @@ impl<'a> Context<'a> {
         parameters: &Parameters,
         instances: &Instances,
         texts: &mut components::text::Manager,
+        labels: &mut components::label::Manager,
     ) -> vd::Result<()> {
         // Note: will most likely return an image index that is still in use
         let index = self.swapchain.acquire_next_image_khr(
@@ -679,7 +705,7 @@ impl<'a> Context<'a> {
             unsafe {
                 copy_buffer(
                     &self.device,
-                    self.text_meta.font_ubo_memory,
+                    self.text_display.font_ubo_memory,
                     dynamic_buffer.size() as u64,
                     &dynamic_buffer.finalize(),
                 )?;
@@ -687,10 +713,7 @@ impl<'a> Context<'a> {
         }
 
         let (mut vertex_ptr_3d, mut idx_ptr_3d) = self.text_display
-            .begin_text_update::<*mut FontVertex>(
-                &self.text_meta.vertex_memory_3d,
-                &self.text_meta.index_memory_3d,
-            );
+            .begin_text_update::<*mut FontVertex>();
 
         texts.prepare_bitmap_text(
             &self.font_data,
@@ -702,9 +725,45 @@ impl<'a> Context<'a> {
         );
 
         self.text_display.end_text_update(
-            &self.device,
             &cmd_buffer,
-            self.text_meta.clone(),
+            self.font_alignment,
+        )?;
+
+        if labels.model_matrices.len() > 0 {
+            // Not optimal: requires copies and a heap allocation
+            let mut dynamic_buffer = util::AlignedBuffer::<FontUBO>::new(
+                self.font_alignment as usize,
+                labels.model_matrices.len(),
+            );
+
+            for model in &labels.model_matrices {
+                dynamic_buffer.push(model.clone());
+            }
+
+            unsafe {
+                copy_buffer(
+                    &self.device,
+                    self.label_display.font_ubo_memory,
+                    dynamic_buffer.size() as u64,
+                    &dynamic_buffer.finalize(),
+                )?;
+            }
+        }
+
+        let (mut vertex_ptr_2d, mut idx_ptr_2d) = self.label_display
+            .begin_text_update::<*mut FontVertex>();
+
+        labels.prepare_bitmap_text(
+            &self.font_data,
+            &mut vertex_ptr_2d,
+            &mut idx_ptr_2d,
+            framebuffer_width,
+            framebuffer_height,
+            &mut self.label_display.text_instances,
+        );
+
+        self.label_display.end_text_update(
+            &cmd_buffer,
             self.font_alignment,
         )?;
 
@@ -831,13 +890,21 @@ impl<'a> Context<'a> {
         self.device.free_memory(self.dyn_ubo_memory, None);
 
         // Text resources
-        self.device.destroy_buffer(self.text_meta.vertex_buffer_3d, None);
-        self.device.free_memory(self.text_meta.vertex_memory_3d, None);
         self.device.free_memory(self.text_meta.image_memory, None);
-        self.device.destroy_buffer(self.text_meta.index_buffer_3d, None);
-        self.device.free_memory(self.text_meta.index_memory_3d, None);
-        self.device.destroy_buffer(self.text_meta.font_ubo_buffer, None);
-        self.device.free_memory(self.text_meta.font_ubo_memory, None);
+        self.device.destroy_buffer(self.text_display.index_buffer, None);
+        self.device.destroy_buffer(self.text_display.vertex_buffer, None);
+        self.device.free_memory(self.text_display.index_memory, None);
+        self.device.free_memory(self.text_display.vertex_memory, None);
+        self.device.destroy_buffer(self.text_display.font_ubo_buffer, None);
+        self.device.free_memory(self.text_display.font_ubo_memory, None);
+        /*
+        self.device.destroy_buffer(self.label_display.index_buffer, None);
+        self.device.free_memory(self.label_display.index_memory, None);
+        self.device.destroy_buffer(self.label_display.vertex_buffer, None);
+        self.device.free_memory(self.label_display.vertex_memory, None);
+        self.device.destroy_buffer(self.label_display.font_ubo_buffer, None);
+        self.device.free_memory(self.label_display.font_ubo_memory, None);*/
+
 
         #[cfg(debug_assertions)] {
             /* Debug buffer */
@@ -2966,7 +3033,7 @@ fn set_image_layout_helper(
     src_stage_mask: vd::PipelineStageFlags,
     dst_stage_mask: vd::PipelineStageFlags,
 ) {
-    let image_memory_barrier_builder = vd::ImageMemoryBarrier::builder()
+    let mut image_memory_barrier_builder = vd::ImageMemoryBarrier::builder()
         .old_layout(old_image_layout)
         .new_layout(new_image_layout)
         .image(image)
@@ -3019,9 +3086,16 @@ fn set_image_layout_helper(
         _ => {}
     }
 
+    if src_access_mask != vd::AccessFlags::NONE {
+        image_memory_barrier_builder = image_memory_barrier_builder
+            .src_access_mask(src_access_mask);
+    }
+
+    if dst_access_mask != vd::AccessFlags::NONE {
+        image_memory_barrier_builder = image_memory_barrier_builder
+            .dst_access_mask(dst_access_mask)
+    }
     let image_memory_barrier = image_memory_barrier_builder
-        .src_access_mask(src_access_mask)
-        .dst_access_mask(dst_access_mask)
         .build();
 
     cmd_buffer.pipeline_barrier(
@@ -3092,7 +3166,11 @@ impl FontVertex {
 }
 
 #[derive(Clone)]
-struct TextPipelineResources {
+struct TextMeta {
+    pub _image: vd::Image,
+    pub image_memory: vd::DeviceMemoryHandle,
+    pub _view: vd::ImageView,
+    pub _sampler: vd::Sampler,
     pub attachments: [vd::PipelineColorBlendAttachmentState; 1],
     pub viewports: [vd::Viewport; 1],
     pub scissors: [vd::Rect2d; 1],
@@ -3100,81 +3178,11 @@ struct TextPipelineResources {
     pub attribute_descriptions: [vd::VertexInputAttributeDescription; 2],
 }
 
-fn init_text_pipeline_resources(
-    extent2d: &vd::Extent2d,
-) -> TextPipelineResources {
-    let attachments = [
-    vd::PipelineColorBlendAttachmentState::builder()
-        .blend_enable(true)
-        .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
-        .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
-        .color_blend_op(vd::BlendOp::Add)
-        .src_alpha_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
-        .dst_alpha_blend_factor(vd::BlendFactor::Zero)
-        .alpha_blend_op(vd::BlendOp::Add)
-        .color_write_mask(
-              vd::ColorComponentFlags::R
-            | vd::ColorComponentFlags::G
-            | vd::ColorComponentFlags::B
-            | vd::ColorComponentFlags::A
-        ).build()
-    ];
-
-    let viewport = vd::Viewport::builder()
-        .x(0.0f32)
-        .y(0.0f32)
-        .width(extent2d.width() as f32)
-        .height(extent2d.height() as f32)
-        .min_depth(0.0f32)
-        .max_depth(1.0f32)
-        .build();
-
-    let scissor = vd::Rect2d::builder()
-        .offset(vd::Offset2d::builder().x(0).y(0).build())
-        .extent(extent2d.clone())
-        .build();
-
-    let viewports = [viewport];
-    let scissors = [scissor];
-    let binding_description = [FontVertex::binding_description()];
-    let attribute_descriptions = FontVertex::attribute_descriptions();
-
-    TextPipelineResources {
-        attachments,
-        viewports,
-        scissors,
-        binding_description,
-        attribute_descriptions,
-    }
-}
-
-#[derive(Clone)]
-struct TextMeta {
-    pub vertex_buffer_3d: vd::BufferHandle,
-    pub vertex_memory_3d: vd::DeviceMemoryHandle,
-    pub index_buffer_3d: vd::BufferHandle,
-    pub index_memory_3d: vd::DeviceMemoryHandle,
-    pub _image: vd::Image,
-    pub image_memory: vd::DeviceMemoryHandle,
-    pub font_ubo_buffer: vd::BufferHandle,
-    pub font_ubo_memory: vd::DeviceMemoryHandle,
-    pub _view: vd::ImageView,
-    pub _descriptor_pool: vd::DescriptorPool,
-    pub _descriptor_set_layout: vd::DescriptorSetLayout,
-    pub descriptor_set: vd::DescriptorSet,
-    pub _sampler: vd::Sampler,
-    pub pipeline_layout: vd::PipelineLayout,
-    pub resources: TextPipelineResources,
-}
-
 fn init_text_pipeline_builder(
     extent2d: &vd::Extent2d,
     vulkan_device: vd::Device,
     graphics_family: u32,
     transient_pool: & vd::CommandPool,
-    ubo_buffer: &vd::BufferHandle,
-    shared_alignment: u64,
-    font_alignment: u64,
     font_data: &font::Data,
 ) -> vd::Result<TextMeta> {
 
@@ -3182,22 +3190,6 @@ fn init_text_pipeline_builder(
 
     // Begin image preparation
     let properties = vulkan_device.physical_device().memory_properties();
-
-    let (vertex_buffer_3d, vertex_memory_3d) = create_buffer(
-        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontVertex>() as u64 * 4,
-        vd::BufferUsageFlags::VERTEX_BUFFER,
-        &vulkan_device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE,
-        &properties,
-    )?;
-
-    let (index_buffer_3d, index_memory_3d) = create_buffer(
-        MAX_CHAR_COUNT as u64 * std::mem::size_of::<u32>() as u64 * 6,
-        vd::BufferUsageFlags::INDEX_BUFFER,
-        &vulkan_device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE,
-        &properties,
-    )?;
 
     let extent = vd::Extent3d::builder()
         .width(font_data.common_font_data.uv_width as u32)
@@ -3354,119 +3346,41 @@ fn init_text_pipeline_builder(
         .max_anisotropy(1.0f32)
         .build(vulkan_device.clone())?;
 
-    let pool_sizes = [
-        vd::DescriptorPoolSize::builder()
-            .type_of(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(1) // Shared by all models
-            .build(),
-        vd::DescriptorPoolSize::builder()
-            .type_of(vd::DescriptorType::CombinedImageSampler)
-            .descriptor_count(1)
-            .build(),
-        vd::DescriptorPoolSize::builder()
-            .type_of(vd::DescriptorType::UniformBufferDynamic)
-            .descriptor_count(1)
-            .build(),
-        ];
-
-    let _descriptor_pool = vd::DescriptorPool::builder()
-        .max_sets(1)
-        .pool_sizes(&pool_sizes)
-        .build(vulkan_device.clone())?;
-
-    let set_layout_bindings = [
-        vd::DescriptorSetLayoutBinding::builder()
-            .binding(0)
-            .descriptor_type(vd::DescriptorType::UniformBuffer)
-            .descriptor_count(1)
-            .stage_flags(vd::ShaderStageFlags::VERTEX)
-            .build(),
-        vd::DescriptorSetLayoutBinding::builder()
-            .binding(1)
-            .descriptor_type(vd::DescriptorType::CombinedImageSampler)
-            .descriptor_count(1)
-            .stage_flags(vd::ShaderStageFlags::FRAGMENT)
-            .build(),
-        vd::DescriptorSetLayoutBinding::builder()
-            .binding(2)
-            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
-            .descriptor_count(1)
-            .stage_flags(vd::ShaderStageFlags::VERTEX)
-            .build()
-        ];
-
-    let _descriptor_set_layout = vd::DescriptorSetLayout::builder()
-        .bindings(&set_layout_bindings)
-        .build(vulkan_device.clone())?;
-
-    let pipeline_layout = vd::PipelineLayout::builder()
-        .set_layouts(&[_descriptor_set_layout.handle()])
-        .build(vulkan_device.clone())?;
-
-    let descriptor_sets = _descriptor_pool.allocate_descriptor_sets(
-        &[_descriptor_set_layout.handle()]
-    )?;
-
-    let descriptor_set = descriptor_sets[0];
-
-    let tex_descriptor = vd::DescriptorImageInfo::builder()
-        .sampler(_sampler.handle())
-        .image_view(_view.handle())
-        .image_layout(vd::ImageLayout::General)
-        .build();
-
-    let shared_info = vd::DescriptorBufferInfo::builder()
-        .buffer(*ubo_buffer)
-        .offset(0)
-        .range(shared_alignment)
-        .build();
-
-    let font_ubo_size = MAX_INSTANCE_TEXTS as u64 * font_alignment;
-
-    let (font_ubo_buffer, font_ubo_memory) = create_buffer(
-        font_ubo_size,
-        vd::BufferUsageFlags::UNIFORM_BUFFER,
-        &vulkan_device,
-        vd::MemoryPropertyFlags::HOST_VISIBLE,
-        &properties,
-    )?;
-
-    let font_ubo_info = vd::DescriptorBufferInfo::builder()
-        .buffer(font_ubo_buffer)
-        .offset(0)
-        .range(font_alignment)
-        .build();
-
-    let descriptor_writes = [
-        vd::WriteDescriptorSet::builder()
-            .dst_set(descriptor_set)
-            .dst_binding(0)
-            .dst_array_element(0)
-            .descriptor_count(1)
-            .descriptor_type(vd::DescriptorType::UniformBuffer)
-            .buffer_info(&shared_info)
-            .build(),
-        vd::WriteDescriptorSet::builder()
-            .dst_set(descriptor_set)
-            .dst_binding(1)
-            .dst_array_element(0)
-            .descriptor_count(1)
-            .descriptor_type(vd::DescriptorType::CombinedImageSampler)
-            .image_info(&tex_descriptor)
-            .build(),
-        vd::WriteDescriptorSet::builder()
-            .dst_set(descriptor_set)
-            .dst_binding(2)
-            .dst_array_element(0)
-            .descriptor_count(1)
-            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
-            .buffer_info(&font_ubo_info)
-            .build(),
+    let attachments = [
+    vd::PipelineColorBlendAttachmentState::builder()
+        .blend_enable(true)
+        .src_color_blend_factor(vd::BlendFactor::SrcAlpha)
+        .dst_color_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
+        .color_blend_op(vd::BlendOp::Add)
+        .src_alpha_blend_factor(vd::BlendFactor::OneMinusSrcAlpha)
+        .dst_alpha_blend_factor(vd::BlendFactor::Zero)
+        .alpha_blend_op(vd::BlendOp::Add)
+        .color_write_mask(
+              vd::ColorComponentFlags::R
+            | vd::ColorComponentFlags::G
+            | vd::ColorComponentFlags::B
+            | vd::ColorComponentFlags::A
+        ).build()
     ];
 
-    _descriptor_pool.update_descriptor_sets(&descriptor_writes, &[]);
+    let viewport = vd::Viewport::builder()
+        .x(0.0f32)
+        .y(0.0f32)
+        .width(extent2d.width() as f32)
+        .height(extent2d.height() as f32)
+        .min_depth(0.0f32)
+        .max_depth(1.0f32)
+        .build();
 
-    let resources = init_text_pipeline_resources(extent2d);
+    let scissor = vd::Rect2d::builder()
+        .offset(vd::Offset2d::builder().x(0).y(0).build())
+        .extent(extent2d.clone())
+        .build();
+
+    let viewports = [viewport];
+    let scissors = [scissor];
+    let binding_description = [FontVertex::binding_description()];
+    let attribute_descriptions = FontVertex::attribute_descriptions();
 
     unsafe {
         vulkan_device.destroy_buffer(host_buffer, None);
@@ -3475,21 +3389,15 @@ fn init_text_pipeline_builder(
 
     Ok(
         TextMeta{
-            vertex_buffer_3d,
-            vertex_memory_3d,
-            index_buffer_3d,
-            index_memory_3d,
             _image,
             image_memory,
-            font_ubo_buffer,
-            font_ubo_memory,
             _view,
-            _descriptor_pool,
-            _descriptor_set_layout,
-            descriptor_set,
             _sampler,
-            pipeline_layout,
-            resources,
+            attachments,
+            viewports,
+            scissors,
+            binding_description,
+            attribute_descriptions,
         }
     )
 }
@@ -3545,21 +3453,31 @@ pub struct TextInstance {
 // Reference to the pipeline for drawing text; used for 3d and non-3d text
 struct TextDisplay {
     device: vd::Device,
+    vertex_buffer: vd::BufferHandle,
+    vertex_memory: vd::DeviceMemoryHandle,
+    index_buffer: vd::BufferHandle,
+    index_memory: vd::DeviceMemoryHandle,
+    font_ubo_buffer: vd::BufferHandle,
+    font_ubo_memory: vd::DeviceMemoryHandle,
+    _descriptor_pool: vd::DescriptorPool,
+    _descriptor_set_layout: vd::DescriptorSetLayout,
+    descriptor_set: vd::DescriptorSet,
+    pipeline_layout: vd::PipelineLayout,
     pipeline: vd::GraphicsPipeline,
     text_instances: Vec<TextInstance>,
-    is_3d: bool,
 }
 
 fn create_text(
-    vulkan_device: vd::Device,
+    device: vd::Device,
     assembly: vd::PipelineInputAssemblyStateCreateInfo,
     multisampling: vd::PipelineMultisampleStateCreateInfo,
+    shared_alignment: u64,
+    font_alignment: u64,
+    ubo_buffer: &vd::BufferHandle,
     render_pass: &vd::RenderPass,
     text_meta: &TextMeta,
-    is_3d: bool,
+    is_2d: bool,
 ) -> vd::Result<TextDisplay> {
-    let resources = &text_meta.resources;
-
     // Loading shaders
     let path = {
         let mut path = &config::load_section_setting::<String>(
@@ -3571,7 +3489,7 @@ fn create_text(
         [path, "/"].concat()
     };
 
-    let shader_type = if is_3d {'3'} else {'2'};
+    let shader_type = if is_2d {'2'} else {'3'};
 
     println!("Loading {}d font shaders from \"{}\"", shader_type, path);
 
@@ -3584,12 +3502,12 @@ fn create_text(
     )?;
 
     let vert_mod = vd::ShaderModule::new(
-        vulkan_device.clone(),
+        device.clone(),
         &vert_buffer
     )?;
 
     let frag_mod = vd::ShaderModule::new(
-        vulkan_device.clone(),
+        device.clone(),
         &frag_buffer
     )?;
 
@@ -3610,13 +3528,13 @@ fn create_text(
     let stages = [vert_stage, frag_stage];
 
     let vert_info = vd::PipelineVertexInputStateCreateInfo::builder()
-        .vertex_binding_descriptions(&resources.binding_description)
-        .vertex_attribute_descriptions(&resources.attribute_descriptions)
+        .vertex_binding_descriptions(&text_meta.binding_description)
+        .vertex_attribute_descriptions(&text_meta.attribute_descriptions)
         .build();
 
     let blending = vd::PipelineColorBlendStateCreateInfo::builder()
         .logic_op_enable(false)
-        .attachments(&resources.attachments)
+        .attachments(&text_meta.attachments)
         .build();
 
     let stencil = vd::PipelineDepthStencilStateCreateInfo::builder()
@@ -3626,8 +3544,8 @@ fn create_text(
         .build();
 
     let viewport_state = vd::PipelineViewportStateCreateInfo::builder()
-        .viewports(&resources.viewports)
-        .scissors(&resources.scissors)
+        .viewports(&text_meta.viewports)
+        .scissors(&text_meta.scissors)
         .build();
 
     let rasterizer = vd::PipelineRasterizationStateCreateInfo::builder()
@@ -3643,6 +3561,175 @@ fn create_text(
         .line_width(1f32)
         .build();
 
+    let properties = device.physical_device().memory_properties();
+
+    let (vertex_buffer, vertex_memory) = create_buffer(
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<FontVertex>() as u64 * 4,
+        vd::BufferUsageFlags::VERTEX_BUFFER,
+        &device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
+        &properties,
+    )?;
+
+    let (index_buffer, index_memory) = create_buffer(
+        MAX_CHAR_COUNT as u64 * std::mem::size_of::<u32>() as u64 * 6,
+        vd::BufferUsageFlags::INDEX_BUFFER,
+        &device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
+        &properties,
+    )?;
+
+    let pool_sizes = if is_2d {vec![
+        vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1)
+            .build(),
+        vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::CombinedImageSampler)
+            .descriptor_count(1)
+            .build(),
+        ]} else {vec![
+        vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::UniformBuffer)
+            .descriptor_count(1) // Shared by all models
+            .build(),
+        vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::CombinedImageSampler)
+            .descriptor_count(1)
+            .build(),
+        vd::DescriptorPoolSize::builder()
+            .type_of(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1)
+            .build(),
+        ]};
+
+    let _descriptor_pool = vd::DescriptorPool::builder()
+        .max_sets(1)
+        .pool_sizes(&pool_sizes)
+        .build(device.clone())?;
+
+    let set_layout_bindings = if is_2d {vec![
+        vd::DescriptorSetLayoutBinding::builder()
+            .binding(0)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1)
+            .stage_flags(vd::ShaderStageFlags::VERTEX)
+            .build(),
+        vd::DescriptorSetLayoutBinding::builder()
+            .binding(1)
+            .descriptor_type(vd::DescriptorType::CombinedImageSampler)
+            .descriptor_count(1)
+            .stage_flags(vd::ShaderStageFlags::FRAGMENT)
+            .build(),
+        ]} else {vec![
+        vd::DescriptorSetLayoutBinding::builder()
+            .binding(0)
+            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .descriptor_count(1)
+            .stage_flags(vd::ShaderStageFlags::VERTEX)
+            .build(),
+        vd::DescriptorSetLayoutBinding::builder()
+            .binding(1)
+            .descriptor_type(vd::DescriptorType::CombinedImageSampler)
+            .descriptor_count(1)
+            .stage_flags(vd::ShaderStageFlags::FRAGMENT)
+            .build(),
+        vd::DescriptorSetLayoutBinding::builder()
+            .binding(2)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .descriptor_count(1)
+            .stage_flags(vd::ShaderStageFlags::VERTEX)
+            .build(),
+        ]};
+
+    let _descriptor_set_layout = vd::DescriptorSetLayout::builder()
+        .bindings(&set_layout_bindings)
+        .build(device.clone())?;
+
+    let pipeline_layout = vd::PipelineLayout::builder()
+        .set_layouts(&[_descriptor_set_layout.handle()])
+        .build(device.clone())?;
+
+    let descriptor_sets = _descriptor_pool.allocate_descriptor_sets(
+        &[_descriptor_set_layout.handle()]
+    )?;
+
+    let descriptor_set = descriptor_sets[0];
+
+    let font_ubo_size = MAX_INSTANCE_TEXTS as u64 * font_alignment;
+
+    let (font_ubo_buffer, font_ubo_memory) = create_buffer(
+        font_ubo_size,
+        vd::BufferUsageFlags::UNIFORM_BUFFER,
+        &device,
+        vd::MemoryPropertyFlags::HOST_VISIBLE,
+        &properties,
+    )?;
+
+    let font_ubo_info = vd::DescriptorBufferInfo::builder()
+        .buffer(font_ubo_buffer)
+        .offset(0)
+        .range(font_alignment)
+        .build();
+
+    let tex_descriptor = vd::DescriptorImageInfo::builder()
+        .sampler(text_meta._sampler.handle())
+        .image_view(text_meta._view.handle())
+        .image_layout(vd::ImageLayout::TransferDstOptimal)
+        .build();
+
+    let shared_info = vd::DescriptorBufferInfo::builder()
+        .buffer(*ubo_buffer)
+        .offset(0)
+        .range(shared_alignment)
+        .build();
+
+    let descriptor_writes = if is_2d {vec![
+        vd::WriteDescriptorSet::builder()
+            .dst_set(descriptor_set)
+            .dst_binding(0)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .buffer_info(&font_ubo_info)
+            .build(),
+        vd::WriteDescriptorSet::builder()
+            .dst_set(descriptor_set)
+            .dst_binding(1)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::CombinedImageSampler)
+            .image_info(&tex_descriptor)
+            .build(),
+        ]} else {vec![
+        vd::WriteDescriptorSet::builder()
+            .dst_set(descriptor_set)
+            .dst_binding(0)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBuffer)
+            .buffer_info(&shared_info)
+            .build(),
+        vd::WriteDescriptorSet::builder()
+            .dst_set(descriptor_set)
+            .dst_binding(1)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::CombinedImageSampler)
+            .image_info(&tex_descriptor)
+            .build(),
+        vd::WriteDescriptorSet::builder()
+            .dst_set(descriptor_set)
+            .dst_binding(2)
+            .dst_array_element(0)
+            .descriptor_count(1)
+            .descriptor_type(vd::DescriptorType::UniformBufferDynamic)
+            .buffer_info(&font_ubo_info)
+            .build(),
+        ]};
+
+    _descriptor_pool.update_descriptor_sets(&descriptor_writes, &[]);
+
     let pipeline = vd::GraphicsPipeline::builder()
         .vertex_input_state(&vert_info)
         .input_assembly_state(&assembly)
@@ -3651,21 +3738,30 @@ fn create_text(
         .multisample_state(&multisampling)
         .color_blend_state(&blending)
         .depth_stencil_state(&stencil)
-        .layout(text_meta.pipeline_layout.handle())
+        .layout(pipeline_layout.handle())
         .render_pass(render_pass.handle())
         .subpass(0)
         .stages(&stages)
         .base_pipeline_index(-1)
-        .build(vulkan_device.clone())?;
+        .build(device.clone())?;
 
     let text_instances = Vec::with_capacity(MAX_INSTANCE_TEXTS as usize);
 
     Ok(
         TextDisplay {
-            device: vulkan_device,
+            device,
+            vertex_buffer,
+            vertex_memory,
+            index_buffer,
+            index_memory,
+            font_ubo_buffer,
+            font_ubo_memory,
+            _descriptor_pool,
+            _descriptor_set_layout,
+            descriptor_set,
+            pipeline_layout,
             pipeline,
             text_instances,
-            is_3d,
         },
     )
 }
@@ -3673,21 +3769,19 @@ fn create_text(
 impl TextDisplay {
     pub fn begin_text_update<T>(
         &mut self,
-        memory: &vd::DeviceMemoryHandle,
-        idx_memory: &vd::DeviceMemoryHandle,
     )-> (*mut FontVertex, *mut u32) {
         self.text_instances.clear();
 
         unsafe {
             let vertex_ptr = self.device.map_memory(
-                *memory,
+                self.vertex_memory,
                 0,
                 vd::WHOLE_SIZE,
                 vd::MemoryMapFlags::empty(),
             ).unwrap();
 
             let idx_ptr = self.device.map_memory(
-                *idx_memory,
+                self.index_memory,
                 0,
                 vd::WHOLE_SIZE,
                 vd::MemoryMapFlags::empty(),
@@ -3699,23 +3793,24 @@ impl TextDisplay {
 
     pub fn end_text_update(
         &self,
-        vulkan_device: &vd::Device,
         cmd_buffer: &vd::CommandBuffer,
-        text_meta: TextMeta,
         font_alignment: u64,
     ) -> vd::Result<()> {
         unsafe {
-            vulkan_device.unmap_memory(text_meta.vertex_memory_3d);
-            vulkan_device.unmap_memory(text_meta.index_memory_3d);
+            self.device.unmap_memory(
+                self.vertex_memory
+            );
+            self.device.unmap_memory(
+                self.index_memory
+            );
         }
 
         self.update_command_buffer(
-            vulkan_device,
             cmd_buffer,
-            &text_meta.vertex_buffer_3d,
-            &text_meta.descriptor_set,
-            &text_meta.pipeline_layout,
-            &text_meta.index_buffer_3d,
+            &self.vertex_buffer,
+            &self.descriptor_set,
+            &self.pipeline_layout,
+            &self.index_buffer,
             font_alignment,
         )?;
 
@@ -3724,7 +3819,6 @@ impl TextDisplay {
 
     pub fn update_command_buffer(
         &self,
-        vulkan_device: &vd::Device,
         cmd_buffer: &vd::CommandBuffer,
         buffer: &vd::BufferHandle,
         descriptor_set: &vd::DescriptorSet,
@@ -3740,14 +3834,14 @@ impl TextDisplay {
         let offsets: vd::DeviceSize = 0;
 
         unsafe {
-            vulkan_device.cmd_bind_vertex_buffers(
+            self.device.cmd_bind_vertex_buffers(
                 cmd_buffer.handle(),
                 0,
                 &[*buffer],
                 &[offsets],
             );
 
-            vulkan_device.cmd_bind_index_buffer(
+            self.device.cmd_bind_index_buffer(
                 cmd_buffer.handle(),
                 *index_buffer,
                 0,

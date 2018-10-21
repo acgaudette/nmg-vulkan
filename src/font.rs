@@ -102,6 +102,7 @@ impl Data {
         let mut base_width = 0f32;
         let mut line_height = 0f32;
         let mut font_face = "".into();
+        let mut font_texture_name: String;
 
         for line in file.lines() {
             let line_string = line.unwrap_or_else(
@@ -134,7 +135,13 @@ impl Data {
                         "Found None value instead of Some"
                     );
 
-                    let path = get_value_from_pair(pair).replace("\"", "");
+                    let mut path_vec: Vec<&str> = font_data_path.split("/").collect();
+                    font_texture_name = get_value_from_pair(pair).replace("\"", "");
+
+                    let last_idx = path_vec.len() - 1;
+                    path_vec[last_idx] = &font_texture_name;
+
+                    let path = path_vec.join("/");
 
                     let decoder = png::Decoder::new(
                         File::open(path).unwrap_or_else(

@@ -38,11 +38,11 @@ pub trait Component {
 }
 
 pub struct Container {
-    pub transforms:     transform::Manager,
-    pub cameras:        camera::Manager,
-    pub lights:         light::Manager,
-    pub draws:          draw::Manager,
-    pub softbodies:     softbody::Manager,
-    pub texts:          text::Manager,
-    pub labels:         label::Manager,
+    pub transforms: transform::Manager,
+    pub cameras:    camera::Manager,
+    pub lights:     light::Manager,
+    pub draws:      draw::Manager,
+    pub softbodies: softbody::Manager,
+    pub texts:      text::Manager,
+    pub labels:     label::Manager,
 }

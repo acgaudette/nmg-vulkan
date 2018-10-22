@@ -163,9 +163,10 @@ impl Vec3 {
     }
 
     #[inline]
-    // Triangle normal (CW)
+    /// Compute triangle normal (CW) \
+    /// Does not normalize the result (i.e. preserves area)
     pub fn normal(a: Vec3, b: Vec3, c: Vec3) -> Vec3 {
-        (b - a).cross(c - a).norm()
+        (b - a).cross(c - a)
     }
 
     pub fn norm(self) -> Vec3 {

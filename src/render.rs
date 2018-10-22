@@ -975,7 +975,7 @@ impl ModelData {
 
         if mode == NormalMode::Smooth {
             while i < indices.len() {
-                let a_index = indices[i] as usize;
+                let a_index = indices[i + 0] as usize;
                 let b_index = indices[i + 1] as usize;
                 let c_index = indices[i + 2] as usize;
 
@@ -983,8 +983,10 @@ impl ModelData {
                 let b = vertices[b_index].position;
                 let c = vertices[c_index].position;
 
+                // Compute area-weighted normal
                 let normal = alg::Vec3::normal(a, b, c);
 
+                // Add to existing normal calculations
                 vertices[a_index].normal = vertices[a_index].normal + normal;
                 vertices[b_index].normal = vertices[b_index].normal + normal;
                 vertices[c_index].normal = vertices[c_index].normal + normal;
@@ -992,12 +994,13 @@ impl ModelData {
                 i += 3;
             }
 
+            // Normalize all
             for vertex in &mut vertices {
                 vertex.normal = vertex.normal.norm();
             }
         } else if mode == NormalMode::Flat {
             while i < indices.len() {
-                let a_index = indices[i] as usize;
+                let a_index = indices[i + 0] as usize;
                 let b_index = indices[i + 1] as usize;
                 let c_index = indices[i + 2] as usize;
 

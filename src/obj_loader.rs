@@ -3,7 +3,9 @@ extern crate tobj;
 use std;
 use render;
 
-/// Load obj meshes from path to vector of `render::ModelData`
+/// Load obj meshes from path to vector of `render::ModelData` \
+/// If the file contains normal data, it will be used.
+/// Otherwise, normals are computed using `render::NormalMode::Smooth`. \
 pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
     let tobj_models = tobj::load_obj(&std::path::Path::new(filename));
     let (models, _) = tobj_models.unwrap_or_else(

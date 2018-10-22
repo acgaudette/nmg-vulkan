@@ -1008,7 +1008,8 @@ impl ModelData {
                 let b = vertices[b_index].position;
                 let c = vertices[c_index].position;
 
-                let normal = (b - a).cross(c - b).norm();
+                // Assume no shared vertices; will recompute normal otherwise
+                let normal = alg::Vec3::normal(a, b, c).norm();
 
                 vertices[a_index].normal = normal;
                 vertices[b_index].normal = normal;

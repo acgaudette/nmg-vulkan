@@ -1,6 +1,7 @@
 extern crate tobj;
 
 use std;
+use alg;
 use render;
 
 /// Load obj meshes from path to vector of `render::ModelData` \
@@ -14,52 +15,66 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
         )
     );
 
+    // TODO: UVs, vertex colors
     let mut result = Vec::new();
 
     for model in models {
-        let positions = &model.mesh.positions;
-        let count = positions.len();
+        if model.mesh.normals.is_empty() {
+            let vertices: Vec<render::Vertex> = model.mesh.positions.chunks(3)
+                .map(|data| alg::Vec3::new(data[0], data[1], data[2]))
+                .map(|position| render::Vertex {
+                    position, .. Default::default()
+                }).collect();
 
-        let (normals, has_normals) = if model.mesh.normals.is_empty() {
-            let mut normals = Vec::with_capacity(count);
-
-            for _ in 0..count {
-                normals.push(0f32)
-            }
-
-            (normals, false)
-        } else {
-            (model.mesh.normals, true)
-        };
-
-        let mut vertices = Vec::with_capacity(count);
-        for v in 0..count / 3 {
-            let v3 = v * 3;
-
-            vertices.push(
-                render::Vertex::new_raw(
-                    positions[v3], positions[v3 + 1], positions[v3 + 2],
-                      normals[v3],   normals[v3 + 1],   normals[v3 + 2],
-                    1.0, 1.0, 1.0, // White
-                    0.0, 0.0,
-                )
+            // Cache buffer lengths for printing
+            let (vertices_len, indices_len) = (
+                vertices.len(),
+                model.mesh.indices.len(),
             );
-        }
 
-        result.push(
-            if has_normals {
-                render::ModelData::new(
-                    vertices,
-                    model.mesh.indices,
-                )
-            } else {
+            // Compute normals and add submesh
+            result.push(
                 render::ModelData::new_with_normals(
                     vertices,
                     model.mesh.indices,
                     render::NormalMode::Smooth,
                 )
-            }
-        );
+            );
+
+            println!(
+                "\tLoaded submesh with {} verts, {} indices (computed normals)",
+                vertices_len,
+                indices_len,
+            );
+        } else {
+            let vertices: Vec<render::Vertex> = model.mesh.positions.chunks(3)
+                .zip(model.mesh.normals.chunks(3))
+                .map(|data| {
+                    (
+                        alg::Vec3::new(data.0[0], data.0[1], data.0[2]),
+                        alg::Vec3::new(data.1[0], data.1[1], data.1[2]),
+                    )
+                }).map(|(position, normal)| render::Vertex {
+                    position,
+                    normal,
+                    .. Default::default()
+                }).collect();
+
+            // Cache buffer lengths for printing
+            let (vertices_len, indices_len) = (
+                vertices.len(),
+                model.mesh.indices.len(),
+            );
+
+            // Add submesh
+            result.push(render::ModelData::new(vertices, model.mesh.indices));
+
+            println!(
+                "\tLoaded submesh with {} verts, {} indices, and normals",
+                vertices_len,
+                indices_len,
+            );
+        }
     }
 
     println!(

@@ -2,12 +2,16 @@ extern crate tobj;
 
 use std;
 use alg;
+use graphics;
 use render;
 
 /// Load obj meshes from path to vector of `render::ModelData` \
 /// If the file contains normal data, it will be used.
 /// Otherwise, normals are computed using `render::NormalMode::Smooth`. \
-pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
+pub fn load_obj(
+    filename: &str,
+    color: graphics::Color,
+) -> Vec<render::ModelData> {
     let tobj_models = tobj::load_obj(&std::path::Path::new(filename));
     let (models, _) = tobj_models.unwrap_or_else(
         |err| panic!(
@@ -15,7 +19,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
         )
     );
 
-    // TODO: UVs, vertex colors
+    // TODO: UVs
     let mut result = Vec::new();
 
     for model in models {
@@ -23,7 +27,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
             let vertices: Vec<render::Vertex> = model.mesh.positions.chunks(3)
                 .map(|data| alg::Vec3::new(data[0], data[1], data[2]))
                 .map(|position| render::Vertex {
-                    position, .. Default::default()
+                    position, color, .. Default::default()
                 }).collect();
 
             // Cache buffer lengths for printing
@@ -55,9 +59,7 @@ pub fn load_obj(filename: &str) -> Vec<render::ModelData> {
                         alg::Vec3::new(data.1[0], data.1[1], data.1[2]),
                     )
                 }).map(|(position, normal)| render::Vertex {
-                    position,
-                    normal,
-                    .. Default::default()
+                    position, normal, color, .. Default::default()
                 }).collect();
 
             // Cache buffer lengths for printing

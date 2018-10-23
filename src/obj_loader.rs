@@ -8,6 +8,7 @@ use render;
 /// Load obj meshes from path to vector of `render::ModelData` \
 /// If the file contains normal data, it will be used.
 /// Otherwise, normals are computed using `render::NormalMode::Smooth`. \
+/// All submeshes will have all vertex colors set to `color`.
 pub fn load_obj(
     filename: &str,
     color: graphics::Color,

@@ -24,8 +24,9 @@ pub fn load_obj(
 
     for model in models {
         if model.mesh.normals.is_empty() {
-            let vertices: Vec<render::Vertex> = model.mesh.positions.chunks(3)
-                .map(|data| alg::Vec3::new(data[0], data[1], data[2]))
+            let vertices: Vec<render::Vertex> = model.mesh.positions
+                .chunks_exact(3)
+                .map(|chunk| alg::Vec3::new(chunk[0], chunk[1], chunk[2]))
                 .map(|position| render::Vertex {
                     position, color, .. Default::default()
                 }).collect();
@@ -51,8 +52,9 @@ pub fn load_obj(
                 indices_len,
             );
         } else {
-            let vertices: Vec<render::Vertex> = model.mesh.positions.chunks(3)
-                .zip(model.mesh.normals.chunks(3))
+            let vertices: Vec<render::Vertex> = model.mesh.positions
+                .chunks_exact(3)
+                .zip(model.mesh.normals.chunks_exact(3))
                 .map(|data| {
                     (
                         alg::Vec3::new(data.0[0], data.0[1], data.0[2]),

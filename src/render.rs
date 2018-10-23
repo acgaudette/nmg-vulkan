@@ -971,51 +971,42 @@ impl ModelData {
         indices: Vec<u32>,
         mode: NormalMode,
     ) -> ModelData {
-        let mut i = 0;
-
         if mode == NormalMode::Smooth {
-            while i < indices.len() {
-                let a_index = indices[i + 0] as usize;
-                let b_index = indices[i + 1] as usize;
-                let c_index = indices[i + 2] as usize;
-
-                let a = vertices[a_index].position;
-                let b = vertices[b_index].position;
-                let c = vertices[c_index].position;
-
+            for (i, j, k) in indices.chunks(3).map(|chunk| {
+                (chunk[0] as usize, chunk[1] as usize, chunk[2] as usize)
+            }) {
                 // Compute area-weighted normal
-                let normal = alg::Vec3::normal(a, b, c);
+                let normal = alg::Vec3::normal(
+                    vertices[i].position,
+                    vertices[j].position,
+                    vertices[k].position,
+                );
 
                 // Add to existing normal calculations
-                vertices[a_index].normal = vertices[a_index].normal + normal;
-                vertices[b_index].normal = vertices[b_index].normal + normal;
-                vertices[c_index].normal = vertices[c_index].normal + normal;
-
-                i += 3;
+                vertices[i].normal = vertices[i].normal + normal;
+                vertices[j].normal = vertices[j].normal + normal;
+                vertices[k].normal = vertices[k].normal + normal;
             }
 
             // Normalize all
-            for vertex in &mut vertices {
-                vertex.normal = vertex.normal.norm();
-            }
-        } else if mode == NormalMode::Flat {
-            while i < indices.len() {
-                let a_index = indices[i + 0] as usize;
-                let b_index = indices[i + 1] as usize;
-                let c_index = indices[i + 2] as usize;
+            vertices.iter_mut()
+                .for_each(|vertex| vertex.normal = vertex.normal.norm());
+        }
 
-                let a = vertices[a_index].position;
-                let b = vertices[b_index].position;
-                let c = vertices[c_index].position;
-
+        else if mode == NormalMode::Flat {
+            for (i, j, k) in indices.chunks(3).map(|chunk| {
+                (chunk[0] as usize, chunk[1] as usize, chunk[2] as usize)
+            }) {
                 // Assume no shared vertices; will recompute normal otherwise
-                let normal = alg::Vec3::normal(a, b, c).norm();
+                let normal = alg::Vec3::normal(
+                    vertices[i].position,
+                    vertices[j].position,
+                    vertices[k].position,
+                ).norm();
 
-                vertices[a_index].normal = normal;
-                vertices[b_index].normal = normal;
-                vertices[c_index].normal = normal;
-
-                i += 3;
+                vertices[i].normal = normal;
+                vertices[j].normal = normal;
+                vertices[k].normal = normal;
             }
         }
 

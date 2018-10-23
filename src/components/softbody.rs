@@ -535,9 +535,9 @@ impl Instance {
     ) -> Vec<alg::Vec3> {
         let mut result = vec![alg::Vec3::zero(); particles.len()];
 
-        for indices in triangles.chunks(3) {
-            let (i, j, k) = (indices[0], indices[1], indices[2]);
-
+        for (i, j, k) in triangles.chunks(3)
+            .map(|chunk| (chunk[0], chunk[1], chunk[2]))
+        {
             let normal = alg::Vec3::normal(
                 particles[i].position,
                 particles[j].position,

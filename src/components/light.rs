@@ -171,8 +171,8 @@ impl Manager {
         let mut i = 0;
 
         for light in self.instances.values() {
-            // Directional
-            if light.radius == -1.0 {
+            // Directional (or hemisphere)
+            if light.radius < 0.0 {
                 instance_lights[i] = *light; // Set light
                 i += 1;
             }

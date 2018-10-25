@@ -87,7 +87,7 @@ impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
         self.instances.insert(
             entity,
-            render::Light::none(),
+            render::Light::default(),
         );
     }
 
@@ -149,7 +149,7 @@ impl Manager {
         position: alg::Vec3,
     ) -> [render::Light; render::MAX_INSTANCE_LIGHTS] {
         let mut instance_lights = [
-            render::Light::none();
+            render::Light::default();
             render::MAX_INSTANCE_LIGHTS
         ];
 

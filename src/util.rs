@@ -106,7 +106,7 @@ mod tests {
             buffer.push(
                 render::InstanceUBO::new(
                     mat,
-                    [render::Light::none(); render::MAX_INSTANCE_LIGHTS],
+                    [render::Light::default(); render::MAX_INSTANCE_LIGHTS],
                     offsets,
                     [render::PaddedVec3::default(); render::MAX_SOFTBODY_VERT],
                 )

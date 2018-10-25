@@ -1376,7 +1376,7 @@ impl Default for InstanceUBO {
     fn default() -> InstanceUBO {
         InstanceUBO {
             model: alg::Mat4::id(),
-            lights: [Light::none(); MAX_INSTANCE_LIGHTS],
+            lights: [Light::default(); MAX_INSTANCE_LIGHTS],
             position_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
             normal_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
         }
@@ -1417,8 +1417,8 @@ pub struct Light {
     pub intensity: f32,
 }
 
-impl Light {
-    pub fn none() -> Light {
+impl Default for Light {
+    fn default() -> Light {
         Light {
             vector: alg::Vec3::zero(),
             intensity: 0.0,

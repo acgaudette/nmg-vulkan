@@ -133,7 +133,7 @@ impl Manager {
         instance.color = color;
     }
 
-    // Update point light positions from transform component
+    /// Update point light positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         for (entity, light) in &mut self.instances {
             if light.radius > 0.0 {
@@ -143,7 +143,7 @@ impl Manager {
         }
     }
 
-    // Given a position, return the set of lights affecting it
+    /// Given a position, return the set of lights affecting it
     pub(super) fn cull(
         &self,
         position: alg::Vec3,

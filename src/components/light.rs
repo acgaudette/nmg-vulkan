@@ -49,6 +49,19 @@ impl<'a> LightBuilder<'a> {
         self
     }
 
+    /// Create hemisphere light with given lower color \
+    /// Use `color(...)` to set the upper color field
+    /// Usage with `directional(...)` or `point_with_radius(...)` results in
+    /// undefined behavior
+    pub fn hemisphere_with_lower_color(
+        &mut self,
+        lower_color: graphics::Color,
+    ) -> &mut LightBuilder<'a> {
+        self.light.vector = lower_color.into();
+        self.light.radius = -2.0; // Sentinel
+        self
+    }
+
     pub fn color(&mut self, color: graphics::Color) -> &mut LightBuilder<'a> {
         self.light.color = color;
         self

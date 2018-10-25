@@ -1,6 +1,7 @@
 #![allow(dead_code)] // Library
 
 use std;
+use alg;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
@@ -147,6 +148,16 @@ impl std::ops::Mul<f32> for Color {
             r: self.r * scalar,
             g: self.g * scalar,
             b: self.b * scalar,
+        }
+    }
+}
+
+impl Into<alg::Vec3> for Color {
+    fn into(self) -> alg::Vec3 {
+        alg::Vec3 {
+            x: self.r,
+            y: self.g,
+            z: self.b,
         }
     }
 }

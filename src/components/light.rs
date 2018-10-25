@@ -28,7 +28,8 @@ impl<'a> LightBuilder<'a> {
     }
 
     /// Create directional light with given vector \
-    /// Usage with `point_with_radius(...)` results in undefined behavior
+    /// Usage with `point_with_radius(...)` or
+    /// `hemisphere_with_lower_color(...)` results in undefined behavior
     pub fn directional(
         &mut self,
         direction: alg::Vec3,
@@ -40,7 +41,8 @@ impl<'a> LightBuilder<'a> {
 
     /// Create point light with given radius \
     /// Position is taken from the associated transform component \
-    /// Usage with `directional(...)` results in undefined behavior
+    /// Usage with `directional(...)` or `hemisphere_with_lower_color(...)`
+    /// results in undefined behavior
     pub fn point_with_radius(
         &mut self,
         radius: f32,

@@ -11,3 +11,11 @@ rust-ini = "0.10.0"
 lazy_static = "1.0.0"
 tobj = "0.1.6"
 png = "0.13.1"
+
+[features]
+memory-test = ["jemallocator"]
+
+[dependencies.jemallocator]
+version = "0.1.8"
+optional = true
+features = ["debug"]

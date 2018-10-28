@@ -101,8 +101,8 @@ pub struct Context<'a> {
 
     /* Text data */
 
-    text_display:   TextDisplay<'a>,
-    label_display:  TextDisplay<'a>,
+    text_display:   TextDisplay,
+    label_display:  TextDisplay,
     font_data:      font::Data,
     text_meta:      TextMeta,
     font_alignment: u64,

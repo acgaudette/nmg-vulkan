@@ -1,5 +1,9 @@
 #![feature(core_intrinsics)]
 
+#[cfg(feature = "memory-test")] extern crate jemallocator;
+#[cfg(feature = "memory-test")] #[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
 extern crate fnv;

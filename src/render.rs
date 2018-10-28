@@ -3473,12 +3473,17 @@ struct TextDisplay {
     index_memory: vd::DeviceMemoryHandle,
     font_ubo_buffer: vd::BufferHandle,
     font_ubo_memory: vd::DeviceMemoryHandle,
-    _descriptor_pool: vd::DescriptorPool,
-    _descriptor_set_layout: vd::DescriptorSetLayout,
     descriptor_set: vd::DescriptorSet,
     pipeline_layout: vd::PipelineLayout,
     pipeline: vd::GraphicsPipeline,
     text_instances: Vec<TextInstance>,
+
+    /* Persistent data */
+
+    _vert_mod: vd::ShaderModule,
+    _frag_mod: vd::ShaderModule,
+    _descriptor_pool: vd::DescriptorPool,
+    _descriptor_set_layout: vd::DescriptorSetLayout,
 }
 
 fn create_text(
@@ -3783,12 +3788,14 @@ fn create_text(
             index_memory,
             font_ubo_buffer,
             font_ubo_memory,
-            _descriptor_pool,
-            _descriptor_set_layout,
             descriptor_set,
             pipeline_layout,
             pipeline,
             text_instances,
+            _vert_mod: vert_mod,
+            _frag_mod: frag_mod,
+            _descriptor_pool,
+            _descriptor_set_layout,
         },
     )
 }

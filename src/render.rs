@@ -101,11 +101,11 @@ pub struct Context<'a> {
 
     /* Text data */
 
-    text_display:     TextDisplay,
-    label_display:    TextDisplay,
-    font_data:        font::Data,
-    text_meta:        TextMeta,
-    font_alignment:   u64,
+    text_display:   TextDisplay<'a>,
+    label_display:  TextDisplay<'a>,
+    font_data:      font::Data,
+    text_meta:      TextMeta,
+    font_alignment: u64,
 
     /* Debug data */
 
@@ -437,7 +437,7 @@ impl<'a> Context<'a> {
             &self.text_meta,
             false,
         )?;
-        
+
         self.label_display = create_text(
             self.device.clone(),
             self.assembly.clone(),
@@ -948,11 +948,11 @@ impl Parameters {
 
 #[allow(dead_code)]
 struct DebugData {
-    buffer:   vd::BufferHandle,
-    memory:   vd::DeviceMemoryHandle,
+    buffer: vd::BufferHandle,
+    memory: vd::DeviceMemoryHandle,
     pipeline: vd::GraphicsPipeline,
-    _vert:    vd::ShaderModule,
-    _frag:    vd::ShaderModule,
+    _vert: vd::ShaderModule,
+    _frag: vd::ShaderModule,
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -3505,6 +3505,7 @@ fn create_text(
             ([FontVertex_3d::binding_description()],
             FontVertex_3d::attribute_descriptions())
         };
+
     // Load shaders
     let path = {
         let mut path = &config::load_section_setting::<String>(
@@ -3685,7 +3686,6 @@ fn create_text(
     let descriptor_sets = _descriptor_pool.allocate_descriptor_sets(
         &[_descriptor_set_layout.handle()]
     )?;
-
     let descriptor_set = descriptor_sets[0];
 
     let font_ubo_size = MAX_INSTANCE_TEXTS as u64 * font_alignment;

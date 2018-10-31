@@ -61,6 +61,7 @@ impl<'a> LightBuilder<'a> {
     ) -> &mut LightBuilder<'a> {
         self.light.vector = lower_color.into();
         self.light.radius = -2.0; // Sentinel
+        self.light.intensity = 0.0; // Unused
         self
     }
 

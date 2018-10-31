@@ -525,6 +525,74 @@ impl Instance {
         }
     }
 
+    fn new_from_model(
+        model: &render::ModelData,
+        mass: f32,
+        rigidity: f32,
+        initial_pos: alg::Vec3,
+        initial_accel: alg::Vec3,
+    ) -> Instance {
+        debug_assert!(mass > 0.0);
+        debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
+
+        /* Initialize particles and base comparison model */
+
+        let vertices_len = model.vertices.len();
+
+        let (particles, perfect_model) = {
+            let mut particles = Vec::with_capacity(vertices_len);
+            let mut perfect_model = Vec::with_capacity(vertices_len);
+
+            for point in model.vertices.iter().map(|vertex| vertex.position) {
+                particles.push(Particle::new(initial_pos + point));
+                perfect_model.push(point);
+            }
+
+            (particles, perfect_model)
+        };
+
+        let center = |positions: &[alg::Vec3]| positions.iter().fold(
+            alg::Vec3::zero(),
+            |sum, position| sum + *position
+        ) / positions.len() as f32;
+
+        let perfect_com = center(&perfect_model);
+
+        // Convert indices
+        let indices: Vec<usize> = model.indices.iter()
+            .map(|index| *index as usize).collect();
+
+        // TODO: Check if model has loaded or computed normals
+        // Softbodies only support computed normals.
+
+        // Compute base comparison normals for instance
+        debug_assert!(indices.len() % 3 == 0);
+        let normals = Instance::compute_normals(&particles, &indices);
+
+        debug_assert!(particles.len() == perfect_model.len());
+
+        Instance {
+            particles,
+            rods: Vec::with_capacity(0),
+            match_shape: true,
+
+            force: alg::Vec3::zero(),
+            accel_dt: initial_accel * FIXED_DT * FIXED_DT,
+
+            frame_position: alg::Vec3::zero(),
+            frame_orientation: alg::Quat::id(),
+
+            mass,
+            inv_pt_mass: 1.0 / (mass / vertices_len as f32),
+            rigidity,
+            perfect_model,
+            perfect_com,
+            model: None,
+            triangles: indices,
+            normals,
+        }
+    }
+
     /* Calculate normals for implicit softbody mesh,
      * useful for blending rendered mesh normals
      * and/or determining softbody topology.

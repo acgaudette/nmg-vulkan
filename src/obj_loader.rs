@@ -53,6 +53,7 @@ pub fn load_obj(
 
             result.push(
                 render::ModelData::new_with_normals(
+                    model.name,
                     vertices,
                     model.mesh.indices,
                     render::NormalMode::Smooth,
@@ -113,7 +114,13 @@ pub fn load_obj(
                     ).collect()
             };
 
-            result.push(render::ModelData::new(vertices, model.mesh.indices));
+            result.push(
+                render::ModelData::new(
+                    model.name,
+                    vertices,
+                    model.mesh.indices,
+                )
+            );
 
             println!(
                 "\tLoaded submesh with \

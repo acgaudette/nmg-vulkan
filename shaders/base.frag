@@ -23,6 +23,7 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
   vec3 total_light = vec3(0);
+  vec3 ambient = vec3(AMBIENT);
 
   for (int i = 0; i < MAX_INSTANCE_LIGHTS; ++i) {
     // Ignore lights with no radius
@@ -50,6 +51,6 @@ void main() {
     total_light += instance.lights[i].color * light;
   }
 
-  total_light = max(vec3(AMBIENT), total_light);
+  total_light = max(ambient, total_light);
   outColor = vec4(fragColor * total_light, 1);
 }

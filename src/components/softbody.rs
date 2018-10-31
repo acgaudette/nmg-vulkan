@@ -562,8 +562,8 @@ impl Instance {
         let indices: Vec<usize> = model.indices.iter()
             .map(|index| *index as usize).collect();
 
-        // TODO: Check if model has loaded or computed normals
         // Softbodies only support computed normals.
+        debug_assert!(model.computed_normals);
 
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);

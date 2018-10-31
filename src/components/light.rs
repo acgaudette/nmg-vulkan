@@ -71,6 +71,7 @@ impl<'a> LightBuilder<'a> {
     }
 
     pub fn intensity(&mut self, intensity: f32) -> &mut LightBuilder<'a> {
+        debug_assert!(intensity >= 0.0);
         self.light.intensity = intensity;
         self
     }

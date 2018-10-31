@@ -24,7 +24,8 @@ pub fn load_obj(
 
     for model in models {
         // Cache buffer lengths for printing
-        let (positions_len, indices_len, uvs_string) = (
+        let (name, positions_len, indices_len, uvs_string) = (
+            model.name.clone(),
             model.mesh.positions.len() / 3,
             model.mesh.indices.len(),
             if model.mesh.texcoords.is_empty() { "no uvs" } else { "uvs" },
@@ -61,9 +62,9 @@ pub fn load_obj(
             );
 
             println!(
-                "\tLoaded submesh with \
+                "\tLoaded submesh \"{}\" with \
                 {} verts, {} indices, {} (computed normals)",
-                positions_len, indices_len, uvs_string,
+                name, positions_len, indices_len, uvs_string,
             );
         }
 
@@ -123,9 +124,9 @@ pub fn load_obj(
             );
 
             println!(
-                "\tLoaded submesh with \
+                "\tLoaded submesh \"{}\" with \
                 {} verts, {} indices, {}, and normals",
-                positions_len, indices_len, uvs_string,
+                name, positions_len, indices_len, uvs_string,
             );
         }
     }

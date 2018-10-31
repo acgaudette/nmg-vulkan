@@ -141,6 +141,7 @@ fn main() {
 
 fn get_models() -> Vec<render::ModelData> {
     let pyramid = render::ModelData::new_with_normals(
+        "pyramid",
         vec![
             render::Vertex::new_position_color( 0.0,  0.5,  0.0, 1., 1., 0.),
             render::Vertex::new_position_color(-0.5, -0.5, -0.5, 1., 0., 1.),

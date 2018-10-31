@@ -110,6 +110,7 @@ fn main() {
 // "Load" model(s)
 fn get_models() -> Vec<render::ModelData> {
     let cube = render::ModelData::new_with_normals(
+        "cube",
         vec![
             // Front Face
             render::Vertex::new_position_color(-0.5,  0.5, -0.5, 1., 1., 1.),

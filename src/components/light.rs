@@ -91,6 +91,12 @@ impl<'a> LightBuilder<'a> {
             }
         }
 
+        #[cfg(debug_assertions)] {
+            if self.light.radius == -2.0 && self.light.intensity > 0.0 {
+                panic!("Hemisphere lights do not support intensity");
+            }
+        }
+
         self.manager.set(entity, self.light);
     }
 }

@@ -972,7 +972,7 @@ pub struct ModelData {
 
 impl ModelData {
     pub fn new_with_normals(
-        name: String,
+        name: &str,
         mut vertices: Vec<Vertex>,
         indices: Vec<u32>,
         mode: NormalMode,
@@ -1017,7 +1017,7 @@ impl ModelData {
         }
 
         ModelData {
-            name,
+            name: name.to_string(),
             computed_normals: true,
             vertices,
             indices,
@@ -1025,12 +1025,12 @@ impl ModelData {
     }
 
     pub fn new(
-        name: String,
+        name: &str,
         vertices: Vec<Vertex>,
         indices: Vec<u32>,
     ) -> ModelData {
         ModelData {
-            name,
+            name: name.to_string(),
             computed_normals: false,
             vertices,
             indices,
@@ -1814,7 +1814,7 @@ fn load_models(
      */
 
     let model_data = if model_data.is_empty() {
-        vec![ModelData::new("".to_string(), vec![Vertex::zero()], vec![0])]
+        vec![ModelData::new("", vec![Vertex::zero()], vec![0])]
     } else { model_data };
 
     /* Concatenate model data */

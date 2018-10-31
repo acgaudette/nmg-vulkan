@@ -52,9 +52,10 @@ const MAX_INSTANCE_TEXTS: usize = 64;
 
 #[allow(dead_code)]
 pub struct Context<'a> {
-    pub device:    vd::Device,
+    pub device: vd::Device,
     pub swapchain: vd::SwapchainKhr,
-    pub models:    Vec<Model>, // Lookup table
+    pub models: Vec<Model>, // Lookup table
+    pub model_names: Vec<String>, // Reference name for each model
 
     /* Swapchain recreation data */
 
@@ -282,6 +283,7 @@ impl<'a> Context<'a> {
                 device,
                 swapchain,
                 models,
+                model_names,
                 surface,
                 surface_format,
                 sharing_mode,

@@ -438,7 +438,7 @@ pub struct Instance {
     inv_pt_mass: f32, // Inverse mass per particle
     perfect_model: Vec<alg::Vec3>, // Vertices reference
     perfect_com: alg::Vec3, // Center of mass reference
-    model: Option<Vec<alg::Vec3>>, // Optional override
+    model: Option<Vec<alg::Vec3>>, // Override offset vertices
     triangles: Vec<usize>, // Indices reference, for normals
     normals: Vec<alg::Vec3>, // Normals reference
 
@@ -897,8 +897,9 @@ impl<'a> InstanceBuilder<'a> {
                     6, 2, 1, // Right face
                     1, 5, 6,
                 ],
-                /* Override scaled input with unit cube.
-                 * Enables offsets to work properly with non-matching mesh.
+                /* Override scaled model with unit cube.
+                 * Enables offsets to work properly with multiple scaled
+                 * versions of the same mesh.
                  */
                 Some(&[
                     // Front face (CW)

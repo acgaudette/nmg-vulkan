@@ -962,6 +962,7 @@ pub enum NormalMode { Flat, Smooth }
 #[derive(Clone)]
 pub struct ModelData {
     pub name: String,
+    pub computed_normals: bool,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u32>,
 }
@@ -1014,6 +1015,7 @@ impl ModelData {
 
         ModelData {
             name,
+            computed_normals: true,
             vertices,
             indices,
         }
@@ -1026,6 +1028,7 @@ impl ModelData {
     ) -> ModelData {
         ModelData {
             name,
+            computed_normals: false,
             vertices,
             indices,
         }

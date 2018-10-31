@@ -69,6 +69,14 @@ impl Manager {
     }
 
     /// Set model that the draw component will render for this entity,
+    /// given the name of the model.
+    /// For now, this can only be done once.
+    pub fn bind_model(&mut self, entity: entity::Handle, name: &str) {
+        let index = self.instances.get_index(name);
+        self.bind_model_index(entity, index);
+    }
+
+    /// Set model that the draw component will render for this entity,
     /// given the unique index of the model.
     /// For now, this can only be done once.
     pub fn bind_model_index(

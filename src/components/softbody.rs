@@ -844,6 +844,7 @@ impl Instance {
 pub struct InstanceBuilder<'a> {
     manager: &'a mut Manager,
     scale: Option<alg::Vec3>, // For optional limb creation
+    model: Option<&'a render::ModelData>,
     mass: f32,
     rigidity: f32,
     particles: Option<&'a [alg::Vec3]>,
@@ -859,6 +860,7 @@ impl<'a> InstanceBuilder<'a> {
         InstanceBuilder {
             manager,
             scale: None,
+            model: None,
             mass: INST_DEFAULT_MASS,
             rigidity: INST_DEFAULT_RIGID,
             particles: None,
@@ -873,6 +875,15 @@ impl<'a> InstanceBuilder<'a> {
     /// Takes in the limb scale as an argument.
     pub fn make_limb(&mut self, scale: alg::Vec3) -> &mut InstanceBuilder<'a> {
         self.scale = Some(scale);
+        self
+    }
+
+    /// Override general instance creation with mesh.
+    pub fn from_model(
+        &mut self,
+        model: &'a render::ModelData,
+    ) -> &mut InstanceBuilder<'a> {
+        self.model = Some(model);
         self
     }
 
@@ -984,6 +995,18 @@ impl<'a> InstanceBuilder<'a> {
                 ]),
                 &[], // Ignore bindings
                 true, // Match shape
+                self.mass,
+                rigidity,
+                self.initial_pos,
+                initial_accel,
+            )
+        }
+
+        /* Mesh */
+
+        else if let Some(model) = self.model {
+            Instance::new_from_model(
+                model,
                 self.mass,
                 rigidity,
                 self.initial_pos,

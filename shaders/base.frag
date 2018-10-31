@@ -36,6 +36,14 @@ void main() {
       light *= max(0, dot(fragNormal, instance.lights[i].vector));
     }
 
+    else if (radius == -2) { // Hemisphere
+      float t = 0.5 * fragNormal.y + 0.5; // Dot the up vector
+
+      // Update ambient lighting
+      ambient += t * instance.lights[i].color
+        + (1 - t) * instance.lights[i].vector;
+    }
+
     else { // Point
       vec3 diff = instance.lights[i].vector - fragPosition;
       float dist = length(diff);

@@ -1064,11 +1064,17 @@ impl Model {
 
 /// Dynamic collection of instance data
 pub struct Instances {
+    names: fnv::FnvHashMap<String, usize>,
     data: Vec<Vec<(InstanceUBO, InstanceMeta)>>,
 }
 
 impl Instances {
-    pub fn new(model_count: usize, hints: Option<&[usize]>) -> Instances {
+    pub fn new(
+        model_count: usize,
+        model_names: &Vec<String>,
+        hints: Option<&[usize]>,
+    ) -> Instances {
+        debug_assert!(model_count == model_names.len());
         let mut data = Vec::with_capacity(model_count);
 
         match hints {
@@ -1086,7 +1092,16 @@ impl Instances {
             }
         };
 
-        Instances { data }
+        let mut names = fnv::FnvHashMap::with_capacity_and_hasher(
+            model_count,
+            Default::default(),
+        );
+
+        for (i, name) in model_names.iter().enumerate() {
+            names.insert(name.clone(), i);
+        };
+
+        Instances { names, data }
     }
 
     /// Returns handle to new instance

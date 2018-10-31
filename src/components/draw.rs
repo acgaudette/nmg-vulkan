@@ -68,9 +68,14 @@ impl Manager {
         }
     }
 
-    /// Set model that the draw component will render for this entity.
+    /// Set model that the draw component will render for this entity,
+    /// given the unique index of the model.
     /// For now, this can only be done once.
-    pub fn bind_model(&mut self, entity: entity::Handle, model_index: usize) {
+    pub fn bind_model_index(
+        &mut self,
+        entity: entity::Handle,
+        model_index: usize,
+    ) {
         debug_validate_entity!(self, entity);
         debug_assert!(self.handles[&entity].is_none());
 

@@ -961,12 +961,14 @@ pub enum NormalMode { Flat, Smooth }
 /// Raw model data structure
 #[derive(Clone)]
 pub struct ModelData {
+    pub name: String,
     pub vertices: Vec<Vertex>,
-    pub indices:  Vec<u32>,
+    pub indices: Vec<u32>,
 }
 
 impl ModelData {
     pub fn new_with_normals(
+        name: String,
         mut vertices: Vec<Vertex>,
         indices: Vec<u32>,
         mode: NormalMode,
@@ -1011,13 +1013,19 @@ impl ModelData {
         }
 
         ModelData {
+            name,
             vertices,
             indices,
         }
     }
 
-    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>) -> ModelData {
+    pub fn new(
+        name: String,
+        vertices: Vec<Vertex>,
+        indices: Vec<u32>,
+    ) -> ModelData {
         ModelData {
+            name,
             vertices,
             indices,
         }
@@ -1778,7 +1786,7 @@ fn load_models(
      */
 
     let model_data = if model_data.is_empty() {
-        vec![ModelData::new(vec![Vertex::zero()], vec![0])]
+        vec![ModelData::new("".to_string(), vec![Vertex::zero()], vec![0])]
     } else { model_data };
 
     /* Concatenate model data */

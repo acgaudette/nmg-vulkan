@@ -1104,6 +1104,12 @@ impl Instances {
         Instances { names, data }
     }
 
+    /// Returns model index for given input string
+    pub fn get_index(&self, name: &str) -> usize {
+        *self.names.get(name)
+            .expect(&format!("Model \"{}\" does not exist", name))
+    }
+
     /// Returns handle to new instance
     pub fn add(
         &mut self,

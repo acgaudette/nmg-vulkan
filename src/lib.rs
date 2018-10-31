@@ -131,7 +131,11 @@ where
     };
 
     let mut parameters = render::Parameters::new();
-    let instances = render::Instances::new(context.models.len(), None);
+    let instances = render::Instances::new(
+        context.models.len(),
+        &context.model_names,
+        None,
+    );
 
     // Create entities container
     let mut entities = entity::Manager::new(1);

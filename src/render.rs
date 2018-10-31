@@ -153,6 +153,7 @@ impl<'a> Context<'a> {
             index_buffer,
             index_memory,
             models,
+            model_names,
         ) = load_models(
             model_data,
             &device,
@@ -1773,9 +1774,9 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
 
 /// Convert model data to concatenated vertex and index buffers
 fn load_models(
-    model_data:      Vec<ModelData>,
-    device:          &vd::Device,
-    transient_pool:  &vd::CommandPool,
+    model_data: Vec<ModelData>,
+    device: &vd::Device,
+    transient_pool: &vd::CommandPool,
     graphics_family: u32,
 ) -> vd::Result<(
     vd::BufferHandle,
@@ -1783,6 +1784,7 @@ fn load_models(
     vd::BufferHandle,
     vd::DeviceMemoryHandle,
     Vec<Model>,
+    Vec<String>,
 )> {
     /* If there's no model data, make up some
      * (really only useful for debugging purposes).
@@ -1806,10 +1808,11 @@ fn load_models(
         (i, j)
     };
 
-    let (vertices, indices, models) = {
+    let (vertices, indices, models, names) = {
         let mut vertices = Vec::with_capacity(vertices_len);
         let mut indices = Vec::with_capacity(indices_len);
         let mut models = Vec::with_capacity(model_data.len());
+        let mut names = Vec::with_capacity(model_data.len());
 
         let mut index_offset = 0;
         let mut vertex_offset = 0;
@@ -1832,9 +1835,10 @@ fn load_models(
             vertex_offset += model.vertex_count as i32;
 
             models.push(model);
+            names.push(data.name);
         }
 
-        (vertices, indices, models)
+        (vertices, indices, models, names)
     };
 
     /* Vertex buffer */
@@ -1867,6 +1871,7 @@ fn load_models(
         index_buffer,
         index_memory,
         models,
+        names,
     ))
 }
 

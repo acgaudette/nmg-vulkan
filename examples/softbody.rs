@@ -33,7 +33,7 @@ impl nmg::Start for Demo {
 
         #[cfg(not(debug_assertions))] {
             components.draws.register(object);
-            components.draws.bind_model(object, 0);
+            components.draws.bind_model_index(object, 0);
         }
 
         components.softbodies.register(object);

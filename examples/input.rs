@@ -23,7 +23,7 @@ impl nmg::Start for Demo {
         let pyramid = entities.add();
         components.transforms.register(pyramid);
         components.draws.register(pyramid);
-        components.draws.bind_model(pyramid, 0);
+        components.draws.bind_model_index(pyramid, 0);
         self.pyramid = Some(pyramid);
 
         let light = entities.add();

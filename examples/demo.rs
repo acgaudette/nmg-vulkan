@@ -37,9 +37,9 @@ impl nmg::Start for Demo {
         components.draws.register(object_2);
 
         // Bind first model to each draw component
-        components.draws.bind_model(object_0, 0);
-        components.draws.bind_model(object_1, 0);
-        components.draws.bind_model(object_2, 0);
+        components.draws.bind_model_index(object_0, 0);
+        components.draws.bind_model_index(object_1, 0);
+        components.draws.bind_model_index(object_2, 0);
 
         // Update demo state
         self.objects.push(object_0);

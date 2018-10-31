@@ -24,8 +24,7 @@ pub fn load_obj(
 
     for model in models {
         // Cache buffer lengths for printing
-        let (name, positions_len, indices_len, uvs_string) = (
-            model.name.clone(),
+        let (positions_len, indices_len, uvs_string) = (
             model.mesh.positions.len() / 3,
             model.mesh.indices.len(),
             if model.mesh.texcoords.is_empty() { "no uvs" } else { "uvs" },
@@ -54,7 +53,7 @@ pub fn load_obj(
 
             result.push(
                 render::ModelData::new_with_normals(
-                    model.name,
+                    &model.name,
                     vertices,
                     model.mesh.indices,
                     render::NormalMode::Smooth,
@@ -64,7 +63,7 @@ pub fn load_obj(
             println!(
                 "\tLoaded submesh \"{}\" with \
                 {} verts, {} indices, {} (computed normals)",
-                name, positions_len, indices_len, uvs_string,
+                model.name, positions_len, indices_len, uvs_string,
             );
         }
 
@@ -117,7 +116,7 @@ pub fn load_obj(
 
             result.push(
                 render::ModelData::new(
-                    model.name,
+                    &model.name,
                     vertices,
                     model.mesh.indices,
                 )
@@ -126,7 +125,7 @@ pub fn load_obj(
             println!(
                 "\tLoaded submesh \"{}\" with \
                 {} verts, {} indices, {}, and normals",
-                name, positions_len, indices_len, uvs_string,
+                model.name, positions_len, indices_len, uvs_string,
             );
         }
     }

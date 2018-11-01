@@ -1149,7 +1149,14 @@ impl Manager {
         match self.joints.get(&i) {
             Some(joints) => for joint in joints {
                 if joint.child == j {
-                    return parent_instance.extend(joint.offset);
+                    let center = parent_instance.center();
+                    let orient = parent_instance.matched_orientation(center);
+
+                    return parent_instance.extend(
+                        joint.offset,
+                        orient,
+                        center,
+                    );
                 }
             },
             None => panic!(
@@ -1318,9 +1325,13 @@ impl Manager {
                 )
             };
 
-            let rotation = parent.orientation().to_quat() * transform;
+            let parent_center = parent.center();
+            let orientation = parent.matched_orientation(parent_center);
+            let rotation = orientation.to_quat() * transform;
+
             let end = (child.end() - child.start()) * 0.5;
-            let position = parent.extend(offset) + rotation * end;
+            let position = parent.extend(offset, orientation, parent_center)
+                + rotation * end;
 
             /* Align child with parent and joint transform */
 
@@ -1565,8 +1576,21 @@ impl Manager {
                 // Calculate mass imbalance
                 let weight = 1. / (children[i].mass / parent.mass + 1.);
 
-                let parent_end = parent.extend(joints[i].offset);
-                let parent_start = parent.extend(-joints[i].offset);
+                // Recompute parent center and orientation
+                let center = parent.center();
+                let orientation = parent.matched_orientation(center);
+
+                let parent_start = parent.extend(
+                    -joints[i].offset,
+                    orientation,
+                    center,
+                );
+
+                let parent_end = parent.extend(
+                    joints[i].offset,
+                    orientation,
+                    center,
+                );
 
                 // Find midpoint for initial correction
                 let midpoint = children[i].start().lerp(parent_end, weight);
@@ -1574,9 +1598,11 @@ impl Manager {
                 /* Rotate child towards midpoint */
 
                 let (center, end) = (children[i].center(), children[i].end());
+                let fwd = children[i].matched_orientation(center)
+                    * alg::Vec3::fwd();
 
                 let child_correction = alg::Quat::from_to(
-                    children[i].fwd(),
+                    fwd,
                     (end - midpoint).norm(),
                 );
 
@@ -1631,8 +1657,9 @@ impl Manager {
             && joint.x_limit.min == joint.y_limit.min
         ));
 
-        let parent_orient = parent.orientation();
-        let child_orient = child.orientation();
+        let parent_center = parent.center();
+        let parent_orient = parent.matched_orientation(parent_center);
+        let child_orient = child.matched_orientation(child.center());
         let child_orient_inv = child_orient.transpose();
 
         // Joint transform is treated as child of parent limb
@@ -1686,7 +1713,8 @@ impl Manager {
         /* Correct parent */
 
         // Transform from the same position as the midpoint correction
-        let point = parent.extend(-joint.offset);
+        // Reuse parent center and orientation from above
+        let point = parent.extend(-joint.offset, parent_orient, parent_center);
 
         let parent_correction = child_orient
             * (simple * twist).conjugate().to_mat()
@@ -1865,11 +1893,13 @@ impl Manager {
                         .as_ref().unwrap();
 
                     for joint in joints {
-                        let joint_orientation = parent.orientation()
+                        let center = parent.center();
+                        let orientation = parent.matched_orientation(center);
+                        let joint_orientation = orientation
                             * joint.transform.conjugate().to_mat();
 
                         debug.add_local_axes(
-                            parent.extend(joint.offset),
+                            parent.extend(joint.offset, orientation, center),
                             joint_orientation * alg::Vec3::fwd(),
                             joint_orientation * alg::Vec3::up(),
                             1.0,

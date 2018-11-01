@@ -422,7 +422,7 @@ impl<'a> JointBuilder<'a> {
 pub struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,
-    match_shape: bool,
+    match_shape: bool, // Actively match shape at runtime
 
     force: alg::Vec3,
     accel_dt: alg::Vec3, // Cached value, dependent on force
@@ -817,7 +817,7 @@ impl Instance {
 pub struct InstanceBuilder<'a> {
     manager: &'a mut Manager,
     scale: Option<alg::Vec3>, // For optional limb creation
-    model: Option<&'a render::ModelData>,
+    model: Option<&'a render::ModelData>, // For optional model starter
     mass: f32,
     rigidity: f32,
     particles: Option<&'a [alg::Vec3]>,
@@ -908,6 +908,7 @@ impl<'a> InstanceBuilder<'a> {
         self
     }
 
+    /// Enable active shape matching
     pub fn match_shape(&mut self) -> &mut InstanceBuilder<'a> {
         self.match_shape = true;
         self

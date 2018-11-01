@@ -688,11 +688,6 @@ impl Instance {
         alg::Quat::axis_angle(omega.norm(), omega.mag())
     }
 
-    #[inline]
-    fn extend(&self, offset: alg::Vec3) -> alg::Vec3 {
-        self.center() + self.orientation() * offset
-    }
-
     /// Returns instance orientation using least squares fit. \
     /// `center` is a parameter for optional caching.
     pub fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
@@ -762,6 +757,19 @@ impl Instance {
             alg::Vec3::zero(),
             |sum, index| sum + self.particles[*index].position
         ) / self.end_indices.len() as f32
+    }
+
+    // Convert local point in instance to global
+    // This function is included for readability;
+    // often orientation and center are cached and reused
+    #[inline]
+    fn extend(
+        &self,
+        offset: alg::Vec3,
+        orientation: alg::Mat3,
+        center: alg::Vec3,
+    ) -> alg::Vec3 {
+        center + orientation * offset
     }
 }
 

@@ -776,7 +776,7 @@ impl Instance {
 /// Builder pattern for softbody instances
 pub struct InstanceBuilder<'a> {
     manager: &'a mut Manager,
-    scale: Option<alg::Vec3>, // For optional limb creation
+    scale: Option<alg::Vec3>, // For optional box limb creation
     model: Option<&'a render::ModelData>, // For optional model starter
     mass: f32,
     rigidity: f32,
@@ -808,9 +808,12 @@ impl<'a> InstanceBuilder<'a> {
         }
     }
 
-    /// Override general instance creation with limb preset.
-    /// Takes in the limb scale as an argument.
-    pub fn make_limb(&mut self, scale: alg::Vec3) -> &mut InstanceBuilder<'a> {
+    /// Override general instance creation with box limb preset.
+    /// Takes in the box scale as an argument.
+    pub fn make_box_limb(
+        &mut self,
+        scale: alg::Vec3,
+    ) -> &mut InstanceBuilder<'a> {
         self.scale = Some(scale);
         self
     }
@@ -900,7 +903,7 @@ impl<'a> InstanceBuilder<'a> {
             }
         }
 
-        /* Limb instance */
+        /* Box limb instance */
 
         let instance = if let Some(scale) = self.scale {
             let scale = scale * 0.5;

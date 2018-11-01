@@ -688,37 +688,6 @@ impl Instance {
         alg::Quat::axis_angle(omega.norm(), omega.mag())
     }
 
-    /* Limb methods */
-
-    #[inline]
-    fn top(&self) -> alg::Vec3 {
-        (     self.particles[0].position
-            + self.particles[1].position
-            + self.particles[4].position
-            + self.particles[5].position
-        ) * 0.25
-    }
-
-    #[inline]
-    fn bot(&self) -> alg::Vec3 {
-        (     self.particles[2].position
-            + self.particles[3].position
-            + self.particles[6].position
-            + self.particles[7].position
-        ) * 0.25
-    }
-
-    // Orientation relies on forward vector calculation
-    #[inline]
-    pub fn fwd(&self) -> alg::Vec3 {
-        (self.end() - self.start()).norm()
-    }
-
-    #[inline]
-    pub fn up_est(&self) -> alg::Vec3 {
-        (self.top() - self.bot()).norm()
-    }
-
     #[inline]
     fn extend(&self, offset: alg::Vec3) -> alg::Vec3 {
         self.center() + self.orientation() * offset

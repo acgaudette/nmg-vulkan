@@ -33,7 +33,7 @@ impl nmg::Start for Demo {
         components.transforms.register(first);
         components.softbodies.register(first);
         components.softbodies.build_instance()
-            .make_limb(alg::Vec3::one())
+            .make_box_limb(alg::Vec3::one())
             .mass(10.0)
             .for_entity(first);
 
@@ -41,7 +41,7 @@ impl nmg::Start for Demo {
         components.transforms.register(second);
         components.softbodies.register(second);
         components.softbodies.build_instance()
-            .make_limb(alg::Vec3::one())
+            .make_box_limb(alg::Vec3::one())
             .mass(10.0)
             .for_entity(second);
 
@@ -49,7 +49,7 @@ impl nmg::Start for Demo {
         components.transforms.register(third);
         components.softbodies.register(third);
         components.softbodies.build_instance()
-            .make_limb(alg::Vec3::one())
+            .make_box_limb(alg::Vec3::one())
             .mass(10.0)
             .for_entity(third);
 

@@ -28,7 +28,7 @@ impl nmg::Start for Demo {
         components.softbodies.register(shape);
 
         components.softbodies.build_instance()
-            .make_limb(alg::Vec3::one())
+            .make_box_limb(alg::Vec3::one())
             .mass(10.0)
             .rigidity(0.015) // Jiggly
             .for_entity(shape);

@@ -759,13 +759,6 @@ impl Instance {
     }
 
     #[inline]
-    #[allow(dead_code)]
-    fn rotate_start(&mut self, rotation: alg::Quat) {
-        let point = self.start();
-        self.rotate_around(rotation, point);
-    }
-
-    #[inline]
     fn rotate_end(&mut self, rotation: alg::Quat) {
         let point = self.end();
         self.rotate_around(rotation, point);

@@ -691,24 +691,6 @@ impl Instance {
     /* Limb methods */
 
     #[inline]
-    fn start(&self) -> alg::Vec3 {
-        (     self.particles[0].position
-            + self.particles[1].position
-            + self.particles[2].position
-            + self.particles[3].position
-        ) * 0.25
-    }
-
-    #[inline]
-    fn end(&self) -> alg::Vec3 {
-        (     self.particles[4].position
-            + self.particles[5].position
-            + self.particles[6].position
-            + self.particles[7].position
-        ) * 0.25
-    }
-
-    #[inline]
     fn top(&self) -> alg::Vec3 {
         (     self.particles[0].position
             + self.particles[1].position
@@ -810,6 +792,24 @@ impl Instance {
             particle.position = particle.position - center + target;
             particle.last = particle.position;
         }
+    }
+
+    fn start(&self) -> alg::Vec3 {
+        debug_assert!(!self.start_indices.is_empty());
+
+        self.start_indices.iter().fold(
+            alg::Vec3::zero(),
+            |sum, index| sum + self.particles[*index].position
+        ) / self.start_indices.len() as f32
+    }
+
+    fn end(&self) -> alg::Vec3 {
+        debug_assert!(!self.end_indices.is_empty());
+
+        self.end_indices.iter().fold(
+            alg::Vec3::zero(),
+            |sum, index| sum + self.particles[*index].position
+        ) / self.end_indices.len() as f32
     }
 }
 

@@ -752,12 +752,6 @@ impl Instance {
         transform * s.inverse()
     }
 
-    #[inline]
-    fn rotate_end(&mut self, rotation: alg::Quat) {
-        let point = self.end();
-        self.rotate_around(rotation, point);
-    }
-
     // Call with point == center for a general rotate method
     #[inline]
     pub fn rotate_around(&mut self, rotation: alg::Quat, point: alg::Vec3) {
@@ -1613,12 +1607,14 @@ impl Manager {
 
                 /* Rotate child towards midpoint */
 
+                let (center, end) = (children[i].center(), children[i].end());
+
                 let child_correction = alg::Quat::from_to(
                     children[i].fwd(),
-                    (children[i].end() - midpoint).norm(),
+                    (end - midpoint).norm(),
                 );
 
-                children[i].rotate_end(child_correction);
+                children[i].rotate_around(child_correction, end);
 
                 /* Rotate parent towards midpoint,
                  * taking joint transform into account

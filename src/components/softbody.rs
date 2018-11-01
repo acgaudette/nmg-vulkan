@@ -945,6 +945,13 @@ impl<'a> InstanceBuilder<'a> {
         let instance = if let Some(scale) = self.scale {
             let scale = scale * 0.5;
 
+            debug_assert!(self.model.is_none());
+            debug_assert!(self.particles.is_none());
+            debug_assert!(self.indices.is_none());
+            debug_assert!(self.bindings.is_none());
+            debug_assert!(self.start_indices.is_none());
+            debug_assert!(self.end_indices.is_none());
+
             // Build 8-particle scaled box
             Instance::new(
                 &[
@@ -1006,6 +1013,10 @@ impl<'a> InstanceBuilder<'a> {
         /* Mesh */
 
         else if let Some(model) = self.model {
+            debug_assert!(self.particles.is_none());
+            debug_assert!(self.indices.is_none());
+            debug_assert!(self.bindings.is_none());
+
             Instance::new_from_model(
                 model,
                 self.mass,

@@ -441,6 +441,8 @@ pub struct Instance {
     model: Option<Vec<alg::Vec3>>, // Override offset vertices
     triangles: Vec<usize>, // Indices reference, for normals
     normals: Vec<alg::Vec3>, // Normals reference
+    start_indices: Vec<usize>, // Optional joint start highlight
+    end_indices: Vec<usize>, // Optional joint end highlight
 
     // Range 0 - 0.5; "Rigid" = 0.5
     // Lower values produce springier meshes
@@ -459,6 +461,8 @@ impl Instance {
         rigidity: f32,
         initial_pos: alg::Vec3,
         initial_accel: alg::Vec3,
+        start_indices: &[usize],
+        end_indices: &[usize],
     ) -> Instance {
         debug_assert!(mass > 0.0);
         debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
@@ -516,12 +520,15 @@ impl Instance {
 
             mass,
             inv_pt_mass: 1.0 / (mass / points.len() as f32),
-            rigidity,
             perfect_model,
             perfect_com,
             model: model_override.map(|model| model.to_vec()),
             triangles: indices.to_vec(),
             normals,
+            start_indices: start_indices.to_vec(),
+            end_indices: end_indices.to_vec(),
+
+            rigidity,
         }
     }
 
@@ -531,6 +538,8 @@ impl Instance {
         rigidity: f32,
         initial_pos: alg::Vec3,
         initial_accel: alg::Vec3,
+        start_indices: &[usize],
+        end_indices: &[usize],
     ) -> Instance {
         debug_assert!(mass > 0.0);
         debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
@@ -584,12 +593,15 @@ impl Instance {
 
             mass,
             inv_pt_mass: 1.0 / (mass / vertices_len as f32),
-            rigidity,
             perfect_model,
             perfect_com,
             model: None,
             triangles: indices,
             normals,
+            start_indices: start_indices.to_vec(),
+            end_indices: end_indices.to_vec(),
+
+            rigidity,
         }
     }
 

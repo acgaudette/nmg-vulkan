@@ -693,17 +693,6 @@ impl Instance {
         self.center() + self.orientation() * offset
     }
 
-    // Get limb orientation as matrix
-    fn orientation(&self) -> alg::Mat3 {
-        // Build orthogonal rotation matrix
-        let fwd = self.fwd();
-        let up = self.up_est(); // Approximation
-        let right = up.cross(fwd); // Resistant to x-axis deformity
-        let up = fwd.cross(right); // Recreate up vector
-
-        alg::Mat3::axes(right, up, fwd)
-    }
-
     /// Returns instance orientation using least squares fit. \
     /// `center` is a parameter for optional caching.
     pub fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {

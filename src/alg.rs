@@ -588,6 +588,13 @@ impl Mat3 {
         };
 
         for iteration in 0..JACOBI_ITERATIONS {
+            /* Early exit: check upper triangle for large values */
+
+            if ( input.x1 * input.x1
+               + input.x2 * input.x2
+               + input.y2 * input.y2
+            ) == 0.0 { break }
+
             // Iterate through off-diagonal
             for i in 0..3 {
                 for j in (i + 1)..3 {

@@ -997,6 +997,8 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
+                &[0, 1, 2, 3], // Start indices
+                &[4, 5, 6, 7], // End indices
             )
         }
 
@@ -1009,6 +1011,8 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
+                self.start_indices.unwrap_or(&[]),
+                self.end_indices.unwrap_or(&[]),
             )
         }
 
@@ -1018,19 +1022,18 @@ impl<'a> InstanceBuilder<'a> {
             debug_assert!(self.particles.is_some());
             debug_assert!(self.indices.is_some());
 
-            let bindings = if let Some(rods) = self.bindings
-                { rods } else { &[] };
-
             Instance::new(
                 self.particles.unwrap(),
                 self.indices.unwrap(),
                 None, // No model override
-                bindings,
+                self.bindings.unwrap_or(&[]),
                 self.match_shape,
                 self.mass,
                 rigidity,
                 self.initial_pos,
                 initial_accel,
+                self.start_indices.unwrap_or(&[]),
+                self.end_indices.unwrap_or(&[]),
             )
         };
 

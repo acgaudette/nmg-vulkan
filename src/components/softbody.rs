@@ -825,6 +825,8 @@ pub struct InstanceBuilder<'a> {
     bindings: Option<&'a [(usize, usize)]>,
     initial_pos: alg::Vec3,
     match_shape: bool,
+    start_indices: Option<&'a [usize]>,
+    end_indices: Option<&'a [usize]>,
 }
 
 impl<'a> InstanceBuilder<'a> {
@@ -841,6 +843,8 @@ impl<'a> InstanceBuilder<'a> {
             bindings: None,
             initial_pos: alg::Vec3::zero(),
             match_shape: false,
+            start_indices: None,
+            end_indices: None,
         }
     }
 
@@ -906,6 +910,18 @@ impl<'a> InstanceBuilder<'a> {
 
     pub fn match_shape(&mut self) -> &mut InstanceBuilder<'a> {
         self.match_shape = true;
+        self
+    }
+
+    /// Highlight indices to use for the joint start target
+    pub fn start(&mut self, indices: &'a [usize]) -> &mut InstanceBuilder<'a> {
+        self.start_indices = Some(indices);
+        self
+    }
+
+    /// Highlight indices to use for the joint end target
+    pub fn end(&mut self, indices: &'a [usize]) -> &mut InstanceBuilder<'a> {
+        self.end_indices = Some(indices);
         self
     }
 

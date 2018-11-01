@@ -930,6 +930,15 @@ impl<'a> InstanceBuilder<'a> {
         let rigidity = self.rigidity * 0.5; // Scale rigidity properly
         let initial_accel = self.manager.gravity; // Initialize with gravity
 
+        #[cfg(debug_assertions)] {
+            if self.start_indices.is_some() && !self.end_indices.is_some() {
+                panic!("Start indices were set but end indices were not set");
+            }
+            if self.end_indices.is_some() && !self.start_indices.is_some() {
+                panic!("End indices were set but start indices were not set");
+            }
+        }
+
         /* Limb instance */
 
         let instance = if let Some(scale) = self.scale {

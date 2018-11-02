@@ -430,7 +430,7 @@ pub struct Instance {
     /* Updated per-frame */
 
     frame_position: alg::Vec3,
-    frame_orientation: alg::Quat,
+    frame_orientation_conjugate: alg::Quat,
 
     /* "Constants" */
 
@@ -589,7 +589,7 @@ impl Instance {
             accel_dt: initial_accel * FIXED_DT * FIXED_DT,
 
             frame_position: alg::Vec3::zero(),
-            frame_orientation: alg::Quat::id(),
+            frame_orientation_conjugate: alg::Quat::id(),
 
             mass,
             inv_pt_mass: 1.0 / (mass / vertices_len as f32),
@@ -1272,8 +1272,8 @@ impl Manager {
             // Compute offsets
             for i in 0..new.len() {
                 offsets[i] = render::PaddedVec3::new(
-                    instance.frame_orientation.conjugate() * new[i]
-                        - instance.normals[i]
+                    instance.frame_orientation_conjugate * new[i]
+                        - instance.model.normals[i]
                 );
             }
         }
@@ -1535,7 +1535,7 @@ impl Manager {
 
             // Update instance position and orientation
             instance.frame_position = center;
-            instance.frame_orientation = orientation;
+            instance.frame_orientation_conjugate = orientation.conjugate();
 
             // Update transform
             debug_validate_entity!(transforms, self.handles[i].unwrap());

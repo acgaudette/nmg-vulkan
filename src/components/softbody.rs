@@ -552,7 +552,7 @@ impl Instance {
     }
 
     fn new_from_model(
-        model: &render::ModelData,
+        input: &render::ModelData,
         mass: f32,
         rigidity: f32,
         initial_pos: alg::Vec3,
@@ -565,30 +565,65 @@ impl Instance {
 
         /* Initialize particles and base comparison model */
 
-        let vertices_len = model.vertices.len();
-
-        let (particles, perfect_model) = {
-            let mut particles = Vec::with_capacity(vertices_len);
-            let mut perfect_model = Vec::with_capacity(vertices_len);
-
-            for point in model.vertices.iter().map(|vertex| vertex.position) {
-                particles.push(Particle::new(initial_pos + point));
-                perfect_model.push(point);
-            }
-
-            (particles, perfect_model)
-        };
-
-        let center = |positions: &[alg::Vec3]| positions.iter().fold(
-            alg::Vec3::zero(),
-            |sum, position| sum + *position
-        ) / positions.len() as f32;
-
-        let perfect_com = center(&perfect_model);
+        let vertices_len = input.vertices.len();
 
         // Convert indices
-        let indices: Vec<usize> = model.indices.iter()
+        let indices: Vec<usize> = input.indices.iter()
             .map(|index| *index as usize).collect();
+
+        let (particles, particle_map, model, model_map, duplicates) = {
+            let mut particles: Vec<Particle>
+                = Vec::with_capacity(vertices_len); // Overfill
+            let mut particle_map
+                = Vec::with_capacity(vertices_len); // Overfill
+            let mut duplicates = 0;
+
+            let model: Vec<alg::Vec3> = input.vertices.iter()
+                .map(|vertex| vertex.position)
+                .collect();
+            let mut model_map = Vec::with_capacity(vertices_len);
+
+            let mut i = 0;
+            for (k, point) in model.iter().enumerate() {
+                let mut valid = true;
+
+                // Search particles for duplicate position
+                for j in 0..i {
+                    let compare = particles[j].position - initial_pos;
+                    let x = compare.x - point.x;
+                    let y = compare.y - point.y;
+                    let z = compare.z - point.z;
+
+                    if x*x < std::f32::EPSILON
+                    && y*y < std::f32::EPSILON
+                    && z*z < std::f32::EPSILON
+                    {
+                        model_map.push(j);
+                        duplicates += 1;
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if valid {
+                    particles.push(Particle::new(initial_pos + *point));
+                    particle_map.push(k);
+                    model_map.push(i);
+                    i += 1;
+                }
+            }
+
+            if duplicates > 0 {
+                println!(
+                    "{} duplicates found in input model \"{}\"",
+                    duplicates,
+                    input.name,
+                );
+            }
+
+            (particles, particle_map, model, model_map, duplicates)
+        };
+
 
         // Softbodies only support computed normals.
         debug_assert!(model.computed_normals);

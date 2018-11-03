@@ -1358,7 +1358,9 @@ impl Manager {
         if let Some(ref instance) = self.instances[i] {
             let new = Instance::compute_normals(
                 &instance.particles,
-                &instance.triangles,
+                &instance.model.indices,
+                &instance.model.model_map,
+                instance.model.positions.len(),
             );
 
             // Compute offsets

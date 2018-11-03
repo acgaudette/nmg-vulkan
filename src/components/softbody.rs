@@ -518,7 +518,9 @@ impl Instance {
         }
 
         debug_assert!(points.len() == particles.len());
-        debug_assert!(particles.len() == perfect_model.len());
+        debug_assert!(particles.len() == model.len());
+        debug_assert!(model.len() == model_map.len());
+        debug_assert!(model_map.len() == particle_map.len());
 
         Instance {
             particles,

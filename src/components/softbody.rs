@@ -1580,11 +1580,15 @@ impl Manager {
                     let center = instance.center();
                     let orientation = instance.matched_orientation(center);
 
-                    for (particle, model_point) in instance.particles.iter_mut()
-                        .zip(instance.perfect_model.iter())
+                    for (i, particle) in instance.particles.iter_mut()
+                        .enumerate()
                     {
+                        let model_position = instance.model.positions[
+                            instance.model.particle_map[i]
+                        ];
+
                         let target = orientation
-                            * (*model_point - instance.perfect_com)
+                            * (model_position - instance.model.com)
                             + center;
 
                         let offset = target - particle.position;

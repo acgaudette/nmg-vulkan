@@ -646,14 +646,6 @@ impl Instance {
         result.iter().map(|raw| raw.norm()).collect()
     }
 
-    // Get offset from center for specific particle
-    fn offset(&self, index: usize) -> alg::Vec3 {
-        // Compare current transform against model reference
-        self.frame_orientation.conjugate() * (
-            self.particles[index].position - self.frame_position
-        ) - self.model.as_ref().unwrap_or(&self.perfect_model)[index]
-    }
-
     #[inline]
     // Must be called when gravity or force changes
     fn update_cache(&mut self, gravity: alg::Vec3) {
@@ -1248,8 +1240,17 @@ impl Manager {
 
         // If the entity has a softbody component, fill the offsets array
         if let Some(ref instance) = self.instances[i] {
-            for i in 0..instance.particles.len() {
-                offsets[i] = render::PaddedVec3::new(instance.offset(i));
+            for i in 0..instance.model.positions.len() {
+                let j = instance.model.model_map[i];
+
+                // Get offset from center; compare current transform against
+                // model reference
+                let offset = instance.frame_orientation_conjugate * (
+                    instance.particles[j].position - instance.frame_position
+                ) - instance.model.positions_override.as_ref()
+                    .unwrap_or(&instance.model.positions)[i];
+
+                offsets[i] = render::PaddedVec3::new(offset);
             }
         }
 

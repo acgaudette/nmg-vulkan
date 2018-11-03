@@ -778,7 +778,8 @@ impl Instance {
         // Sum multiplication of actual and model particle positions
         for i in 0..self.particles.len() {
             let actual = self.particles[i].position - center;
-            let model = self.perfect_model[i] - self.perfect_com;
+            let j = self.model.particle_map[i]; // Adjust index for duplicates
+            let model = self.model.positions[j] - self.model.com;
             transform = transform + (actual * model);
         }
 

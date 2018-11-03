@@ -450,6 +450,18 @@ pub struct Instance {
     rigidity: f32,
 }
 
+/// Source mesh reference structure.
+/// All data is preserved from the original model input (including duplicates).
+pub struct Model {
+    positions: Vec<alg::Vec3>,
+    positions_override: Option<Vec<alg::Vec3>>, // Override offset computations
+    com: alg::Vec3,
+    indices: Vec<usize>, // For computing normals
+    model_map: Vec<usize>, // Model indices to particle indices
+    particle_map: Vec<usize>, // Particle indices to model indices
+    normals: Vec<alg::Vec3>,
+}
+
 impl Instance {
     fn new(
         points: &[alg::Vec3],

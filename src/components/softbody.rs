@@ -644,7 +644,12 @@ impl Instance {
             model.len(),
         );
 
-        debug_assert!(particles.len() == perfect_model.len());
+        debug_assert!(particle_map.len() == particles.len());
+        debug_assert!(model_map.len() == model.len());
+        debug_assert!(
+            particles.len() == model.len() - duplicates
+        );
+
         /* Remap start and end indices */
 
         let mut start_indices: Vec<usize> = start_indices.iter()

@@ -624,6 +624,13 @@ impl Instance {
             (particles, particle_map, model, model_map, duplicates)
         };
 
+        // Compute center from particles instead of input model;
+        // Duplicates throw off the result.
+        let com = particles.iter()
+            .map(|particle| particle.position - initial_pos).fold(
+                alg::Vec3::zero(),
+                |sum, position| sum + position,
+        ) / particles.len() as f32;
 
         // Softbodies only support computed normals.
         debug_assert!(model.computed_normals);

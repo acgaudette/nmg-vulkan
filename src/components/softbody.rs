@@ -435,14 +435,10 @@ pub struct Instance {
     /* "Constants" */
 
     mass: f32,
-    inv_pt_mass: f32, // Inverse mass per particle
-    perfect_model: Vec<alg::Vec3>, // Vertices reference
-    perfect_com: alg::Vec3, // Center of mass reference
-    model: Option<Vec<alg::Vec3>>, // Override offset vertices
-    triangles: Vec<usize>, // Indices reference, for normals
-    normals: Vec<alg::Vec3>, // Normals reference
+    inv_pt_mass: f32, // Cached inverse mass per particle
     start_indices: Vec<usize>, // Optional joint start highlight
     end_indices: Vec<usize>, // Optional joint end highlight
+    model: Model,
 
     // Range 0 - 0.5; "Rigid" = 0.5
     // Lower values produce springier meshes

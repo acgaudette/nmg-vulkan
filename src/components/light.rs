@@ -168,6 +168,17 @@ impl Manager {
         instance.vector = direction.norm();
     }
 
+    /// Sets `vector` field of light instance directly
+    pub fn set_vector_raw(
+        &mut self,
+        entity: entity::Handle,
+        vector: alg::Vec3,
+    ) {
+        debug_validate_entity!(self, entity);
+        let instance = self.instances.get_mut(&entity).unwrap();
+        instance.vector = vector;
+    }
+
     /// Update point light positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         for (entity, light) in &mut self.instances {

@@ -496,12 +496,6 @@ impl Instance {
 
         let perfect_com = center(&perfect_model);
 
-        #[cfg(debug_assertions)] {
-            if let Some(model) = model_override {
-                assert_eq!(center(model), perfect_com);
-            }
-        }
-
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);
         let normals = Instance::compute_normals(&particles, &indices);

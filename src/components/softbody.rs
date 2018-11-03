@@ -1970,16 +1970,20 @@ impl Manager {
 
                 if instance.match_shape {
                     let mut draw = |triangle: &[usize], a: usize, b: usize| {
+                        // Will draw more lines than necessary
+                        let i = instance.model.model_map[triangle[a]];
+                        let j = instance.model.model_map[triangle[b]];
+
                         debug.add_line(
                             alg::Line::new(
-                                instance.particles[triangle[a]].position,
-                                instance.particles[triangle[b]].position,
+                                instance.particles[i].position,
+                                instance.particles[j].position,
                             ),
                             graphics::Color::gray(),
                         );
                     };
 
-                    for triangle in instance.triangles.chunks(3) {
+                    for triangle in instance.model.indices.chunks(3) {
                         draw(triangle, 0, 1);
                         draw(triangle, 1, 2);
                         draw(triangle, 2, 0);

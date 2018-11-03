@@ -156,6 +156,18 @@ impl Manager {
         instance.color = color;
     }
 
+    /// Sets direction vector of directional light.
+    /// Normalizes input.
+    pub fn set_direction(
+        &mut self,
+        entity: entity::Handle,
+        direction: alg::Vec3,
+    ) {
+        debug_validate_entity!(self, entity);
+        let instance = self.instances.get_mut(&entity).unwrap();
+        instance.vector = direction.norm();
+    }
+
     /// Update point light positions from transform component
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         for (entity, light) in &mut self.instances {

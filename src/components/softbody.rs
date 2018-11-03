@@ -633,11 +633,16 @@ impl Instance {
         ) / particles.len() as f32;
 
         // Softbodies only support computed normals.
-        debug_assert!(model.computed_normals);
+        debug_assert!(input.computed_normals);
 
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);
-        let normals = Instance::compute_normals(&particles, &indices);
+        let normals = Instance::compute_normals(
+            &particles,
+            &indices,
+            &model_map,
+            model.len(),
+        );
 
         debug_assert!(particles.len() == perfect_model.len());
         /* Remap start and end indices */
@@ -669,14 +674,17 @@ impl Instance {
 
             mass,
             inv_pt_mass: 1.0 / (mass / vertices_len as f32),
-            perfect_model,
-            perfect_com,
-            model: None,
-            triangles: indices,
-            normals,
-            start_indices: start_indices.to_vec(),
-            end_indices: end_indices.to_vec(),
-
+            start_indices,
+            end_indices,
+            model: Model {
+                positions: model,
+                com,
+                positions_override: None,
+                indices,
+                model_map,
+                particle_map,
+                normals,
+            },
             rigidity,
         }
     }

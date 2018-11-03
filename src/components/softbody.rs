@@ -477,16 +477,22 @@ impl Instance {
 
         /* Initialize particles and base comparison model */
 
-        let (particles, perfect_model) = {
-            let mut particles = Vec::with_capacity(points.len());
-            let mut perfect_model = Vec::with_capacity(points.len());
+        let points_len = points.len();
 
-            for point in points {
+        let (particles, particle_map, model, model_map) = {
+            let mut particles = Vec::with_capacity(points_len);
+            let mut particle_map = Vec::with_capacity(points_len);
+            let mut model = Vec::with_capacity(points_len);
+            let mut model_map = Vec::with_capacity(points_len);
+
+            for (i, point) in points.iter().enumerate() {
                 particles.push(Particle::new(initial_pos + *point));
-                perfect_model.push(*point);
+                particle_map.push(i); // NOOP
+                model.push(*point);
+                model_map.push(i); // NOOP
             }
 
-            (particles, perfect_model)
+            (particles, particle_map, model, model_map)
         };
 
         let center = |model: &[alg::Vec3]| model.iter().fold(
@@ -494,11 +500,16 @@ impl Instance {
             |sum, position| sum + *position
         ) / model.len() as f32;
 
-        let perfect_com = center(&perfect_model);
+        let com = center(&model);
 
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);
-        let normals = Instance::compute_normals(&particles, &indices);
+        let normals = Instance::compute_normals(
+            &particles,
+            &indices,
+            &model_map,
+            model.len(),
+        );
 
         // Initialize rods
         let mut rods = Vec::with_capacity(bindings.len());
@@ -518,18 +529,22 @@ impl Instance {
             accel_dt: initial_accel * FIXED_DT * FIXED_DT,
 
             frame_position: alg::Vec3::zero(),
-            frame_orientation: alg::Quat::id(),
+            frame_orientation_conjugate: alg::Quat::id(),
 
             mass,
-            inv_pt_mass: 1.0 / (mass / points.len() as f32),
-            perfect_model,
-            perfect_com,
-            model: model_override.map(|model| model.to_vec()),
-            triangles: indices.to_vec(),
-            normals,
+            inv_pt_mass: 1.0 / (mass / points_len as f32),
+            model: Model {
+                positions: model,
+                com,
+                positions_override: model_override
+                    .map(|positions| positions.to_vec()),
+                indices: indices.to_vec(),
+                particle_map,
+                model_map,
+                normals,
+            },
             start_indices: start_indices.to_vec(),
             end_indices: end_indices.to_vec(),
-
             rigidity,
         }
     }

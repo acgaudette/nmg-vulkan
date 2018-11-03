@@ -640,6 +640,21 @@ impl Instance {
         let normals = Instance::compute_normals(&particles, &indices);
 
         debug_assert!(particles.len() == perfect_model.len());
+        /* Remap start and end indices */
+
+        let mut start_indices: Vec<usize> = start_indices.iter()
+            .map(|index| model_map[*index])
+            .collect();
+
+        start_indices.sort_unstable();
+        start_indices.dedup();
+
+        let mut end_indices: Vec<usize> = end_indices.iter()
+            .map(|index| model_map[*index])
+            .collect();
+
+        end_indices.sort_unstable();
+        end_indices.dedup();
 
         Instance {
             particles,

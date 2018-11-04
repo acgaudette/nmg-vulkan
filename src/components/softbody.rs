@@ -966,13 +966,23 @@ impl<'a> InstanceBuilder<'a> {
         self
     }
 
-    /// Highlight indices to use for the joint start target
+    /// Highlight indices to use for the joint start target.
+    /// This is only necessary for instances that will be joint children. \
+    /// The instance's `start` point will be taken as the aggregate position
+    /// of the vertices at these indices. \
+    /// Input indices are with respect to the input model (if one exists),
+    /// and as such must include duplicates.
     pub fn start(&mut self, indices: &'a [usize]) -> &mut InstanceBuilder<'a> {
         self.start_indices = Some(indices);
         self
     }
 
-    /// Highlight indices to use for the joint end target
+    /// Highlight indices to use for the joint end target.
+    /// This is only necessary for instances that will be joint children. \
+    /// The instance's `end` point will be taken as the aggregate position
+    /// of the vertices at these indices. \
+    /// Input indices are with respect to the input model (if one exists),
+    /// and as such must include duplicates.
     pub fn end(&mut self, indices: &'a [usize]) -> &mut InstanceBuilder<'a> {
         self.end_indices = Some(indices);
         self
@@ -1707,6 +1717,8 @@ impl Manager {
                 // using oriented_fwd seems to be less noisy with box limbs.
                 let child_fwd = (child_end - child_start).norm();
 
+                // This assertion will only exist as long as oriented_fwd is
+                // equal to child_fwd. In the general case this is not true!
                 #[cfg(debug_assertions)] {
                     let center = children[i].center();
                     let oriented_fwd = children[i].matched_orientation(center)

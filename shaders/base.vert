@@ -13,6 +13,7 @@ layout(binding = 1, std140) uniform instance_ubo {
   vec4 lights[MAX_INSTANCE_LIGHTS * 2];
   vec3 position_offsets[MAX_SOFTBODY_VERT];
   vec3 normal_offsets[MAX_SOFTBODY_VERT];
+  uint baseVertex;
 } instance;
 
 layout(location = 0) in vec3 inPosition;
@@ -28,15 +29,16 @@ out gl_PerVertex {
 };
 
 void main() {
+  uint index = gl_VertexIndex - instance.baseVertex;
   vec4 position = instance.model
-    * vec4(inPosition + instance.position_offsets[gl_VertexIndex], 1);
+    * vec4(inPosition + instance.position_offsets[index], 1);
 
   fragPosition = position.xyz;
   fragColor = inColor;
 
   fragNormal = (
     instance.model
-      * vec4(inNormal + instance.normal_offsets[gl_VertexIndex], 0)
+      * vec4(inNormal + instance.normal_offsets[index], 0)
   ).xyz;
   fragNormal = normalize(fragNormal);
 

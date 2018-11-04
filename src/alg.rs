@@ -473,6 +473,20 @@ impl Mat3 {
     pub fn to_quat(self) -> Quat {
         let trace = self.trace();
 
+        // Log warning if input is not special orthogonal;
+        // this is sometimes "expected" behavior, so I avoid the panic.
+        #[cfg(debug_assertions)] {
+            let det = self.det();
+            let err = det - 1.0;
+            if (err * err) > std::f32::EPSILON {
+                eprintln!(
+                    "Warning: attempted to convert invalid Mat3 to Quat \
+                    (det = {:.2})",
+                    det,
+                );
+            }
+        }
+
         if trace > 0.0 {
             let s = 2.0 * (1.0 + trace).sqrt();
 

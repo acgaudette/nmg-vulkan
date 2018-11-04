@@ -1685,21 +1685,25 @@ impl Manager {
                     center,
                 );
 
+                // Recompute child start and end
+                let child_start = children[i].start();
+                let child_end = children[i].end();
+
                 // Find midpoint for initial correction
-                let midpoint = children[i].start().lerp(parent_end, weight);
+                let midpoint = child_start.lerp(parent_end, weight);
 
                 /* Rotate child towards midpoint */
 
-                let (center, end) = (children[i].center(), children[i].end());
-                let fwd = children[i].matched_orientation(center)
-                    * alg::Vec3::fwd();
+                // This fwd is stable under the Quat call below; however,
+                // using oriented_fwd seems to be less noisy with box limbs.
+                let child_fwd = (child_end - child_start).norm();
 
                 let child_correction = alg::Quat::from_to(
-                    fwd,
-                    (end - midpoint).norm(),
+                    child_fwd,
+                    (child_end - midpoint).norm(),
                 );
 
-                children[i].rotate_around(child_correction, end);
+                children[i].rotate_around(child_correction, child_end);
 
                 /* Rotate parent towards midpoint,
                  * taking joint transform into account

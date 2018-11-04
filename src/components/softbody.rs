@@ -783,6 +783,15 @@ impl Instance {
             transform = transform + (actual * model);
         }
 
+        // If the mesh self-intersects (e.g. if the rigidity is too low),
+        // the transform cannot be fully described by a rotation,
+        // which causes it to invert.
+        #[cfg(debug_assertions)] {
+            if transform.det() < 0.0 {
+                eprintln!("Warning: invalid shape matching transform");
+            }
+        }
+
         // Compute rotation component using polar decomposition
         let s = (transform.transpose() * transform).sqrt();
         transform * s.inverse()

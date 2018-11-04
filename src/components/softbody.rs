@@ -681,6 +681,8 @@ impl Instance {
     /* Calculate normals for implicit softbody mesh,
      * useful for blending rendered mesh normals
      * and/or determining softbody topology.
+     * Note: returns Vec with length equal to the input model
+     * (including duplicates), i.e. `actual_len`
      */
     fn compute_normals(
         particles: &[Particle],
@@ -1313,6 +1315,7 @@ impl Manager {
             for i in 0..instance.model.positions.len() {
                 let j = instance.model.model_map[i];
 
+            // Duplicates will cause repeat computations
             for (i, j) in instance.model.duplicates.iter()
                 .map(|index| *index as usize)
                 .enumerate()
@@ -1960,7 +1963,7 @@ impl Manager {
 
                 if instance.match_shape {
                     let mut draw = |triangle: &[usize], a: usize, b: usize| {
-                        // Will draw more lines than necessary
+                        // Duplicates will draw more lines than necessary
                         let i = instance.model.duplicates[triangle[a]];
                         let j = instance.model.duplicates[triangle[b]];
 

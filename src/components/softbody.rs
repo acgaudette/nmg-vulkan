@@ -700,17 +700,16 @@ impl Instance {
     fn compute_normals(
         particles: &[Particle],
         indices: &[usize],
-        model_map: &[usize],
-        actual_length: usize,
+        actual_len: usize,
     ) -> Vec<alg::Vec3> {
-        let mut result = vec![alg::Vec3::zero(); actual_length];
+        let mut result = vec![alg::Vec3::zero(); actual_len];
 
         for (i, j, k) in indices.chunks(3)
             .map(|chunk| (chunk[0], chunk[1], chunk[2]))
         {
-            let a = particles[model_map[i]].position;
-            let b = particles[model_map[j]].position;
-            let c = particles[model_map[k]].position;
+            let a = particles[i].position;
+            let b = particles[j].position;
+            let c = particles[k].position;
             let normal = alg::Vec3::normal(a, b, c);
 
             // Sum normal contributions

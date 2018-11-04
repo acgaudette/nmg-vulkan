@@ -761,8 +761,7 @@ impl Instance {
         // Sum multiplication of actual and model particle positions
         for i in 0..self.particles.len() {
             let actual = self.particles[i].position - center;
-            let j = self.model.particle_map[i]; // Adjust index for duplicates
-            let model = self.model.positions[j] - self.model.com;
+            let model = self.model.positions[i] - self.model.com;
             transform = transform + (actual * model);
         }
 
@@ -1572,15 +1571,11 @@ impl Manager {
                     let center = instance.center();
                     let orientation = instance.matched_orientation(center);
 
-                    for (i, particle) in instance.particles.iter_mut()
-                        .enumerate()
+                    for (particle, model_position) in instance.particles
+                        .iter_mut().zip(&instance.model.positions)
                     {
-                        let model_position = instance.model.positions[
-                            instance.model.particle_map[i]
-                        ];
-
                         let target = orientation
-                            * (model_position - instance.model.com)
+                            * (*model_position - instance.model.com)
                             + center;
 
                         let offset = target - particle.position;

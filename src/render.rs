@@ -667,11 +667,6 @@ impl<'a> Context<'a> {
         for j in 0..self.models.len() {
             // Render each instance
             for k in 0..instances.data[j].len() {
-                // Skip drawing hidden instances
-                if instances.data[j][k].1.hide {
-                    continue;
-                }
-
                 // Bind uniform data
                 cmd_buffer.bind_descriptor_sets(
                     vd::PipelineBindPoint::Graphics,
@@ -682,6 +677,11 @@ impl<'a> Context<'a> {
                     &[self.ubo_alignment as u32 * instance as u32],
                 );
 
+                instance += 1;
+
+                // Skip drawing hidden instances
+                if instances.data[j][k].1.hide { continue; }
+
                 // Draw call
                 cmd_buffer.draw_indexed(
                     self.models[j].index_count,
@@ -690,8 +690,6 @@ impl<'a> Context<'a> {
                     self.models[j].vertex_offset,
                     0,
                 );
-
-                instance += 1;
             }
         }
 

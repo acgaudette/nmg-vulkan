@@ -42,6 +42,7 @@ pub const MAX_SOFTBODY_VERT: usize = (
     DYNAMIC_UBO_WIDTH
         - std::mem::size_of::<alg::Mat4>()
         - std::mem::size_of::<[Light; MAX_INSTANCE_LIGHTS]>()
+        - 4 // Base vertex (no padding)
 ) / std::mem::size_of::<PaddedVec3>()
   / 2; // There are two offset arrays
 
@@ -1389,6 +1390,10 @@ pub struct InstanceUBO {
     lights: [Light; MAX_INSTANCE_LIGHTS],
     position_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
     normal_offsets: [PaddedVec3; MAX_SOFTBODY_VERT],
+
+    // In lieu of ARB_shader_draw_parameters / SPV_KHR_shader_draw_parameters,
+    // this is passed in to the vertex shader manually
+    base_vertex: u32,
 }
 
 impl InstanceUBO {
@@ -1403,6 +1408,7 @@ impl InstanceUBO {
             lights,
             position_offsets,
             normal_offsets,
+            base_vertex: 0, // Set internally
         }
     }
 }
@@ -1414,6 +1420,7 @@ impl Default for InstanceUBO {
             lights: [Light::default(); MAX_INSTANCE_LIGHTS],
             position_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
             normal_offsets: [PaddedVec3::default(); MAX_SOFTBODY_VERT],
+            base_vertex: 0,
         }
     }
 }

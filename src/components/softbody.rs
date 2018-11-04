@@ -492,12 +492,10 @@ impl Instance {
             (particles, model, duplicates)
         };
 
-        let center = |model: &[alg::Vec3]| model.iter().fold(
+        let com = model.iter().fold(
             alg::Vec3::zero(),
             |sum, position| sum + *position
         ) / model.len() as f32;
-
-        let com = center(&model);
 
         // Compute base comparison normals for instance
         debug_assert!(indices.len() % 3 == 0);

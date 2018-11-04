@@ -98,10 +98,25 @@ mod tests {
             make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
             make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
             make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(0., 0.5, 0.)),
+            make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(0., 0.5, 0.)),
+            make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(0., 0.5, 0.)),
+            make_offset(alg::Vec3::new(0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, -0.5)),
+            make_offset(alg::Vec3::new(0.5, -0.5, 0.5)),
+            make_offset(alg::Vec3::new(-0.5, -0.5, 0.5)),
         ];
 
         let mut raw = {
-            let mut buffer = AlignedBuffer::new(512, 1);
+            let mut buffer = AlignedBuffer::new(996, 1);
 
             buffer.push(
                 render::InstanceUBO::new(

@@ -1313,12 +1313,16 @@ impl Manager {
             for i in 0..instance.model.positions.len() {
                 let j = instance.model.model_map[i];
 
+            for (i, j) in instance.model.duplicates.iter()
+                .map(|index| *index as usize)
+                .enumerate()
+            {
                 // Get offset from center; compare current transform against
                 // model reference
                 let offset = instance.frame_orientation_conjugate * (
                     instance.particles[j].position - instance.frame_position
                 ) - instance.model.positions_override.as_ref()
-                    .unwrap_or(&instance.model.positions)[i];
+                    .unwrap_or(&instance.model.positions)[j];
 
                 offsets[i] = render::PaddedVec3::new(offset);
             }

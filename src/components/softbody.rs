@@ -474,24 +474,22 @@ impl Instance {
         debug_assert!(mass > 0.0);
         debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
 
-        /* Initialize particles and base comparison model */
-
         let points_len = points.len();
 
-        let (particles, particle_map, model, model_map) = {
+        /* Initialize particles and base comparison model */
+
+        let (particles, model, duplicates) = {
             let mut particles = Vec::with_capacity(points_len);
-            let mut particle_map = Vec::with_capacity(points_len);
             let mut model = Vec::with_capacity(points_len);
-            let mut model_map = Vec::with_capacity(points_len);
+            let mut duplicates = Vec::with_capacity(points_len);
 
             for (i, point) in points.iter().enumerate() {
                 particles.push(Particle::new(initial_pos + *point));
-                particle_map.push(i); // NOOP
                 model.push(*point);
-                model_map.push(i); // NOOP
+                duplicates.push(i); // NOOP
             }
 
-            (particles, particle_map, model, model_map)
+            (particles, model, duplicates)
         };
 
         let center = |model: &[alg::Vec3]| model.iter().fold(
@@ -506,8 +504,7 @@ impl Instance {
         let normals = Instance::compute_normals(
             &particles,
             &indices,
-            &model_map,
-            model.len(),
+            duplicates.len(),
         );
 
         // Initialize rods
@@ -518,8 +515,7 @@ impl Instance {
 
         debug_assert!(points.len() == particles.len());
         debug_assert!(particles.len() == model.len());
-        debug_assert!(model.len() == model_map.len());
-        debug_assert!(model_map.len() == particle_map.len());
+        debug_assert!(model.len() == duplicates.len());
 
         Instance {
             particles,
@@ -540,9 +536,8 @@ impl Instance {
                 positions_override: model_override
                     .map(|positions| positions.to_vec()),
                 indices: indices.to_vec(),
-                particle_map,
-                model_map,
                 normals,
+                duplicates,
             },
             start_indices: start_indices.to_vec(),
             end_indices: end_indices.to_vec(),

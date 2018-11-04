@@ -528,9 +528,12 @@ impl<'a> Context<'a> {
             count,
         );
 
-        for model in &instances.data {
+        for (i, model) in instances.data.iter().enumerate() {
             for entry in model {
-                dynamic_buffer.push(entry.0.clone());
+                // Copy UBO and manually set base vertex
+                let mut ubo = entry.0.clone();
+                ubo.base_vertex = self.models[i].vertex_offset as u32;
+                dynamic_buffer.push(ubo);
             }
         }
 

@@ -555,74 +555,74 @@ impl Instance {
         debug_assert!(mass > 0.0);
         debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
 
-        /* Initialize particles and base comparison model */
-
         let vertices_len = input.vertices.len();
 
-        // Convert indices
-        let indices: Vec<usize> = input.indices.iter()
-            .map(|index| *index as usize).collect();
+        /* Initialize particles and base comparison model */
 
-        let (particles, particle_map, model, model_map, duplicates) = {
+        let (particles, model, duplicates) = {
             let mut particles: Vec<Particle>
                 = Vec::with_capacity(vertices_len); // Overfill
-            let mut particle_map
+            let mut model: Vec<alg::Vec3>
                 = Vec::with_capacity(vertices_len); // Overfill
-            let mut duplicates = 0;
+            let mut duplicate_count = 0;
 
-            let model: Vec<alg::Vec3> = input.vertices.iter()
-                .map(|vertex| vertex.position)
-                .collect();
-            let mut model_map = Vec::with_capacity(vertices_len);
+            // Mapping array from input indices to result indices
+            let mut duplicates = Vec::with_capacity(vertices_len);
 
             let mut i = 0;
-            for (k, point) in model.iter().enumerate() {
+            for point in input.vertices.iter().map(|vertex| vertex.position) {
                 let mut valid = true;
 
-                // Search particles for duplicate position
+                // Search previous entries for duplicate position
                 for j in 0..i {
-                    let compare = particles[j].position - initial_pos;
+                    let compare = model[j];
                     let x = compare.x - point.x;
                     let y = compare.y - point.y;
                     let z = compare.z - point.z;
 
-                    if x*x < std::f32::EPSILON
-                    && y*y < std::f32::EPSILON
-                    && z*z < std::f32::EPSILON
-                    {
-                        model_map.push(j);
-                        duplicates += 1;
+                    if x*x + y*y + z*z < std::f32::EPSILON {
+                        duplicates.push(j);
+                        duplicate_count += 1;
                         valid = false;
                         break;
                     }
                 }
 
                 if valid {
-                    particles.push(Particle::new(initial_pos + *point));
-                    particle_map.push(k);
-                    model_map.push(i);
+                    particles.push(Particle::new(initial_pos + point));
+                    model.push(point);
+                    duplicates.push(i);
                     i += 1;
                 }
             }
 
-            if duplicates > 0 {
+            if duplicate_count > 0 {
                 println!(
                     "{} duplicates found in input model \"{}\"",
-                    duplicates,
+                    duplicate_count,
                     input.name,
                 );
             }
 
-            (particles, particle_map, model, model_map, duplicates)
+            debug_assert!(duplicates.len() == input.vertices.len());
+            debug_assert!(
+                particles.len() == input.vertices.len() - duplicate_count
+            );
+
+            (particles, model, duplicates)
         };
 
-        // Compute center from particles instead of input model;
-        // Duplicates throw off the result.
-        let com = particles.iter()
-            .map(|particle| particle.position - initial_pos).fold(
-                alg::Vec3::zero(),
-                |sum, position| sum + position,
-        ) / particles.len() as f32;
+        // Convert indices
+        let indices: Vec<usize> = input.indices.iter()
+            .map(|index| duplicates[*index as usize])
+            .collect();
+
+        // Compute center from stored model instead of input model;
+        // duplicates throw off the result.
+        let com = model.iter().fold(
+            alg::Vec3::zero(),
+            |sum, position| sum + *position,
+        ) / model.len() as f32;
 
         // Softbodies only support computed normals.
         debug_assert!(input.computed_normals);
@@ -632,27 +632,20 @@ impl Instance {
         let normals = Instance::compute_normals(
             &particles,
             &indices,
-            &model_map,
-            model.len(),
-        );
-
-        debug_assert!(particle_map.len() == particles.len());
-        debug_assert!(model_map.len() == model.len());
-        debug_assert!(
-            particles.len() == model.len() - duplicates
+            duplicates.len(),
         );
 
         /* Remap start and end indices */
 
         let mut start_indices: Vec<usize> = start_indices.iter()
-            .map(|index| model_map[*index])
+            .map(|index| duplicates[*index])
             .collect();
 
         start_indices.sort_unstable();
         start_indices.dedup();
 
         let mut end_indices: Vec<usize> = end_indices.iter()
-            .map(|index| model_map[*index])
+            .map(|index| duplicates[*index])
             .collect();
 
         end_indices.sort_unstable();
@@ -678,9 +671,8 @@ impl Instance {
                 com,
                 positions_override: None,
                 indices,
-                model_map,
-                particle_map,
                 normals,
+                duplicates,
             },
             rigidity,
         }

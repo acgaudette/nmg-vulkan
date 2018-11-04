@@ -310,21 +310,24 @@ impl<'a> JointBuilder<'a> {
         self
     }
 
-    /// Joint x-axis limit range, in degrees
+    /// Joint x-axis limit range, in degrees \
+    /// Limits greater than 90 degrees on the x axis are not supported
     pub fn x(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
         let (min, max) = (min.to_radians(), max.to_radians());
         self.x_limit = Some(Range { min, max });
         self
     }
 
-    /// Joint y-axis limit range, in degrees
+    /// Joint y-axis limit range, in degrees \
+    /// Limits greater than 90 degrees on the y axis are not supported
     pub fn y(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
         let (min, max) = (min.to_radians(), max.to_radians());
         self.y_limit = Some(Range { min, max });
         self
     }
 
-    /// Joint z-axis limit range, in degrees
+    /// Joint z-axis limit range, in degrees \
+    /// Full range of motion on the z axis is supported
     pub fn z(&mut self, min: f32, max: f32) -> &'a mut JointBuilder {
         let (min, max) = (min.to_radians(), max.to_radians());
         self.z_limit = Some(Range { min, max });
@@ -351,6 +354,7 @@ impl<'a> JointBuilder<'a> {
 
     /* Locking */
 
+    /// Unlocked joints will ignore all rotational limits
     pub fn unlock(&mut self) -> &'a mut JointBuilder {
         self.unlocked = true;
         self
@@ -358,16 +362,22 @@ impl<'a> JointBuilder<'a> {
 
     /* Joint transform */
 
+    /// Forward vector of the joint (parent) transform \
+    /// Joint children use `start` and `end` instead
     pub fn fwd(&mut self, fwd: alg::Vec3) -> &'a mut JointBuilder {
         self.fwd = fwd;
         self
     }
 
+    /// Up vector of the joint (parent) transform \
+    /// Joint children use `start` and `end` instead
     pub fn up(&mut self, up: alg::Vec3) -> &'a mut JointBuilder {
         self.up = up;
         self
     }
 
+    /// Joint offset is relative to the model orientation of the softbody
+    /// instance (not the joint transform created with `fwd` and `up`)
     pub fn offset(&mut self, offset: alg::Vec3) -> &'a mut JointBuilder {
         self.offset = offset;
         self

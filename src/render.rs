@@ -36,7 +36,7 @@ const MAX_DEBUG_LINES: u64 = 1024;
  * (adjusting for matrix size and padding)
  */
 
-const DYNAMIC_UBO_WIDTH: usize = 512;
+const DYNAMIC_UBO_WIDTH: usize = 996;
 
 pub const MAX_SOFTBODY_VERT: usize = (
     DYNAMIC_UBO_WIDTH

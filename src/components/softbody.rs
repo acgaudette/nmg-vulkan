@@ -419,6 +419,10 @@ impl<'a> JointBuilder<'a> {
     }
 }
 
+/* TODO: Refactor Instance data structure for memory performance
+ * now that you have converged on how/where it is actually used.
+ */
+
 pub struct Instance {
     particles: Vec<Particle>,
     rods: Vec<Rod>,

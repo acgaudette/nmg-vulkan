@@ -1316,9 +1316,6 @@ impl Manager {
 
         // If the entity has a softbody component, fill the offsets array
         if let Some(ref instance) = self.instances[i] {
-            for i in 0..instance.model.positions.len() {
-                let j = instance.model.model_map[i];
-
             // Duplicates will cause repeat computations
             for (i, j) in instance.model.duplicates.iter()
                 .map(|index| *index as usize)

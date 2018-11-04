@@ -451,7 +451,7 @@ pub struct Instance {
 pub struct Model {
     positions: Vec<alg::Vec3>,
     positions_override: Option<Vec<alg::Vec3>>, // Override offset computations
-    com: alg::Vec3,
+    com: alg::Vec3, // Point-evaluated (not volume) center of mass
     indices: Vec<usize>, // For computing normals
     normals: Vec<alg::Vec3>,
     duplicates: Vec<usize>, // Mapping from "true" input mesh

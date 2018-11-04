@@ -849,11 +849,10 @@ impl Instance {
         ) / self.end_indices.len() as f32
     }
 
-    // Convert local point in instance to global
+    // Convert local point in instance to global.
     // This function is included for readability;
-    // often orientation and center are cached and reused
-    #[inline]
-    fn extend(
+    // often orientation and center are cached and reused.
+    #[inline] fn extend(
         &self,
         offset: alg::Vec3,
         orientation: alg::Mat3,

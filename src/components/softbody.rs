@@ -1698,6 +1698,19 @@ impl Manager {
                 // using oriented_fwd seems to be less noisy with box limbs.
                 let child_fwd = (child_end - child_start).norm();
 
+                #[cfg(debug_assertions)] {
+                    let center = children[i].center();
+                    let oriented_fwd = children[i].matched_orientation(center)
+                        * alg::Vec3::fwd();
+
+                    if oriented_fwd.dot(child_fwd) < 0.9 {
+                        panic!(
+                            "Softbody instance orientation \
+                            and start/end do not match!",
+                        );
+                    }
+                }
+
                 let child_correction = alg::Quat::from_to(
                     child_fwd,
                     (child_end - midpoint).norm(),

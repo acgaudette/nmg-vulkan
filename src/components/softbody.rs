@@ -1354,8 +1354,7 @@ impl Manager {
             let new = Instance::compute_normals(
                 &instance.particles,
                 &instance.model.indices,
-                &instance.model.model_map,
-                instance.model.positions.len(),
+                instance.model.duplicates.len(),
             );
 
             // Compute offsets

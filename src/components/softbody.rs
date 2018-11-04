@@ -1967,19 +1967,16 @@ impl Manager {
 
                 if instance.match_shape {
                     let mut draw = |triangle: &[usize], a: usize, b: usize| {
-                        // Duplicates will draw more lines than necessary
-                        let i = instance.model.duplicates[triangle[a]];
-                        let j = instance.model.duplicates[triangle[b]];
-
                         debug.add_line(
                             alg::Line::new(
-                                instance.particles[i].position,
-                                instance.particles[j].position,
+                                instance.particles[triangle[a]].position,
+                                instance.particles[triangle[b]].position,
                             ),
                             graphics::Color::gray(),
                         );
                     };
 
+                    // Duplicates will draw more lines than necessary
                     for triangle in instance.model.indices.chunks(3) {
                         draw(triangle, 0, 1);
                         draw(triangle, 1, 2);

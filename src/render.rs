@@ -2732,7 +2732,13 @@ fn init_drawing(
 
     /* Dynamic */
 
-    debug_assert!(std::mem::size_of::<InstanceUBO>() == DYNAMIC_UBO_WIDTH);
+    // If this assertion fails, update DYNAMIC_UBO_WIDTH
+    // Sometimes it is not possible to fit the arrays given the size you want
+    // Alternative: add padding to the end of the struct
+    #[cfg(debug_assertions)] assert_eq!(
+        std::mem::size_of::<InstanceUBO>(),
+        DYNAMIC_UBO_WIDTH,
+    );
 
     // Can't guarantee the minimum alignment will equal DYNAMIC_UBO_WIDTH,
     // even though it probably will.

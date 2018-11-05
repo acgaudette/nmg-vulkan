@@ -104,7 +104,7 @@ impl Manager {
         }
     }
 
-    pub fn prepare_bitmap_text(
+    pub(crate) fn prepare_bitmap_text(
         &mut self,
         font_data: &font::Data,
         vertex_ptr: *mut *mut *mut render::FontVertex_3d,
@@ -114,7 +114,6 @@ impl Manager {
         text_instances: &mut Vec<render::TextInstance>,
     ) {
         // Calls function that shares functionality with other types of text
-        
         for (_, text_instance) in self.instances.iter() {
             let mut idx_offset = 0u32;
             bitmap::prepare_text(

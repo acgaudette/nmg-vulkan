@@ -116,7 +116,7 @@ impl Manager {
         }
     }
 
-    pub fn prepare_bitmap_text(
+    pub(crate) fn prepare_bitmap_text(
         &mut self,
         font_data: &font::Data,
         vertex_ptr: *mut *mut *mut render::FontVertex_2d,

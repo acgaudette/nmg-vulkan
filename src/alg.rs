@@ -560,11 +560,13 @@ impl Mat3 {
         }
     }
 
-    /* Jacobi eigenvalue algorithm
-     * Input: real symmetric matrix
-     * Returns (eigenvectors, diagonal eigenvalues)
-     */
-
+    /// Jacobi eigenvalue algorithm \
+    /// Expected input is a real symmetric `Mat3` (`A`) \
+    /// Returns tuple `(P, B)` where `P` is a `Mat3` containing the
+    /// eigenvectors of `A` as columns, and `B` is a diagonal `Mat3` containing
+    /// the eigenvalues of `A` (along the main diagonal) \
+    /// Note: `B = P^-1 * A * P` \
+    /// Eigenvectors/values are returned sorted in ascending order
     pub fn jacobi(self) -> (Mat3, Mat3) {
         let mut vectors = Mat3::id(); // Eigenvectors
         // Initialize eigenvalues with diagonal

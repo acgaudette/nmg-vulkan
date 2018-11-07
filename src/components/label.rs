@@ -106,6 +106,13 @@ impl Manager {
         *self.instances.get_mut(&entity).unwrap() = text;
     }
 
+    /// Changes string that the label will render
+    pub fn set_str(&mut self, entity: entity::Handle, str: &str) {
+        debug_validate_entity!(self, entity);
+        let instance = self.instances.get_mut(&entity).unwrap();
+        instance.text = str.to_string();
+    }
+
     pub(crate) fn update(&mut self, transforms: &transform::Manager) {
         self.instance_data.clear();
         for (entity, _) in &mut self.instances {

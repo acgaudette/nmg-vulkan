@@ -1348,14 +1348,14 @@ impl DebugLine {
 #[repr(C)]
 pub struct PaddedVec3 {
     value: alg::Vec3,
-    pad: f32,
+    _pad: u32,
 }
 
 impl PaddedVec3 {
     pub fn new(value: alg::Vec3) -> PaddedVec3 {
         PaddedVec3 {
             value,
-            pad: 0.,
+            _pad: 0,
         }
     }
 }

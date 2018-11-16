@@ -1042,7 +1042,7 @@ impl ModelData {
 
 /// Model reference values used at runtime
 pub struct Model {
-    index_count:  u32,
+    index_count: u32,
     index_offset: u32,
     vertex_count: usize,
     vertex_offset: i32,
@@ -1050,7 +1050,7 @@ pub struct Model {
 
 impl Model {
     fn new(
-        index_count:  u32,
+        index_count: u32,
         index_offset: u32,
         vertex_count: usize,
         vertex_offset: i32,

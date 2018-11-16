@@ -547,16 +547,18 @@ impl Mat3 {
         )
     }
 
+    /// Computes the square root of a 3x3 matrix using the Jacobi eigenvalue
+    /// algorithm
     pub fn sqrt(self) -> Mat3 {
         // Check for early exit
         if self.is_diagonal() { self.diagonal_sqrt() }
 
         else {
             let (vectors, values) = self.jacobi(); // Diagonalize
-            let d = values.diagonal_sqrt(); // Get square root
+            let d = values.diagonal_sqrt(); // Get square root of result
 
             // Diagonalizing matrix is orthogonal; can use transpose
-            vectors * d * vectors.transpose()
+            vectors * d * vectors.transpose() // Change back to original basis
         }
     }
 

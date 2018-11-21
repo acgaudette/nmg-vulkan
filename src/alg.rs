@@ -550,6 +550,10 @@ impl Mat3 {
     /// Computes the square root of a 3x3 matrix using the Jacobi eigenvalue
     /// algorithm
     pub fn sqrt(self) -> Mat3 {
+        debug_assert!(self.x0 >= 0.0);
+        debug_assert!(self.y1 >= 0.0);
+        debug_assert!(self.z2 >= 0.0);
+
         // Check for early exit
         if self.is_diagonal() { self.diagonal_sqrt() }
 

@@ -367,6 +367,7 @@ impl Mat3 {
         )
     }
 
+    /// Creates a new diagonal matrix with the input main diagonal values
     #[inline]
     pub fn new_diagonal(x0: f32, y1: f32, z2: f32) -> Mat3 {
         Mat3::new(
@@ -376,11 +377,15 @@ impl Mat3 {
         )
     }
 
+    /// Creates a new diagonal matrix with the main diagonal values of an
+    /// existing input matrix
     #[inline]
     pub fn diagonal(self) -> Mat3 {
         Mat3::new_diagonal(self.x0, self.y1, self.z2)
     }
 
+    /// Checks if the matrix is diagonal,
+    /// i.e. the entries outside the main diagonal are all zero.
     pub fn is_diagonal(self) -> bool {
            self.x1 == 0.0 && self.x2 == 0.0
         && self.y0 == 0.0 && self.y2 == 0.0
@@ -395,6 +400,8 @@ impl Mat3 {
         )
     }
 
+    /// Inverts the matrix.
+    /// Does not check if the matrix is singular or nearly-singular.
     pub fn inverse(self) -> Mat3 {
         let reciprocal = 1. / self.det();
 
@@ -416,6 +423,7 @@ impl Mat3 {
         )
     }
 
+    /// Computes the general determinant of a 3x3 matrix.
     pub fn det(self) -> f32 {
           self.x0 * ((self.y1 * self.z2) - (self.z1 * self.y2))
         - self.x1 * ((self.y0 * self.z2) - (self.y2 * self.z0))
@@ -423,6 +431,7 @@ impl Mat3 {
     }
 
     pub fn trace(self) -> f32 {
+        // Add the diagonal
         self.x0 + self.y1 + self.z2
     }
 

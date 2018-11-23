@@ -544,10 +544,9 @@ impl Mat3 {
         )
     }
 
+    /// Computes the square root of a diagonal 3x3 matrix (trivial)
     pub fn diagonal_sqrt(self) -> Mat3 {
-        debug_assert!(self.x0 >= 0.0);
-        debug_assert!(self.y1 >= 0.0);
-        debug_assert!(self.z2 >= 0.0);
+        debug_assert!(self.is_diagonal());
 
         Mat3::new_diagonal(
             self.x0.sqrt(),

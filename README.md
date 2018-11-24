@@ -19,9 +19,11 @@ For the upcoming game, NMG ([watch original prototype here!][3])
 Currently requires Rust nightly.
 
 ## Acknowledgements
-- ![voodoo][4]
+- [cogciprocate/voodoo][4]
+- [tomaka/winit][5]
 
 [1]: https://travis-ci.org/acgaudette/nmg-vulkan.svg?branch=master
 [2]: https://travis-ci.org/acgaudette/nmg-vulkan
 [3]: https://youtu.be/dD4nkrqb9RY
 [4]: https://github.com/cogciprocate/voodoo
+[5]: https://github.com/tomaka/winit

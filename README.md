@@ -17,12 +17,18 @@ specialized for two things:
 
 ## Features
 - Low-level Vulkan backend
+- ECS architecture
+- Homebrew math module ([alg.rs](src/alg.rs))
 - Softbody physics engine
-- Optimized ECS architecture
-- Homebrew math module
-- Library crate
+- Cross-platform library crate
+- Few dependencies
 
-Currently requires Rust nightly.
+The engine is still a work in progress.
+The codebase and tooling is kept as lean as possible
+to avoid feature creep.
+
+## Notes
+- Currently requires Rust nightly
 
 ## Acknowledgements
 - [cogciprocate/voodoo][4]

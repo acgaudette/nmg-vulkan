@@ -4,6 +4,10 @@ For the upcoming game, NMG ([watch original prototype here!][3])
 
 [![Build Status][1]][2]
 
+![](media/pingpong.gif)
+![](media/softy.gif)
+![](media/pyramid.gif)
+
 ## Goals
 - Specialized
 - Data-oriented

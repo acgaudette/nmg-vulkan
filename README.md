@@ -7,6 +7,7 @@ For the upcoming game, NMG ([watch original prototype here!][3])
 ![](media/pingpong.gif)
 ![](media/softy.gif)
 ![](media/pyramid.gif)
+![](media/walking.gif)
 
 ## Goals
 - Specialized

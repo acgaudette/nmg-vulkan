@@ -1,6 +1,6 @@
-# Untitled Rust x Vulkan Engine
+# The `nmg` Rust x Vulkan Engine
 
-For the upcoming game, NMG ([watch original prototype here!][3])
+For the upcoming game, `nmg` ([watch original prototype here!][3])
 
 [![Build Status][1]][2]
 

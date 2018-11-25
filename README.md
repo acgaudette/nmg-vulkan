@@ -15,11 +15,6 @@ specialized for two things:
 ![](media/pyramid.gif)
 ![](media/walking.gif)
 
-## Goals
-- Specialized
-- Data-oriented
-- Concurrent
-
 ## Features
 - Low-level Vulkan backend
 - Softbody physics engine

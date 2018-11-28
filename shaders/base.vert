@@ -30,6 +30,7 @@ out gl_PerVertex {
 
 void main() {
   uint index = gl_VertexIndex - instance.baseVertex;
+
   vec4 position = instance.model
     * vec4(inPosition + instance.position_offsets[index], 1);
 

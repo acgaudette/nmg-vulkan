@@ -79,6 +79,14 @@ impl Vec2 {
     pub fn mag_squared(self) -> f32 {
         self.x * self.x + self.y * self.y
     }
+
+    pub fn dist_squared(self, other: Vec2) -> f32 {
+        (self - other).mag_squared()
+    }
+
+    pub fn dist(self, other: Vec2) -> f32 {
+        self.dist_squared(other).sqrt()
+    }
 }
 
 impl std::ops::Add for Vec2 {

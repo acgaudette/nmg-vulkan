@@ -3128,7 +3128,7 @@ fn set_image_layout_helper(
 }
 
 #[derive(Clone)]
-pub enum TextAlign { AlignLeft, AlignCenter, AlignRight }
+pub enum TextAlign { Left, Center, Right }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
@@ -3490,8 +3490,8 @@ impl Text {
         Text {
             text: "".to_string(),
             position: alg::Vec3::zero(),
-            align: TextAlign::AlignCenter,
             scale: TextScale::PixelScale,
+            align: TextAlign::Center,
             scale_factor: 1f32,
             is_2d: true,
         }
@@ -3501,8 +3501,8 @@ impl Text {
         Text {
             text: "".to_string(),
             position: alg::Vec3::zero(),
-            align: TextAlign::AlignRight,
             scale: TextScale::AspectScale,
+            align: TextAlign::Right,
             scale_factor: 1f32,
             is_2d: false,
         }

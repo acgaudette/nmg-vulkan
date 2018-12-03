@@ -30,7 +30,7 @@ pub fn prepare_text<T>(
      */
     let (char_width_scale, char_height_scale) = {
         if text_instance.is_2d {
-            if text_instance.scale == render::TextScale::PixelScale {
+            if text_instance.scale == render::TextScale::Pixel {
                 (text_instance.scale_factor / fb_w,
                  text_instance.scale_factor / fb_h)
             } else {

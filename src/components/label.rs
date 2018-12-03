@@ -36,7 +36,7 @@ impl<'a> TextBuilder<'a> {
      * Scaling with reference to each pixel of texture
      */
     pub fn pixel_scale_factor(&mut self, scale_factor: f32) -> &mut TextBuilder<'a> {
-        self.text.scale = render::TextScale::PixelScale;
+        self.text.scale = render::TextScale::Pixel;
         self.text.scale_factor = scale_factor;
         self
     }
@@ -45,7 +45,7 @@ impl<'a> TextBuilder<'a> {
      * Scaling with respect to aspect ratio
      */
     pub fn aspect_scale_factor(&mut self, scale_factor: f32) -> &mut TextBuilder<'a> {
-        self.text.scale = render::TextScale::AspectScale;
+        self.text.scale = render::TextScale::Aspect;
         self.text.scale_factor = scale_factor;
         self
     }

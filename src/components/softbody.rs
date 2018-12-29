@@ -1771,18 +1771,13 @@ impl Manager {
 
                 /* Rotate child towards midpoint */
 
-                // This fwd is stable under the Quat call below; however,
-                // using oriented_fwd seems to be less noisy with box limbs.
-                let child_fwd = (child_end - child_start).norm();
+                let child_fwd = child_orient * alg::Vec3::fwd();
 
-                // This assertion will only exist as long as oriented_fwd is
-                // equal to child_fwd. In the general case this is not true!
+                // Ensure the child endpoints are aligned with the child
+                // forward direction
                 #[cfg(debug_assertions)] {
-                    let center = children[i].center();
-                    let oriented_fwd = children[i].matched_orientation(center)
-                        * alg::Vec3::fwd();
-
-                    if oriented_fwd.dot(child_fwd) < 0.9 {
+                    let compare = (child_end - child_start).norm();
+                    if child_fwd.dot(compare) < 0.99 {
                         panic!(
                             "Softbody instance orientation \
                             and start/end do not match!",

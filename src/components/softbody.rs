@@ -1811,7 +1811,18 @@ impl Manager {
 
                 /* Constrain positions */
 
-                let offset = (children[i].start() - parent_end)
+                // Recompute child orientation
+                let child_center = children[i].center();
+                let child_orient = children[i].matched_orientation(
+                    child_center
+                );
+
+                let child_start = children[i].start(
+                    child_center,
+                    child_orient,
+                );
+
+                let offset = (child_start - parent_end)
                     * -JOINT_POS_RIGID;
 
                 children[i].translate(offset * weight);

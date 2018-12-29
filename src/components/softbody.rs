@@ -1730,20 +1730,23 @@ impl Manager {
                 // Calculate mass imbalance
                 let weight = 1. / (children[i].mass / parent.mass + 1.);
 
-                // Recompute parent center and orientation
-                let center = parent.center();
-                let orientation = parent.matched_orientation(center);
+                /* Recompute parent center, orientation, start/end */
+
+                let parent_center = parent.center();
+                let parent_orient = parent.matched_orientation(
+                    parent_center
+                );
 
                 let parent_start = parent.extend(
                     -joints[i].offset,
-                    orientation,
-                    center,
+                    parent_orient,
+                    parent_center,
                 );
 
                 let parent_end = parent.extend(
                     joints[i].offset,
-                    orientation,
-                    center,
+                    parent_orient,
+                    parent_center,
                 );
 
                 // Recompute child start and end

@@ -872,6 +872,7 @@ pub struct InstanceBuilder<'a> {
     bindings: Option<&'a [(usize, usize)]>,
     initial_pos: alg::Vec3,
     match_shape: bool,
+    end_offset: f32,
     start_indices: Option<&'a [usize]>,
     end_indices: Option<&'a [usize]>,
 }
@@ -890,6 +891,7 @@ impl<'a> InstanceBuilder<'a> {
             bindings: None,
             initial_pos: alg::Vec3::zero(),
             match_shape: false,
+            end_offset: 0.0, // Default to no simple endpoint
             start_indices: None,
             end_indices: None,
         }
@@ -961,6 +963,13 @@ impl<'a> InstanceBuilder<'a> {
     /// Enable active shape matching
     pub fn match_shape(&mut self) -> &mut InstanceBuilder<'a> {
         self.match_shape = true;
+        self
+    }
+
+    /// Distance from center of limb to simple endpoint (start and end).
+    /// This is only necessary for instances that will be joint children.
+    pub fn end_offset(&mut self, offset: f32) -> &mut InstanceBuilder<'a> {
+        self.end_offset = offset;
         self
     }
 
@@ -1065,6 +1074,7 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
+                self.end_offset,
                 &[0, 1, 2, 3], // Start indices
                 &[4, 5, 6, 7], // End indices
             )
@@ -1083,6 +1093,7 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
+                self.end_offset,
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
             )
@@ -1104,6 +1115,7 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
+                self.end_offset,
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
             )

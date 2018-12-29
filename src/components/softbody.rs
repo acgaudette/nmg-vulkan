@@ -450,6 +450,7 @@ pub struct Instance {
 
     mass: f32,
     inv_pt_mass: f32, // Cached inverse mass per particle
+    end_offset: f32, // Distance from center to simple endpoint
     start_indices: Vec<usize>, // Optional joint start highlight
     end_indices: Vec<usize>, // Optional joint end highlight
     model: Model,
@@ -482,6 +483,7 @@ impl Instance {
         rigidity: f32,
         initial_pos: alg::Vec3,
         initial_accel: alg::Vec3,
+        end_offset: f32,
         start_indices: &[usize],
         end_indices: &[usize],
     ) -> Instance {
@@ -551,6 +553,7 @@ impl Instance {
                 normals,
                 duplicates,
             },
+            end_offset,
             start_indices: start_indices.to_vec(),
             end_indices: end_indices.to_vec(),
             rigidity,
@@ -563,6 +566,7 @@ impl Instance {
         rigidity: f32,
         initial_pos: alg::Vec3,
         initial_accel: alg::Vec3,
+        end_offset: f32,
         start_indices: &[usize],
         end_indices: &[usize],
     ) -> Instance {
@@ -678,6 +682,7 @@ impl Instance {
 
             mass,
             inv_pt_mass: 1.0 / (mass / vertices_len as f32),
+            end_offset,
             start_indices,
             end_indices,
             model: Model {

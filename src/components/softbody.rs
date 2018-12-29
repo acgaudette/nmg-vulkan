@@ -723,8 +723,8 @@ impl Instance {
         result.iter().map(|raw| raw.norm()).collect()
     }
 
-    #[inline]
     // Must be called when gravity or force changes
+    #[inline]
     fn update_cache(&mut self, gravity: alg::Vec3) {
         self.accel_dt = (self.force * self.inv_pt_mass + gravity)
             * FIXED_DT * FIXED_DT;

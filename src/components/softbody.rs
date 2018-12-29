@@ -1472,16 +1472,28 @@ impl Manager {
             /* Align child with parent and joint transform */
 
             let parent_center = parent.center();
-            let orientation = parent.matched_orientation(parent_center);
-            let rotation = orientation.to_quat() * transform;
+            let parent_orient = parent.matched_orientation(parent_center);
+            let rotation = parent_orient.to_quat() * transform;
 
-            let end = (child.end() - child.start()) * 0.5;
-            let position = parent.extend(offset, orientation, parent_center)
+            let child_center = child.center();
+            let child_orient = child.matched_orientation(child_center);
+
+            let child_start = child.start(
+                child_center,
+                child_orient,
+            );
+
+            let child_end = child.end(
+                child_center,
+                child_orient,
+            );
+
+            let end = (child_end - child_start) * 0.5;
+            let position = parent.extend(offset, parent_orient, parent_center)
                 + rotation * end;
 
-            let center = child.center();
-            child.rotate_around(rotation, center);
-            child.translate(position - center);
+            child.rotate_around(rotation, child_center);
+            child.translate(position - child_center);
 
             // Reset child position for integrator
             child.lock();

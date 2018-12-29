@@ -836,22 +836,15 @@ impl Instance {
         }
     }
 
-    fn start(&self) -> alg::Vec3 {
-        debug_assert!(!self.start_indices.is_empty());
-
-        self.start_indices.iter().fold(
-            alg::Vec3::zero(),
-            |sum, index| sum + self.particles[*index].position
-        ) / self.start_indices.len() as f32
+    // optional caching
+    #[inline]
+    fn start(&self, center: alg::Vec3, orientation: alg::Mat3) -> alg::Vec3 {
+        center + orientation * alg::Vec3::fwd() * self.end_offset * -1.0
     }
 
-    fn end(&self) -> alg::Vec3 {
-        debug_assert!(!self.end_indices.is_empty());
-
-        self.end_indices.iter().fold(
-            alg::Vec3::zero(),
-            |sum, index| sum + self.particles[*index].position
-        ) / self.end_indices.len() as f32
+    #[inline]
+    fn end(&self, center: alg::Vec3, orientation: alg::Mat3) -> alg::Vec3 {
+        center + orientation * alg::Vec3::fwd() * self.end_offset * 1.0
     }
 
     // Convert local point in instance to global.

@@ -1749,9 +1749,22 @@ impl Manager {
                     parent_center,
                 );
 
-                // Recompute child start and end
-                let child_start = children[i].start();
-                let child_end = children[i].end();
+                /* Recompute child center, orientation, start/end */
+
+                let child_center = children[i].center();
+                let child_orient = children[i].matched_orientation(
+                    child_center
+                );
+
+                let child_start = children[i].start(
+                    child_center,
+                    child_orient,
+                );
+
+                let child_end = children[i].end(
+                    child_center,
+                    child_orient,
+                );
 
                 // Find midpoint for initial correction
                 let midpoint = child_start.lerp(parent_end, weight);

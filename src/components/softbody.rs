@@ -1859,7 +1859,8 @@ impl Manager {
 
         let parent_center = parent.center();
         let parent_orient = parent.matched_orientation(parent_center);
-        let child_orient = child.matched_orientation(child.center());
+        let child_center = child.center();
+        let child_orient = child.matched_orientation(child_center);
         let child_orient_inv = child_orient.transpose();
 
         // Joint transform is treated as child of parent limb
@@ -1897,7 +1898,7 @@ impl Manager {
 
         /* Correct child */
 
-        let point = child.start();
+        let point = child.start(child_center, child_orient);
 
         // Clear child, apply new rotation, apply parent joint
         let child_correction = joint_global

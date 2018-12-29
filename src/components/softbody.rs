@@ -1335,6 +1335,16 @@ impl Manager {
 
         // If the entity has a softbody component, fill the offsets array
         if let Some(ref instance) = self.instances[i] {
+            #[cfg(debug_assertions)] {
+                if instance.particles.len() > render::MAX_SOFTBODY_VERT {
+                    panic!(
+                        "Softbody instance for entity {} \
+                        has too many vertices!",
+                        entity,
+                    );
+                }
+            }
+
             // Duplicates will cause repeat computations
             for (i, j) in instance.model.duplicates.iter()
                 .map(|index| *index as usize)

@@ -2019,36 +2019,36 @@ impl Manager {
     }
 
     #[allow(unused_variables)]
-    pub fn draw_debug(
+    pub fn draw_all(&self, debug: &mut debug::Handler) {
+        #[cfg(debug_assertions)] {
+            self.draw_all_instances(debug);
+            self.draw_all_joints(debug);
+        }
+    }
+
+    #[allow(unused_variables)]
+    pub fn draw_entity(
         &self,
         entity: entity::Handle,
         debug: &mut debug::Handler,
     ) {
         #[cfg(debug_assertions)] {
             let i = entity.get_index() as usize;
-            self.draw_instance_debug(i, debug);
+            self.draw_instance(i, debug);
         }
     }
 
     #[allow(unused_variables)]
-    pub fn draw_all_debug(&self, debug: &mut debug::Handler) {
-        #[cfg(debug_assertions)] {
-            self.draw_all_instances_debug(debug);
-            self.draw_all_joints_debug(debug);
-        }
-    }
-
-    #[allow(unused_variables)]
-    pub fn draw_all_instances_debug(&self, debug: &mut debug::Handler) {
+    pub fn draw_all_instances(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             for i in 0..self.instances.len() {
-                self.draw_instance_debug(i, debug);
+                self.draw_instance(i, debug);
             }
         }
     }
 
     #[allow(unused_variables)]
-    fn draw_instance_debug(&self, index: usize, debug: &mut debug::Handler) {
+    fn draw_instance(&self, index: usize, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             debug_assert!(index < self.instances.len());
 
@@ -2094,17 +2094,17 @@ impl Manager {
     }
 
     #[allow(unused_variables)]
-    pub fn draw_all_joints_debug(&self, debug: &mut debug::Handler) {
+    pub fn draw_all_joints(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             // Draw joints for every parent
             for (parent_index, joints) in &self.joints {
-                self.draw_parent_debug(*parent_index, joints, debug);
+                self.draw_parent(*parent_index, joints, debug);
             }
         }
     }
 
     #[allow(unused_variables)]
-    fn draw_parent_debug(
+    fn draw_parent(
         &self,
         index: usize,
         joints: &[Joint],

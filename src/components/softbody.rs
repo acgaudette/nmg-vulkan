@@ -2059,6 +2059,29 @@ impl Manager {
             debug_assert!(index < self.instances.len());
 
             if let Some(ref instance) = self.instances[index] {
+                if draw_normals {
+                    let normals = Instance::compute_normals(
+                        &instance.particles,
+                        &instance.model.indices,
+                        instance.model.duplicates.len(),
+                    );
+
+                    for (position, normal) in instance.model.indices.iter()
+                        .map(|index| {
+                            (
+                                instance.particles[*index].position,
+                                normals[*index],
+                            )
+                        })
+                    {
+                        debug.add_ray(
+                            position,
+                            normal * 0.5,
+                            graphics::Color::green(),
+                        );
+                    }
+                }
+
                 // Draw instance bindings
                 for rod in &instance.rods {
                     let left = instance.particles[rod.left].position;

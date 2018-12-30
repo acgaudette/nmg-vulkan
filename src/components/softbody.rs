@@ -2031,11 +2031,12 @@ impl Manager {
         &self,
         entity: entity::Handle,
         draw_normals: bool,
+        draw_endpoints: bool,
         debug: &mut debug::Handler,
     ) {
         #[cfg(debug_assertions)] {
             let i = entity.get_index() as usize;
-            self.draw_instance(i, draw_normals, debug);
+            self.draw_instance(i, draw_normals, draw_endpoints, debug);
         }
     }
 
@@ -2043,7 +2044,7 @@ impl Manager {
     pub fn draw_all_instances(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             for i in 0..self.instances.len() {
-                self.draw_instance(i, false, debug);
+                self.draw_instance(i, false, true, debug);
             }
         }
     }
@@ -2053,6 +2054,7 @@ impl Manager {
         &self,
         index: usize,
         draw_normals: bool,
+        draw_endpoints: bool,
         debug: &mut debug::Handler,
     ) {
         #[cfg(debug_assertions)] {

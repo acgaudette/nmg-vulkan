@@ -2033,6 +2033,14 @@ impl Manager {
     #[allow(unused_variables)]
     pub fn draw_all_debug(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
+            self.draw_all_instances_debug(debug);
+            self.draw_all_joints_debug(debug);
+        }
+    }
+
+    #[allow(unused_variables)]
+    pub fn draw_all_instances_debug(&self, debug: &mut debug::Handler) {
+        #[cfg(debug_assertions)] {
             for i in 0..self.instances.len() {
                 self.draw_instance_debug(i, debug);
             }

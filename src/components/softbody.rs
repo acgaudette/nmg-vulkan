@@ -2147,8 +2147,8 @@ impl Manager {
             for joint in joints {
                 let center = parent.center();
                 let orientation = parent.matched_orientation(center);
-                let joint_orientation = orientation
-                    * joint.transform.conjugate().to_mat();
+                let point = parent.extend(joint.offset, orientation, center);
+                let joint_orientation = orientation * joint.transform.to_mat();
 
                 // Draw joint endpoint
                 debug.add_local_axes(

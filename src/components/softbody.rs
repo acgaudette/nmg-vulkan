@@ -2142,6 +2142,25 @@ impl Manager {
     }
 
     #[allow(unused_variables)]
+    pub fn draw_joint_parent(
+        &self,
+        entity: entity::Handle,
+        draw_cone: bool,
+        debug: &mut debug::Handler,
+    ) {
+        #[cfg(debug_assertions)] {
+            let i = entity.get_index() as usize;
+            match self.joints.get(&i) {
+                Some(joints) => self.draw_parent(i, joints, draw_cone, debug),
+                None => panic!(
+                    "Softbody instance for entity {} is not a joint parent.",
+                    entity,
+                ),
+            }
+        }
+    }
+
+    #[allow(unused_variables)]
     pub fn draw_all_joints(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             // Draw joints for every parent

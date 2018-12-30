@@ -2179,6 +2179,28 @@ impl Manager {
                     debug.add_ray(point, right_ray, graphics::Color::red());
                     debug.add_ray(point, upper_ray, graphics::Color::green());
                     debug.add_ray(point, left_ray, graphics::Color::red());
+
+                    /* Edge lines */
+
+                    debug.add_line(
+                        alg::Line::new(point + lower_ray, point + right_ray),
+                        graphics::Color::yellow(),
+                    );
+
+                    debug.add_line(
+                        alg::Line::new(point + right_ray, point + upper_ray),
+                        graphics::Color::yellow(),
+                    );
+
+                    debug.add_line(
+                        alg::Line::new(point + upper_ray, point + left_ray),
+                        graphics::Color::yellow(),
+                    );
+
+                    debug.add_line(
+                        alg::Line::new(point + left_ray, point + lower_ray),
+                        graphics::Color::yellow(),
+                    );
                 } else {
                     let fwd = joint_orientation * alg::Vec3::fwd();
                     let up = joint_orientation * alg::Vec3::up();

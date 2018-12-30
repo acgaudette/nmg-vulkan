@@ -2151,14 +2151,41 @@ impl Manager {
                 let point = parent.extend(joint.offset, orientation, center);
                 let joint_orientation = orientation * joint.transform.to_mat();
 
-                // Draw joint endpoint
-                debug.add_local_axes(
-                    parent.extend(joint.offset, orientation, center),
-                    joint_orientation * alg::Vec3::fwd(),
-                    joint_orientation * alg::Vec3::up(),
-                    1.0,
-                    1.0,
-                );
+                if draw_cone {
+                    // Compute endpoints
+                    // (duplicate code from ReachCone new method)
+                    let (lower, right, upper, left) = {
+                        let x_min = joint.y_limit.min / 90f32.to_radians();
+                        let x_max = joint.y_limit.max / 90f32.to_radians();
+                        let y_min = joint.x_limit.min / 90f32.to_radians();
+                        let y_max = joint.x_limit.max / 90f32.to_radians();
+
+                        (
+                            alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
+                            alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
+                            alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
+                            alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm()
+                        )
+                    };
+
+                    /* Cone rays */
+
+                    let lower_ray = joint_orientation * lower * 0.5;
+                    let right_ray = joint_orientation * right * 0.5;
+                    let upper_ray = joint_orientation * upper * 0.5;
+                    let left_ray = joint_orientation * left * 0.5;
+
+                    debug.add_ray(point, lower_ray, graphics::Color::green());
+                    debug.add_ray(point, right_ray, graphics::Color::red());
+                    debug.add_ray(point, upper_ray, graphics::Color::green());
+                    debug.add_ray(point, left_ray, graphics::Color::red());
+                } else {
+                    let fwd = joint_orientation * alg::Vec3::fwd();
+                    let up = joint_orientation * alg::Vec3::up();
+
+                    // Draw joint endpoint
+                    debug.add_local_axes(point, fwd, up, 1.0, 1.0);
+                }
             }
         }
     }

@@ -2082,28 +2082,45 @@ impl Manager {
                     }
                 }
             }
+        }
+    }
 
-            // Draw joint endpoints
+    #[allow(unused_variables)]
+    pub fn draw_all_joints_debug(&self, debug: &mut debug::Handler) {
+        #[cfg(debug_assertions)] {
+            // Draw joints for every parent
             for (parent_index, joints) in &self.joints {
-                if *parent_index == index {
-                    let parent = self.instances[*parent_index]
-                        .as_ref().unwrap();
+                self.draw_parent_debug(*parent_index, joints, debug);
+            }
+        }
+    }
 
-                    for joint in joints {
-                        let center = parent.center();
-                        let orientation = parent.matched_orientation(center);
-                        let joint_orientation = orientation
-                            * joint.transform.conjugate().to_mat();
+    #[allow(unused_variables)]
+    fn draw_parent_debug(
+        &self,
+        index: usize,
+        joints: &[Joint],
+        debug: &mut debug::Handler,
+    ) {
+        #[cfg(debug_assertions)] {
+            let parent = self.instances[index]
+                .as_ref().unwrap();
 
-                        debug.add_local_axes(
-                            parent.extend(joint.offset, orientation, center),
-                            joint_orientation * alg::Vec3::fwd(),
-                            joint_orientation * alg::Vec3::up(),
-                            1.0,
-                            1.0,
-                        );
-                    }
-                }
+            // Draw all joints for this parent
+            for joint in joints {
+                let center = parent.center();
+                let orientation = parent.matched_orientation(center);
+                let joint_orientation = orientation
+                    * joint.transform.conjugate().to_mat();
+
+                // Draw joint endpoint
+                debug.add_local_axes(
+                    parent.extend(joint.offset, orientation, center),
+                    joint_orientation * alg::Vec3::fwd(),
+                    joint_orientation * alg::Vec3::up(),
+                    1.0,
+                    1.0,
+                );
             }
         }
     }

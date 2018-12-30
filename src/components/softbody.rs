@@ -2127,7 +2127,7 @@ impl Manager {
         #[cfg(debug_assertions)] {
             // Draw joints for every parent
             for (parent_index, joints) in &self.joints {
-                self.draw_parent(*parent_index, joints, debug);
+                self.draw_parent(*parent_index, joints, true, debug);
             }
         }
     }
@@ -2137,6 +2137,7 @@ impl Manager {
         &self,
         index: usize,
         joints: &[Joint],
+        draw_cone: bool,
         debug: &mut debug::Handler,
     ) {
         #[cfg(debug_assertions)] {

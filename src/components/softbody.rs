@@ -2030,11 +2030,12 @@ impl Manager {
     pub fn draw_entity(
         &self,
         entity: entity::Handle,
+        draw_normals: bool,
         debug: &mut debug::Handler,
     ) {
         #[cfg(debug_assertions)] {
             let i = entity.get_index() as usize;
-            self.draw_instance(i, debug);
+            self.draw_instance(i, draw_normals, debug);
         }
     }
 
@@ -2042,13 +2043,18 @@ impl Manager {
     pub fn draw_all_instances(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
             for i in 0..self.instances.len() {
-                self.draw_instance(i, debug);
+                self.draw_instance(i, false, debug);
             }
         }
     }
 
     #[allow(unused_variables)]
-    fn draw_instance(&self, index: usize, debug: &mut debug::Handler) {
+    fn draw_instance(
+        &self,
+        index: usize,
+        draw_normals: bool,
+        debug: &mut debug::Handler,
+    ) {
         #[cfg(debug_assertions)] {
             debug_assert!(index < self.instances.len());
 

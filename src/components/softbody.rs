@@ -2061,6 +2061,23 @@ impl Manager {
             debug_assert!(index < self.instances.len());
 
             if let Some(ref instance) = self.instances[index] {
+                if draw_endpoints && instance.end_offset > 0.0 {
+                    let center = instance.center();
+                    let orientation = instance.matched_orientation(center);
+
+                    debug.add_cross(
+                        instance.start(center, orientation),
+                        0.33,
+                        graphics::Color::yellow(),
+                    );
+
+                    debug.add_cross(
+                        instance.end(center, orientation),
+                        0.33,
+                        graphics::Color::blue(),
+                    );
+                }
+
                 if draw_normals {
                     let normals = Instance::compute_normals(
                         &instance.particles,

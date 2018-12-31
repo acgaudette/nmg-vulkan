@@ -199,16 +199,17 @@ impl ReachCone {
     fn new(x_limit: Range, y_limit: Range) -> ReachCone {
         // Build cone
         let (lower, right, upper, left) = {
+            // Linear "approximation" to angles, requires normalization
             let x_min = 2.0 * y_limit.min / std::f32::consts::PI;
             let x_max = 2.0 * y_limit.max / std::f32::consts::PI;
             let y_min = 2.0 * x_limit.min / std::f32::consts::PI;
             let y_max = 2.0 * x_limit.max / std::f32::consts::PI;
 
             (
-                alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
-                alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
-                alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
-                alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(),
+                alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(), // Lower
+                alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(), // Right
+                alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(), // Upper
+                alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm(), // Left
             )
         };
 

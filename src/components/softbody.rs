@@ -2199,11 +2199,16 @@ impl Manager {
                         let y_min = joint.x_limit.min / half_pi;
                         let y_max = joint.x_limit.max / half_pi;
 
+                        let x_min_inv = 1.0 - x_min.abs();
+                        let x_max_inv = 1.0 - x_max.abs();
+                        let y_min_inv = 1.0 - y_min.abs();
+                        let y_max_inv = 1.0 - y_max.abs();
+
                         (
-                            alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
-                            alg::Vec3::new(x_max, 0.0, 1.0 - x_max.abs()).norm(),
-                            alg::Vec3::new(0.0, y_max, 1.0 - y_max.abs()).norm(),
-                            alg::Vec3::new(x_min, 0.0, 1.0 - x_min.abs()).norm()
+                            alg::Vec3::new(0.0, y_min, y_min_inv).norm(),
+                            alg::Vec3::new(x_max, 0.0, x_max_inv).norm(),
+                            alg::Vec3::new(0.0, y_max, y_max_inv).norm(),
+                            alg::Vec3::new(x_min, 0.0, x_min_inv).norm(),
                         )
                     };
 

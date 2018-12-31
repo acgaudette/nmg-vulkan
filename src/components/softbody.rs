@@ -199,10 +199,10 @@ impl ReachCone {
     fn new(x_limit: Range, y_limit: Range) -> ReachCone {
         // Build cone
         let (lower, right, upper, left) = {
-            let x_min = y_limit.min / 90f32.to_radians();
-            let x_max = y_limit.max / 90f32.to_radians();
-            let y_min = x_limit.min / 90f32.to_radians();
-            let y_max = x_limit.max / 90f32.to_radians();
+            let x_min = 2.0 * y_limit.min / std::f32::consts::PI;
+            let x_max = 2.0 * y_limit.max / std::f32::consts::PI;
+            let y_min = 2.0 * x_limit.min / std::f32::consts::PI;
+            let y_max = 2.0 * x_limit.max / std::f32::consts::PI;
 
             (
                 alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),
@@ -2192,11 +2192,12 @@ impl Manager {
                 if draw_cone {
                     // Compute endpoints
                     // (duplicate code from ReachCone new method)
+                    let half_pi = 0.5 * std::f32::consts::PI;
                     let (lower, right, upper, left) = {
-                        let x_min = joint.y_limit.min / 90f32.to_radians();
-                        let x_max = joint.y_limit.max / 90f32.to_radians();
-                        let y_min = joint.x_limit.min / 90f32.to_radians();
-                        let y_max = joint.x_limit.max / 90f32.to_radians();
+                        let x_min = joint.y_limit.min / half_pi;
+                        let x_max = joint.y_limit.max / half_pi;
+                        let y_min = joint.x_limit.min / half_pi;
+                        let y_max = joint.x_limit.max / half_pi;
 
                         (
                             alg::Vec3::new(0.0, y_min, 1.0 - y_min.abs()).norm(),

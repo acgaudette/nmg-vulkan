@@ -83,7 +83,7 @@ impl nmg::Update for Demo {
         );
 
         // Draw softbodies
-        components.softbodies.draw_all_debug(debug);
+        components.softbodies.draw_all(debug);
 
         /* Add force on key press */
 

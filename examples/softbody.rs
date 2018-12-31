@@ -143,7 +143,7 @@ impl nmg::Update for Demo {
         debug.clear_lines();
         debug.add_cross( alg::Vec3::up(), 0.4, graphics::Color::red());
         debug.add_cross(-alg::Vec3::up(), 0.4, graphics::Color::red());
-        components.softbodies.draw_debug(self.objects[0], debug);
+        components.softbodies.draw_entity(self.objects[0], true, false, debug);
     }
 }
 

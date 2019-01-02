@@ -2259,6 +2259,16 @@ impl Manager {
                         child_orient * alg::Vec3::fwd() * 0.5,
                         graphics::Color::white(),
                     );
+
+                    // Twist joint limits
+                    if joint.z_limit.min != 0.0 || joint.z_limit.max != 0.0 {
+                        // Twist pointer
+                        debug.add_ray(
+                            point,
+                            child_orient * alg::Vec3::up() * 0.25,
+                            graphics::Color::white(),
+                        );
+                    }
                 } else {
                     let fwd = joint_orientation * alg::Vec3::fwd();
                     let up = joint_orientation * alg::Vec3::up();

@@ -1882,12 +1882,20 @@ impl Manager {
             Manager::limit_simple_joint(&joint.cone, local_child_fwd)
         } else { simple };
 
-        // Rebind (limit) twist
+        /* Rebind (limit) twist */
+
         let (axis, angle) = twist.to_axis_angle();
-        let twist = alg::Quat::axis_angle(
-            axis,
-            angle.max(joint.z_limit.min).min(joint.z_limit.max),
-        );
+
+        // Test to see if axis has flipped
+        // (forcing positive angles)
+        let sign = if axis.dot(alg::Vec3::fwd()) > 0.0 { -1.0 } else { 1.0 };
+
+        let limited = (angle * sign)
+            .max(joint.z_limit.min)
+            .min(joint.z_limit.max);
+
+        // Flip sign again to undo the limit comparison sign change
+        let twist = alg::Quat::axis_angle(alg::Vec3::fwd(), -limited);
 
         // Calculate mass imbalance
         let weight = 1. / (child.mass / parent.mass + 1.);

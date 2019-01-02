@@ -960,6 +960,7 @@ struct DebugData {
     _frag: vd::ShaderModule,
 }
 
+/// Flat normal computation assumes no shared vertices and does not renormalize
 #[derive(Copy, Clone, PartialEq)]
 pub enum NormalMode { Flat, Smooth }
 
@@ -973,6 +974,7 @@ pub struct ModelData {
 }
 
 impl ModelData {
+    /// Create new model from input and compute normals automatically
     pub fn new_with_normals(
         name: &str,
         mut vertices: Vec<Vertex>,
@@ -1026,6 +1028,7 @@ impl ModelData {
         }
     }
 
+    /// Create new model from input
     pub fn new(
         name: &str,
         vertices: Vec<Vertex>,

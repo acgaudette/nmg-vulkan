@@ -2252,12 +2252,12 @@ impl Manager {
                     let child = self.instances[joint.child].as_ref().unwrap();
                     let child_center = child.center();
                     let child_orient = child.matched_orientation(child_center);
-                    let child_fwd = child_orient * alg::Vec3::fwd();
 
+                    // Forward pointer
                     debug.add_ray(
                         point,
-                        child_fwd * 0.5,
-                        graphics::Color::cyan(),
+                        child_orient * alg::Vec3::fwd() * 0.5,
+                        graphics::Color::white(),
                     );
                 } else {
                     let fwd = joint_orientation * alg::Vec3::fwd();

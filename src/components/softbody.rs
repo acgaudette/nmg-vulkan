@@ -2268,6 +2268,43 @@ impl Manager {
                             child_orient * alg::Vec3::up() * 0.25,
                             graphics::Color::white(),
                         );
+
+                        /* Limits */
+
+                        let min = alg::Vec3::new(
+                            joint.z_limit.min.sin(),
+                            joint.z_limit.min.cos(),
+                            0.0,
+                        );
+
+                        let max = alg::Vec3::new(
+                            joint.z_limit.max.sin(),
+                            joint.z_limit.max.cos(),
+                            0.0,
+                        );
+
+                        // Reuse computations from joint limit code
+                        let joint_inv = joint_orientation.transpose();
+                        let local_child = (joint_inv * child_orient).to_quat();
+
+                        let simple = alg::Quat::simple(
+                            alg::Vec3::fwd(),
+                            local_child * alg::Vec3::fwd(),
+                        );
+
+                        let transform = joint_orientation.to_quat() * simple;
+
+                        debug.add_ray(
+                            point,
+                            transform * min * 0.25,
+                            graphics::Color::cyan(),
+                        );
+
+                        debug.add_ray(
+                            point,
+                            transform * max * 0.25,
+                            graphics::Color::cyan(),
+                        );
                     }
                 } else {
                     let fwd = joint_orientation * alg::Vec3::fwd();

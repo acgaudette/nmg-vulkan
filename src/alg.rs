@@ -1258,11 +1258,14 @@ impl Quat {
         }
     }
 
+    /// Normalize quaternion and convert quaternion to axis and angle
+    /// representation. Note that the returned axis may not be a unit vector.
     pub fn to_axis_angle(self) -> (Vec3, f32) {
         let this = if self.w > 1.0 { self.norm() } else { self };
         this.to_axis_angle_raw()
     }
 
+    /// Convert quaternion to axis and angle representation.
     pub fn to_axis_angle_raw(self) -> (Vec3, f32) {
         let inverse = inverse_sqrt(1.0 - self.w * self.w);
 

@@ -3,7 +3,7 @@
 VK_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
 COMPILER=$VK_PATH/glslangValidator
 
-function compile {
+function compile_fast {
   name=$1; extension=$2; prefix=${name}_
 
   # Check for syntax errors
@@ -11,6 +11,11 @@ function compile {
     -o out/$prefix$extension.spv
     then exit 1
   fi
+}
+
+function compile {
+  name=$1; extension=$2; prefix=${name}_
+  compile_fast $name $extension
 
   # Generate binary and disassembly
   $COMPILER -H $name.$extension \

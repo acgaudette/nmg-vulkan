@@ -187,8 +187,18 @@ impl Manager {
             parent_transform.children.push(transform_index);
         }
 
-        // TODO: Potentially update local transform
-        // relative to the new parent at the time of assignment
+        /* Update local transform relative to the new parent */
+
+        // Note: parent scale cannot be non-uniform
+        let inverse_scale = 1.0 / parent_transform.scale.x;
+        transform.local_scale = transform.scale * inverse_scale;
+
+        let inverse_orient = parent_transform.orientation.conjugate();
+        transform.local_orientation = transform.orientation * inverse_orient;
+
+        transform.local_position = inverse_orient
+            * (transform.position - parent_transform.position)
+            * inverse_scale;
 
         transform.update_cached(self);
         unsafe { transform.update_children(self); }

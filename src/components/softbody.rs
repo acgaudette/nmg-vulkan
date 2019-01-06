@@ -47,7 +47,7 @@ const JOINT_ANG_RIGID: f32 = 1.0;
 // Large values will produce spurious intersections, especially with small
 // constraint angles--this leads to "softer" and eventually degenerate
 // joints
-const JOINT_CONTAINS_BIAS: f32 = 8.0;
+const JOINT_CONTAINS_BIAS: f32 = 1.0;
 
 macro_rules! debug_validate_instance {
     ($instance: expr, $entity: expr) => {

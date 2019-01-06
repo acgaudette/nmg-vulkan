@@ -204,6 +204,36 @@ impl Manager {
         unsafe { transform.update_children(self); }
     }
 
+    /// Clear parent of entity
+    pub fn deparent(&mut self, entity: entity::Handle) {
+        debug_validate_entity!(self, entity); // Child
+
+        let child_index = entity.get_index() as usize;
+        let child = get_mut_instance_raw!(self, child_index);
+
+        if let Some(parent_index) = child.parent {
+            let parent = get_mut_instance_raw!(self, parent_index);
+
+            // Get index of child
+            let i = parent.children.iter().enumerate()
+                .find(|(_, j)| **j == child_index)
+                .unwrap().0;
+
+            parent.children.remove(i);
+        } else {
+            return // NOOP
+        }
+
+        child.parent = None;
+
+        // Update local transform to reflect new parent
+        child.local_position = child.position;
+        child.local_orientation = child.orientation;
+        child.local_scale = child.scale;
+
+        unsafe { child.update_children(self); }
+    }
+
     /// Returns tuple of position, rotation, scale \
     /// Faster than getting the transform fields individually
     pub fn get(&self, entity: entity::Handle) -> (

@@ -154,7 +154,8 @@ impl Manager {
         }
     }
 
-    /// Set transform parent of `entity` to `parent`
+    /// Set transform parent of `entity` to `parent` and update the child's
+    /// local transform
     pub fn parent(&mut self, entity: entity::Handle, parent: entity::Handle) {
         debug_validate_entity!(self, entity); // Child
         debug_validate_entity!(self, parent);
@@ -204,6 +205,8 @@ impl Manager {
         unsafe { transform.update_children(self); }
     }
 
+    /// Set transform parent of `entity` to `parent` without updating the
+    /// child's local transform
     pub fn parent_raw(
         &mut self,
         entity: entity::Handle,

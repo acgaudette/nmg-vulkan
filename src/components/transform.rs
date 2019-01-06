@@ -41,7 +41,7 @@ pub struct Transform {
 
     parent: Option<usize>,
     children: Vec<usize>,
-    cached_transform: alg::Mat4,
+    cached_transform: alg::Mat4, // Cached world transform
 }
 
 impl Transform {
@@ -81,8 +81,7 @@ impl Transform {
         }
 
         // Rebuild cached transform for this instance
-        let transform =
-            parent.cached_transform
+        let transform = parent.cached_transform
             * alg::Mat4::transform(
                 self.local_position,
                 self.local_orientation,

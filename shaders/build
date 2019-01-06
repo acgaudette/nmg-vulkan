@@ -28,10 +28,17 @@ function compile_all {
   compile $1 frag
 }
 
-./clean
 mkdir -p out
 
-compile_all font3d
-compile_all font2d
-compile_all debug
+if [ "$1" = "-f" ]; then
+  compile_fast base vert
+  compile_fast base frag
+  echo Warning: skipped remaining shaders!
+  exit
+fi
+
+./clean; mkdir out
 compile_all base
+compile_all debug
+compile_all font2d
+compile_all font3d

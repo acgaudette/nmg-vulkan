@@ -153,7 +153,7 @@ struct ReachPlane {
 impl ReachPlane {
     fn new(left: alg::Vec3, right: alg::Vec3) -> ReachPlane {
         ReachPlane {
-            normal: left.cross(right),
+            normal: left.cross(right).norm(),
         }
     }
 

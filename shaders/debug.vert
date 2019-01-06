@@ -1,7 +1,5 @@
 #version 450
 
-#define MAX_SOFTBODY_VERT 12
-
 layout(binding = 0) uniform shared_ubo {
   mat4 view;
   mat4 projection;

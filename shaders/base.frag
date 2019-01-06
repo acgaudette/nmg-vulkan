@@ -42,6 +42,9 @@ void main() {
       // Update ambient lighting
       ambient += t * instance.lights[i].color
         + (1 - t) * instance.lights[i].vector;
+
+      // Cancel light addition below
+      light = 0.0;
     }
 
     else { // Point

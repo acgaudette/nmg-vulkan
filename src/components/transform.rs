@@ -204,6 +204,46 @@ impl Manager {
         unsafe { transform.update_children(self); }
     }
 
+    pub fn parent_raw(
+        &mut self,
+        entity: entity::Handle,
+        parent: entity::Handle,
+    ) {
+        debug_validate_entity!(self, entity);
+        debug_validate_entity!(self, parent);
+
+        #[cfg(debug_assertions)] {
+            if entity == parent {
+                panic!("Attempted to parent entity {} to itself", entity);
+            }
+        }
+
+        let transform_index = entity.get_index() as usize;
+        let transform = get_mut_instance_raw!(self, transform_index);
+
+        let parent_index = parent.get_index() as usize;
+        let parent_transform = get_mut_instance_raw!(self, parent_index);
+
+        #[cfg(debug_assertions)] {
+            if transform.children.contains(&parent_index) {
+                panic!(
+                    "Attemped to parent entity {} to its child {}",
+                    entity,
+                    parent,
+                );
+            }
+        }
+
+        transform.parent = Some(parent_index);
+
+        if !parent_transform.children.contains(&transform_index) {
+            parent_transform.children.push(transform_index);
+        }
+
+        transform.update_cached(self);
+        unsafe { transform.update_children(self); }
+    }
+
     /// Clear parent of entity
     pub fn deparent(&mut self, entity: entity::Handle) {
         debug_validate_entity!(self, entity); // Child

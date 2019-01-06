@@ -1,6 +1,6 @@
 #version 450
 
-#define MAX_SOFTBODY_VERT 25
+#define MAX_SOFTBODY_VERT 57
 #define MAX_INSTANCE_LIGHTS 4
 
 layout(binding = 0) uniform shared_ubo {

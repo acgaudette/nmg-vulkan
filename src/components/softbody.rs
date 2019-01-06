@@ -1945,7 +1945,7 @@ impl Manager {
             let mut plane = cone.lower_left;
 
             // Linear rotation path (ray) is
-            // (Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
+            // (alg::Vec3::fwd() + local_child_fwd - alg::Vec3::fwd()).norm()
             // which can be simplified to local_child_fwd
 
             if cone.lower_left.intersects(local_child_fwd) {

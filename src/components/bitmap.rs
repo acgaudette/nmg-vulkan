@@ -31,15 +31,15 @@ pub fn prepare_text<T>(
     let (char_width_scale, char_height_scale) = {
         if text_instance.is_2d {
             if text_instance.scale == render::TextScale::Pixel {
-                (text_instance.scale_factor / fb_w,
-                 text_instance.scale_factor / fb_h)
+                let height = text_instance.scale_factor / framebuffer_height as f32;
+                (height / aspect_ratio, height)
             } else {
-                (text_instance.scale_factor / (aspect_ratio * common_data.base_width),
-                 text_instance.scale_factor / common_data.base_width)
+                let height = text_instance.scale_factor / common_data.base_width;
+                (height / aspect_ratio, height)
             }
         } else {
-            (text_instance.scale_factor / common_data.base_width,
-             text_instance.scale_factor / common_data.base_width)
+            let char_measure = text_instance.scale_factor / common_data.base_width;
+            (char_measure, char_measure)
         }
     };
 
@@ -54,6 +54,11 @@ pub fn prepare_text<T>(
         if c == '\n' {
             curr_line_start_y -= common_data.line_height * char_height_scale;
             curr_line_start_x = x_starting;
+            continue;
+        }
+        // TODO: Replace with scalable constant
+        if c == '\t' {
+            curr_line_start_x += 10.;
             continue;
         }
         // Alias for character data from character map
@@ -73,12 +78,11 @@ pub fn prepare_text<T>(
         );
 
         // Apply transformations based on scale factor and divisors
-        let xoffset =
-            char_data.xoffset * char_width_scale * text_instance.scale_factor;
+        let xoffset = char_data.xoffset * char_width_scale;
         curr_line_start_x += xoffset;
 
         let yoffset =
-            char_data.yoffset * char_height_scale * text_instance.scale_factor;
+            char_data.yoffset * char_height_scale;
 
         // Send data to the GPU for the positions of the character quad
         let curr_x_advance = char_data.xadvance * char_width_scale;

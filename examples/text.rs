@@ -72,13 +72,13 @@ impl nmg::Start for Demo {
         components.labels.register(label_0);
         components.labels.build()
             .text("nmg_vulkan")
-            .pixel_scale_factor(1f32)
+            .pixel_scale_factor(4f32)
             .for_entity(label_0);
         self.objects.push(label_0);
 
         components.transforms.set_position(
             label_0,
-            alg::Vec3::new(0.45, 0.95 , 0.0),
+            alg::Vec3::new(0., 0.7, 0.),
         );
 
         let label_1 = entities.add();
@@ -88,9 +88,14 @@ impl nmg::Start for Demo {
         components.labels.register(label_1);
         components.labels.build()
             .text("FOR YOUR CONSIDERATION")
-            .pixel_scale_factor(2f32)
+            .aspect_scale_factor(1f32)
             .for_entity(label_1);
         self.objects.push(label_1);
+
+        components.transforms.set_position(
+            label_1,
+            alg::Vec3::new(0., 0., 0.),
+        );
 
         /* Set up camera */
 
@@ -141,8 +146,14 @@ impl nmg::Update for Demo {
 
         // Rotate label
         components.transforms.set_orientation(
-            self.label_1.unwrap(),
+            self.label_0.unwrap(),
             alg::Quat::axis_angle_raw(alg::Vec3::fwd(), -angle),
+        );
+
+        // Rotate label
+        components.transforms.set_orientation(
+            self.label_1.unwrap(),
+            alg::Quat::axis_angle_raw(alg::Vec3::fwd(), angle),
         );
 
         // Rotate camera

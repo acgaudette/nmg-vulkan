@@ -750,7 +750,7 @@ impl Instance {
         self.particles.iter().fold(
             alg::Vec3::zero(),
             |sum, particle| sum + particle.displacement,
-        ) / self.particles.len() as f32
+        ) / (self.particles.len() as f32 * FIXED_DT)
     }
 
     /// Returns axis and angular velocity of instance in radians per second. \
@@ -764,7 +764,7 @@ impl Instance {
             alg::Vec3::zero(),
             |sum, particle| {
                 let r = particle.position - center; // m
-                let v = particle.displacement - velocity; // m/s
+                let v = particle.displacement / FIXED_DT - velocity; // m/s
                 let r_mag = r.mag();
 
                 sum + r.cross(v)      // m^2/s

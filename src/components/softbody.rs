@@ -1561,17 +1561,6 @@ impl Manager {
                 None => continue,
             };
 
-            // Position Verlet
-            for particle in &mut instance.particles {
-                let next_position = particle.position * 2.
-                    - particle.last
-                    + instance.accel_dt;
-
-                particle.displacement = (next_position - particle.last) / 2.0;
-                particle.last = particle.position;
-                particle.position = next_position;
-            }
-
             // Plane friction
             for plane in &self.planes {
                 for particle in &mut instance.particles {
@@ -1594,6 +1583,28 @@ impl Manager {
                         - projected * self.friction;
                 }
             }
+
+            // Position Verlet
+            for particle in &mut instance.particles {
+                let next_position = particle.position * 2.
+                    - particle.last
+                    + instance.accel_dt;
+
+                // Displacement is in units of meters per FIXED_DT
+                particle.displacement = (next_position - particle.last) / 2.0;
+                particle.last = particle.position;
+                particle.position = next_position;
+            }
+        }
+
+        // Solve abstracted constraints first
+        // Note: "true" delta time is FIXED_DT / ITERATIONS
+        for _ in 0..ITERATIONS {
+            // External constraints
+            game.iterate(FIXED_DT, ITERATIONS, self);
+
+            // Joint constraints
+            self.solve_joints();
         }
 
         // Solve constraints
@@ -1663,15 +1674,6 @@ impl Manager {
                     );
                 }
             }
-        }
-
-        // Solve abstracted constraints
-        for _ in 0..ITERATIONS {
-            // External constraints
-            game.iterate(FIXED_DT, ITERATIONS, self);
-
-            // Joint constraints
-            self.solve_joints();
         }
 
         // Finalize instances

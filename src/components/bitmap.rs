@@ -30,12 +30,17 @@ pub fn prepare_text<T>(
      */
     let (char_width_scale, char_height_scale) = {
         if text_instance.is_2d {
-            if text_instance.scale == render::TextScale::Pixel {
-                let height = text_instance.scale_factor / framebuffer_height as f32;
-                (height / aspect_ratio, height)
-            } else {
-                let height = text_instance.scale_factor / common_data.base_width;
-                (height / aspect_ratio, height)
+            match text_instance.scale {
+                render::TextScale::Pixel => {
+                    let height = text_instance.scale_factor
+                        / framebuffer_height as f32;
+                    (height / aspect_ratio, height)
+                },
+                render::TextScale::Aspect => {
+                    let height = text_instance.scale_factor
+                        / common_data.base_width;
+                    (height / aspect_ratio, height)
+                },
             }
         } else {
             let char_measure = text_instance.scale_factor / common_data.base_width;

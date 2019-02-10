@@ -95,26 +95,26 @@ pub fn prepare_text<T>(
         let bot_y = draw_y + char_data.height * char_height_scale;
 
         if text_instance.is_2d {
-            let (top_left, bottom_right, bottom_left, top_right,) =
-                (render::FontVertex_2d::new_raw(
+            let (top_left, bottom_right, bottom_left, top_right) =
+                (render::FontVertex_2d::new_raw( // Top left
                         left_x,
                         top_y,
                         u_start,
                         v_start,
                     ),
-                render::FontVertex_2d::new_raw(
+                render::FontVertex_2d::new_raw( // Bottom right
                         right_x,
-                        bottom_y,
+                        bot_y,
                         u_end,
                         v_end,
                     ),
-                render::FontVertex_2d::new_raw(
+                render::FontVertex_2d::new_raw( // Bottom left
                         left_x,
-                        bottom_y,
+                        bot_y,
                         u_start,
                         v_end,
                     ),
-                render::FontVertex_2d::new_raw(
+                render::FontVertex_2d::new_raw( // Top right
                         right_x,
                         top_y,
                         u_end,
@@ -130,24 +130,24 @@ pub fn prepare_text<T>(
                 }
             }
         } else {
-            let (top_left, bottom_right, bottom_left, top_right,) =
+            let (top_left, bottom_right, bottom_left, top_right) =
                 (render::FontVertex_3d::new_raw(
-                    left_x,
-                    top_y,
-                    z,
-                    u_start,
-                    v_start,
+                        left_x,
+                        top_y,
+                        z,
+                        u_start,
+                        v_start,
                     ),
                 render::FontVertex_3d::new_raw(
                         right_x,
-                        bottom_y,
+                        bot_y,
                         z,
                         u_end,
                         v_end,
                     ),
                 render::FontVertex_3d::new_raw(
                         left_x,
-                        bottom_y,
+                        bot_y,
                         z,
                         u_start,
                         v_end,

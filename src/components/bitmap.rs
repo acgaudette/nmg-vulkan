@@ -85,18 +85,14 @@ pub fn prepare_text<T>(
             vs as f32,
         );
 
-        // Apply transformations based on scale factor and divisors
-        let xoffset = char_data.xoffset * char_width_scale;
-        curr_line_start_x += xoffset;
-
-        let yoffset = char_data.yoffset * char_height_scale;
-
         // Send data to the GPU for the positions of the character quad
-        let curr_x_advance = char_data.xadvance * char_width_scale;
-        let left_x = curr_line_start_x;
-        let right_x = curr_line_start_x + curr_x_advance;
-        let bottom_y = curr_line_start_y - yoffset;
-        let top_y = bottom_y - (char_height_scale * char_data.height);
+        let draw_x = cursor_x + char_data.xoffset * char_width_scale;
+        let draw_y = cursor_y + char_data.yoffset * char_height_scale;
+
+        let left_x = draw_x;
+        let right_x = draw_x + char_data.width * char_width_scale;
+        let top_y = draw_y;
+        let bot_y = draw_y + char_data.height * char_height_scale;
 
         if text_instance.is_2d {
             let (top_left, bottom_right, bottom_left, top_right,) =

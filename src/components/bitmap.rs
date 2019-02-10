@@ -184,7 +184,8 @@ pub fn prepare_text<T>(
             }
         }
 
-        curr_line_start_x += curr_x_advance;
+        cursor_x += char_data.xadvance * char_width_scale;
+
         num_letters += 1;
         **idx_offset = **idx_offset + 4;
     }

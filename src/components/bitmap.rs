@@ -57,8 +57,8 @@ pub fn prepare_text<T>(
     // Render quads for each individual character
     for c in text_instance.text.chars() {
         if c == '\n' {
-            curr_line_start_y -= common_data.line_height * char_height_scale;
-            curr_line_start_x = x_starting;
+            cursor_y += common_data.line_height * char_height_scale;
+            cursor_x = x_starting;
             continue;
         }
 

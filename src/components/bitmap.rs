@@ -38,7 +38,7 @@ pub fn prepare_text<T>(
                 },
                 render::TextScale::Aspect => {
                     let height = text_instance.scale_factor
-                        / common_data.base_width;
+                        / common_data.line_height;
                     (height / aspect_ratio, height)
                 },
             }

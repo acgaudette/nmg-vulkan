@@ -64,7 +64,7 @@ pub fn prepare_text<T>(
 
         if c == '\t' {
             // TODO: Replace with scalable constant
-            curr_line_start_x += 10.;
+            cursor_x += 30.0 * char_width_scale;
             continue;
         }
 

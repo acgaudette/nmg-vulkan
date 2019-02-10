@@ -49,10 +49,9 @@ pub fn prepare_text<T>(
     };
 
     // Starting positions for current text instance being rendered
-    let mut curr_line_start_x = x;
+    let mut cursor_x = x; // NDC
     let x_starting = x;
-    let mut curr_line_start_y = y + common_data.line_height
-        * char_height_scale;
+    let mut cursor_y = y;
 
     let mut num_letters = 0;
     // Render quads for each individual character

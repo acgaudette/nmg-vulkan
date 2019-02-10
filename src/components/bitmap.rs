@@ -51,7 +51,8 @@ pub fn prepare_text<T>(
     // Starting positions for current text instance being rendered
     let mut curr_line_start_x = x;
     let x_starting = x;
-    let mut curr_line_start_y = y + common_data.line_height * char_height_scale;
+    let mut curr_line_start_y = y + common_data.line_height
+        * char_height_scale;
 
     let mut num_letters = 0;
     // Render quads for each individual character
@@ -61,13 +62,16 @@ pub fn prepare_text<T>(
             curr_line_start_x = x_starting;
             continue;
         }
-        // TODO: Replace with scalable constant
+
         if c == '\t' {
+            // TODO: Replace with scalable constant
             curr_line_start_x += 10.;
             continue;
         }
+
         // Alias for character data from character map
         let char_data = &common_data.char_map[&(c as i32)];
+
         // UV coordinates
         let us = char_data.x / uv_width;
         let ue = (char_data.x + char_data.width) / uv_width;
@@ -86,8 +90,7 @@ pub fn prepare_text<T>(
         let xoffset = char_data.xoffset * char_width_scale;
         curr_line_start_x += xoffset;
 
-        let yoffset =
-            char_data.yoffset * char_height_scale;
+        let yoffset = char_data.yoffset * char_height_scale;
 
         // Send data to the GPU for the positions of the character quad
         let curr_x_advance = char_data.xadvance * char_width_scale;
@@ -95,7 +98,6 @@ pub fn prepare_text<T>(
         let right_x = curr_line_start_x + curr_x_advance;
         let bottom_y = curr_line_start_y - yoffset;
         let top_y = bottom_y - (char_height_scale * char_data.height);
-
 
         if text_instance.is_2d {
             let (top_left, bottom_right, bottom_left, top_right,) =
@@ -201,10 +203,12 @@ pub fn prepare_text<T>(
 
     if text_instances.len() > 0 {
         let last_instance = text_instances.last().unwrap();
-        text_instance.index_offset =
-            last_instance.index_offset as u32 + last_instance.index_count;
-        text_instance.vertex_offset =
-            last_instance.vertex_count as i32 + last_instance.vertex_offset as i32;
+
+        text_instance.index_offset = last_instance.index_offset as u32
+            + last_instance.index_count;
+        text_instance.vertex_offset = last_instance.vertex_count as i32
+            + last_instance.vertex_offset as i32;
     }
+
     text_instances.push(text_instance);
 }

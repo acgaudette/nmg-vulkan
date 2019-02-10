@@ -74,8 +74,8 @@ pub fn prepare_text<T>(
         // UV coordinates
         let us = char_data.x / uv_width;
         let ue = (char_data.x + char_data.width) / uv_width;
-        let vs = char_data.y / uv_height;
-        let ve = (char_data.y + char_data.height) / uv_height;
+        let vs = (char_data.y + char_data.height) / uv_height;
+        let ve = char_data.y / uv_height;
 
         // Flip vertical UV coordinates
         let (u_start, u_end, v_start, v_end) = (

@@ -15,10 +15,6 @@ pub fn prepare_text<T>(
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
 
-    let x = 0f32;
-    let y = 0f32;
-    let z = 0f32;
-
     /*
       Determines scaling for text depending on type of text
       e.g. 3D text dependent on position versus label text
@@ -40,9 +36,8 @@ pub fn prepare_text<T>(
     };
 
     // Starting positions for current text instance being rendered
-    let mut cursor_x = x; // NDC
-    let x_starting = x;
-    let mut cursor_y = y;
+    let mut cursor_x = 0.0; // NDC
+    let mut cursor_y = 0.0;
     let perspective_scale = if text_instance.is_2d { 1.0 } else { -1.0 };
     let mut num_letters = 0;
 
@@ -51,7 +46,7 @@ pub fn prepare_text<T>(
         if c == '\n' {
             cursor_y += common_data.line_height * char_scale
                 * perspective_scale;
-            cursor_x = x_starting;
+            cursor_x = 0.0;
             continue;
         }
 
@@ -131,28 +126,28 @@ pub fn prepare_text<T>(
                 (render::FontVertex_3d::new_raw(
                         left_x,
                         top_y,
-                        z,
+                        0.0,
                         u_start,
                         v_start,
                     ),
                 render::FontVertex_3d::new_raw(
                         right_x,
                         bot_y,
-                        z,
+                        0.0,
                         u_end,
                         v_end,
                     ),
                 render::FontVertex_3d::new_raw(
                         left_x,
                         bot_y,
-                        z,
+                        0.0,
                         u_start,
                         v_end,
                     ),
                 render::FontVertex_3d::new_raw(
                         right_x,
                         top_y,
-                        z,
+                        0.0,
                         u_end,
                         v_start,
                     ));

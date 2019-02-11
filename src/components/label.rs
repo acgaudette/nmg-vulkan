@@ -4,7 +4,6 @@ use render;
 use entity;
 use components;
 use font;
-use alg;
 
 use components::transform;
 use components::bitmap;

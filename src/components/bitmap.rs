@@ -82,6 +82,8 @@ pub fn prepare_text<T>(
 
         // Send data to the GPU for the positions of the character quad
         let draw_x = cursor_x + char_data.xoffset * char_scale;
+        // Note: the Y offset will center the characters within the line,
+        // making them appear as if they are rotating around a distant point.
         let draw_y = cursor_y + char_data.yoffset * char_scale;
 
         let left_x  = draw_x;

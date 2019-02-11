@@ -22,7 +22,8 @@ pub fn prepare_text<T>(
      */
     let char_scale = {
         if text_instance.is_2d {
-            match text_instance.scale {
+            // Double for 2D to scale into (-1, 1) NDC
+            2.0 * match text_instance.scale {
                 render::TextScale::Pixel => {
                     text_instance.scale_factor / framebuffer_height as f32
                 },

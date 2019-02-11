@@ -43,12 +43,14 @@ pub fn prepare_text<T>(
     let mut cursor_x = x; // NDC
     let x_starting = x;
     let mut cursor_y = y;
-
+    let perspective_scale = if text_instance.is_2d { 1.0 } else { -1.0 };
     let mut num_letters = 0;
+
     // Render quads for each individual character
     for c in text_instance.text.chars() {
         if c == '\n' {
-            cursor_y += common_data.line_height * char_scale;
+            cursor_y += common_data.line_height * char_scale
+                * perspective_scale;
             cursor_x = x_starting;
             continue;
         }
@@ -78,14 +80,16 @@ pub fn prepare_text<T>(
 
         // Send data to the GPU for the positions of the character quad
         let draw_x = cursor_x + char_data.xoffset * char_scale;
+        let left_x = draw_x;
+        let right_x = draw_x + char_data.width * char_scale;
+
         // Note: the Y offset will center the characters within the line,
         // making them appear as if they are rotating around a distant point.
-        let draw_y = cursor_y + char_data.yoffset * char_scale;
-
-        let left_x  = draw_x;
-        let right_x = draw_x + char_data.width * char_scale;
+        let draw_y = cursor_y + char_data.yoffset * char_scale
+            * perspective_scale;
         let top_y = draw_y;
-        let bot_y = draw_y + char_data.height * char_scale;
+        let bot_y = draw_y + char_data.height * char_scale
+            * perspective_scale;
 
         if text_instance.is_2d {
             v_start = ve;

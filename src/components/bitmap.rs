@@ -43,8 +43,7 @@ pub fn prepare_text<T>(
                 },
             }
         } else {
-            let char_measure = text_instance.scale_factor / common_data.base_width;
-            (char_measure, char_measure)
+            text_instance.scale_factor / common_data.line_height
         }
     };
 

@@ -67,8 +67,8 @@ pub fn prepare_text<T>(
         // UV coordinates
         let us = char_data.x / uv_width;
         let ue = (char_data.x + char_data.width) / uv_width;
-        let vs = (char_data.y + char_data.height) / uv_height;
-        let ve = char_data.y / uv_height;
+        let vs = char_data.y / uv_height;
+        let ve = (char_data.y + char_data.height) / uv_height;
 
         // Flip vertical UV coordinates
         let (u_start, u_end, mut v_start, mut v_end) = (
@@ -92,8 +92,6 @@ pub fn prepare_text<T>(
             * perspective_scale;
 
         if text_instance.is_2d {
-            v_start = ve;
-            v_end = vs;
             let (top_left, bottom_right, bottom_left, top_right) =
                 (render::FontVertex_2d::new_raw( // Top left
                         left_x,

@@ -693,7 +693,6 @@ impl<'a> Context<'a> {
             }
         }
 
-        let framebuffer_width = self.swapchain.extent().width();
         let framebuffer_height = self.swapchain.extent().height();
 
         if texts.instance_data.len() > 0 {
@@ -724,7 +723,6 @@ impl<'a> Context<'a> {
             &self.font_data,
             &mut vertex_ptr_3d,
             &mut idx_ptr_3d,
-            framebuffer_width,
             framebuffer_height,
             &mut self.text_display.text_instances,
         );
@@ -762,7 +760,6 @@ impl<'a> Context<'a> {
             &self.font_data,
             &mut vertex_ptr_2d,
             &mut idx_ptr_2d,
-            framebuffer_width,
             framebuffer_height,
             &mut self.label_display.text_instances,
         );

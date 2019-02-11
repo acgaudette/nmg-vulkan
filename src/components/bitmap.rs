@@ -8,14 +8,10 @@ pub fn prepare_text<T>(
     vertex_ptr: *mut *mut T,
     idx_ptr: *mut *mut u32,
     idx_offset: &mut &mut u32,
-    framebuffer_width:  u32,
     framebuffer_height: u32,
     text_instances: &mut Vec<render::TextInstance>,
 ) {
     let common_data = &font.common_font_data;
-    let fb_w = framebuffer_width as f32;
-    let fb_h = framebuffer_height as f32;
-    let aspect_ratio = fb_w / fb_h;
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
 

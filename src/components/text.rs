@@ -116,7 +116,6 @@ impl Manager {
         font_data: &font::Data,
         vertex_ptr: *mut *mut *mut render::FontVertex_3d,
         idx_ptr: *mut *mut u32,
-        framebuffer_width:  u32,
         framebuffer_height: u32,
         text_instances: &mut Vec<render::TextInstance>,
     ) {
@@ -129,7 +128,6 @@ impl Manager {
                 vertex_ptr,
                 idx_ptr,
                 &mut &mut idx_offset,
-                framebuffer_width,
                 framebuffer_height,
                 text_instances,
             );

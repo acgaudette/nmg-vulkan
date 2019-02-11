@@ -28,18 +28,14 @@ pub fn prepare_text<T>(
       e.g. 3D text dependent on position versus label text
       viewable on screen at all times
      */
-    let (char_width_scale, char_height_scale) = {
+    let char_scale = {
         if text_instance.is_2d {
             match text_instance.scale {
                 render::TextScale::Pixel => {
-                    let height = text_instance.scale_factor
-                        / framebuffer_height as f32;
-                    (height / aspect_ratio, height)
+                    text_instance.scale_factor / framebuffer_height as f32
                 },
                 render::TextScale::Aspect => {
-                    let height = text_instance.scale_factor
-                        / common_data.line_height;
-                    (height / aspect_ratio, height)
+                    text_instance.scale_factor / common_data.line_height
                 },
             }
         } else {

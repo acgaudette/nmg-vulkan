@@ -19,6 +19,6 @@ out gl_PerVertex {
 
 void main(void) {
   gl_Position = shared_data.projection * shared_data.view
-      * model_data.model * vec4(inPosition, 1.0);
+    * model_data.model * vec4(inPosition, 1.0);
   outUV = inUV;
 }

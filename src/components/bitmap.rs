@@ -39,8 +39,9 @@ pub fn prepare_text<T>(
     // Starting positions for current text instance being rendered
     let mut cursor_x = 0.0; // NDC
     let mut cursor_y = 0.0;
-    let perspective_scale = if text_instance.is_2d { 1.0 } else { -1.0 };
     let mut num_letters = 0;
+    let perspective_scale = if text_instance.is_2d { 1.0 } else { -1.0 };
+    let fixed_width = 0.5 * common_data.size;
 
     // Render quads for each individual character
     for c in text_instance.text.chars() {
@@ -74,7 +75,8 @@ pub fn prepare_text<T>(
         );
 
         // Send data to the GPU for the positions of the character quad
-        let draw_x = cursor_x + char_data.xoffset * char_scale;
+        let inset = (fixed_width - char_data.width) * 0.5;
+        let draw_x = cursor_x + inset * char_scale;
         let left_x = draw_x;
         let right_x = draw_x + char_data.width * char_scale;
 
@@ -176,7 +178,7 @@ pub fn prepare_text<T>(
             }
         }
 
-        cursor_x += char_data.xadvance * char_scale;
+        cursor_x += fixed_width * char_scale;
 
         num_letters += 1;
         **idx_offset = **idx_offset + 4;

@@ -415,8 +415,9 @@ fn begin_update<T>(
             &components.transforms,
             screen,
         );
+
         components.texts.update(&components.transforms);
-        components.labels.update(&components.transforms);
+        components.labels.update(&components.transforms, screen);
 
         // Update renderer
         if let Err(e) = context.update(

@@ -4,6 +4,7 @@ use render;
 use entity;
 use components;
 use font;
+use alg;
 
 use components::transform;
 use components::bitmap;
@@ -113,12 +114,28 @@ impl Manager {
         instance.text = str.to_string();
     }
 
-    pub(crate) fn update(&mut self, transforms: &transform::Manager) {
+    pub(crate) fn update(
+        &mut self,
+        transforms: &transform::Manager,
+        screen: ::ScreenData,
+    ) {
+        let inv_aspect = screen.height as f32 / screen.width as f32;
         self.instance_data.clear();
+
         for (entity, _) in &mut self.instances {
+            // Initialize projection * model matrix to model matrix
+            let mut proj_model = transforms.get_mat(*entity);
+
+            // Scale X axis by inverse aspect ratio
+            proj_model.x0 = inv_aspect * proj_model.x0;
+            proj_model.x1 = inv_aspect * proj_model.x1;
+            proj_model.x2 = inv_aspect * proj_model.x2;
+            proj_model.x3 = inv_aspect * proj_model.x3;
+
             let font_ubo = render::FontUBO {
-                model: transforms.get_mat(*entity)
+                model: proj_model,
             };
+
             self.instance_data.push(font_ubo);
         }
     }

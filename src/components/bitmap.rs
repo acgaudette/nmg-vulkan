@@ -52,14 +52,14 @@ pub fn prepare_text<T>(
     // Render quads for each individual character
     for c in text_instance.text.chars() {
         if c == '\n' {
-            cursor_y += common_data.line_height * char_height_scale;
+            cursor_y += common_data.line_height * char_scale;
             cursor_x = x_starting;
             continue;
         }
 
         if c == '\t' {
             // TODO: Replace with scalable constant
-            cursor_x += 30.0 * char_width_scale;
+            cursor_x += 30.0 * char_scale;
             continue;
         }
 
@@ -81,13 +81,13 @@ pub fn prepare_text<T>(
         );
 
         // Send data to the GPU for the positions of the character quad
-        let draw_x = cursor_x + char_data.xoffset * char_width_scale;
-        let draw_y = cursor_y + char_data.yoffset * char_height_scale;
+        let draw_x = cursor_x + char_data.xoffset * char_scale;
+        let draw_y = cursor_y + char_data.yoffset * char_scale;
 
-        let left_x = draw_x;
-        let right_x = draw_x + char_data.width * char_width_scale;
+        let left_x  = draw_x;
+        let right_x = draw_x + char_data.width * char_scale;
         let top_y = draw_y;
-        let bot_y = draw_y + char_data.height * char_height_scale;
+        let bot_y = draw_y + char_data.height * char_scale;
 
         if text_instance.is_2d {
             v_start = ve;
@@ -181,7 +181,7 @@ pub fn prepare_text<T>(
             }
         }
 
-        cursor_x += char_data.xadvance * char_width_scale;
+        cursor_x += char_data.xadvance * char_scale;
 
         num_letters += 1;
         **idx_offset = **idx_offset + 4;

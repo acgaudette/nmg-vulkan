@@ -53,7 +53,7 @@ pub fn prepare_text<T>(
         }
 
         if c == '\t' {
-            cursor_x += common_data.size * char_scale;
+            cursor_x += 2.0 * common_data.size * char_scale;
             continue;
         }
 

@@ -52,8 +52,7 @@ pub fn prepare_text<T>(
         }
 
         if c == '\t' {
-            // TODO: Replace with scalable constant
-            cursor_x += 30.0 * char_scale;
+            cursor_x += common_data.size * char_scale;
             continue;
         }
 

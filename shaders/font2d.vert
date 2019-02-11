@@ -1,7 +1,7 @@
 #version 450 core
 
 layout(binding = 0) uniform font_ubo {
-  mat4 model;
+  mat4 proj_model;
 } instance;
 
 layout (location = 0) in  vec2 inPos;
@@ -15,7 +15,7 @@ out gl_PerVertex {
 void main(void)
 {
   // Apply 3d transformations in 2d space
-  gl_Position = instance.model * vec4(inPos, 0.0, 1.0);
+  gl_Position = instance.proj_model * vec4(inPos, 0.0, 1.0);
 
   outUV = inUV;
 }

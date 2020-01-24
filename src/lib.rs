@@ -48,6 +48,7 @@ mod statics;
 mod util;
 
 use std::thread;
+use components::Component;
 
 const FIXED_DT: f32 = 1. / 100.;
 const LIMIT_NS: u32 = 100_000;
@@ -215,6 +216,28 @@ fn begin_update<T>(
     let mut last_frame = 0u32;
 
     let mut metadata = Metadata::new();
+
+    let show_fps = config::load_section_setting::<bool>(
+        &config::ENGINE_CONFIG,
+        "settings",
+        "show_fps",
+    );
+
+    let debug_fps = if show_fps {
+        let handle = entities.add();
+        components.transforms.register(handle);
+        components.transforms.set_position(
+            handle,
+            alg::Vec3::new(-1.0, -1.0, 0.),
+        );
+
+        components.labels.register(handle);
+        components.labels.build()
+            .text("Frames per second: 0")
+            .for_entity(handle);
+
+        Some(handle)
+    } else { None };
 
     /* Frame limiter */
 
@@ -500,8 +523,10 @@ fn begin_update<T>(
             metadata.fps = metadata.frame - last_frame;
             last_frame = metadata.frame;
 
-            #[cfg(debug_assertions)] {
-                println!("Frames per second: {}", metadata.fps);
+            if debug_fps.is_some() {
+                components.labels.build()
+                    .text(&format!("Frames per second: {}", metadata.fps))
+                    .for_entity(debug_fps.unwrap());
             }
 
             last_updated_counter = now;

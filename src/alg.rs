@@ -614,7 +614,7 @@ impl Mat3 {
             }
         }
 
-        if trace > 0.0 {
+        let result = if trace > 0.0 {
             let s = 2.0 * (1.0 + trace).sqrt();
 
             Quat::new(
@@ -650,7 +650,9 @@ impl Mat3 {
                 0.25 * s,
                 (self.y0 - self.x1) / s,
             )
-        }
+        };
+
+        result.norm()
     }
 
     pub fn to_mat4(self) -> Mat4 {

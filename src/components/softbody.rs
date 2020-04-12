@@ -106,6 +106,12 @@ impl Particle {
             displacement: alg::Vec3::zero(),
         }
     }
+
+    pub fn init(&mut self, to: alg::Vec3, vel: alg::Vec3) {
+        self.position = to;
+        self.last = to - vel * FIXED_DT;
+        self.displacement = alg::Vec3::zero();
+    }
 }
 
 struct Rod {

@@ -1329,16 +1329,6 @@ impl Manager {
         instance.update_cache(self.gravity);
     }
 
-    pub fn get_particle(
-        &self,
-        entity: entity::Handle,
-        index: usize,
-    ) -> alg::Vec3 {
-        let instance = get_instance!(self, entity);
-        debug_assert!(index < instance.particles.len());
-        instance.particles[index].position
-    }
-
     /// Get instance particle offsets from the model.
     pub(super) fn get_position_offsets(
         &self,

@@ -1024,6 +1024,20 @@ impl Mat4 {
                 0.0,      0.0,     1.0,      0.0, // Left-handed (scaling factor)
         )
     }
+
+    pub fn infinite_perspective(fov: f32, aspect: f32) -> Mat4 {
+        // Perspective scaling (rectilinear)
+        let y_scale = 1. / (0.5 * fov).to_radians().tan();
+        let x_scale = y_scale / aspect;
+
+        // Take the far plane to infinity
+        Mat4::new(
+            x_scale,      0.0, 0.0, 0.0,
+                0.0, -y_scale, 0.0, 0.0,
+                0.0,      0.0, 0.0, 0.0,
+                0.0,      0.0, 1.0, 0.0,
+        )
+    }
 }
 
 impl std::ops::Mul for Mat4 {

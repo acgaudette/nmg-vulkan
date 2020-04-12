@@ -1597,8 +1597,6 @@ impl Manager {
                     - particle.last
                     + instance.accel_dt;
 
-                // Displacement is in units of meters per FIXED_DT
-                particle.displacement = (next_position - particle.last) / 2.0;
                 particle.last = particle.position;
                 particle.position = next_position;
             }
@@ -1701,6 +1699,11 @@ impl Manager {
             // Update transform
             debug_validate_entity!(transforms, self.handles[i].unwrap());
             transforms.set_raw(i, center, orientation, alg::Vec3::one());
+
+            for particle in &mut instance.particles {
+                // Meters per FIXED_DT
+                particle.displacement = particle.position - particle.last;
+            }
         }
     }
 

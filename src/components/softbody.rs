@@ -1235,6 +1235,18 @@ impl Manager {
         get_mut_instance!(self, entity)
     }
 
+    pub fn energy(&self) -> f32 {
+        return self.instances.iter().filter_map(|i| i.as_ref())
+            .map(
+                |i| i.particles.iter()
+                    .map(
+                        move |p|
+                        (1. / i.inv_pt_mass, p.displacement.mag() / FIXED_DT)
+                    )
+            ).flatten()
+                .fold(0., |acc, p| acc + 0.5 * p.0 * p.1 * p.1); // KE
+    }
+
     /// Returns closest particle in specified direction. \
     /// `center` is a parameter for optional caching.
     pub fn closest_point(

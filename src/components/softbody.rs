@@ -24,8 +24,8 @@ pub const MNGR_DEFAULT_BOUNCE: f32 = 2.0;
 /// Default system (softbody manager) friction
 pub const MNGR_DEFAULT_FRICTION: f32 = 0.02;
 
-// Constraint solver iterations
-const ITERATIONS: usize = 10;
+// Default constraint solver iterations
+const MNGR_DEFAULT_ITER: usize = 10;
 
 // Range 0 - 1; 1.0 = cannot be deformed
 // A value of zero nullifies all rods in the instance
@@ -1136,12 +1136,16 @@ impl<'a> InstanceBuilder<'a> {
 pub struct Manager {
     handles: Vec<Option<entity::Handle>>,
     instances: Vec<Option<Instance>>,
+    count: usize,
+
     joints: fnv::FnvHashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
+
+    pub iterations: usize,
+
     gravity: alg::Vec3,
     bounce: f32,
     friction: f32,
-    count: usize,
 }
 
 impl components::Component for Manager {
@@ -1191,12 +1195,13 @@ impl Manager {
         Manager {
             handles: Vec::with_capacity(instance_hint),
             instances: Vec::with_capacity(instance_hint),
+            count: 0,
             joints: joint_map,
             planes: Vec::with_capacity(plane_hint),
+            iterations: MNGR_DEFAULT_ITER,
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
             bounce: MNGR_DEFAULT_BOUNCE,
             friction: MNGR_DEFAULT_FRICTION,
-            count: 0,
         }
     }
 
@@ -1601,16 +1606,16 @@ impl Manager {
 
         // Solve abstracted constraints first
         // Note: "true" delta time is FIXED_DT / ITERATIONS
-        for _ in 0..ITERATIONS {
+        for _ in 0..self.iterations {
             // External constraints
-            game.iterate(FIXED_DT, ITERATIONS, self);
+            game.iterate(FIXED_DT, self.iterations, self);
 
             // Joint constraints
             self.solve_joints();
         }
 
         // Solve constraints
-        for _ in 0..ITERATIONS {
+        for _ in 0..self.iterations {
             for i in 0..self.instances.len() {
                 let instance = match self.instances[i] {
                     Some(ref mut instance) => instance,

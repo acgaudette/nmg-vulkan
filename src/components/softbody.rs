@@ -495,7 +495,7 @@ impl Instance {
         end_indices: &[usize],
     ) -> Instance {
         debug_assert!(mass > 0.0);
-        debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
+        debug_assert!(rigidity > 0.0 && rigidity <= 1.0);
 
         let points_len = points.len();
 
@@ -1004,7 +1004,6 @@ impl<'a> InstanceBuilder<'a> {
 
     /// Finalize
     pub fn for_entity(&mut self, entity: entity::Handle) {
-        let rigidity = self.rigidity * 0.5; // Scale rigidity properly
         let initial_accel = self.manager.gravity; // Initialize with gravity
 
         #[cfg(debug_assertions)] {
@@ -1078,7 +1077,7 @@ impl<'a> InstanceBuilder<'a> {
                 &[], // Ignore bindings
                 true, // Match shape
                 self.mass,
-                rigidity,
+                self.rigidity,
                 self.initial_pos,
                 initial_accel,
                 self.end_offset.unwrap_or(0.5),
@@ -1097,7 +1096,7 @@ impl<'a> InstanceBuilder<'a> {
             Instance::new_from_model(
                 model,
                 self.mass,
-                rigidity,
+                self.rigidity,
                 self.initial_pos,
                 initial_accel,
                 self.end_offset.unwrap_or(0.0),
@@ -1119,7 +1118,7 @@ impl<'a> InstanceBuilder<'a> {
                 self.bindings.unwrap_or(&[]),
                 self.match_shape,
                 self.mass,
-                rigidity,
+                self.rigidity,
                 self.initial_pos,
                 initial_accel,
                 self.end_offset.unwrap_or(0.0),

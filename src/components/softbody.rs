@@ -24,6 +24,9 @@ pub const MNGR_DEFAULT_BOUNCE: f32 = 2.0;
 /// Default system (softbody manager) friction
 pub const MNGR_DEFAULT_FRICTION: f32 = 0.02;
 
+/// Default system (softbody manager) friction
+pub const MNGR_DEFAULT_DRAG: f32 = 0.001;
+
 // Default constraint solver iterations
 const MNGR_DEFAULT_ITER: usize = 10;
 
@@ -1146,6 +1149,7 @@ pub struct Manager {
     gravity: alg::Vec3,
     bounce: f32,
     friction: f32,
+    drag: f32,
 }
 
 impl components::Component for Manager {
@@ -1202,6 +1206,7 @@ impl Manager {
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
             bounce: MNGR_DEFAULT_BOUNCE,
             friction: MNGR_DEFAULT_FRICTION,
+            drag: MNGR_DEFAULT_DRAG,
         }
     }
 
@@ -1556,6 +1561,11 @@ impl Manager {
         self.friction = friction;
     }
 
+    /// Range 0 - 1; 0 = no drag; 1 = nothing moves
+    pub fn set_drag(&mut self, drag: f32) {
+        self.drag = drag;
+    }
+
     pub(crate) fn simulate<T>(
         &mut self,
         game: &mut T,
@@ -1593,9 +1603,9 @@ impl Manager {
 
             // Position Verlet
             for particle in &mut instance.particles {
-                let next_position = particle.position * 2.
-                    - particle.last
-                    + instance.accel_dt;
+                let next_position = particle.position * (2.0 - self.drag)
+                    + (instance.accel_dt - particle.last)
+                    * (1.0 - self.drag);
 
                 particle.last = particle.position;
                 particle.position = next_position;

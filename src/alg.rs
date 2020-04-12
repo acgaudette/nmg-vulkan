@@ -6,6 +6,64 @@ const JACOBI_ITERATIONS: usize = 16;
 const JACOBI_SKIP_SCALE: f32 = 10.0;
 const JACOBI_SKIP_ITERATIONS: usize = 4;
 
+macro_rules! assert_approx_eq {
+    ($lhs: expr, $rhs: expr, $prec: expr) => {
+        let err = ($lhs - $rhs).abs();
+        let min = std::f32::EPSILON * $prec;
+        let mag = err / min;
+        if err > min {
+            panic!(
+                "assertion failed: `(lhs ~= rhs)`\
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
+                $lhs, $rhs, err, min, mag,
+            );
+        }
+    }
+}
+
+macro_rules! assert_approx_eq_vec3 {
+    ($lhs: expr, $rhs: expr, $prec: expr) => {
+        let err = 0.25 * (
+              ($lhs.x - $rhs.x).abs()
+            + ($lhs.y - $rhs.y).abs()
+            + ($lhs.z - $rhs.z).abs()
+        );
+
+        let min = std::f32::EPSILON * $prec;
+        let mag = err / min;
+
+        if err > min {
+            panic!(
+                "assertion failed: `(lhs ~= rhs)`\
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
+                $lhs, $rhs, err, min, mag,
+            );
+        }
+    }
+}
+
+macro_rules! assert_approx_eq_quat {
+    ($lhs: expr, $rhs: expr, $prec: expr) => {
+        let err = 0.25 * (
+              ($lhs.x - $rhs.x).abs()
+            + ($lhs.y - $rhs.y).abs()
+            + ($lhs.z - $rhs.z).abs()
+            + ($lhs.w - $rhs.w).abs()
+        );
+
+        let min = std::f32::EPSILON * $prec;
+        let mag = err / min;
+
+        if err > min {
+            panic!(
+                "assertion failed: `(lhs ~= rhs)`\
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
+                $lhs, $rhs, err, min, mag,
+            );
+        }
+    }
+}
+
 // For kicks
 fn inverse_sqrt(x: f32) -> f32 {
     debug_assert!(!x.is_nan());

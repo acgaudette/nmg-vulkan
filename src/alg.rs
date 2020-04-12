@@ -1773,40 +1773,29 @@ mod tests {
             0.0,  0.0, 1.0,
         );
 
-        assert_eq!(compare.to_quat(), quat);
+        assert_approx_eq_quat!(compare.to_quat(), quat, 1.0);
         assert_eq!(quat.to_mat(), compare);
     }
 
     #[test]
     fn axis_angle() {
-        let rotation = Mat3::rotation_y(45f32.to_radians()).to_quat();
-        let (axis, angle) = rotation.to_axis_angle();
-
-        let error = vec3_error(axis, Vec3::up());
-        eprintln!("Axis Error: {}", error);
-        assert!(error < 0.0001);
-
-        let error = (angle.to_degrees() - 45.0).abs();
-        eprintln!("Angle Error: {}", error);
-        assert!(error < 0.001);
+        let half = 0.5_f32.sqrt();
+        let rot = Quat { x: 0.0, y: half, z: 0.0, w: half };
+        let (axis, angle) = rot.to_axis_angle();
+        assert_approx_eq_vec3!(axis, Vec3::up(), 1.0);
+        assert_approx_eq!(angle.to_degrees(), 90.0, 1.0);
     }
 
     #[test]
     fn convert_axis_angle() {
         let rotation = Quat::axis_angle(
             Vec3::one().norm(),
-            120f32.to_radians(),
+            120_f32.to_radians(),
         );
 
         let (axis, angle) = rotation.to_axis_angle();
-
-        let error = vec3_error(axis, Vec3::one().norm());
-        eprintln!("Axis Error: {}", error);
-        assert!(error < 0.0001);
-
-        let error = (angle.to_degrees() - 120.0).abs();
-        eprintln!("Angle Error: {}", error);
-        assert!(error < 0.0001);
+        assert_approx_eq_vec3!(axis, Vec3::one().norm(), 1.0);
+        assert_approx_eq!(angle.to_degrees(), 120.0, 64.0);
     }
 
     #[test]
@@ -1825,8 +1814,8 @@ mod tests {
             0.0,  0.0, 1.0,
         );
 
-        assert_eq!(quat, mat.to_quat());
-        assert_eq!(quat, quat.to_mat().to_quat());
+        assert_approx_eq_quat!(quat, mat.to_quat(), 1.0);
+        assert_approx_eq_quat!(quat, quat.to_mat().to_quat(), 1.0);
 
         assert_eq!(mat, quat.to_mat());
         assert_eq!(mat, mat.to_quat().to_mat());
@@ -1834,6 +1823,16 @@ mod tests {
 
     #[test]
     fn mul_quat_vec() {
+        assert_approx_eq_vec3!(Vec3::fwd(), Quat::id() * Vec3::fwd(), 1.0);
+        assert_approx_eq_vec3!(
+            Vec3::up(),
+            Quat::axis_angle(
+                -Vec3::right(),
+                0.5 * std::f32::consts::PI,
+            ) * Vec3::fwd(),
+            1.0
+        );
+
         let quat = Quat::axis_angle(Vec3::up(), 7.1);
         let mat = Mat3::rotation_y(7.1);
         let vec = Vec3::new(1., 2., 3.);

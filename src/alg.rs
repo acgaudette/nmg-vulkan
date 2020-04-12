@@ -8,11 +8,10 @@ const JACOBI_SKIP_ITERATIONS: usize = 4;
 
 // For kicks
 fn inverse_sqrt(x: f32) -> f32 {
-    let half = x * 0.5;
+    debug_assert!(!x.is_nan());
 
-    let cast: u32 = unsafe {
-        std::mem::transmute(x)
-    };
+    let half = x * 0.5;
+    let cast: u32 = unsafe { std::mem::transmute(x) };
 
     let guess = 0x5f3759df - (cast >> 1);
     let guess = f32::from_bits(guess);

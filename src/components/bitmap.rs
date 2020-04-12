@@ -66,7 +66,7 @@ pub fn prepare_text<T>(
         let ve = (char_data.y + char_data.height) / uv_height;
 
         // Flip vertical UV coordinates
-        let (u_start, u_end, mut v_start, mut v_end) = (
+        let (u_start, u_end, v_start, v_end) = (
             us as f32,
             ue as f32,
             vs as f32,

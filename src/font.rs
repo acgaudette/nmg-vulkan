@@ -116,7 +116,7 @@ impl Data {
 
             match iter.next() {
                 Some("info") => {
-                    let mut pair = iter.next().expect("Could not find font face");
+                    let pair = iter.next().expect("Could not find font face");
                     font_face = get_value_from_pair(pair).replace("\"", "");
                     println!("Reading font \"{}\"", font_face);
                     size = get_float_from_pair!(iter);

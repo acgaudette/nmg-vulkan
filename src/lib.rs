@@ -18,7 +18,7 @@ macro_rules! fn_name {
         // Store the function name as a static string
         fn name_of<T>(_: T) -> &'static str {
             extern crate core;
-            unsafe { core::intrinsics::type_name::<T>() }
+            core::intrinsics::type_name::<T>()
         }
 
         fn f() {} // Declare bogus function to query function chain
@@ -127,7 +127,7 @@ where
 
     // Initialize rendering engine
     let mut context = match render::Context::new(&window, model_data) {
-        Ok(mut context) => context,
+        Ok(context) => context,
         Err(e) => panic!("Could not create Vulkan context: {}", e)
     };
 

@@ -13,7 +13,8 @@ use font;
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
         unsafe {
-            let value: $struct = $crate::std::mem::uninitialized();
+            let value: $struct = $crate::std::mem::MaybeUninit::uninit()
+                .assume_init();
             let base = &value as *const _ as u32;
             let indent = &value.$field as *const _ as u32;
             $crate::std::mem::forget(value);
@@ -1760,7 +1761,7 @@ fn load_shaders<'a>(device: vd::Device) -> vd::Result<(
     [vd::PipelineShaderStageCreateInfo<'a>; 2],
 )> {
     let path = {
-        let mut path = &config::load_section_setting::<String>(
+        let path = &config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
             "settings",
             "shader_path"
@@ -1936,7 +1937,7 @@ fn init_debug(
     /* Load debug shaders */
 
     let path = {
-        let mut path = &config::load_section_setting::<String>(
+        let path = &config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
             "settings",
             "shader_path"
@@ -2340,7 +2341,7 @@ fn init_render_pass(
     swapchain:    &vd::SwapchainKhr,
     depth_format: vd::Format,
     device:       &vd::Device
-) -> vd::Result<(vd::RenderPass)> {
+) -> vd::Result<vd::RenderPass> {
     // Clear framebuffer
     let color_attachment = vd::AttachmentDescription::builder()
         .format(swapchain.image_format())
@@ -2410,7 +2411,7 @@ fn init_pipeline(
     pipeline_layout: &vd::PipelineLayout,
     render_pass:     &vd::RenderPass,
     device:          &vd::Device,
-) -> vd::Result<(vd::GraphicsPipeline)> {
+) -> vd::Result<vd::GraphicsPipeline> {
     /*
      * Fixed functions (these will be allocated on the heap later,
      * inside the graphics pipeline)
@@ -3561,7 +3562,7 @@ fn create_text(
 
     // Load shaders
     let path = {
-        let mut path = &config::load_section_setting::<String>(
+        let path = &config::load_section_setting::<String>(
             &config::ENGINE_CONFIG,
             "settings",
             "shader_path"

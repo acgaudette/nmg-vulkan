@@ -1,7 +1,5 @@
 extern crate ini;
-
 use std;
-use std::error::Error;
 
 lazy_static! {
     pub static ref ENGINE_CONFIG: ini::Ini =
@@ -11,7 +9,7 @@ lazy_static! {
 pub fn load_config(filename: &str) -> ini::Ini {
     match ini::Ini::load_from_file(filename) {
         Ok(result) => result,
-        Err(e) => panic!("{}", e.description()),
+        Err(e) => panic!("{}", e.to_string()),
     }
 }
 
@@ -40,7 +38,7 @@ where <T as std::str::FromStr>::Err: std::error::Error {
 
     match raw.parse::<T>() {
         Ok(result) => result,
-        Err(e) => panic!("{}", e.description()),
+        Err(e) => panic!("{}", e.to_string()),
     }
 }
 
@@ -69,6 +67,6 @@ where <T as std::str::FromStr>::Err: std::error::Error {
 
     match raw.parse::<T>() {
         Ok(result) => result,
-        Err(e) => panic!("{}", e.description()),
+        Err(e) => panic!("{}", e.to_string()),
     }
 }

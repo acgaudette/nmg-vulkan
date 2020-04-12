@@ -1556,7 +1556,7 @@ impl Manager {
     ) where T: Iterate {
         // Update instance particles
         for i in 0..self.instances.len() {
-            let mut instance = match self.instances[i] {
+            let instance = match self.instances[i] {
                 Some(ref mut instance) => instance,
                 None => continue,
             };
@@ -1610,7 +1610,7 @@ impl Manager {
         // Solve constraints
         for _ in 0..ITERATIONS {
             for i in 0..self.instances.len() {
-                let mut instance = match self.instances[i] {
+                let instance = match self.instances[i] {
                     Some(ref mut instance) => instance,
                     None => continue,
                 };
@@ -1705,7 +1705,7 @@ impl Manager {
              * is slower.
              */
 
-            let mut parent = unsafe {
+            let parent = unsafe {
                 let ptr = self.instances.as_mut_ptr()
                     .offset(*parent_index as isize);
 
@@ -1715,7 +1715,7 @@ impl Manager {
             let mut children = Vec::with_capacity(joints.len());
 
             for joint in joints {
-                let mut child = unsafe {
+                let child = unsafe {
                     let ptr = self.instances.as_mut_ptr()
                         .offset(joint.child as isize);
 

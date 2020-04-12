@@ -67,6 +67,11 @@ macro_rules! assert_approx_eq_quat {
 // For kicks
 fn inverse_sqrt(x: f32) -> f32 {
     debug_assert!(!x.is_nan());
+    #[cfg(debug_assertions)] {
+        if (x - 0.0).abs() < std::f32::EPSILON {
+            panic!("attempted to divide by zero");
+        }
+    }
 
     let half = x * 0.5;
     let cast: u32 = unsafe { std::mem::transmute(x) };
@@ -74,8 +79,9 @@ fn inverse_sqrt(x: f32) -> f32 {
     let guess = 0x5f3759df - (cast >> 1);
     let guess = f32::from_bits(guess);
 
-    let iteration = guess * (1.5 - half * guess * guess);
-    iteration * (1.5 - half * iteration * iteration)
+    let mut iter = guess;
+    for _ in 0..4 { iter *= 1.5 - half * iter * iter; }
+    iter
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -1596,6 +1602,27 @@ impl Line {
 #[cfg(test)]
 mod tests {
     use alg::*;
+
+    const MIN_INV_CMP: f32 = 0.01;
+
+    #[test]
+    fn inv_sqrt() {
+        let mut i = 1024;
+        loop {
+            let val = MIN_INV_CMP * i as f32;
+            let (a, b) = (
+                inverse_sqrt(val),
+                1f32 / val.sqrt(),
+            );
+
+            let mag = (a - b).abs() / std::f32::EPSILON;
+            println!("1/sqrt({})\nerr_mag={}", val, mag);
+            assert_approx_eq!(a, b, 4.0);
+
+            i -= 1;
+            if i == 0 { break; }
+        }
+    }
 
     /* Vec3 */
 

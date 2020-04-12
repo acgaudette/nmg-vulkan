@@ -1885,15 +1885,8 @@ impl Manager {
         child: &mut Instance,
         joint: &Joint,
     ) {
-        // Ignore unlocked joints
+        // Ignore unlocked joints (slow)
         if joint.unlocked { return }
-
-        // If all limits are equal, then the joint is unlimited
-        debug_assert!(!(
-               joint.x_limit.min == joint.x_limit.max
-            && joint.y_limit.min == joint.y_limit.max
-            && joint.x_limit.min == joint.y_limit.min
-        ));
 
         let parent_center = parent.center();
         let parent_orient = parent.matched_orientation(parent_center);
@@ -1922,6 +1915,11 @@ impl Manager {
         // Rebind (limit) simple
         let simple = if !inside {
             Manager::limit_simple_joint(&joint.cone, local_child_fwd)
+        } else { simple };
+
+        let simple = if joint.x_limit.min == joint.x_limit.max
+                     || joint.y_limit.min == joint.y_limit.max {
+            alg::Quat::id()
         } else { simple };
 
         /* Rebind (limit) twist */

@@ -873,7 +873,7 @@ pub struct InstanceBuilder<'a> {
     bindings: Option<&'a [(usize, usize)]>,
     initial_pos: alg::Vec3,
     match_shape: bool,
-    end_offset: f32,
+    end_offset: Option<f32>,
     start_indices: Option<&'a [usize]>,
     end_indices: Option<&'a [usize]>,
 }
@@ -892,7 +892,7 @@ impl<'a> InstanceBuilder<'a> {
             bindings: None,
             initial_pos: alg::Vec3::zero(),
             match_shape: false,
-            end_offset: 0.0, // Default to no simple endpoint
+            end_offset: None, // Default to no simple endpoint
             start_indices: None,
             end_indices: None,
         }
@@ -970,7 +970,7 @@ impl<'a> InstanceBuilder<'a> {
     /// Distance from center of limb to simple endpoint (start and end).
     /// This is only necessary for instances that will be joint children.
     pub fn end_offset(&mut self, offset: f32) -> &mut InstanceBuilder<'a> {
-        self.end_offset = offset;
+        self.end_offset = Some(offset);
         self
     }
 
@@ -1075,7 +1075,7 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
-                self.end_offset,
+                self.end_offset.unwrap_or(0.5),
                 &[0, 1, 2, 3], // Start indices
                 &[4, 5, 6, 7], // End indices
             )
@@ -1094,7 +1094,7 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
-                self.end_offset,
+                self.end_offset.unwrap_or(0.0),
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
             )
@@ -1116,7 +1116,7 @@ impl<'a> InstanceBuilder<'a> {
                 rigidity,
                 self.initial_pos,
                 initial_accel,
-                self.end_offset,
+                self.end_offset.unwrap_or(0.0),
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
             )

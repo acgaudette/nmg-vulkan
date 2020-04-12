@@ -217,6 +217,26 @@ impl Vec3 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    /// Component-wise product of two vectors
+    #[inline]
+    pub fn schur(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+
+    /// Component-wise reciprocal of a vector
+    #[inline]
+    pub fn recip(self) -> Vec3 {
+        Vec3 {
+            x: 1.0 / self.x,
+            y: 1.0 / self.y,
+            z: 1.0 / self.z,
+        }
+    }
+
     #[inline]
     pub fn lerp(self, other: Vec3, t: f32) -> Vec3 {
         self * (1. - t) + other * t

@@ -1207,7 +1207,14 @@ impl Manager {
         self.instances[i] = Some(instance);
     }
 
-    pub fn get_instance(&mut self, entity: entity::Handle) -> &mut Instance {
+    pub fn get_instance(&self, entity: entity::Handle) -> &Instance {
+        get_instance!(self, entity)
+    }
+
+    pub fn get_mut_instance(
+        &mut self,
+        entity: entity::Handle,
+    ) -> &mut Instance {
         get_mut_instance!(self, entity)
     }
 

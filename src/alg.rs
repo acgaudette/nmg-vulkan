@@ -124,10 +124,12 @@ impl std::ops::Mul<f32> for Vec2 {
 
 impl std::fmt::Display for Vec2 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let precision = out.precision().unwrap_or(8);
         write!(
             out,
-            "( {}, {} )",
-            self.x, self.y,
+            "( {:+.*?}, {:+.*?} )",
+            precision, self.x,
+            precision, self.y,
         )
     }
 }
@@ -324,10 +326,13 @@ impl std::ops::Mul<Vec3> for Vec3 {
 
 impl std::fmt::Display for Vec3 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let precision = out.precision().unwrap_or(8);
         write!(
             out,
-            "( {}, {}, {} )",
-            self.x, self.y, self.z,
+            "( {:+.*?}, {:+.*?}, {:+.*?} )",
+            precision, self.x,
+            precision, self.y,
+            precision, self.z,
         )
     }
 }
@@ -1464,7 +1469,15 @@ impl std::ops::Sub for Quat {
 
 impl std::fmt::Display for Quat {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(out, "( {}, {}, {}, {} )", self.x, self.y, self.z, self.w)
+        let precision = out.precision().unwrap_or(8);
+        write!(
+            out,
+            "( {:+.*?}, {:+.*?}, {:+.*?}, {:+.*?} )",
+            precision, self.x,
+            precision, self.y,
+            precision, self.z,
+            precision, self.w,
+        )
     }
 }
 

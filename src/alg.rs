@@ -519,10 +519,16 @@ impl Mat3 {
     }
 
     /// Inverts the matrix.
-    /// Does not check if the matrix is singular or nearly-singular.
     pub fn inverse(self) -> Mat3 {
-        let reciprocal = 1. / self.det();
+        let det = self.det();
 
+        #[cfg(debug_assertions)] {
+            if std::f32::EPSILON > det.abs() {
+                panic!("singular matrix passed to inverse() (det={})", det);
+            }
+        }
+
+        let reciprocal = 1. / det;
         Mat3::new(
             // Row 0: x0, x1, x2
             ((self.y1 * self.z2) - (self.z1 * self.y2)) * reciprocal,
@@ -1705,6 +1711,14 @@ mod tests {
 
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn singular_mat3_inv() {
+        let mat = Mat3::zero();
+        mat.inverse();
     }
 
     /* Mat4 */

@@ -1148,11 +1148,10 @@ pub struct Manager {
     planes: Vec<alg::Plane>,
 
     pub iterations: usize,
-
     gravity: alg::Vec3,
-    bounce: f32,
-    friction: f32,
     drag: f32,
+    friction: f32,
+    bounce: f32,
 }
 
 impl components::Component for Manager {
@@ -1207,9 +1206,9 @@ impl Manager {
             planes: Vec::with_capacity(plane_hint),
             iterations: MNGR_DEFAULT_ITER,
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
-            bounce: MNGR_DEFAULT_BOUNCE,
-            friction: MNGR_DEFAULT_FRICTION,
             drag: MNGR_DEFAULT_DRAG,
+            friction: MNGR_DEFAULT_FRICTION,
+            bounce: MNGR_DEFAULT_BOUNCE,
         }
     }
 
@@ -1552,11 +1551,9 @@ impl Manager {
         self.gravity = gravity;
     }
 
-    /// Range 0 - inf; "Realistic" = 2.0 \
-    /// Values < 2 become force zones, values > 2 add impossible force. \
-    /// A value of zero nullifies all collisions.
-    pub fn set_bounce(&mut self, bounce: f32) {
-        self.bounce = bounce;
+    /// Range 0 - 1; 0 = no drag; 1 = nothing moves
+    pub fn set_drag(&mut self, drag: f32) {
+        self.drag = drag;
     }
 
     /// Range 0 - 1; 0 = no planar friction
@@ -1564,9 +1561,11 @@ impl Manager {
         self.friction = friction;
     }
 
-    /// Range 0 - 1; 0 = no drag; 1 = nothing moves
-    pub fn set_drag(&mut self, drag: f32) {
-        self.drag = drag;
+    /// Range 0 - inf; "Realistic" = 2.0 \
+    /// Values < 2 become force zones, values > 2 add impossible force. \
+    /// A value of zero nullifies all collisions.
+    pub fn set_bounce(&mut self, bounce: f32) {
+        self.bounce = bounce;
     }
 
     pub(crate) fn simulate<T>(

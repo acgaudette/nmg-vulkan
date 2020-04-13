@@ -1060,9 +1060,12 @@ impl<'a> InstanceBuilder<'a> {
                     6, 2, 1, // Right face
                     1, 5, 6,
                 ],
-                /* Override scaled model with unit cube.
-                 * Enables offsets to work properly with multiple scaled
+                /* Override scaled model with unit cube;
+                 * enables offsets to work properly with multiple scaled
                  * versions of the same mesh.
+                 * While this can change the magnitude of the scale matrix
+                 * during shape matching, this doesn't actually affect the
+                 * output.
                  */
                 Some(&[
                     // Front face (CW)

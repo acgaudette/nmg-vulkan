@@ -604,22 +604,15 @@ impl Mat3 {
     }
 
     pub fn to_quat(self) -> Quat {
-        let trace = self.trace();
-
-        // Log warning if input is not special orthogonal;
-        // this is sometimes "expected" behavior, so I avoid the panic.
         #[cfg(debug_assertions)] {
             let det = self.det();
-            let err = det - 1.0;
-            if (err * err) > std::f32::EPSILON {
-                eprintln!(
-                    "Warning: attempted to convert invalid Mat3 to Quat \
-                    (det = {:.2})",
-                    det,
-                );
+            let err = (det - 1.0).abs();
+            if 256.0 * std::f32::EPSILON < err {
+                panic!("invalid matrix argument in to_quat() (det={})", det);
             }
         }
 
+        let trace = self.trace();
         let result = if trace > 0.0 {
             let s = 2.0 * (1.0 + trace).sqrt();
 
@@ -1719,6 +1712,23 @@ mod tests {
     fn singular_mat3_inv() {
         let mat = Mat3::zero();
         mat.inverse();
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn singular_mat3_to_quat() {
+        let mat = Mat3::zero();
+        mat.to_quat();
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn flip_mat3_to_quat() {
+        let mut mat = Mat3::id();
+        mat.y1 = -1.0;
+        mat.to_quat();
     }
 
     /* Mat4 */

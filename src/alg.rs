@@ -1624,6 +1624,11 @@ mod tests {
         }
     }
 
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn sqrt_0() { inverse_sqrt(0.0); }
+
     /* Vec3 */
 
     #[test]

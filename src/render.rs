@@ -549,23 +549,16 @@ impl<'a> Context<'a> {
         Ok(())
     }
 
-    /// Execute command buffers and render frame
-    pub fn draw(
+    pub fn perform_render_pass(
         &mut self,
+        cmd_buffer: &vd::CommandBuffer,
+        framebuffer: &vd::Framebuffer,
         parameters: &Parameters,
         instances: &Instances,
         texts: &mut components::text::Manager,
         labels: &mut components::label::Manager,
     ) -> vd::Result<()> {
-        // Note: will most likely return an image index that is still in use
-        let index = self.swapchain.acquire_next_image_khr(
-            u64::max_value(), // Disable timeout
-            Some(&self.image_available),
-            None,
-        )?;
-
-        // Get command buffer to use this frame
-        let cmd_buffer = &self.command_buffers[index as usize];
+        let handle = cmd_buffer.handle();
 
         let clears = [
             // Clear color
@@ -588,39 +581,9 @@ impl<'a> Context<'a> {
             },
         ];
 
-        // Get handle to this command buffer's fence
-        let fence = self.command_fences[index as usize].handle();
-
-        unsafe {
-            // Wait for command buffer to become available
-            self.device.wait_for_fences(
-                &[fence],
-                false,
-                u64::max_value(),
-            )?;
-
-            // Unsignal fence
-            self.device.reset_fences(&[fence])?;
-        }
-
-        // Reset command buffer (now that it's no longer in use)
-        cmd_buffer.reset(
-            vd::CommandBufferResetFlags::empty(),
-        )?;
-
-        /* Build command buffer */
-
-        cmd_buffer.begin(
-            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
-        )?;
-
-        let handle = cmd_buffer.handle();
-
-        debug_assert!(index < self.framebuffers.len() as u32);
-
         let pass_info = vd::RenderPassBeginInfo::builder()
             .render_pass(self.render_pass.handle())
-            .framebuffer(&self.framebuffers[index as usize])
+            .framebuffer(framebuffer)
             .render_area(
                 vd::Rect2d::builder()
                     .offset(
@@ -632,8 +595,6 @@ impl<'a> Context<'a> {
                     .build()
             ).clear_values(&clears)
             .build();
-
-        /* Execute render pass */
 
         cmd_buffer.begin_render_pass(
             &pass_info,
@@ -660,8 +621,6 @@ impl<'a> Context<'a> {
                 vd::IndexType::Uint32,
             );
         }
-
-        debug_assert!(self.models.len() == instances.data.len());
 
         let mut instance = 0;
         for j in 0..self.models.len() {
@@ -804,8 +763,91 @@ impl<'a> Context<'a> {
         }
 
         cmd_buffer.end_render_pass();
-        cmd_buffer.end()?;
+        
+        Ok(())
+    }
 
+    pub fn prepare_command_buffer(
+        &mut self,
+        cmd_buffer: &vd::CommandBuffer,
+        framebuffer: &vd::Framebuffer,
+        parameters: &Parameters,
+        instances: &Instances,
+        texts: &mut components::text::Manager,
+        labels: &mut components::label::Manager,
+    ) -> vd::Result<()> {
+        /* Build command buffer */
+
+        cmd_buffer.begin(
+            vd::CommandBufferUsageFlags::SIMULTANEOUS_USE,
+        )?;
+
+        /* Execute render pass */
+        self.perform_render_pass(
+            cmd_buffer,
+            framebuffer,
+            parameters,
+            instances,
+            texts,
+            labels,
+        );
+
+        cmd_buffer.end()?;
+        
+        Ok(())
+    }
+
+    /// Execute command buffers and render frame
+    pub fn draw(
+        &mut self,
+        parameters: &Parameters,
+        instances: &Instances,
+        texts: &mut components::text::Manager,
+        labels: &mut components::label::Manager,
+    ) -> vd::Result<()> {
+        // Note: will most likely return an image index that is still in use
+        let index = self.swapchain.acquire_next_image_khr(
+            u64::max_value(), // Disable timeout
+            Some(&self.image_available),
+            None,
+        )?;
+
+        // Get command buffer to use this frame
+        let cmd_buffer = &self.command_buffers[index as usize].clone();
+
+        // Get handle to this command buffer's fence
+        let fence = self.command_fences[index as usize].handle();
+
+        unsafe {
+            // Wait for command buffer to become available
+            self.device.wait_for_fences(
+                &[fence],
+                false,
+                u64::max_value(),
+            )?;
+
+            // Unsignal fence
+            self.device.reset_fences(&[fence])?;
+        }
+
+        // Reset command buffer (now that it's no longer in use)
+        cmd_buffer.reset(
+            vd::CommandBufferResetFlags::empty(),
+        )?;
+
+
+        debug_assert!(index < self.framebuffers.len() as u32);
+        
+        let framebuffer = &self.framebuffers[index as usize].clone();
+
+        self.prepare_command_buffer(
+            cmd_buffer,
+            framebuffer,
+            parameters,
+            instances,
+            texts,
+            labels,
+        );
         /* Submit render and presentation queues */
 
         // Synchronization primitives

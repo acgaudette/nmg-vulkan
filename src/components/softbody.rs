@@ -449,8 +449,8 @@ pub struct Instance {
 
     /* "Constants" */
 
-    mass: f32,
-    inv_pt_mass: f32, // Cached inverse mass per particle
+    pub mass: f32,
+    pub inv_pt_mass: f32, // Cached inverse mass per particle
     end_offset: f32, // Distance from center to simple endpoint
     start_indices: Vec<usize>, // Optional joint start highlight
     end_indices: Vec<usize>, // Optional joint end highlight
@@ -459,7 +459,7 @@ pub struct Instance {
     // Range 0 - 0.5; "Rigid" = 0.5
     // Lower values produce springier meshes
     // A value of zero nullifies all rods in the instance
-    rigidity: f32,
+    pub rigidity: f32,
 }
 
 /// Source mesh reference structure.

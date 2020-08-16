@@ -434,7 +434,7 @@ fn begin_update<T>(
         );
 
         // Get shared UBO from camera component
-        let shared_ubo = components.cameras.compute(
+        let shared_ubos = components.cameras.compute(
             &components.transforms,
             screen,
         );
@@ -445,7 +445,7 @@ fn begin_update<T>(
         // Update renderer
         if let Err(e) = context.update(
             &components.draws.instances,
-            shared_ubo,
+            shared_ubos,
         ) {
             // Irrecoverable error
             panic!("{}", e);

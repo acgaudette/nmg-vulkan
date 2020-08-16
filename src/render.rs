@@ -502,7 +502,7 @@ impl<'a> Context<'a> {
     pub fn update(
         &mut self,
         instances: &Instances,
-        shared_ubo: SharedUBO,
+        shared_ubos: Vec<SharedUBO>,
     ) -> vd::Result<()> {
         /* Copy shared UBO to GPU */
 
@@ -510,8 +510,8 @@ impl<'a> Context<'a> {
             copy_buffer(
                 &self.device,
                 self.ubo_memory,
-                std::mem::size_of::<SharedUBO>() as u64,
-                &[shared_ubo],
+                (std::mem::size_of::<SharedUBO>() * shared_ubos.len()) as u64,
+                &shared_ubos,
             )?;
         }
 

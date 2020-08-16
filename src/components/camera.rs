@@ -29,7 +29,7 @@ impl Default for Camera {
 }
 
 pub struct Manager {
-    active: usize,
+    active: Vec<usize>,
     // There will likely be few cameras
     instances: Vec<(entity::Handle, Camera)>,
 }
@@ -58,7 +58,7 @@ impl components::Component for Manager {
 impl Manager {
     pub fn new(hint: usize) -> Manager {
         Manager {
-            active: 0,
+            active: vec![0],
             instances: Vec::with_capacity(hint),
         }
     }
@@ -73,8 +73,11 @@ impl Manager {
                 );
             }
         }
+        if self.instances.iter().any(|index| index == camera_index) {
 
-        self.active = camera_index;
+        } else {
+            self.active.push(camera_index);
+        }
     }
 
     pub fn set_fov(&mut self, entity: entity::Handle, fov: f32) {
@@ -136,7 +139,7 @@ impl Manager {
         &mut self,
         transforms: &transform::Manager,
         screen: ::ScreenData,
-    ) -> render::SharedUBO {
+    ) -> Vec<render::SharedUBO> {
         #[cfg(debug_assertions)] {
             use components::Component;
             if self.count() == 0 {
@@ -144,30 +147,38 @@ impl Manager {
             }
         }
 
-        debug_assert!(self.active < self.instances.len());
+        let mut shared_ubos = vec![];
 
-        // Get active entity and camera
-        let (entity, camera) = self.instances[self.active];
+        for active_idx in self.active.clone() {
+            debug_assert!(active_idx < self.instances.len());
 
-        // Return overridden shared UBO if set
-        if let Some(shared_ubo) = camera.overrule { return shared_ubo }
+            // Get active entity and camera
+            let (entity, camera) = self.instances[active_idx];
 
-        // Get transform data for active camera entity
-        debug_validate_entity!(transforms, entity);
-        let (position, orientation, _) = transforms.get(entity);
+            // Return overridden shared UBO if set
+            if let Some(shared_ubo) = camera.overrule {
+                shared_ubos.push(shared_ubo);
+                continue;
+            }
 
-        /* Build view and projection matrices */
+            // Get transform data for active camera entity
+            debug_validate_entity!(transforms, entity);
+            let (position, orientation, _) = transforms.get(entity);
 
-        let view = orientation.conjugate().to_mat()
-            * alg::Mat4::translation_vec(-position);
+            /* Build view and projection matrices */
 
-        let projection = alg::Mat4::perspective(
-            camera.fov,
-            screen.width as f32 / screen.height as f32,
-            camera.near,
-            camera.far,
-        );
+            let view = orientation.conjugate().to_mat()
+                * alg::Mat4::translation_vec(-position);
 
-        render::SharedUBO::new(view, projection)
+            let projection = alg::Mat4::perspective(
+                camera.fov,
+                screen.width as f32 / screen.height as f32,
+                camera.near,
+                camera.far,
+            );
+
+            shared_ubos.push(render::SharedUBO::new(view, projection));
+        }
+        shared_ubos
     }
 }

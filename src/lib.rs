@@ -34,6 +34,7 @@ macro_rules! default_traits {
     }
 }
 
+#[macro_use]
 pub mod alg;
 pub mod render;
 pub mod graphics;

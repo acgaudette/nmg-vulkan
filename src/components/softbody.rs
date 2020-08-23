@@ -735,7 +735,7 @@ impl Instance {
         }
 
         // Rescale
-        result.iter().map(|raw| raw.norm()).collect()
+        result.iter().map(|raw| raw.norm_safe()).collect()
     }
 
     // Must be called when gravity or force changes
@@ -768,7 +768,7 @@ impl Instance {
         &self,
         center: alg::Vec3,
         velocity: alg::Vec3,
-    ) -> alg::Quat {
+    ) -> (alg::Vec3, f32) {
         let omega = self.particles.iter().fold(
             alg::Vec3::zero(),
             |sum, particle| {
@@ -781,7 +781,13 @@ impl Instance {
             },
         ) / self.particles.len() as f32; // Average values
 
-        alg::Quat::axis_angle(omega.norm(), omega.mag())
+        let mag = omega.mag_squared();
+        if std::f32::EPSILON >= mag {
+            (alg::Vec3::up(), 0.0) // Always return normalized vector
+        } else {
+            let inv = alg::inverse_sqrt(mag);
+            (omega * inv, 1.0 / inv)
+        }
     }
 
     /// Returns instance orientation using least squares fit. \
@@ -1235,6 +1241,18 @@ impl Manager {
         get_mut_instance!(self, entity)
     }
 
+    pub fn energy(&self) -> f32 {
+        return self.instances.iter().filter_map(|i| i.as_ref())
+            .map(
+                |i| i.particles.iter()
+                    .map(
+                        move |p|
+                        (1. / i.inv_pt_mass, p.displacement.mag() / FIXED_DT)
+                    )
+            ).flatten()
+                .fold(0., |acc, p| acc + 0.5 * p.0 * p.1 * p.1); // KE
+    }
+
     /// Returns closest particle in specified direction. \
     /// `center` is a parameter for optional caching.
     pub fn closest_point(
@@ -1589,7 +1607,7 @@ impl Manager {
                         continue;
                     }
 
-                    let direction = particle.displacement.norm();
+                    let direction = particle.displacement.norm_safe();
                     let tangent = direction
                         .cross(plane.normal)
                         .cross(plane.normal);
@@ -1867,15 +1885,8 @@ impl Manager {
         child: &mut Instance,
         joint: &Joint,
     ) {
-        // Ignore unlocked joints
+        // Ignore unlocked joints (slow)
         if joint.unlocked { return }
-
-        // If all limits are equal, then the joint is unlimited
-        debug_assert!(!(
-               joint.x_limit.min == joint.x_limit.max
-            && joint.y_limit.min == joint.y_limit.max
-            && joint.x_limit.min == joint.y_limit.min
-        ));
 
         let parent_center = parent.center();
         let parent_orient = parent.matched_orientation(parent_center);
@@ -1904,6 +1915,11 @@ impl Manager {
         // Rebind (limit) simple
         let simple = if !inside {
             Manager::limit_simple_joint(&joint.cone, local_child_fwd)
+        } else { simple };
+
+        let simple = if joint.x_limit.min == joint.x_limit.max
+                     || joint.y_limit.min == joint.y_limit.max {
+            alg::Quat::id()
         } else { simple };
 
         /* Rebind (limit) twist */

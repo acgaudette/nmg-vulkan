@@ -6,19 +6,82 @@ const JACOBI_ITERATIONS: usize = 16;
 const JACOBI_SKIP_SCALE: f32 = 10.0;
 const JACOBI_SKIP_ITERATIONS: usize = 4;
 
-// For kicks
-fn inverse_sqrt(x: f32) -> f32 {
-    let half = x * 0.5;
+macro_rules! assert_approx_eq {
+    ($lhs: expr, $rhs: expr, $prec: expr) => {
+        let err = ($lhs - $rhs).abs();
+        let min = std::f32::EPSILON * $prec;
+        let mag = err / min;
+        if err > min {
+            panic!(
+                "assertion failed: `(lhs ~= rhs)`\
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
+                $lhs, $rhs, err, min, mag,
+            );
+        }
+    }
+}
 
-    let cast: u32 = unsafe {
-        std::mem::transmute(x)
-    };
+macro_rules! assert_approx_eq_vec3 {
+    ($lhs: expr, $rhs: expr, $prec: expr) => {
+        let err = 0.25 * (
+              ($lhs.x - $rhs.x).abs()
+            + ($lhs.y - $rhs.y).abs()
+            + ($lhs.z - $rhs.z).abs()
+        );
+
+        let min = std::f32::EPSILON * $prec;
+        let mag = err / min;
+
+        if err > min {
+            panic!(
+                "assertion failed: `(lhs ~= rhs)`\
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
+                $lhs, $rhs, err, min, mag,
+            );
+        }
+    }
+}
+
+macro_rules! assert_approx_eq_quat {
+    ($lhs: expr, $rhs: expr, $prec: expr) => {
+        let err = 0.25 * (
+              ($lhs.x - $rhs.x).abs()
+            + ($lhs.y - $rhs.y).abs()
+            + ($lhs.z - $rhs.z).abs()
+            + ($lhs.w - $rhs.w).abs()
+        );
+
+        let min = std::f32::EPSILON * $prec;
+        let mag = err / min;
+
+        if err > min {
+            panic!(
+                "assertion failed: `(lhs ~= rhs)`\
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
+                $lhs, $rhs, err, min, mag,
+            );
+        }
+    }
+}
+
+// For kicks
+pub fn inverse_sqrt(x: f32) -> f32 {
+    debug_assert!(!x.is_nan());
+    #[cfg(debug_assertions)] {
+        if (x - 0.0).abs() < std::f32::EPSILON {
+            panic!("attempted to divide by zero");
+        }
+    }
+
+    let half = x * 0.5;
+    let cast: u32 = unsafe { std::mem::transmute(x) };
 
     let guess = 0x5f3759df - (cast >> 1);
     let guess = f32::from_bits(guess);
 
-    let iteration = guess * (1.5 - half * guess * guess);
-    iteration * (1.5 - half * iteration * iteration)
+    let mut iter = guess;
+    for _ in 0..4 { iter *= 1.5 - half * iter * iter; }
+    iter
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -76,6 +139,17 @@ impl Vec2 {
         }
     }
 
+    /// Normalize `self` only if squared magnitude is nonzero.
+    /// Useful in cases where zero vectors are known in advance to exist.
+    pub fn norm_safe(self) -> Vec2 {
+        let mag_sq = self.mag_squared();
+        if std::f32::EPSILON >= mag_sq { self }
+
+        else {
+            self * inverse_sqrt(mag_sq)
+        }
+    }
+
     pub fn mag_squared(self) -> f32 {
         self.x * self.x + self.y * self.y
     }
@@ -124,10 +198,12 @@ impl std::ops::Mul<f32> for Vec2 {
 
 impl std::fmt::Display for Vec2 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let precision = out.precision().unwrap_or(8);
         write!(
             out,
-            "( {}, {} )",
-            self.x, self.y,
+            "( {:+.*?}, {:+.*?} )",
+            precision, self.x,
+            precision, self.y,
         )
     }
 }
@@ -187,6 +263,17 @@ impl Vec3 {
         )
     }
 
+    /// Normalize `self` only if squared magnitude is nonzero.
+    /// Useful in cases where zero vectors are known in advance to exist.
+    pub fn norm_safe(self) -> Vec3 {
+        let mag_sq = self.mag_squared();
+        if std::f32::EPSILON >= mag_sq { self }
+
+        else {
+            self * inverse_sqrt(mag_sq)
+        }
+    }
+
     pub fn mag_squared(self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -215,6 +302,26 @@ impl Vec3 {
     #[inline]
     pub fn dot(self, other: Vec3) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    /// Component-wise product of two vectors
+    #[inline]
+    pub fn schur(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+
+    /// Component-wise reciprocal of a vector
+    #[inline]
+    pub fn recip(self) -> Vec3 {
+        Vec3 {
+            x: 1.0 / self.x,
+            y: 1.0 / self.y,
+            z: 1.0 / self.z,
+        }
     }
 
     #[inline]
@@ -304,10 +411,13 @@ impl std::ops::Mul<Vec3> for Vec3 {
 
 impl std::fmt::Display for Vec3 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let precision = out.precision().unwrap_or(8);
         write!(
             out,
-            "( {}, {}, {} )",
-            self.x, self.y, self.z,
+            "( {:+.*?}, {:+.*?}, {:+.*?} )",
+            precision, self.x,
+            precision, self.y,
+            precision, self.z,
         )
     }
 }
@@ -409,10 +519,16 @@ impl Mat3 {
     }
 
     /// Inverts the matrix.
-    /// Does not check if the matrix is singular or nearly-singular.
     pub fn inverse(self) -> Mat3 {
-        let reciprocal = 1. / self.det();
+        let det = self.det();
 
+        #[cfg(debug_assertions)] {
+            if std::f32::EPSILON > det.abs() {
+                panic!("singular matrix passed to inverse() (det={})", det);
+            }
+        }
+
+        let reciprocal = 1. / det;
         Mat3::new(
             // Row 0: x0, x1, x2
             ((self.y1 * self.z2) - (self.z1 * self.y2)) * reciprocal,
@@ -488,23 +604,16 @@ impl Mat3 {
     }
 
     pub fn to_quat(self) -> Quat {
-        let trace = self.trace();
-
-        // Log warning if input is not special orthogonal;
-        // this is sometimes "expected" behavior, so I avoid the panic.
         #[cfg(debug_assertions)] {
             let det = self.det();
-            let err = det - 1.0;
-            if (err * err) > std::f32::EPSILON {
-                eprintln!(
-                    "Warning: attempted to convert invalid Mat3 to Quat \
-                    (det = {:.2})",
-                    det,
-                );
+            let err = (det - 1.0).abs();
+            if 256.0 * std::f32::EPSILON < err {
+                panic!("invalid matrix argument in to_quat() (det={})", det);
             }
         }
 
-        if trace > 0.0 {
+        let trace = self.trace();
+        let result = if trace > 0.0 {
             let s = 2.0 * (1.0 + trace).sqrt();
 
             Quat::new(
@@ -540,7 +649,9 @@ impl Mat3 {
                 0.25 * s,
                 (self.y0 - self.x1) / s,
             )
-        }
+        };
+
+        result.norm()
     }
 
     pub fn to_mat4(self) -> Mat4 {
@@ -1024,6 +1135,20 @@ impl Mat4 {
                 0.0,      0.0,     1.0,      0.0, // Left-handed (scaling factor)
         )
     }
+
+    pub fn infinite_perspective(fov: f32, aspect: f32) -> Mat4 {
+        // Perspective scaling (rectilinear)
+        let y_scale = 1. / (0.5 * fov).to_radians().tan();
+        let x_scale = y_scale / aspect;
+
+        // Take the far plane to infinity
+        Mat4::new(
+            x_scale,      0.0, 0.0, 0.0,
+                0.0, -y_scale, 0.0, 0.0,
+                0.0,      0.0, 0.0, 0.0,
+                0.0,      0.0, 1.0, 0.0,
+        )
+    }
 }
 
 impl std::ops::Mul for Mat4 {
@@ -1185,6 +1310,10 @@ impl Quat {
         }
     }
 
+    pub fn vec(self) -> Vec3 {
+        Vec3::new(self.x, self.y, self.z)
+    }
+
     #[inline]
     pub fn dot(self, other: Quat) -> f32 {
         self.x * other.x
@@ -1259,34 +1388,18 @@ impl Quat {
     }
 
     /// Normalize quaternion and convert quaternion to axis and angle
-    /// representation. Note that the returned axis may not be a unit vector.
+    /// representation.
     pub fn to_axis_angle(self) -> (Vec3, f32) {
-        let this = if self.w > 1.0 { self.norm() } else { self };
-        this.to_axis_angle_raw()
+        self.norm().to_axis_angle_raw()
     }
 
     /// Convert quaternion to axis and angle representation.
     pub fn to_axis_angle_raw(self) -> (Vec3, f32) {
-        let inverse = inverse_sqrt(1.0 - self.w * self.w);
-
-        if 1.0 / inverse < std::f32::EPSILON {
-            (
-                Vec3::new(
-                    self.x,
-                    self.y,
-                    self.z,
-                ),
-                0.0,
-            )
+        let s = 1.0 - self.w * self.w;
+        if std::f32::EPSILON >= s {
+            (Vec3::up(), 0.0) // Always return normalized vector
         } else {
-            (
-                Vec3::new(
-                    self.x * inverse,
-                    self.y * inverse,
-                    self.z * inverse,
-                ),
-                self.angle(),
-            )
+            (self.vec() * inverse_sqrt(s), self.angle())
         }
     }
 
@@ -1430,7 +1543,15 @@ impl std::ops::Sub for Quat {
 
 impl std::fmt::Display for Quat {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(out, "( {}, {}, {}, {} )", self.x, self.y, self.z, self.w)
+        let precision = out.precision().unwrap_or(8);
+        write!(
+            out,
+            "( {:+.*?}, {:+.*?}, {:+.*?}, {:+.*?} )",
+            precision, self.x,
+            precision, self.y,
+            precision, self.z,
+            precision, self.w,
+        )
     }
 }
 
@@ -1492,6 +1613,32 @@ impl Line {
 #[cfg(test)]
 mod tests {
     use alg::*;
+
+    const MIN_INV_CMP: f32 = 0.01;
+
+    #[test]
+    fn inv_sqrt() {
+        let mut i = 1024;
+        loop {
+            let val = MIN_INV_CMP * i as f32;
+            let (a, b) = (
+                inverse_sqrt(val),
+                1f32 / val.sqrt(),
+            );
+
+            let mag = (a - b).abs() / std::f32::EPSILON;
+            println!("1/sqrt({})\nerr_mag={}", val, mag);
+            assert_approx_eq!(a, b, 4.0);
+
+            i -= 1;
+            if i == 0 { break; }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn sqrt_0() { inverse_sqrt(0.0); }
 
     /* Vec3 */
 
@@ -1557,6 +1704,31 @@ mod tests {
 
         eprintln!("Error: {}", error);
         assert!(error < 0.0001);
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn singular_mat3_inv() {
+        let mat = Mat3::zero();
+        mat.inverse();
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn singular_mat3_to_quat() {
+        let mat = Mat3::zero();
+        mat.to_quat();
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn flip_mat3_to_quat() {
+        let mut mat = Mat3::id();
+        mat.y1 = -1.0;
+        mat.to_quat();
     }
 
     /* Mat4 */
@@ -1669,40 +1841,29 @@ mod tests {
             0.0,  0.0, 1.0,
         );
 
-        assert_eq!(compare.to_quat(), quat);
+        assert_approx_eq_quat!(compare.to_quat(), quat, 1.0);
         assert_eq!(quat.to_mat(), compare);
     }
 
     #[test]
     fn axis_angle() {
-        let rotation = Mat3::rotation_y(45f32.to_radians()).to_quat();
-        let (axis, angle) = rotation.to_axis_angle();
-
-        let error = vec3_error(axis, Vec3::up());
-        eprintln!("Axis Error: {}", error);
-        assert!(error < 0.0001);
-
-        let error = (angle.to_degrees() - 45.0).abs();
-        eprintln!("Angle Error: {}", error);
-        assert!(error < 0.001);
+        let half = 0.5_f32.sqrt();
+        let rot = Quat { x: 0.0, y: half, z: 0.0, w: half };
+        let (axis, angle) = rot.to_axis_angle();
+        assert_approx_eq_vec3!(axis, Vec3::up(), 1.0);
+        assert_approx_eq!(angle.to_degrees(), 90.0, 1.0);
     }
 
     #[test]
     fn convert_axis_angle() {
         let rotation = Quat::axis_angle(
             Vec3::one().norm(),
-            120f32.to_radians(),
+            120_f32.to_radians(),
         );
 
         let (axis, angle) = rotation.to_axis_angle();
-
-        let error = vec3_error(axis, Vec3::one().norm());
-        eprintln!("Axis Error: {}", error);
-        assert!(error < 0.0001);
-
-        let error = (angle.to_degrees() - 120.0).abs();
-        eprintln!("Angle Error: {}", error);
-        assert!(error < 0.0001);
+        assert_approx_eq_vec3!(axis, Vec3::one().norm(), 1.0);
+        assert_approx_eq!(angle.to_degrees(), 120.0, 64.0);
     }
 
     #[test]
@@ -1721,8 +1882,8 @@ mod tests {
             0.0,  0.0, 1.0,
         );
 
-        assert_eq!(quat, mat.to_quat());
-        assert_eq!(quat, quat.to_mat().to_quat());
+        assert_approx_eq_quat!(quat, mat.to_quat(), 1.0);
+        assert_approx_eq_quat!(quat, quat.to_mat().to_quat(), 1.0);
 
         assert_eq!(mat, quat.to_mat());
         assert_eq!(mat, mat.to_quat().to_mat());
@@ -1730,6 +1891,16 @@ mod tests {
 
     #[test]
     fn mul_quat_vec() {
+        assert_approx_eq_vec3!(Vec3::fwd(), Quat::id() * Vec3::fwd(), 1.0);
+        assert_approx_eq_vec3!(
+            Vec3::up(),
+            Quat::axis_angle(
+                -Vec3::right(),
+                0.5 * std::f32::consts::PI,
+            ) * Vec3::fwd(),
+            1.0
+        );
+
         let quat = Quat::axis_angle(Vec3::up(), 7.1);
         let mat = Mat3::rotation_y(7.1);
         let vec = Vec3::new(1., 2., 3.);

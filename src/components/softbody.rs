@@ -735,7 +735,7 @@ impl Instance {
         }
 
         // Rescale
-        result.iter().map(|raw| raw.norm()).collect()
+        result.iter().map(|raw| raw.norm_safe()).collect()
     }
 
     // Must be called when gravity or force changes

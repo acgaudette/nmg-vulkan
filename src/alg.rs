@@ -1309,6 +1309,10 @@ impl Quat {
         }
     }
 
+    pub fn vec(self) -> Vec3 {
+        Vec3::new(self.x, self.y, self.z)
+    }
+
     #[inline]
     pub fn dot(self, other: Quat) -> f32 {
         self.x * other.x
@@ -1383,34 +1387,18 @@ impl Quat {
     }
 
     /// Normalize quaternion and convert quaternion to axis and angle
-    /// representation. Note that the returned axis may not be a unit vector.
+    /// representation.
     pub fn to_axis_angle(self) -> (Vec3, f32) {
-        let this = if self.w > 1.0 { self.norm() } else { self };
-        this.to_axis_angle_raw()
+        self.norm().to_axis_angle_raw()
     }
 
     /// Convert quaternion to axis and angle representation.
     pub fn to_axis_angle_raw(self) -> (Vec3, f32) {
-        let inverse = inverse_sqrt(1.0 - self.w * self.w);
-
-        if 1.0 / inverse < std::f32::EPSILON {
-            (
-                Vec3::new(
-                    self.x,
-                    self.y,
-                    self.z,
-                ),
-                0.0,
-            )
+        let s = 1.0 - self.w * self.w;
+        if std::f32::EPSILON >= s {
+            (Vec3::up(), 0.0) // Always return normalized vector
         } else {
-            (
-                Vec3::new(
-                    self.x * inverse,
-                    self.y * inverse,
-                    self.z * inverse,
-                ),
-                self.angle(),
-            )
+            (self.vec() * inverse_sqrt(s), self.angle())
         }
     }
 

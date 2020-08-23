@@ -139,6 +139,17 @@ impl Vec2 {
         }
     }
 
+    /// Normalize `self` only if squared magnitude is nonzero.
+    /// Useful in cases where zero vectors are known in advance to exist.
+    pub fn norm_safe(self) -> Vec2 {
+        let mag_sq = self.mag_squared();
+        if std::f32::EPSILON >= mag_sq { self }
+
+        else {
+            self * inverse_sqrt(mag_sq)
+        }
+    }
+
     pub fn mag_squared(self) -> f32 {
         self.x * self.x + self.y * self.y
     }
@@ -250,6 +261,17 @@ impl Vec3 {
             self.y * inverse_len,
             self.z * inverse_len,
         )
+    }
+
+    /// Normalize `self` only if squared magnitude is nonzero.
+    /// Useful in cases where zero vectors are known in advance to exist.
+    pub fn norm_safe(self) -> Vec3 {
+        let mag_sq = self.mag_squared();
+        if std::f32::EPSILON >= mag_sq { self }
+
+        else {
+            self * inverse_sqrt(mag_sq)
+        }
     }
 
     pub fn mag_squared(self) -> f32 {

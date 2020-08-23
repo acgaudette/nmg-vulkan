@@ -768,7 +768,7 @@ impl Instance {
         &self,
         center: alg::Vec3,
         velocity: alg::Vec3,
-    ) -> alg::Quat {
+    ) -> (alg::Vec3, f32) {
         let omega = self.particles.iter().fold(
             alg::Vec3::zero(),
             |sum, particle| {
@@ -781,7 +781,13 @@ impl Instance {
             },
         ) / self.particles.len() as f32; // Average values
 
-        alg::Quat::axis_angle(omega.norm(), omega.mag())
+        let mag = omega.mag_squared();
+        if std::f32::EPSILON >= mag {
+            (alg::Vec3::up(), 0.0) // Always return normalized vector
+        } else {
+            let inv = alg::inverse_sqrt(mag);
+            (omega * inv, 1.0 / inv)
+        }
     }
 
     /// Returns instance orientation using least squares fit. \

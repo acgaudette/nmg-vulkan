@@ -24,8 +24,11 @@ pub const MNGR_DEFAULT_BOUNCE: f32 = 2.0;
 /// Default system (softbody manager) friction
 pub const MNGR_DEFAULT_FRICTION: f32 = 0.02;
 
-// Constraint solver iterations
-const ITERATIONS: usize = 10;
+/// Default system (softbody manager) friction
+pub const MNGR_DEFAULT_DRAG: f32 = 0.001;
+
+// Default constraint solver iterations
+const MNGR_DEFAULT_ITER: usize = 10;
 
 // Range 0 - 1; 1.0 = cannot be deformed
 // A value of zero nullifies all rods in the instance
@@ -105,6 +108,12 @@ impl Particle {
             last: position,
             displacement: alg::Vec3::zero(),
         }
+    }
+
+    pub fn init(&mut self, to: alg::Vec3, vel: alg::Vec3) {
+        self.position = to;
+        self.last = to - vel * FIXED_DT;
+        self.displacement = alg::Vec3::zero();
     }
 }
 
@@ -449,8 +458,8 @@ pub struct Instance {
 
     /* "Constants" */
 
-    mass: f32,
-    inv_pt_mass: f32, // Cached inverse mass per particle
+    pub mass: f32,
+    pub inv_pt_mass: f32, // Cached inverse mass per particle
     end_offset: f32, // Distance from center to simple endpoint
     start_indices: Vec<usize>, // Optional joint start highlight
     end_indices: Vec<usize>, // Optional joint end highlight
@@ -459,7 +468,7 @@ pub struct Instance {
     // Range 0 - 0.5; "Rigid" = 0.5
     // Lower values produce springier meshes
     // A value of zero nullifies all rods in the instance
-    rigidity: f32,
+    pub rigidity: f32,
 }
 
 /// Source mesh reference structure.
@@ -489,7 +498,7 @@ impl Instance {
         end_indices: &[usize],
     ) -> Instance {
         debug_assert!(mass > 0.0);
-        debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
+        debug_assert!(rigidity > 0.0 && rigidity <= 1.0);
 
         let points_len = points.len();
 
@@ -873,7 +882,7 @@ pub struct InstanceBuilder<'a> {
     bindings: Option<&'a [(usize, usize)]>,
     initial_pos: alg::Vec3,
     match_shape: bool,
-    end_offset: f32,
+    end_offset: Option<f32>,
     start_indices: Option<&'a [usize]>,
     end_indices: Option<&'a [usize]>,
 }
@@ -892,7 +901,7 @@ impl<'a> InstanceBuilder<'a> {
             bindings: None,
             initial_pos: alg::Vec3::zero(),
             match_shape: false,
-            end_offset: 0.0, // Default to no simple endpoint
+            end_offset: None, // Default to no simple endpoint
             start_indices: None,
             end_indices: None,
         }
@@ -970,7 +979,7 @@ impl<'a> InstanceBuilder<'a> {
     /// Distance from center of limb to simple endpoint (start and end).
     /// This is only necessary for instances that will be joint children.
     pub fn end_offset(&mut self, offset: f32) -> &mut InstanceBuilder<'a> {
-        self.end_offset = offset;
+        self.end_offset = Some(offset);
         self
     }
 
@@ -998,7 +1007,6 @@ impl<'a> InstanceBuilder<'a> {
 
     /// Finalize
     pub fn for_entity(&mut self, entity: entity::Handle) {
-        let rigidity = self.rigidity * 0.5; // Scale rigidity properly
         let initial_accel = self.manager.gravity; // Initialize with gravity
 
         #[cfg(debug_assertions)] {
@@ -1052,9 +1060,12 @@ impl<'a> InstanceBuilder<'a> {
                     6, 2, 1, // Right face
                     1, 5, 6,
                 ],
-                /* Override scaled model with unit cube.
-                 * Enables offsets to work properly with multiple scaled
+                /* Override scaled model with unit cube;
+                 * enables offsets to work properly with multiple scaled
                  * versions of the same mesh.
+                 * While this can change the magnitude of the scale matrix
+                 * during shape matching, this doesn't actually affect the
+                 * output.
                  */
                 Some(&[
                     // Front face (CW)
@@ -1072,10 +1083,10 @@ impl<'a> InstanceBuilder<'a> {
                 &[], // Ignore bindings
                 true, // Match shape
                 self.mass,
-                rigidity,
+                self.rigidity,
                 self.initial_pos,
                 initial_accel,
-                self.end_offset,
+                self.end_offset.unwrap_or(0.5),
                 &[0, 1, 2, 3], // Start indices
                 &[4, 5, 6, 7], // End indices
             )
@@ -1091,10 +1102,10 @@ impl<'a> InstanceBuilder<'a> {
             Instance::new_from_model(
                 model,
                 self.mass,
-                rigidity,
+                self.rigidity,
                 self.initial_pos,
                 initial_accel,
-                self.end_offset,
+                self.end_offset.unwrap_or(0.0),
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
             )
@@ -1113,10 +1124,10 @@ impl<'a> InstanceBuilder<'a> {
                 self.bindings.unwrap_or(&[]),
                 self.match_shape,
                 self.mass,
-                rigidity,
+                self.rigidity,
                 self.initial_pos,
                 initial_accel,
-                self.end_offset,
+                self.end_offset.unwrap_or(0.0),
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
             )
@@ -1131,12 +1142,16 @@ impl<'a> InstanceBuilder<'a> {
 pub struct Manager {
     handles: Vec<Option<entity::Handle>>,
     instances: Vec<Option<Instance>>,
+    count: usize,
+
     joints: fnv::FnvHashMap<usize, Vec<Joint>>,
     planes: Vec<alg::Plane>,
+
+    pub iterations: usize,
     gravity: alg::Vec3,
-    bounce: f32,
+    drag: f32,
     friction: f32,
-    count: usize,
+    bounce: f32,
 }
 
 impl components::Component for Manager {
@@ -1186,12 +1201,14 @@ impl Manager {
         Manager {
             handles: Vec::with_capacity(instance_hint),
             instances: Vec::with_capacity(instance_hint),
+            count: 0,
             joints: joint_map,
             planes: Vec::with_capacity(plane_hint),
+            iterations: MNGR_DEFAULT_ITER,
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
-            bounce: MNGR_DEFAULT_BOUNCE,
+            drag: MNGR_DEFAULT_DRAG,
             friction: MNGR_DEFAULT_FRICTION,
-            count: 0,
+            bounce: MNGR_DEFAULT_BOUNCE,
         }
     }
 
@@ -1207,7 +1224,14 @@ impl Manager {
         self.instances[i] = Some(instance);
     }
 
-    pub fn get_instance(&mut self, entity: entity::Handle) -> &mut Instance {
+    pub fn get_instance(&self, entity: entity::Handle) -> &Instance {
+        get_instance!(self, entity)
+    }
+
+    pub fn get_mut_instance(
+        &mut self,
+        entity: entity::Handle,
+    ) -> &mut Instance {
         get_mut_instance!(self, entity)
     }
 
@@ -1314,16 +1338,6 @@ impl Manager {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;
         instance.update_cache(self.gravity);
-    }
-
-    pub fn get_particle(
-        &self,
-        entity: entity::Handle,
-        index: usize,
-    ) -> alg::Vec3 {
-        let instance = get_instance!(self, entity);
-        debug_assert!(index < instance.particles.len());
-        instance.particles[index].position
     }
 
     /// Get instance particle offsets from the model.
@@ -1537,16 +1551,21 @@ impl Manager {
         self.gravity = gravity;
     }
 
-    /// Range 0 - inf; "Realistic" = 2.0 \
-    /// Values < 2 become force zones, values > 2 add impossible force. \
-    /// A value of zero nullifies all collisions.
-    pub fn set_bounce(&mut self, bounce: f32) {
-        self.bounce = bounce;
+    /// Range 0 - 1; 0 = no drag; 1 = nothing moves
+    pub fn set_drag(&mut self, drag: f32) {
+        self.drag = drag;
     }
 
     /// Range 0 - 1; 0 = no planar friction
     pub fn set_friction(&mut self, friction: f32) {
         self.friction = friction;
+    }
+
+    /// Range 0 - inf; "Realistic" = 2.0 \
+    /// Values < 2 become force zones, values > 2 add impossible force. \
+    /// A value of zero nullifies all collisions.
+    pub fn set_bounce(&mut self, bounce: f32) {
+        self.bounce = bounce;
     }
 
     pub(crate) fn simulate<T>(
@@ -1586,12 +1605,10 @@ impl Manager {
 
             // Position Verlet
             for particle in &mut instance.particles {
-                let next_position = particle.position * 2.
-                    - particle.last
-                    + instance.accel_dt;
+                let next_position = particle.position * (2.0 - self.drag)
+                    + (instance.accel_dt - particle.last)
+                    * (1.0 - self.drag);
 
-                // Displacement is in units of meters per FIXED_DT
-                particle.displacement = (next_position - particle.last) / 2.0;
                 particle.last = particle.position;
                 particle.position = next_position;
             }
@@ -1599,16 +1616,16 @@ impl Manager {
 
         // Solve abstracted constraints first
         // Note: "true" delta time is FIXED_DT / ITERATIONS
-        for _ in 0..ITERATIONS {
+        for _ in 0..self.iterations {
             // External constraints
-            game.iterate(FIXED_DT, ITERATIONS, self);
+            game.iterate(FIXED_DT, self.iterations, self);
 
             // Joint constraints
             self.solve_joints();
         }
 
         // Solve constraints
-        for _ in 0..ITERATIONS {
+        for _ in 0..self.iterations {
             for i in 0..self.instances.len() {
                 let instance = match self.instances[i] {
                     Some(ref mut instance) => instance,
@@ -1694,6 +1711,11 @@ impl Manager {
             // Update transform
             debug_validate_entity!(transforms, self.handles[i].unwrap());
             transforms.set_raw(i, center, orientation, alg::Vec3::one());
+
+            for particle in &mut instance.particles {
+                // Meters per FIXED_DT
+                particle.displacement = particle.position - particle.last;
+            }
         }
     }
 

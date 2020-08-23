@@ -581,7 +581,7 @@ impl Instance {
         end_indices: &[usize],
     ) -> Instance {
         debug_assert!(mass > 0.0);
-        debug_assert!(rigidity > 0.0 && rigidity <= 0.5);
+        debug_assert!(rigidity > 0.0 && rigidity <= 1.0);
 
         let vertices_len = input.vertices.len();
 

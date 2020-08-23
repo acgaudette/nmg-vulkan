@@ -1601,7 +1601,7 @@ impl Manager {
                         continue;
                     }
 
-                    let direction = particle.displacement.norm();
+                    let direction = particle.displacement.norm_safe();
                     let tangent = direction
                         .cross(plane.normal)
                         .cross(plane.normal);

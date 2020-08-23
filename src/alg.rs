@@ -65,7 +65,7 @@ macro_rules! assert_approx_eq_quat {
 }
 
 // For kicks
-fn inverse_sqrt(x: f32) -> f32 {
+pub fn inverse_sqrt(x: f32) -> f32 {
     debug_assert!(!x.is_nan());
     #[cfg(debug_assertions)] {
         if (x - 0.0).abs() < std::f32::EPSILON {

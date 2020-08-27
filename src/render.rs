@@ -2230,17 +2230,6 @@ fn init_swapchain(
         count
     };
 
-    println!("Swapchain image count: {}", image_count);
-
-    // Create command buffer fences, given image count
-    let mut command_fences = Vec::with_capacity(image_count as usize);
-
-    for _ in 0..image_count {
-        command_fences.push(
-            vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
-        );
-    }
-
     let swap_extent = {
         let mut extent = vd::Extent2d::default();
 
@@ -2258,6 +2247,7 @@ fn init_swapchain(
                     )
                 )
             );
+
             extent.set_height(
                 std::cmp::max(
                     capabilities.min_image_extent().height(),
@@ -2299,14 +2289,26 @@ fn init_swapchain(
 
     /* Image views */
 
-    if swapchain.images().is_empty() {
+    let image_count = swapchain.images().len();
+    if 0 == image_count {
         return Err("empty swapchain".into());
     }
 
-    let views = {
-        let mut views = Vec::with_capacity(swapchain.images().len());
+    println!("Swapchain image count: {}", image_count);
 
-        for i in 0..swapchain.images().len() {
+    // Create command buffer fences, given image count
+    let mut command_fences = Vec::with_capacity(image_count);
+
+    for i in 0..image_count {
+        command_fences.push(
+            vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
+        );
+    }
+
+    let views = {
+        let mut views = Vec::with_capacity(image_count);
+
+        for i in 0..image_count {
             let chain = swapchain.clone();
 
             let view = vd::ImageView::builder()

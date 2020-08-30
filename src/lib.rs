@@ -1,4 +1,5 @@
 #![feature(core_intrinsics)]
+#![feature(or_patterns)]
 
 #[cfg(feature = "memory-test")] extern crate jemallocator;
 #[cfg(feature = "memory-test")] #[global_allocator]
@@ -279,15 +280,43 @@ fn begin_update<T>(
     ) as f64;
 
     loop {
-        // Update last frame of input
-        input.increment_key_states();
-
-        // Reset dirty input
-        input.mouse_delta = alg::Vec2::zero();
+        /* Gamepad input */
 
         while let Some(event) = gamepads.next_event() {
             match event {
-                gilrs::Event { id: _, event: gilrs::EventType::AxisChanged(axis, s, _), .. } => {
+                gilrs::Event {
+                    id,
+                    event: gilrs::EventType::Connected
+                         | gilrs::EventType::Disconnected,
+                    ..
+                } => {
+                    let gamepad = gamepads.gamepad(id);
+                    let connected = if gamepad.is_connected() {
+                        "connected"
+                    } else {
+                        "disconnected"
+                    };
+
+                    println!(
+                        "Gamepad (id={}) {}: \"{}\" ({})",
+                        id,
+                        connected,
+                        gamepad.name(),
+                        match gamepad.power_info() {
+                            gilrs::PowerInfo::Unknown => "unknown power source",
+                            gilrs::PowerInfo::Wired => "wired",
+                            gilrs::PowerInfo::Discharging(_) => "discharging",
+                            gilrs::PowerInfo::Charging(_) => "charging",
+                            gilrs::PowerInfo::Charged => "fully charged",
+                        }
+                    );
+                },
+
+                gilrs::Event {
+                    id: _,
+                    event: gilrs::EventType::AxisChanged(axis, s, _),
+                    ..
+                } => {
                     match axis {
                         gilrs::Axis::LeftStickX  => input.joy_l.x = s,
                         gilrs::Axis::LeftStickY  => input.joy_l.y = s,
@@ -296,11 +325,17 @@ fn begin_update<T>(
 
                         _ => (),
                     };
-                }
+                },
 
                 _ => (),
             };
         }
+
+        // Update last frame of input
+        input.increment_key_states();
+
+        // Reset dirty input
+        input.mouse_delta = alg::Vec2::zero();
 
         // Handle window events
         events.poll_events(|event| {

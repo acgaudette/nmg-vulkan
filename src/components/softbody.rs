@@ -52,6 +52,11 @@ const JOINT_ANG_RIGID: f32 = 1.0;
 // joints
 const JOINT_CONTAINS_BIAS: f32 = 1.0;
 
+// Range 0 - 1.0; "Noisy" = 0.0
+// Larger values bias instance velocity and acceleration values to the past
+// (low pass filter).
+const INTEGRAL_SMOOTH_BIAS: f32 = 0.0;
+
 macro_rules! debug_validate_instance {
     ($instance: expr, $entity: expr) => {
         #[cfg(debug_assertions)] {
@@ -455,6 +460,8 @@ pub struct Instance {
 
     frame_position: alg::Vec3,
     frame_orientation_conjugate: alg::Quat,
+    frame_vel: alg::Vec3,
+    frame_accel: alg::Vec3,
 
     /* "Constants" */
 
@@ -551,6 +558,8 @@ impl Instance {
 
             frame_position: alg::Vec3::zero(),
             frame_orientation_conjugate: alg::Quat::id(),
+            frame_vel: alg::Vec3::zero(),
+            frame_accel: alg::Vec3::zero(),
 
             mass,
             inv_pt_mass: 1.0 / (mass / points_len as f32),
@@ -689,6 +698,8 @@ impl Instance {
 
             frame_position: alg::Vec3::zero(),
             frame_orientation_conjugate: alg::Quat::id(),
+            frame_vel: alg::Vec3::zero(),
+            frame_accel: alg::Vec3::zero(),
 
             mass,
             inv_pt_mass: 1.0 / (mass / vertices_len as f32),
@@ -754,13 +765,27 @@ impl Instance {
         ) / self.particles.len() as f32
     }
 
-    /// Returns velocity of instance in meters per second.
-    pub fn velocity(&self) -> alg::Vec3 {
-        self.particles.iter().fold(
+    // TODO: mass weighted result
+    fn compute_velocity(&mut self) -> alg::Vec3 {
+        let new = self.particles.iter().fold(
             alg::Vec3::zero(),
             |sum, particle| sum + particle.displacement,
-        ) / (self.particles.len() as f32 * FIXED_DT)
+        ) / (self.particles.len() as f32 * FIXED_DT);
+
+       new.lerp(self.frame_vel, INTEGRAL_SMOOTH_BIAS)
     }
+
+    fn compute_accel(&mut self, new_vel: alg::Vec3) -> alg::Vec3 {
+        let diff = new_vel - self.frame_vel;
+        let new = diff / FIXED_DT;
+        new.lerp(self.frame_accel, INTEGRAL_SMOOTH_BIAS)
+    }
+
+    /// Returns velocity of instance in meters per second.
+    pub fn approx_velocity(&self) -> alg::Vec3 { self.frame_vel }
+
+    /// Returns acceleration of instance in meters per second squared.
+    pub fn approx_acceleration(&self) -> alg::Vec3 { self.frame_accel }
 
     /// Returns axis and angular velocity of instance in radians per second. \
     /// `center` and `velocity` are parameters for optional caching.
@@ -1343,7 +1368,7 @@ impl Manager {
     pub fn velocity(&self, entities: &[entity::Handle]) -> alg::Vec3 {
         let sum = entities.iter()
             .map(|handle| get_instance!(self, *handle))
-            .map(|instance| (instance.velocity(), instance.mass))
+            .map(|instance| (instance.approx_velocity(), instance.mass))
             .fold(
                 (alg::Vec3::zero(), 0f32),
                 |sum, (v, mass)| (sum.0 + v * mass, sum.1 + mass)
@@ -1734,6 +1759,10 @@ impl Manager {
                 // Meters per FIXED_DT
                 particle.displacement = particle.position - particle.last;
             }
+
+            let new_vel = instance.compute_velocity();
+            instance.frame_accel = instance.compute_accel(new_vel);
+            instance.frame_vel = new_vel;
         }
     }
 

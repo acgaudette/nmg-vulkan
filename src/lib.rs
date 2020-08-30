@@ -1,4 +1,5 @@
 #![feature(core_intrinsics)]
+#![feature(or_patterns)]
 
 #[cfg(feature = "memory-test")] extern crate jemallocator;
 #[cfg(feature = "memory-test")] #[global_allocator]
@@ -98,7 +99,7 @@ pub trait Update {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) { }
 }
@@ -114,7 +115,7 @@ pub trait FixedUpdate {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) { }
 }
@@ -207,7 +208,7 @@ fn begin_update<T>(
     mut events: vdw::winit::EventsLoop,
     context:    &mut render::Context,
     parameters: &mut render::Parameters,
-    gamepads:   &mut gilrs::Gilrs,
+    mut gamepads: &mut gilrs::Gilrs,
     input:      &mut input::Manager,
     entities:   &mut entity::Manager,
     components: &mut components::Container,
@@ -278,16 +279,102 @@ fn begin_update<T>(
         FIXED_DT * fixed_step_factor
     ) as f64;
 
-    loop {
-        // Update last frame of input
-        input.increment_key_states();
+    /* Gamepad rumble */
 
-        // Reset dirty input
-        input.mouse_delta = alg::Vec2::zero();
+    let mut rumble_gamepads = gamepads.gamepads()
+        .filter_map(
+            |(id, pad)|
+                if pad.is_ff_supported() { Some(id) } else { None }
+        ).collect::<Vec<_>>();
+
+    let (rumble_lo, rumble_hi) = {
+        let scheduling = gilrs::ff::Replay {
+                 after: gilrs::ff::Ticks::from_ms(0),
+              play_for: gilrs::ff::Ticks::from_ms(512),
+            with_delay: gilrs::ff::Ticks::from_ms(0),
+        };
+
+        let mut builder_lo = gilrs::ff::EffectBuilder::new();
+
+        builder_lo
+            .gain(0.0)
+            .repeat(gilrs::ff::Repeat::Infinitely)
+            .distance_model(gilrs::ff::DistanceModel::None)
+            .gamepads(&rumble_gamepads);
+
+        let mut builder_hi = builder_lo.clone();
+
+        (
+            builder_lo
+            .add_effect(
+                gilrs::ff::BaseEffect {
+                    kind: gilrs::ff::BaseEffectType::Weak { magnitude: u16::MAX },
+                    scheduling, .. Default::default()
+                }).finish(&mut gamepads)
+                  .expect("Bad gamepad rumble array"),
+
+            builder_hi
+            .add_effect(
+                gilrs::ff::BaseEffect {
+                    kind: gilrs::ff::BaseEffectType::Strong { magnitude: u16::MAX },
+                    scheduling, .. Default::default()
+                }).finish(&mut gamepads)
+                  .expect("Bad gamepad rumble array"),
+        )
+    };
+
+    rumble_lo.play()
+        .expect("Bad gamepad rumble array");
+    rumble_hi.play()
+        .expect("Bad gamepad rumble array");
+
+    loop {
+        /* Gamepad input */
 
         while let Some(event) = gamepads.next_event() {
             match event {
-                gilrs::Event { id: _, event: gilrs::EventType::AxisChanged(axis, s, _), .. } => {
+                gilrs::Event {
+                    id,
+                    event: gilrs::EventType::Connected
+                         | gilrs::EventType::Disconnected,
+                    ..
+                } => {
+                    let gamepad = gamepads.gamepad(id);
+                    let connected = if gamepad.is_connected() {
+                        rumble_gamepads.push(id);
+                        "connected"
+                    } else {
+                        let found = rumble_gamepads.iter().position(|&u| u == id)
+                            .expect("Corrupted gamepad rumble array");
+                        rumble_gamepads.remove(found);
+                        "disconnected"
+                    };
+
+                    rumble_lo.set_gamepads(&rumble_gamepads, gamepads)
+                        .expect("Bad gamepad rumble array");
+                    rumble_hi.set_gamepads(&rumble_gamepads, gamepads)
+                        .expect("Bad gamepad rumble array");
+
+                    println!(
+                        "Gamepad (id={}) {}: \"{}\" ({})",
+                        id,
+                        connected,
+                        gamepad.name(),
+                        match gamepad.power_info() {
+                            gilrs::PowerInfo::Unknown => "unknown power source",
+                            gilrs::PowerInfo::Wired => "wired",
+                            gilrs::PowerInfo::Discharging(_) => "discharging",
+                            gilrs::PowerInfo::Charging(_) => "charging",
+                            gilrs::PowerInfo::Charged => "fully charged",
+                        }
+                    );
+                },
+
+                gilrs::Event {
+                    id: _,
+                    event: gilrs::EventType::AxisChanged(axis, s, _),
+                    ..
+                } => {
                     match axis {
                         gilrs::Axis::LeftStickX  => input.joy_l.x = s,
                         gilrs::Axis::LeftStickY  => input.joy_l.y = s,
@@ -296,11 +383,48 @@ fn begin_update<T>(
 
                         _ => (),
                     };
-                }
+                },
+
+                gilrs::Event {
+                    id: _,
+                    event: gilrs::EventType::ButtonChanged(button, s, _),
+                    ..
+                } => {
+                    match button {
+                        gilrs::Button::LeftTrigger2  => input.trig_l = s,
+                        gilrs::Button::RightTrigger2 => input.trig_r = s,
+
+                        _ => (),
+                    };
+                },
 
                 _ => (),
             };
         }
+
+        let rumble_mix = input.mix_rumble();
+
+        if rumble_mix.0 > 0.0 {
+            match rumble_lo.set_gain(rumble_mix.0) {
+                Ok(_) => (),
+                Err(e) => panic!("Error setting rumble gain: {}", e)
+            }
+        }
+
+        if rumble_mix.1 > 0.0 {
+            match rumble_hi.set_gain(rumble_mix.1) {
+                Ok(_) => (),
+                Err(e) => panic!("Error setting rumble gain: {}", e)
+            }
+        }
+
+        // Update last frame of input
+        input.increment_key_states();
+
+        // Reset dirty input
+        input.mouse_delta = alg::Vec2::zero();
+        input.rumbles_lo.clear();
+        input.rumbles_hi.clear();
 
         // Handle window events
         events.poll_events(|event| {

@@ -6,10 +6,16 @@ pub const KEY_COUNT: usize = 23;
 
 pub struct Manager {
     key_map: [KeyState; KEY_COUNT],
+    pub rumbles_lo: Vec<f32>,
+    pub rumbles_hi: Vec<f32>,
+
     pub cursor_coords: alg::Vec2,
     pub mouse_delta: alg::Vec2,
+
     pub joy_l: alg::Vec2,
     pub joy_r: alg::Vec2,
+    pub trig_l: f32,
+    pub trig_r: f32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -89,10 +95,14 @@ impl Manager {
     pub fn new() -> Manager {
         Manager {
             key_map: [KeyState::default(); KEY_COUNT],
+            rumbles_lo: Vec::with_capacity(4),
+            rumbles_hi: Vec::with_capacity(4),
             cursor_coords: alg::Vec2::zero(),
             mouse_delta: alg::Vec2::zero(),
             joy_l: alg::Vec2::zero(),
             joy_r: alg::Vec2::zero(),
+            trig_l: 0.0,
+            trig_r: 0.0,
         }
     }
 
@@ -134,5 +144,26 @@ impl Manager {
         }
 
         keys
+    }
+
+    /* Gamepad */
+
+    pub fn mix_rumble(&self) -> (f32, f32) {
+        (
+            self.rumbles_lo.iter().sum::<f32>() / self.rumbles_lo.len() as f32,
+            self.rumbles_hi.iter().sum::<f32>() / self.rumbles_hi.len() as f32,
+        )
+    }
+
+    pub fn add_rumble_lo(&mut self, amt: f32) {
+        debug_assert!(amt >= 0.0);
+        debug_assert!(amt <= 1.0);
+        self.rumbles_lo.push(amt);
+    }
+
+    pub fn add_rumble_hi(&mut self, amt: f32) {
+        debug_assert!(amt >= 0.0);
+        debug_assert!(amt <= 1.0);
+        self.rumbles_hi.push(amt);
     }
 }

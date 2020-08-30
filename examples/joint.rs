@@ -104,7 +104,7 @@ impl nmg::Update for Demo {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) {
         /* Debug */

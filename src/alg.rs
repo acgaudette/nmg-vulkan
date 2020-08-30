@@ -142,6 +142,14 @@ impl Vec2 {
         }
     }
 
+    #[inline]
+    pub fn sign(self) -> Vec2 {
+        Vec2 {
+            x: self.x.signum(),
+            y: self.y.signum(),
+        }
+    }
+
     pub fn norm(self) -> Vec2 {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

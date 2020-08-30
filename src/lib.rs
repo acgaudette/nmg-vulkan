@@ -99,7 +99,7 @@ pub trait Update {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) { }
 }
@@ -115,7 +115,7 @@ pub trait FixedUpdate {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) { }
 }
@@ -208,7 +208,7 @@ fn begin_update<T>(
     mut events: vdw::winit::EventsLoop,
     context:    &mut render::Context,
     parameters: &mut render::Parameters,
-    gamepads:   &mut gilrs::Gilrs,
+    mut gamepads: &mut gilrs::Gilrs,
     input:      &mut input::Manager,
     entities:   &mut entity::Manager,
     components: &mut components::Container,
@@ -279,6 +279,33 @@ fn begin_update<T>(
         FIXED_DT * fixed_step_factor
     ) as f64;
 
+    /* Gamepad rumble */
+
+    let mut rumble_gamepads = gamepads.gamepads()
+        .filter_map(
+            |(id, pad)|
+                if pad.is_ff_supported() { Some(id) } else { None }
+        ).collect::<Vec<_>>();
+
+    let rumble = gilrs::ff::EffectBuilder::new()
+        .add_effect(gilrs::ff::BaseEffect {
+            kind: gilrs::ff::BaseEffectType::Weak { magnitude: u16::MAX },
+            scheduling: gilrs::ff::Replay {
+                     after: gilrs::ff::Ticks::from_ms(0),
+                  play_for: gilrs::ff::Ticks::from_ms(512),
+                with_delay: gilrs::ff::Ticks::from_ms(0),
+            },
+            envelope: Default::default(),
+        })
+        .gain(0.0)
+        .repeat(gilrs::ff::Repeat::Infinitely)
+        .distance_model(gilrs::ff::DistanceModel::None)
+        .gamepads(&rumble_gamepads)
+        .finish(&mut gamepads)
+        .expect("Bad gamepad rumble array");
+    rumble.play()
+        .expect("Bad gamepad rumble array");
+
     loop {
         /* Gamepad input */
 
@@ -292,10 +319,17 @@ fn begin_update<T>(
                 } => {
                     let gamepad = gamepads.gamepad(id);
                     let connected = if gamepad.is_connected() {
+                        rumble_gamepads.push(id);
                         "connected"
                     } else {
+                        let found = rumble_gamepads.iter().position(|&u| u == id)
+                            .expect("Corrupted gamepad rumble array");
+                        rumble_gamepads.remove(found);
                         "disconnected"
                     };
+
+                    rumble.set_gamepads(&rumble_gamepads, gamepads)
+                        .expect("Bad gamepad rumble array");
 
                     println!(
                         "Gamepad (id={}) {}: \"{}\" ({})",
@@ -331,11 +365,21 @@ fn begin_update<T>(
             };
         }
 
+        // Rumble
+        let rumble_mix = input.mix_rumble();
+        if rumble_mix > 0.0 {
+            match rumble.set_gain(rumble_mix) {
+                Ok(_) => (),
+                Err(e) => panic!("Error setting rumble gain: {}", e)
+            }
+        }
+
         // Update last frame of input
         input.increment_key_states();
 
         // Reset dirty input
         input.mouse_delta = alg::Vec2::zero();
+        input.rumbles.clear();
 
         // Handle window events
         events.poll_events(|event| {

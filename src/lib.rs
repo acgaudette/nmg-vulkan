@@ -287,39 +287,41 @@ fn begin_update<T>(
                 if pad.is_ff_supported() { Some(id) } else { None }
         ).collect::<Vec<_>>();
 
-    let rumble_lo = gilrs::ff::EffectBuilder::new()
-        .add_effect(gilrs::ff::BaseEffect {
-            kind: gilrs::ff::BaseEffectType::Weak { magnitude: u16::MAX },
-            scheduling: gilrs::ff::Replay {
-                     after: gilrs::ff::Ticks::from_ms(0),
-                  play_for: gilrs::ff::Ticks::from_ms(512),
-                with_delay: gilrs::ff::Ticks::from_ms(0),
-            },
-            envelope: Default::default(),
-        })
-        .gain(0.0)
-        .repeat(gilrs::ff::Repeat::Infinitely)
-        .distance_model(gilrs::ff::DistanceModel::None)
-        .gamepads(&rumble_gamepads)
-        .finish(&mut gamepads)
-        .expect("Bad gamepad rumble array");
+    let (rumble_lo, rumble_hi) = {
+        let scheduling = gilrs::ff::Replay {
+                 after: gilrs::ff::Ticks::from_ms(0),
+              play_for: gilrs::ff::Ticks::from_ms(512),
+            with_delay: gilrs::ff::Ticks::from_ms(0),
+        };
 
-    let rumble_hi = gilrs::ff::EffectBuilder::new()
-        .add_effect(gilrs::ff::BaseEffect {
-            kind: gilrs::ff::BaseEffectType::Strong { magnitude: u16::MAX },
-            scheduling: gilrs::ff::Replay {
-                     after: gilrs::ff::Ticks::from_ms(0),
-                  play_for: gilrs::ff::Ticks::from_ms(512),
-                with_delay: gilrs::ff::Ticks::from_ms(0),
-            },
-            envelope: Default::default(),
-        })
-        .gain(0.0)
-        .repeat(gilrs::ff::Repeat::Infinitely)
-        .distance_model(gilrs::ff::DistanceModel::None)
-        .gamepads(&rumble_gamepads)
-        .finish(&mut gamepads)
-        .expect("Bad gamepad rumble array");
+        let mut builder_lo = gilrs::ff::EffectBuilder::new();
+
+        builder_lo
+            .gain(0.0)
+            .repeat(gilrs::ff::Repeat::Infinitely)
+            .distance_model(gilrs::ff::DistanceModel::None)
+            .gamepads(&rumble_gamepads);
+
+        let mut builder_hi = builder_lo.clone();
+
+        (
+            builder_lo
+            .add_effect(
+                gilrs::ff::BaseEffect {
+                    kind: gilrs::ff::BaseEffectType::Weak { magnitude: u16::MAX },
+                    scheduling, .. Default::default()
+                }).finish(&mut gamepads)
+                  .expect("Bad gamepad rumble array"),
+
+            builder_hi
+            .add_effect(
+                gilrs::ff::BaseEffect {
+                    kind: gilrs::ff::BaseEffectType::Strong { magnitude: u16::MAX },
+                    scheduling, .. Default::default()
+                }).finish(&mut gamepads)
+                  .expect("Bad gamepad rumble array"),
+        )
+    };
 
     rumble_lo.play()
         .expect("Bad gamepad rumble array");

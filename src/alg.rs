@@ -6,6 +6,7 @@ const JACOBI_ITERATIONS: usize = 16;
 const JACOBI_SKIP_SCALE: f32 = 10.0;
 const JACOBI_SKIP_ITERATIONS: usize = 4;
 
+#[allow(unused_macros)]
 macro_rules! assert_approx_eq {
     ($lhs: expr, $rhs: expr, $prec: expr) => {
         let err = ($lhs - $rhs).abs();
@@ -21,6 +22,7 @@ macro_rules! assert_approx_eq {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! assert_approx_eq_vec3 {
     ($lhs: expr, $rhs: expr, $prec: expr) => {
         let err = 0.25 * (
@@ -42,6 +44,7 @@ macro_rules! assert_approx_eq_vec3 {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! assert_approx_eq_quat {
     ($lhs: expr, $rhs: expr, $prec: expr) => {
         let err = 0.25 * (

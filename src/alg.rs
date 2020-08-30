@@ -133,6 +133,15 @@ impl Vec2 {
         self.x * other.x + self.y * other.y
     }
 
+    /// Component-wise product of two vectors
+    #[inline]
+    pub fn schur(self, other: Vec2) -> Vec2 {
+        Vec2 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+        }
+    }
+
     pub fn norm(self) -> Vec2 {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

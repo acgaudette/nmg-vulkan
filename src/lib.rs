@@ -6,6 +6,7 @@ static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 extern crate voodoo as vd;
 extern crate voodoo_winit as vdw;
+extern crate gilrs;
 extern crate fnv;
 extern crate ini;
 
@@ -129,7 +130,7 @@ where
     // Initialize rendering engine
     let mut context = match render::Context::new(&window, model_data) {
         Ok(context) => context,
-        Err(e) => panic!("Could not create Vulkan context: {}", e)
+        Err(e) => panic!("Could not create Vulkan context: {}", e),
     };
 
     let mut parameters = render::Parameters::new();
@@ -138,6 +139,15 @@ where
         &context.model_names,
         None,
     );
+
+    /* Initialize input */
+
+    let mut gamepads = match gilrs::GilrsBuilder::new().build() {
+        Ok(pads) => pads,
+        Err(e) => panic!("Could not create gamepad context: {}", e),
+    };
+
+    let mut input = input::Manager::new();
 
     // Create entities container
     let mut entities = entity::Manager::new(1);
@@ -153,9 +163,6 @@ where
         labels:     components::label::Manager::new(8),
     };
 
-    // Create input manager
-    let mut input = input::Manager::new();
-
     // Initialize debug struct
     let mut debug = debug::Handler::new();
 
@@ -169,9 +176,10 @@ where
         events,
         &mut context,
         &mut parameters,
+        &mut gamepads,
+        &mut input,
         &mut entities,
         &mut components,
-        &mut input,
         &mut debug,
     );
 
@@ -199,9 +207,10 @@ fn begin_update<T>(
     mut events: vdw::winit::EventsLoop,
     context:    &mut render::Context,
     parameters: &mut render::Parameters,
+    gamepads:   &mut gilrs::Gilrs,
+    input:      &mut input::Manager,
     entities:   &mut entity::Manager,
     components: &mut components::Container,
-    input:      &mut input::Manager,
     debug:      &mut debug::Handler,
 ) where
     T: Start + Update + FixedUpdate
@@ -275,6 +284,23 @@ fn begin_update<T>(
 
         // Reset dirty input
         input.mouse_delta = alg::Vec2::zero();
+
+        while let Some(event) = gamepads.next_event() {
+            match event {
+                gilrs::Event { id: _, event: gilrs::EventType::AxisChanged(axis, s, _), .. } => {
+                    match axis {
+                        gilrs::Axis::LeftStickX  => input.joy_l.x = s,
+                        gilrs::Axis::LeftStickY  => input.joy_l.y = s,
+                        gilrs::Axis::RightStickX => input.joy_r.x = s,
+                        gilrs::Axis::RightStickY => input.joy_r.y = s,
+
+                        _ => (),
+                    };
+                }
+
+                _ => (),
+            };
+        }
 
         // Handle window events
         events.poll_events(|event| {

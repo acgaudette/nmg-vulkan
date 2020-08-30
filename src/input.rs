@@ -8,6 +8,8 @@ pub struct Manager {
     key_map: [KeyState; KEY_COUNT],
     pub cursor_coords: alg::Vec2,
     pub mouse_delta: alg::Vec2,
+    pub joy_l: alg::Vec2,
+    pub joy_r: alg::Vec2,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -89,6 +91,8 @@ impl Manager {
             key_map: [KeyState::default(); KEY_COUNT],
             cursor_coords: alg::Vec2::zero(),
             mouse_delta: alg::Vec2::zero(),
+            joy_l: alg::Vec2::zero(),
+            joy_r: alg::Vec2::zero(),
         }
     }
 

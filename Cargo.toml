@@ -6,6 +6,7 @@ authors = ["Aaron C Gaudette <gaudetteaaron@gmail.com>"]
 [dependencies]
 voodoo = { git = "https://github.com/acgaudette/voodoo" }
 voodoo_winit = { git = "https://github.com/acgaudette/voodoo" }
+gilrs = "0.7.2"
 fnv = "1.0.3"
 rust-ini = "0.10.0"
 lazy_static = "1.0.0"

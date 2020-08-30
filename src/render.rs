@@ -2299,7 +2299,7 @@ fn init_swapchain(
     // Create command buffer fences, given image count
     let mut command_fences = Vec::with_capacity(image_count);
 
-    for i in 0..image_count {
+    for _ in 0..image_count {
         command_fences.push(
             vd::Fence::new(device.clone(), vd::FenceCreateFlags::SIGNALED)?,
         );

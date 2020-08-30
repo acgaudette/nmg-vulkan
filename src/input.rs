@@ -11,8 +11,11 @@ pub struct Manager {
 
     pub cursor_coords: alg::Vec2,
     pub mouse_delta: alg::Vec2,
+
     pub joy_l: alg::Vec2,
     pub joy_r: alg::Vec2,
+    pub trig_l: f32,
+    pub trig_r: f32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -98,6 +101,8 @@ impl Manager {
             mouse_delta: alg::Vec2::zero(),
             joy_l: alg::Vec2::zero(),
             joy_r: alg::Vec2::zero(),
+            trig_l: 0.0,
+            trig_r: 0.0,
         }
     }
 

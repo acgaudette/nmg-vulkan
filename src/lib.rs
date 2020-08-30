@@ -385,6 +385,19 @@ fn begin_update<T>(
                     };
                 },
 
+                gilrs::Event {
+                    id: _,
+                    event: gilrs::EventType::ButtonChanged(button, s, _),
+                    ..
+                } => {
+                    match button {
+                        gilrs::Button::LeftTrigger2  => input.trig_l = s,
+                        gilrs::Button::RightTrigger2 => input.trig_r = s,
+
+                        _ => (),
+                    };
+                },
+
                 _ => (),
             };
         }

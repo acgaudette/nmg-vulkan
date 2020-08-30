@@ -135,7 +135,7 @@ impl nmg::Update for Demo {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) {
         /* Debug data */
@@ -158,7 +158,7 @@ impl nmg::FixedUpdate for Demo {
         parameters: &mut render::Parameters,
         entities: &mut entity::Manager,
         components: &mut components::Container,
-        input: &input::Manager,
+        input: &mut input::Manager,
         debug: &mut debug::Handler,
     ) {
         if metadata.fixed_frame > 0 {

@@ -287,7 +287,7 @@ fn begin_update<T>(
                 if pad.is_ff_supported() { Some(id) } else { None }
         ).collect::<Vec<_>>();
 
-    let rumble = gilrs::ff::EffectBuilder::new()
+    let rumble_lo = gilrs::ff::EffectBuilder::new()
         .add_effect(gilrs::ff::BaseEffect {
             kind: gilrs::ff::BaseEffectType::Weak { magnitude: u16::MAX },
             scheduling: gilrs::ff::Replay {
@@ -303,7 +303,27 @@ fn begin_update<T>(
         .gamepads(&rumble_gamepads)
         .finish(&mut gamepads)
         .expect("Bad gamepad rumble array");
-    rumble.play()
+
+    let rumble_hi = gilrs::ff::EffectBuilder::new()
+        .add_effect(gilrs::ff::BaseEffect {
+            kind: gilrs::ff::BaseEffectType::Strong { magnitude: u16::MAX },
+            scheduling: gilrs::ff::Replay {
+                     after: gilrs::ff::Ticks::from_ms(0),
+                  play_for: gilrs::ff::Ticks::from_ms(512),
+                with_delay: gilrs::ff::Ticks::from_ms(0),
+            },
+            envelope: Default::default(),
+        })
+        .gain(0.0)
+        .repeat(gilrs::ff::Repeat::Infinitely)
+        .distance_model(gilrs::ff::DistanceModel::None)
+        .gamepads(&rumble_gamepads)
+        .finish(&mut gamepads)
+        .expect("Bad gamepad rumble array");
+
+    rumble_lo.play()
+        .expect("Bad gamepad rumble array");
+    rumble_hi.play()
         .expect("Bad gamepad rumble array");
 
     loop {
@@ -328,7 +348,9 @@ fn begin_update<T>(
                         "disconnected"
                     };
 
-                    rumble.set_gamepads(&rumble_gamepads, gamepads)
+                    rumble_lo.set_gamepads(&rumble_gamepads, gamepads)
+                        .expect("Bad gamepad rumble array");
+                    rumble_hi.set_gamepads(&rumble_gamepads, gamepads)
                         .expect("Bad gamepad rumble array");
 
                     println!(
@@ -365,10 +387,17 @@ fn begin_update<T>(
             };
         }
 
-        // Rumble
         let rumble_mix = input.mix_rumble();
-        if rumble_mix > 0.0 {
-            match rumble.set_gain(rumble_mix) {
+
+        if rumble_mix.0 > 0.0 {
+            match rumble_lo.set_gain(rumble_mix.0) {
+                Ok(_) => (),
+                Err(e) => panic!("Error setting rumble gain: {}", e)
+            }
+        }
+
+        if rumble_mix.1 > 0.0 {
+            match rumble_hi.set_gain(rumble_mix.1) {
                 Ok(_) => (),
                 Err(e) => panic!("Error setting rumble gain: {}", e)
             }
@@ -379,7 +408,8 @@ fn begin_update<T>(
 
         // Reset dirty input
         input.mouse_delta = alg::Vec2::zero();
-        input.rumbles.clear();
+        input.rumbles_lo.clear();
+        input.rumbles_hi.clear();
 
         // Handle window events
         events.poll_events(|event| {

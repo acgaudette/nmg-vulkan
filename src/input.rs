@@ -2,7 +2,7 @@ extern crate voodoo_winit as vdw;
 
 use alg;
 
-pub const KEY_COUNT: usize = 23;
+pub const KEY_COUNT: usize = 27;
 
 pub struct Manager {
     key_map: [KeyState; KEY_COUNT],
@@ -58,6 +58,13 @@ pub enum Key {
     Enter,
     LCtrl,
     LShift,
+
+    /* Gamepad */
+
+    North,
+    East,
+    South,
+    West,
 }
 
 impl Key {
@@ -86,6 +93,12 @@ impl Key {
             20 => Some(Key::Enter),
             21 => Some(Key::LCtrl),
             22 => Some(Key::LShift),
+
+            23 => Some(Key::North),
+            24 => Some(Key::East),
+            25 => Some(Key::South),
+            26 => Some(Key::West),
+
             _ => None,
         }
     }

@@ -329,6 +329,9 @@ fn begin_update<T>(
         .expect("Bad gamepad rumble array");
 
     loop {
+        // Update last frame of input
+        input.increment_key_states();
+
         /* Gamepad input */
 
         while let Some(event) = gamepads.next_event() {
@@ -398,6 +401,32 @@ fn begin_update<T>(
                     };
                 },
 
+                gilrs::Event {
+                    id: _,
+                    event: gilrs::EventType::ButtonPressed(button,  _)
+                         | gilrs::EventType::ButtonReleased(button, _),
+                    ..
+                } => {
+                    let key = match button {
+                        gilrs::Button::North => Some(input::Key::North),
+                        gilrs::Button::East => Some(input::Key::East),
+                        gilrs::Button::South => Some(input::Key::South),
+                        gilrs::Button::West => Some(input::Key::West),
+                        _ => None,
+                    };
+
+                    if let Some(code) = key {
+                        input.set_key_pressed(
+                            code as usize,
+                            match event.event {
+                                gilrs::EventType::ButtonPressed(_, _) => true,
+                                gilrs::EventType::ButtonReleased(_, _) => false,
+                                _ => panic!(),
+                            },
+                        );
+                    }
+                },
+
                 _ => (),
             };
         }
@@ -417,9 +446,6 @@ fn begin_update<T>(
                 Err(e) => panic!("Error setting rumble gain: {}", e)
             }
         }
-
-        // Update last frame of input
-        input.increment_key_states();
 
         // Reset dirty input
         input.mouse_delta = alg::Vec2::zero();
@@ -704,6 +730,7 @@ fn vdw_key_to_key(keycode: vdw::winit::VirtualKeyCode) -> Option<input::Key> {
         VirtualKeyCode::V =>        Some(Key::V),
         VirtualKeyCode::Q =>        Some(Key::Q),
         VirtualKeyCode::E =>        Some(Key::E),
+        VirtualKeyCode::M =>        Some(Key::M),
         VirtualKeyCode::Up =>       Some(Key::Up),
         VirtualKeyCode::Down =>     Some(Key::Down),
         VirtualKeyCode::Left =>     Some(Key::Left),

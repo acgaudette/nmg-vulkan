@@ -1675,6 +1675,19 @@ mod tests {
     #[cfg(debug_assertions)]
     fn sqrt_0() { inverse_sqrt(0.0); }
 
+    #[test]
+    fn sqrt_1() {
+        let result = inverse_sqrt(1.0);
+        assert_approx_eq!(result, 1.0, 1.0);
+    }
+
+    #[test]
+    fn sqrt_cmp() {
+        let a = inverse_sqrt(1.0);
+        let b = 1.0 / 1f32.sqrt();
+        assert_approx_eq!(a, b, 1.0);
+    }
+
     /* Vec3 */
 
     #[test]

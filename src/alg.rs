@@ -174,6 +174,10 @@ impl Vec2 {
         self.x * self.x + self.y * self.y
     }
 
+    pub fn mag(self) -> f32 {
+        self.mag_squared().sqrt()
+    }
+
     pub fn dist_squared(self, other: Vec2) -> f32 {
         (self - other).mag_squared()
     }
@@ -212,6 +216,17 @@ impl std::ops::Mul<f32> for Vec2 {
         Vec2::new(
             self.x * scalar,
             self.y * scalar,
+        )
+    }
+}
+
+impl std::ops::Div<f32> for Vec2 {
+    type Output = Vec2;
+
+    fn div(self, scalar: f32) -> Vec2 {
+        Vec2::new(
+            self.x / scalar,
+            self.y / scalar,
         )
     }
 }

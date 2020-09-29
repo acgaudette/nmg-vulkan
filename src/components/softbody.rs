@@ -92,11 +92,33 @@ macro_rules! get_mut_instance {
 
 pub trait Iterate {
     #[allow(unused_variables)]
-    fn iterate(
+    fn pre_iterate(
+        &mut self,
+        fixed_delta: f32,
+        &mut Particle,
+    ) { }
+
+    #[allow(unused_variables)]
+    fn solve(
         &mut self,
         fixed_delta: f32,
         iterations: usize,
         &mut Manager,
+    ) { }
+
+    #[allow(unused_variables)]
+    fn iterate(
+        &mut self,
+        fixed_delta: f32,
+        iterations: usize,
+        &mut Particle,
+    ) { }
+
+    #[allow(unused_variables)]
+    fn post_iterate(
+        &mut self,
+        fixed_delta: f32,
+        &mut Particle,
     ) { }
 }
 
@@ -1623,6 +1645,10 @@ impl Manager {
                 None => continue,
             };
 
+            for particle in &mut instance.particles {
+                game.pre_iterate(FIXED_DT, particle);
+            }
+
             // Plane friction
             for plane in &self.planes {
                 for particle in &mut instance.particles {
@@ -1661,7 +1687,7 @@ impl Manager {
         // Note: "true" delta time is FIXED_DT / ITERATIONS
         for _ in 0..self.iterations {
             // External constraints
-            game.iterate(FIXED_DT, self.iterations, self);
+            game.solve(FIXED_DT, self.iterations, self);
 
             // Joint constraints
             self.solve_joints();
@@ -1674,6 +1700,10 @@ impl Manager {
                     Some(ref mut instance) => instance,
                     None => continue,
                 };
+
+                for particle in &mut instance.particles {
+                    game.iterate(FIXED_DT, self.iterations, particle);
+                }
 
                 // Plane collision
                 for plane in &self.planes {
@@ -1758,6 +1788,8 @@ impl Manager {
             for particle in &mut instance.particles {
                 // Meters per FIXED_DT
                 particle.displacement = particle.position - particle.last;
+
+                game.post_iterate(FIXED_DT, particle);
             }
 
             let new_vel = instance.compute_velocity();

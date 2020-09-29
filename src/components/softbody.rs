@@ -122,10 +122,10 @@ pub trait Iterate {
     ) { }
 }
 
-struct Particle {
-    position: alg::Vec3,
+pub struct Particle {
+    pub position: alg::Vec3,
     last: alg::Vec3,
-    displacement: alg::Vec3,
+    pub displacement: alg::Vec3,
 }
 
 impl Particle {
@@ -471,7 +471,7 @@ impl<'a> JointBuilder<'a> {
  */
 
 pub struct Instance {
-    particles: Vec<Particle>,
+    pub particles: Vec<Particle>,
     rods: Vec<Rod>,
     match_shape: bool, // Actively match shape at runtime
 
@@ -1194,7 +1194,7 @@ impl<'a> InstanceBuilder<'a> {
 // Data layout assumes many physics objects (but may still be sparse)
 pub struct Manager {
     handles: Vec<Option<entity::Handle>>,
-    instances: Vec<Option<Instance>>,
+    pub instances: Vec<Option<Instance>>,
     count: usize,
 
     joints: fnv::FnvHashMap<usize, Vec<Joint>>,
@@ -1203,7 +1203,7 @@ pub struct Manager {
     pub iterations: usize,
     gravity: alg::Vec3,
     drag: f32,
-    friction: f32,
+    pub friction: f32,
     bounce: f32,
 }
 

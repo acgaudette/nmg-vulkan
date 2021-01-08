@@ -116,20 +116,26 @@ impl Manager {
         font_data: &font::Data,
         vertex_ptr: *mut *mut *mut render::FontVertex_3d,
         idx_ptr: *mut *mut u32,
-        framebuffer_height: u32,
         text_instances: &mut Vec<render::TextInstance>,
     ) {
         // Calls function that shares functionality with other types of text
         for (_, text_instance) in self.instances.iter() {
             let mut idx_offset = 0u32;
-            bitmap::prepare_text(
+            let char_scale = bitmap::get_3d_char_scale(
+                font_data,
+                text_instance,
+            );
+            let quads_props = bitmap::prepare_text(
                 text_instance,
                 font_data,
-                vertex_ptr,
                 idx_ptr,
                 &mut &mut idx_offset,
-                framebuffer_height,
                 text_instances,
+                char_scale,
+            );
+            bitmap::write_vertices_3d(
+                quads_props,
+                vertex_ptr,
             );
         }
     }

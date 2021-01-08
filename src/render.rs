@@ -724,7 +724,6 @@ impl<'a> Context<'a> {
             &self.font_data,
             &mut vertex_ptr_3d,
             &mut idx_ptr_3d,
-            framebuffer_height,
             &mut self.text_display.text_instances,
         );
 

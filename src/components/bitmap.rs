@@ -1,46 +1,64 @@
 use render;
 use font;
 
+pub struct QuadProperties {
+    left_x: f32,
+    right_x: f32,
+    top_y: f32,
+    bot_y: f32,
+    u_start: f32,
+    u_end: f32,
+    v_start: f32,
+    v_end: f32,
+}
+
+// label text viewable on screen at all times
+pub fn get_2d_char_scale(
+    font: &font::Data,
+    text_instance: &render::Text,
+    framebuffer_height: u32,
+) -> f32 {
+    let common_data = &font.common_font_data;
+    // Double for 2D to scale into (-1, 1) NDC
+    return 2.0 * match text_instance.scale {
+        render::TextScale::Pixel => {
+            text_instance.scale_factor / framebuffer_height as f32
+        },
+        render::TextScale::Aspect => {
+            text_instance.scale_factor / common_data.line_height
+        },
+    };
+}
+
+// 3D text dependent on position
+pub fn get_3d_char_scale(
+    font: &font::Data,
+    text_instance: &render::Text,
+) -> f32{
+    let common_data = &font.common_font_data;
+    return text_instance.scale_factor / common_data.line_height;
+}
+
 // Shared method for preparing and rendering text instances, whether 3d or not
 pub fn prepare_text<T>(
     text_instance: &render::Text,
     font: &font::Data,
-    vertex_ptr: *mut *mut T,
     idx_ptr: *mut *mut u32,
     idx_offset: &mut &mut u32,
-    framebuffer_height: u32,
     text_instances: &mut Vec<render::TextInstance>,
-) {
+    char_scale: f32,
+)-> Vec<QuadProperties> {
     let common_data = &font.common_font_data;
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
-
-    /*
-      Determines scaling for text depending on type of text
-      e.g. 3D text dependent on position versus label text
-      viewable on screen at all times
-     */
-    let char_scale = {
-        if text_instance.is_2d {
-            // Double for 2D to scale into (-1, 1) NDC
-            2.0 * match text_instance.scale {
-                render::TextScale::Pixel => {
-                    text_instance.scale_factor / framebuffer_height as f32
-                },
-                render::TextScale::Aspect => {
-                    text_instance.scale_factor / common_data.line_height
-                },
-            }
-        } else {
-            text_instance.scale_factor / common_data.line_height
-        }
-    };
 
     // Starting positions for current text instance being rendered
     let mut cursor_x = 0.0; // NDC
     let mut cursor_y = 0.0;
     let perspective_scale = if text_instance.is_2d { 1.0 } else { -1.0 };
     let mut num_letters = 0;
+
+    let mut quads: Vec<QuadProperties> = vec![];
 
     // Render quads for each individual character
     for c in text_instance.text.chars() {
@@ -73,7 +91,8 @@ pub fn prepare_text<T>(
             ve as f32,
         );
 
-        // Send data to the GPU for the positions of the character quad
+        // Calculate data to be sent to GPU for the 
+        // positions of the character quad
         let draw_x = cursor_x + char_data.xoffset * char_scale;
         let left_x = draw_x;
         let right_x = draw_x + char_data.width * char_scale;
@@ -85,83 +104,18 @@ pub fn prepare_text<T>(
         let top_y = draw_y;
         let bot_y = draw_y + char_data.height * char_scale
             * perspective_scale;
-
-        if text_instance.is_2d {
-            let (top_left, bottom_right, bottom_left, top_right) =
-                (render::FontVertex_2d::new_raw( // Top left
-                        left_x,
-                        top_y,
-                        u_start,
-                        v_start,
-                    ),
-                render::FontVertex_2d::new_raw( // Bottom right
-                        right_x,
-                        bot_y,
-                        u_end,
-                        v_end,
-                    ),
-                render::FontVertex_2d::new_raw( // Bottom left
-                        left_x,
-                        bot_y,
-                        u_start,
-                        v_end,
-                    ),
-                render::FontVertex_2d::new_raw( // Top right
-                        right_x,
-                        top_y,
-                        u_end,
-                        v_start,
-                    ));
-            for vertex in [
-                top_left, top_right, bottom_left, bottom_right,
-            ].iter() {
-                unsafe {
-                    let vp = vertex_ptr as *mut *mut render::FontVertex_2d;
-                    (**vp) = *vertex;
-                    (*vertex_ptr) = (*vp).offset(1) as *mut T;
-                }
+        quads.push(
+            QuadProperties {
+                left_x,
+                right_x,
+                top_y,
+                bot_y,
+                u_start,
+                u_end,
+                v_start,
+                v_end,
             }
-        } else {
-            let (top_left, bottom_right, bottom_left, top_right) =
-                (render::FontVertex_3d::new_raw(
-                        left_x,
-                        top_y,
-                        0.0,
-                        u_start,
-                        v_start,
-                    ),
-                render::FontVertex_3d::new_raw(
-                        right_x,
-                        bot_y,
-                        0.0,
-                        u_end,
-                        v_end,
-                    ),
-                render::FontVertex_3d::new_raw(
-                        left_x,
-                        bot_y,
-                        0.0,
-                        u_start,
-                        v_end,
-                    ),
-                render::FontVertex_3d::new_raw(
-                        right_x,
-                        top_y,
-                        0.0,
-                        u_end,
-                        v_start,
-                    ));
-            for vertex in [
-                top_left, top_right, bottom_left, bottom_right,
-            ].iter() {
-                unsafe {
-                    let vp = vertex_ptr as *mut *mut render::FontVertex_3d;
-                    (**vp) = *vertex;
-                    (*vertex_ptr) = (*vp).offset(1) as *mut T;
-                }
-            }
-        };
-
+        );
         /*
             top_left, top_right, bottom_right,
             top_left, bottom_right, bottom_left,
@@ -199,4 +153,112 @@ pub fn prepare_text<T>(
     }
 
     text_instances.push(text_instance);
+    return quads;
+}
+
+pub fn write_vertices_2d<T>(
+    quads_props: Vec<QuadProperties>,
+    vertex_ptr: *mut *mut T,
+) {
+    for QuadProperties {
+        left_x,
+        right_x,
+        top_y,
+        bot_y,
+        u_start,
+        u_end,
+        v_start,
+        v_end,
+    } in quads_props.iter() {
+        let (top_left, bottom_right, bottom_left, top_right) =
+            (render::FontVertex_2d::new_raw( // Top left
+                    *left_x,
+                    *top_y,
+                    *u_start,
+                    *v_start,
+                ),
+            render::FontVertex_2d::new_raw( // Bottom right
+                    *right_x,
+                    *bot_y,
+                    *u_end,
+                    *v_end,
+                ),
+            render::FontVertex_2d::new_raw( // Bottom left
+                    *left_x,
+                    *bot_y,
+                    *u_start,
+                    *v_end,
+                ),
+            render::FontVertex_2d::new_raw( // Top right
+                    *right_x,
+                    *top_y,
+                    *u_end,
+                    *v_start,
+                ));
+        for vertex in [
+            top_left, top_right, bottom_left, bottom_right,
+        ].iter() {
+            unsafe {
+                let vp = vertex_ptr as *mut *mut render::FontVertex_2d;
+                (**vp) = *vertex;
+                (*vertex_ptr) = (*vp).offset(1) as *mut T;
+            }
+        }
+    }
+}
+
+pub fn write_vertices_3d<T>(
+    quads_props: Vec<QuadProperties>,
+    vertex_ptr: *mut *mut T,
+) {
+
+    for QuadProperties {
+        left_x,
+        right_x,
+        top_y,
+        bot_y,
+        u_start,
+        u_end,
+        v_start,
+        v_end,
+    } in quads_props.iter() {
+        let (top_left, bottom_right, bottom_left, top_right) =
+            (render::FontVertex_3d::new_raw(
+                    *left_x,
+                    *top_y,
+                    0.0,
+                    *u_start,
+                    *v_start,
+                ),
+            render::FontVertex_3d::new_raw(
+                    *right_x,
+                    *bot_y,
+                    0.0,
+                    *u_end,
+                    *v_end,
+                ),
+            render::FontVertex_3d::new_raw(
+                    *left_x,
+                    *bot_y,
+                    0.0,
+                    *u_start,
+                    *v_end,
+                ),
+            render::FontVertex_3d::new_raw(
+                    *right_x,
+                    *top_y,
+                    0.0,
+                    *u_end,
+                    *v_start,
+                ));
+        for vertex in [
+            top_left, top_right, bottom_left, bottom_right,
+        ].iter() {
+            unsafe {
+                let vp = vertex_ptr as *mut *mut render::FontVertex_3d;
+                (**vp) = *vertex;
+                (*vertex_ptr) = (*vp).offset(1) as *mut T;
+            }
+        }
+    }
 }

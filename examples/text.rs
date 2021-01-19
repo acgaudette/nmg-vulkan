@@ -35,6 +35,8 @@ impl nmg::Start for Demo {
         components.texts.build()
             .text("the medium is the\nmassage")
             .scale_factor(1f32)
+            .anchor_x(0.5f32)
+            .anchor_y(0.5f32)
             .for_entity(text_0);
         self.objects.push(text_0);
 
@@ -73,6 +75,8 @@ impl nmg::Start for Demo {
         components.labels.build()
             .text("nmg_vulkan")
             .pixel_scale_factor(4f32)
+            .anchor_x(0.5f32)
+            .anchor_y(0.5f32)
             .for_entity(label_0);
         self.objects.push(label_0);
 

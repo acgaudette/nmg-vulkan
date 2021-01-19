@@ -8,7 +8,6 @@ use graphics;
 use config;
 use statics;
 use util;
-use font;
 
 macro_rules! offset_of {
     ($struct:ty, $field:tt) => (
@@ -106,7 +105,6 @@ pub struct Context<'a> {
 
     text_display:   TextDisplay,
     label_display:  TextDisplay,
-    font_data:      font::Data,
     text_meta:      TextMeta,
     font_alignment: u64,
 
@@ -238,21 +236,11 @@ impl<'a> Context<'a> {
 
         let command_buffers = init_commands(&drawing_pool, &framebuffers)?;
 
-        /* Text data */
-
-        let font_path = config::load_section_setting::<String>(
-            &config::ENGINE_CONFIG,
-            "settings",
-            "font_path",
-        );
-        let font_data = font::Data::new(&font_path);
-
         let text_meta = init_text_pipeline_builder(
             &swapchain.extent(),
             device.clone(),
             graphics_family,
             &transient_pool,
-            &font_data,
         )?;
 
         let text_display = create_text(
@@ -322,7 +310,6 @@ impl<'a> Context<'a> {
                 dyn_ubo_memory,
                 text_display,
                 label_display,
-                font_data,
                 text_meta,
                 font_alignment,
                 debug_data,
@@ -426,7 +413,6 @@ impl<'a> Context<'a> {
             self.device.clone(),
             self.graphics_family,
             &self.transient_pool,
-            &self.font_data,
         )?;
 
         self.text_meta = text_meta;
@@ -721,7 +707,6 @@ impl<'a> Context<'a> {
             .begin_text_update::<*mut FontVertex_3d>();
 
         texts.prepare_bitmap_text(
-            &self.font_data,
             &mut vertex_ptr_3d,
             &mut idx_ptr_3d,
             &mut self.text_display.text_instances,
@@ -757,7 +742,6 @@ impl<'a> Context<'a> {
             .begin_text_update::<*mut FontVertex_2d>();
 
         labels.prepare_bitmap_text(
-            &self.font_data,
             &mut vertex_ptr_2d,
             &mut idx_ptr_2d,
             framebuffer_height,
@@ -3129,9 +3113,6 @@ fn set_image_layout_helper(
     );
 }
 
-#[derive(Clone)]
-pub enum TextAlign { Left, Center, Right }
-
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct FontVertex_2d {
@@ -3256,9 +3237,9 @@ fn init_text_pipeline_builder(
     vulkan_device: vd::Device,
     graphics_family: u32,
     transient_pool: & vd::CommandPool,
-    font_data: &font::Data,
 ) -> vd::Result<TextMeta> {
 
+    let font_data = &config::FONT_DATA;
     /* Prepare Resources */
 
     // Begin image preparation
@@ -3469,46 +3450,6 @@ fn init_text_pipeline_builder(
             scissors,
         }
     )
-}
-
-#[derive(Clone, PartialEq)]
-pub enum TextScale {
-    Pixel,
-    Aspect,
-}
-
-#[derive(Clone)]
-pub struct Text {
-    pub text: String,
-    pub position: alg::Vec3,
-    pub align: TextAlign,
-    pub scale: TextScale,
-    pub scale_factor: f32,
-    pub is_2d: bool,
-}
-
-impl Text {
-    pub fn empty_2d_instance() -> Text {
-        Text {
-            text: "".to_string(),
-            position: alg::Vec3::zero(),
-            align: TextAlign::Center,
-            scale: TextScale::Pixel,
-            scale_factor: 1f32,
-            is_2d: true,
-        }
-    }
-
-    pub fn empty_3d_instance() -> Text {
-        Text {
-            text: "".to_string(),
-            position: alg::Vec3::zero(),
-            align: TextAlign::Right,
-            scale: TextScale::Aspect,
-            scale_factor: 1f32,
-            is_2d: false,
-        }
-    }
 }
 
 // Contains data for making indexed draws

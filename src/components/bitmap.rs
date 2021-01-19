@@ -1,5 +1,6 @@
+use alg;
 use render;
-use font;
+use config;
 
 pub struct QuadProperties {
     left_x: f32,
@@ -12,19 +13,105 @@ pub struct QuadProperties {
     v_end: f32,
 }
 
+#[derive(Clone, PartialEq)]
+pub enum TextScale {
+    Pixel,
+    Aspect,
+}
+
+#[derive(Clone)]
+pub enum TextAlign { Left, Center, Right }
+
+#[derive(Clone)]
+pub struct Text {
+    pub text: String,
+    pub position: alg::Vec3,
+    pub align: TextAlign,
+    pub scale: TextScale,
+    pub scale_factor: f32,
+    pub raw_width: f32,
+    pub raw_height: f32,
+    pub anchor_x: f32,
+    pub anchor_y: f32,
+    pub is_2d: bool,
+}
+
+impl Text {
+    pub fn empty_2d_instance() -> Text {
+        Text {
+            text: "".to_string(),
+            position: alg::Vec3::zero(),
+            align: TextAlign::Center,
+            scale: TextScale::Pixel,
+            scale_factor: 1f32,
+            raw_width: 0f32,
+            raw_height: 0f32,
+            anchor_x: 0f32,
+            anchor_y: 0f32,
+            is_2d: true,
+        }
+    }
+
+    pub fn empty_3d_instance() -> Text {
+        Text {
+            text: "".to_string(),
+            position: alg::Vec3::zero(),
+            align: TextAlign::Right,
+            scale: TextScale::Aspect,
+            scale_factor: 1f32,
+            raw_width: 0f32,
+            raw_height: 0f32,
+            anchor_x: 0f32,
+            anchor_y: 0f32,
+            is_2d: false,
+        }
+    }
+
+    pub fn set_str(&mut self, str: &str) {
+        self.text = str.to_string();
+        let common_data = &config::FONT_DATA.common_font_data;
+        let mut width = 0f32;
+        let mut height = common_data.line_height;
+        let mut width_counter = 0f32;
+        for c in str.chars() {
+            if c == '\n' {
+                height += common_data.line_height;
+                if width_counter > width {
+                    width = width_counter;
+                }
+                width_counter = 0.0;
+                continue;
+            }
+    
+            if c == '\t' {
+                width_counter += common_data.size;
+                continue;
+            }
+    
+            // Alias for character data from character map
+            let char_data = &common_data.char_map[&(c as i32)];
+            width_counter += char_data.xoffset + char_data.width;
+        }
+        if width_counter > width {
+            width = width_counter;
+        }
+        self.raw_width = width;
+        self.raw_height = height;
+    }
+}
+
 // label text viewable on screen at all times
 pub fn get_2d_char_scale(
-    font: &font::Data,
-    text_instance: &render::Text,
+    text_instance: &Text,
     framebuffer_height: u32,
 ) -> f32 {
-    let common_data = &font.common_font_data;
+    let common_data = &config::FONT_DATA.common_font_data;
     // Double for 2D to scale into (-1, 1) NDC
     return 2.0 * match text_instance.scale {
-        render::TextScale::Pixel => {
+        TextScale::Pixel => {
             text_instance.scale_factor / framebuffer_height as f32
         },
-        render::TextScale::Aspect => {
+        TextScale::Aspect => {
             text_instance.scale_factor / common_data.line_height
         },
     };
@@ -32,22 +119,21 @@ pub fn get_2d_char_scale(
 
 // 3D text dependent on position
 pub fn get_3d_char_scale(
-    font: &font::Data,
-    text_instance: &render::Text,
+    text_instance: &Text,
 ) -> f32{
-    let common_data = &font.common_font_data;
+    let common_data = &config::FONT_DATA.common_font_data;
     return text_instance.scale_factor / common_data.line_height;
 }
 
 // Shared method for preparing and rendering text instances, whether 3d or not
 pub fn prepare_text<T>(
-    text_instance: &render::Text,
-    font: &font::Data,
+    text_instance: &Text,
     idx_ptr: *mut *mut u32,
     idx_offset: &mut &mut u32,
     text_instances: &mut Vec<render::TextInstance>,
     char_scale: f32,
 )-> Vec<QuadProperties> {
+    let font = &config::FONT_DATA;
     let common_data = &font.common_font_data;
     let uv_width = common_data.uv_width;
     let uv_height = common_data.uv_height;
@@ -93,14 +179,16 @@ pub fn prepare_text<T>(
 
         // Calculate data to be sent to GPU for the 
         // positions of the character quad
-        let draw_x = cursor_x + char_data.xoffset * char_scale;
+        let draw_x = cursor_x + ((char_data.xoffset -
+            (text_instance.raw_width * text_instance.anchor_x)) * char_scale);
         let left_x = draw_x;
         let right_x = draw_x + char_data.width * char_scale;
 
         // Note: the Y offset will center the characters within the line,
         // making them appear as if they are rotating around a distant point.
-        let draw_y = cursor_y + char_data.yoffset * char_scale
-            * perspective_scale;
+        let draw_y = cursor_y + ((char_data.yoffset -
+            (text_instance.raw_height * text_instance.anchor_y)) *
+                char_scale * perspective_scale);
         let top_y = draw_y;
         let bot_y = draw_y + char_data.height * char_scale
             * perspective_scale;
@@ -211,7 +299,6 @@ pub fn write_vertices_3d<T>(
     quads_props: Vec<QuadProperties>,
     vertex_ptr: *mut *mut T,
 ) {
-
     for QuadProperties {
         left_x,
         right_x,

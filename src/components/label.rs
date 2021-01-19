@@ -3,7 +3,6 @@ extern crate fnv;
 use render;
 use entity;
 use components;
-use font;
 
 use components::transform;
 use components::bitmap;
@@ -11,24 +10,34 @@ use components::bitmap;
 /// Builder pattern for text
 pub struct TextBuilder<'a> {
     manager: &'a mut Manager,
-    text: render::Text,
+    text: bitmap::Text,
 }
 
 impl<'a> TextBuilder<'a> {
     pub fn new(manager: &'a mut Manager) -> TextBuilder<'a> {
         TextBuilder {
             manager,
-            text: render::Text::empty_2d_instance(),
+            text: bitmap::Text::empty_2d_instance(),
         }
     }
 
     pub fn text(&mut self, text: &str) -> &mut TextBuilder<'a> {
-        self.text.text = text.into();
+        self.text.set_str(text);
         self
     }
 
-    pub fn alignment(&mut self, alignment: render::TextAlign) -> &mut TextBuilder<'a> {
+    pub fn alignment(&mut self, alignment: bitmap::TextAlign) -> &mut TextBuilder<'a> {
         self.text.align = alignment;
+        self
+    }
+
+    pub fn anchor_x(&mut self, anchor_ratio: f32) -> &mut TextBuilder<'a> {
+        self.text.anchor_x = anchor_ratio;
+        self
+    }
+
+    pub fn anchor_y(&mut self, anchor_ratio: f32) -> &mut TextBuilder<'a> {
+        self.text.anchor_y = anchor_ratio;
         self
     }
 
@@ -36,7 +45,7 @@ impl<'a> TextBuilder<'a> {
      * Scaling with reference to each pixel of texture
      */
     pub fn pixel_scale_factor(&mut self, scale_factor: f32) -> &mut TextBuilder<'a> {
-        self.text.scale = render::TextScale::Pixel;
+        self.text.scale = bitmap::TextScale::Pixel;
         self.text.scale_factor = scale_factor;
         self
     }
@@ -45,7 +54,7 @@ impl<'a> TextBuilder<'a> {
      * Scaling with respect to aspect ratio
      */
     pub fn aspect_scale_factor(&mut self, scale_factor: f32) -> &mut TextBuilder<'a> {
-        self.text.scale = render::TextScale::Aspect;
+        self.text.scale = bitmap::TextScale::Aspect;
         self.text.scale_factor = scale_factor;
         self
     }
@@ -63,7 +72,7 @@ impl<'a> TextBuilder<'a> {
 }
 
 pub struct Manager {
-    instances: fnv::FnvHashMap<entity::Handle, render::Text>,
+    instances: fnv::FnvHashMap<entity::Handle, bitmap::Text>,
     pub instance_data: Vec<render::FontUBO>,
 }
 
@@ -71,7 +80,7 @@ impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
         self.instances.insert(
             entity,
-            render::Text::empty_2d_instance(),
+            bitmap::Text::empty_2d_instance(),
         );
     }
 
@@ -101,7 +110,7 @@ impl Manager {
         TextBuilder::new(self)
     }
 
-    fn set(&mut self, entity: entity::Handle, text: render::Text) {
+    fn set(&mut self, entity: entity::Handle, text: bitmap::Text) {
         debug_validate_entity!(self, entity);
         *self.instances.get_mut(&entity).unwrap() = text;
     }
@@ -110,7 +119,7 @@ impl Manager {
     pub fn set_str(&mut self, entity: entity::Handle, str: &str) {
         debug_validate_entity!(self, entity);
         let instance = self.instances.get_mut(&entity).unwrap();
-        instance.text = str.to_string();
+        instance.set_str(str);
     }
 
     pub(crate) fn update(
@@ -124,6 +133,9 @@ impl Manager {
         for (entity, _) in &mut self.instances {
             // Initialize projection * model matrix to model matrix
             let mut proj_model = transforms.get_mat(*entity);
+            // TODO: Translate by anchors
+            // let framebuffer_height = screen.height;
+            // println!("{}", *framebuffer_height);
 
             // Scale X axis by inverse aspect ratio
             proj_model.x0 = inv_aspect * proj_model.x0;
@@ -141,7 +153,6 @@ impl Manager {
 
     pub(crate) fn prepare_bitmap_text(
         &mut self,
-        font_data: &font::Data,
         vertex_ptr: *mut *mut *mut render::FontVertex_2d,
         idx_ptr: *mut *mut u32,
         framebuffer_height: u32,
@@ -151,13 +162,11 @@ impl Manager {
         for (_, text_instance) in self.instances.iter() {
             let mut idx_offset = 0u32;
             let char_scale = bitmap::get_2d_char_scale(
-                font_data,
                 text_instance,
                 framebuffer_height,
             );
-            let quads_props = bitmap::prepare_text(
+            let quads_props = bitmap::prepare_text::<render::FontVertex_2d>(
                 text_instance,
-                font_data,
                 idx_ptr,
                 &mut &mut idx_offset,
                 text_instances,

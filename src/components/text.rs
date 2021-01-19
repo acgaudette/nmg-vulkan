@@ -3,7 +3,6 @@ extern crate fnv;
 use render;
 use entity;
 use components;
-use font;
 
 use components::transform;
 use components::bitmap;
@@ -11,24 +10,34 @@ use components::bitmap;
 /// Builder pattern for text
 pub struct TextBuilder<'a> {
     manager: &'a mut Manager,
-    text: render::Text,
+    text: bitmap::Text,
 }
 
 impl<'a> TextBuilder<'a> {
     pub fn new(manager: &'a mut Manager) -> TextBuilder<'a> {
         TextBuilder {
             manager,
-            text: render::Text::empty_3d_instance(),
+            text: bitmap::Text::empty_3d_instance(),
         }
     }
 
     pub fn text(&mut self, text: &str) -> &mut TextBuilder<'a> {
-        self.text.text = text.into();
+        self.text.set_str(text);
         self
     }
 
-    pub fn alignment(&mut self, alignment: render::TextAlign) -> &mut TextBuilder<'a> {
+    pub fn alignment(&mut self, alignment: bitmap::TextAlign) -> &mut TextBuilder<'a> {
         self.text.align = alignment;
+        self
+    }
+
+    pub fn anchor_x(&mut self, anchor_ratio: f32) -> &mut TextBuilder<'a> {
+        self.text.anchor_x = anchor_ratio;
+        self
+    }
+
+    pub fn anchor_y(&mut self, anchor_ratio: f32) -> &mut TextBuilder<'a> {
+        self.text.anchor_y = anchor_ratio;
         self
     }
 
@@ -50,7 +59,7 @@ impl<'a> TextBuilder<'a> {
 }
 
 pub struct Manager {
-    instances: fnv::FnvHashMap<entity::Handle, render::Text>,
+    instances: fnv::FnvHashMap<entity::Handle, bitmap::Text>,
     pub instance_data: Vec<render::FontUBO>,
 }
 
@@ -58,7 +67,7 @@ impl components::Component for Manager {
     fn register(&mut self, entity: entity::Handle) {
         self.instances.insert(
             entity,
-            render::Text::empty_3d_instance(),
+            bitmap::Text::empty_3d_instance(),
         );
     }
 
@@ -88,7 +97,7 @@ impl Manager {
         TextBuilder::new(self)
     }
 
-    fn set(&mut self, entity: entity::Handle, text: render::Text) {
+    fn set(&mut self, entity: entity::Handle, text: bitmap::Text) {
         debug_validate_entity!(self, entity);
         *self.instances.get_mut(&entity).unwrap() = text;
     }
@@ -113,7 +122,6 @@ impl Manager {
 
     pub(crate) fn prepare_bitmap_text(
         &mut self,
-        font_data: &font::Data,
         vertex_ptr: *mut *mut *mut render::FontVertex_3d,
         idx_ptr: *mut *mut u32,
         text_instances: &mut Vec<render::TextInstance>,
@@ -122,12 +130,10 @@ impl Manager {
         for (_, text_instance) in self.instances.iter() {
             let mut idx_offset = 0u32;
             let char_scale = bitmap::get_3d_char_scale(
-                font_data,
                 text_instance,
             );
-            let quads_props = bitmap::prepare_text(
+            let quads_props = bitmap::prepare_text::<render::FontVertex_3d>(
                 text_instance,
-                font_data,
                 idx_ptr,
                 &mut &mut idx_offset,
                 text_instances,

@@ -1,9 +1,17 @@
 extern crate ini;
 use std;
+use font;
 
 lazy_static! {
     pub static ref ENGINE_CONFIG: ini::Ini =
         load_config("config.ini");
+    /* Text data */
+    pub static ref FONT_DATA: font::Data = font::Data::new(
+        &load_section_setting::<String>(
+            &ENGINE_CONFIG,
+            "settings",
+            "font_path",
+        ));
 }
 
 pub fn load_config(filename: &str) -> ini::Ini {

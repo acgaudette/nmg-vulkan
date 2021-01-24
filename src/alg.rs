@@ -1360,6 +1360,16 @@ impl Quat {
             + self.w * other.w
     }
 
+    #[inline]
+    pub fn neg(self) -> Quat {
+        Quat {
+                x: -self.x,
+                y: -self.y,
+                z: -self.z,
+                w: -self.w,
+        }
+    }
+
     pub fn norm(self) -> Quat {
         let inverse_len = inverse_sqrt(self.mag_squared());
 

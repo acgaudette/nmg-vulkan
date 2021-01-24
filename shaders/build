@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-VK_PATH=~/dev/vulkan/sdk/*/x86_64/bin/
-COMPILER=$VK_PATH/glslangValidator
+COMPILER=glslangValidator
 
 function compile_fast {
   name=$1; extension=$2; prefix=${name}_

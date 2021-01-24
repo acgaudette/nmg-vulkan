@@ -1003,12 +1003,15 @@ impl std::ops::Add for Mat3 {
 
 impl std::fmt::Display for Mat3 {
     fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let precision = out.precision().unwrap_or(8);
         write!(
             out,
-            "[ {}, {}, {} ]\n[ {}, {}, {} ]\n[ {}, {}, {} ]",
-            self.x0, self.x1, self.x2,
-            self.y0, self.y1, self.y2,
-            self.z0, self.z1, self.z2,
+            "[ {:+.*?}, {:+.*?}, {:+.*?} ]\n\
+             [ {:+.*?}, {:+.*?}, {:+.*?} ]\n\
+             [ {:+.*?}, {:+.*?}, {:+.*?} ]",
+            precision, self.x0, precision, self.x1, precision, self.x2,
+            precision, self.y0, precision, self.y1, precision, self.y2,
+            precision, self.z0, precision, self.z1, precision, self.z2,
         )
     }
 }

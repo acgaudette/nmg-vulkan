@@ -1394,7 +1394,7 @@ impl Quat {
             x: -self.x,
             y: -self.y,
             z: -self.z,
-            w:  self.w,
+            w:  self.w, // Preserve w
         }
     }
 
@@ -1633,6 +1633,7 @@ impl Plane {
 
     #[inline]
     pub fn dist(self, point: Vec3) -> f32 {
+        // Note: signed distance
         self.normal.dot(point) + self.offset
     }
 

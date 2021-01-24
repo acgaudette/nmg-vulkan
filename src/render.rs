@@ -24,7 +24,7 @@ macro_rules! offset_of {
     );
 }
 
-const ENABLE_VALIDATION_LAYERS: bool = cfg!(debug_assertions);
+const ENABLE_VALIDATION_LAYERS: bool = false;
 const VALIDATION_LAYERS: &[&str] = &["VK_LAYER_LUNARG_standard_validation"];
 const DEVICE_EXTENSIONS: &[&str] = &["VK_KHR_swapchain"];
 

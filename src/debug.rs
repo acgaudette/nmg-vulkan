@@ -133,6 +133,46 @@ impl Handler {
     }
 
     #[allow(unused_variables)]
+    pub fn add_transform_axes(
+        &mut self,
+        center: alg::Vec3,
+        transform: alg::Mat3,
+        intensity: f32,
+    ) {
+        #[cfg(debug_assertions)] {
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + transform.col(0),
+                    ),
+                    graphics::Color::red() * intensity,
+                )
+            );
+
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + transform.col(1),
+                    ),
+                    graphics::Color::green() * intensity,
+                )
+            );
+
+            self.lines.push(
+                render::DebugLine::new(
+                    alg::Line::new(
+                        center,
+                        center + transform.col(2),
+                    ),
+                    graphics::Color::cyan() * intensity,
+                )
+            );
+        }
+    }
+
+    #[allow(unused_variables)]
     pub fn add_cross(
         &mut self,
         center: alg::Vec3,

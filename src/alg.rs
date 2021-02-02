@@ -70,6 +70,7 @@ macro_rules! assert_approx_eq_quat {
 // For kicks
 pub fn inverse_sqrt(x: f32) -> f32 {
     debug_assert!(!x.is_nan());
+
     #[cfg(debug_assertions)] {
         if (x - 0.0).abs() < std::f32::EPSILON {
             panic!("attempted to divide by zero");
@@ -85,6 +86,14 @@ pub fn inverse_sqrt(x: f32) -> f32 {
     let mut iter = guess;
     for _ in 0..4 { iter *= 1.5 - half * iter * iter; }
     iter
+}
+
+pub fn mix_open(a: f32, b: f32, t: f32) -> f32 {
+     a * (1f32 - t) + b * t
+}
+
+pub fn mix(a: f32, b: f32, t: f32) -> f32 {
+     mix_open(a, b, t).min(1f32).max(0f32)
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -160,7 +169,7 @@ impl Vec2 {
     }
 
     /// Normalize `self` only if squared magnitude is nonzero.
-    /// Useful in cases where zero vectors are known in advance to exist.
+    /// Useful in cases where zero vectors are known to exist in advance.
     pub fn norm_safe(self) -> Vec2 {
         let mag_sq = self.mag_squared();
         if std::f32::EPSILON >= mag_sq { self }
@@ -495,11 +504,27 @@ impl Mat3 {
     }
 
     #[inline]
+    pub fn col(self, i: usize) -> Vec3 {
+        Vec3::new(
+            self.get(0, i),
+            self.get(1, i),
+            self.get(2, i),
+        )
+    }
+
+    #[inline]
     pub fn set(&mut self, row: usize, column: usize, value: f32) {
         unsafe {
             let ptr = std::mem::transmute::<*mut Mat3, *mut f32>(self);
             *ptr.add(row + 3 * column) = value;
         }
+    }
+
+    #[inline]
+    pub fn set_col(&mut self, i: usize, v: Vec3) {
+        self.set(0, i, v.x);
+        self.set(1, i, v.y);
+        self.set(2, i, v.z);
     }
 
     #[inline]
@@ -1279,10 +1304,6 @@ impl Quat {
         Mat3::axes(right, up, fwd).to_quat()
     }
 
-    pub fn axis_angle(axis: Vec3, angle: f32) -> Quat {
-        Quat::axis_angle_raw(axis.norm(), angle) // Normalize first
-    }
-
     pub fn axis_angle_raw(axis: Vec3, angle: f32) -> Quat {
         let half = 0.5 * angle;
         let half_sin = half.sin();
@@ -1294,6 +1315,10 @@ impl Quat {
             z: axis.z * half_sin,
             w: half_cos,
         }
+    }
+
+    pub fn axis_angle(axis: Vec3, angle: f32) -> Quat {
+        Quat::axis_angle_raw(axis.norm(), angle) // Normalize first
     }
 
     pub fn look_at(position: Vec3, target: Vec3, up: Vec3) -> Quat {

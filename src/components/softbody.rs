@@ -11,6 +11,7 @@ use debug;
 
 use ::FIXED_DT; // Import from lib
 use components::transform;
+const EXTRACT_ITER: usize = 16;
 
 /// Default instance mass
 pub const INST_DEFAULT_MASS: f32 = 1.0;
@@ -444,6 +445,35 @@ impl<'a> JointBuilder<'a> {
     }
 }
 
+pub fn extract_orient(prev: alg::Quat, transform: alg::Mat3) -> alg::Quat {
+    let mut result = prev;
+
+    for _ in 0..EXTRACT_ITER {
+        let rot = result.to_mat();
+        let omega = (
+              rot.col(0).cross(transform.col(0))
+            + rot.col(1).cross(transform.col(1))
+            + rot.col(2).cross(transform.col(2))
+        ) * (
+            1.0 / (
+                  rot.col(0).dot(transform.col(0))
+                + rot.col(1).dot(transform.col(1))
+                + rot.col(2).dot(transform.col(2))
+                + std::f32::EPSILON
+            ).abs() + 1.0e-9
+        );
+
+        let a = omega.mag();
+        if 1.0e-9 >= a { break; }
+
+        let dir = omega / a;
+        result = alg::Quat::axis_angle(dir, a) * result;
+        result = result.norm();
+    }
+
+    result
+}
+
 #[cfg(debug_assertions)]
 struct InstanceIterationDebug {
     plane: f32,
@@ -859,17 +889,25 @@ impl Instance {
         (n, a / FIXED_DT)
     }
 
-    /// Returns instance orientation using least squares fit. \
+    /// Returns instance transform using least squares fit. \
     /// `center` is a parameter for optional caching.
-    pub fn matched_orientation(&self, center: alg::Vec3) -> alg::Mat3 {
+    pub fn matched_transform(&self, center: alg::Vec3) -> alg::Mat3 {
         let mut transform = alg::Mat3::zero();
 
-        // Sum multiplication of actual and model particle positions
+        // Sum product of actual and model particle positions
         for i in 0..self.particles.len() {
             let actual = self.particles[i].position - center;
             let model = self.model.positions[i] - self.model.com;
             transform = transform + (actual * model);
+            // Ignore [inverse] model matrix
         }
+
+        transform
+    }
+
+    /// Returns instance orientation using least squares fit.
+    pub fn matched_orient_polar(&self, center: alg::Vec3) -> alg::Mat3 {
+        let transform = self.matched_transform(center);
 
         // If the mesh self-intersects (e.g. if the rigidity is too low),
         // the transform cannot be fully described by a rotation,
@@ -883,6 +921,13 @@ impl Instance {
         // Compute rotation component using polar decomposition
         let s = (transform.transpose() * transform).sqrt();
         transform * s.inverse()
+    }
+
+    /// Returns instance orientation using least squares fit.
+    pub fn matched_orient(&self, center: alg::Vec3) -> alg::Quat {
+        let result = self.frame_orient_conj.conjugate();
+        let transform = self.matched_transform(center);
+        extract_orient(result, transform)
     }
 
     // Call with point == center for a general rotate method
@@ -1374,7 +1419,7 @@ impl Manager {
             Some(joints) => for joint in joints {
                 if joint.child == j {
                     let center = parent_instance.center();
-                    let orient = parent_instance.matched_orientation(center);
+                    let orient = parent_instance.matched_orient(center).to_mat();
 
                     return parent_instance.extend(
                         joint.offset,
@@ -1574,11 +1619,11 @@ impl Manager {
             /* Align child with parent and joint transform */
 
             let parent_center = parent.center();
-            let parent_orient = parent.matched_orientation(parent_center);
-            let rotation = parent_orient.to_quat() * transform;
+            let parent_orient = parent.matched_orient(parent_center);
+            let rotation = parent_orient * transform;
 
             let child_center = child.center();
-            let child_orient = child.matched_orientation(child_center);
+            let child_orient = child.matched_orient(child_center).to_mat();
 
             let child_start = child.start(
                 child_center,
@@ -1591,7 +1636,7 @@ impl Manager {
             );
 
             let end = (child_end - child_start) * 0.5;
-            let position = parent.extend(offset, parent_orient, parent_center)
+            let position = parent.extend(offset, parent_orient.to_mat(), parent_center)
                 + rotation * end;
 
             child.rotate_around(rotation, child_center);
@@ -1776,7 +1821,13 @@ impl Manager {
                 // Shape matching
                 if instance.match_shape {
                     let center = instance.center();
-                    let orientation = instance.matched_orientation(center);
+                    let orientation = instance.matched_orient(center);
+
+                    /* TODO: currently disabled
+                     *       so that matching is always predicted
+                     *       from the previous good _frame_ (not substep).
+                    instance.frame_orient_conj = orientation.conjugate();
+                    */
 
                     for (particle, model_position) in instance.particles
                         .iter_mut().zip(&instance.model.positions)
@@ -1825,7 +1876,7 @@ impl Manager {
 
             // Compute average position and best fit orientation
             let center = instance.center();
-            let orientation = instance.matched_orientation(center).to_quat();
+            let orientation = instance.matched_orient(center);
 
             #[cfg(debug_assertions)] {
                 instance.debug.pos_delta = if instance.debug.age > 0 {
@@ -1908,9 +1959,7 @@ impl Manager {
                 /* Recompute parent center, orientation, start/end */
 
                 let parent_center = parent.center();
-                let parent_orient = parent.matched_orientation(
-                    parent_center
-                );
+                let parent_orient = parent.matched_orient(parent_center).to_mat();
 
                 let parent_start = parent.extend(
                     -joints[i].offset,
@@ -1927,9 +1976,7 @@ impl Manager {
                 /* Recompute child center, orientation, start/end */
 
                 let child_center = children[i].center();
-                let child_orient = children[i].matched_orientation(
-                    child_center
-                );
+                let child_orient = children[i].matched_orient(child_center).to_mat();
 
                 let child_start = children[i].start(
                     child_center,
@@ -1983,9 +2030,7 @@ impl Manager {
 
                 // Recompute child orientation
                 let child_center = children[i].center();
-                let child_orient = children[i].matched_orientation(
-                    child_center
-                );
+                let child_orient = children[i].matched_orient(child_center).to_mat();
 
                 let child_start = children[i].start(
                     child_center,
@@ -2021,9 +2066,9 @@ impl Manager {
         if joint.unlocked { return }
 
         let parent_center = parent.center();
-        let parent_orient = parent.matched_orientation(parent_center);
+        let parent_orient = parent.matched_orient(parent_center).to_mat();
         let child_center = child.center();
-        let child_orient = child.matched_orientation(child_center);
+        let child_orient = child.matched_orient(child_center).to_mat();
         let child_orient_inv = child_orient.transpose();
 
         // Joint transform is treated as child of parent limb
@@ -2300,7 +2345,7 @@ impl Manager {
             if let Some(ref instance) = self.instances[index] {
                 if draw_endpoints && instance.end_offset > 0.0 {
                     let center = instance.center();
-                    let orientation = instance.matched_orientation(center);
+                    let orientation = instance.matched_orient(center).to_mat();
 
                     debug.add_cross(
                         instance.start(center, orientation),
@@ -2422,7 +2467,7 @@ impl Manager {
             // Draw all joints for this parent
             for joint in joints {
                 let center = parent.center();
-                let orientation = parent.matched_orientation(center);
+                let orientation = parent.frame_orient_conj.conjugate().to_mat();
                 let point = parent.extend(joint.offset, orientation, center);
                 let joint_orientation = orientation * joint.transform.to_mat();
 
@@ -2487,7 +2532,8 @@ impl Manager {
 
                     let child = self.instances[joint.child].as_ref().unwrap();
                     let child_center = child.center();
-                    let child_orient = child.matched_orientation(child_center);
+                    let child_orient = child.frame_orient_conj.conjugate()
+                        .to_mat();
 
                     // Forward pointer
                     debug.add_ray(
@@ -2780,22 +2826,25 @@ mod tests {
 
     #[test]
     fn shape_scale() {
-        for i in 1..8 {
-            let (mut ctx, e) = Context::single();
+        for i in 0..256 {
             let scale = i as f32 * 0.5;
+            println!("i={}, scale={}", i, scale);
+
+            // Implicitly tests singular shapes
+            let (mut ctx, e) = Context::single();
             {
                 let inst = ctx.softbodies.get_mut_instance(e);
                 inst.rigidity = 1.0;
                 inst.particles.iter_mut()
                     .for_each(|p| p.init(p.position * scale, Vec3::zero()));
-                let orient = inst.matched_orientation(inst.center());
-                assert_approx_eq_quat!(orient.to_quat(), Quat::id(), 1.0);
+
+                let orient = inst.matched_orient(inst.center());
+                assert_approx_eq_quat!(orient, Quat::id(), 1.0);
             }
 
-            println!("scale={}", scale);
             ctx.softbodies.iterations = 1;
             ctx.softbodies.set_gravity(Vec3::zero());
-            ctx.softbodies.set_drag(0.75); // Reduce rubber banding
+            ctx.softbodies.set_drag(0.5); // Reduce rubber banding
             ctx.burndown(1.0);
             {
                 let orient = ctx.transforms.get_orientation(e);
@@ -2814,5 +2863,260 @@ mod tests {
                     );
             }
         }
+    }
+
+    #[test]
+    fn shape_rot() {
+        let substeps = 2;
+        let total = 90.0 * substeps as f32 * 2.0;
+        let regress_limit = 31;
+
+        for i in 0..(90 * substeps) {
+            let rad = std::f32::consts::PI * (i as f32 / total);
+            let deg = i as f32 / substeps as f32;
+            println!("i={}, a : {} deg, {} rad", i, deg, rad);
+
+            let rot = Quat::axis_angle(Vec3::up(), rad);
+            println!("rot={}", rot);
+
+            let (mut ctx, e) = Context::single();
+            {
+                let inst = ctx.softbodies.get_mut_instance(e);
+                let center = inst.center();
+                inst.rotate_around(rot, center);
+                inst.rigidity = 1.0;
+
+                let mut orient = inst.matched_orient(inst.center());
+                if orient.dot(rot) < 0.0 { orient = orient.neg(); }
+                assert_approx_eq_quat!(orient, rot, 512.0); // See EXTRACT_ITER
+            }
+
+            ctx.softbodies.iterations = 1;
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.0);
+            ctx.cycle();
+
+            let new = rot * rot;
+            let orient = ctx.transforms.get_orientation(e);
+            let actual = orient.abs_angle();
+            let err = (actual - 2.0 * rad).abs()
+                * 180.0 / std::f32::consts::PI;
+
+            println!(
+                "result={:.3}deg err={:.3}deg\n",
+                actual * 180.0 / std::f32::consts::PI,
+                err
+            );
+
+            if err > 1.0 {
+                assert_eq!(i, regress_limit);
+                let rps = deg / (360.0 * FIXED_DT);
+                let rpm = 60.0 * rps;
+
+                println!(
+                    "regression limit reached: rpm={:.1} rps={:.1}",
+                    rpm,
+                    rps
+                );
+
+                break;
+            }
+
+         /* assert_approx_eq_quat!(orient, new, 1.0); */
+            let pos = ctx.transforms.get_position(e);
+            assert_approx_eq_vec3!(pos, Vec3::zero(), 4.0);
+        }
+    }
+
+    #[test]
+    fn shape_inv() {
+        let (mut ctx, e) = Context::single();
+        ctx.init_instance(
+            e,
+            |mut pos| {
+                pos.y *= -1.0;
+                (pos, Vec3::zero())
+            }
+        );
+
+        {
+            let inst = ctx.softbodies.get_mut_instance(e);
+            inst.rigidity = 1.0;
+
+            let center = inst.center();
+            let transform = inst.matched_transform(center);
+            assert!(transform.det() < 0f32);
+
+            let orient = inst.matched_orient(center);
+            assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+        }
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.burndown(2.0);
+
+        let inst = ctx.softbodies.get_instance(e);
+        let orient = inst.matched_orient(inst.center());
+        assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+        inst.particles.iter()
+            .for_each(
+                |p| {
+                    assert_approx_eq!(
+                        p.position.mag_squared(),
+                        0.75, // Distance from unit cube to center
+                        1.0
+                    );
+                }
+            );
+    }
+
+    #[test]
+    fn shape_planar() {
+        let (mut ctx, e) = Context::single();
+        ctx.init_instance(
+            e,
+            |mut pos| {
+                pos.y *= 0f32;
+                (pos, Vec3::zero())
+            }
+        );
+
+        {
+            let inst = ctx.softbodies.get_mut_instance(e);
+            inst.rigidity = 1.0;
+
+            let center = inst.center();
+            let transform = inst.matched_transform(center);
+            assert!(transform.det() == 0f32);
+
+            let orient = inst.matched_orient(center);
+            assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+        }
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.burndown(2.0);
+
+        let inst = ctx.softbodies.get_instance(e);
+        let orient = inst.matched_orient(inst.center());
+        assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+        inst.particles.iter()
+            .for_each(
+                |p| {
+                    assert_approx_eq!(
+                        p.position.mag_squared(),
+                        0.75, // Distance from unit cube to center
+                        1.0
+                    );
+                }
+            );
+    }
+
+    #[test]
+    fn shape_rand() {
+        for i in 0..128 {
+            let (mut ctx, e) = Context::single();
+            ctx.init_instance(
+                e, |pos| {
+                    let off = Vec3::new(rands(), rands(), rands());
+                    (pos + off, Vec3::zero())
+                }
+            );
+
+            {
+                let instance = ctx.softbodies.get_mut_instance(e);
+                instance.rigidity = 1.0;
+            }
+
+            println!("config={}", i + 1);
+            ctx.softbodies.iterations = 1;
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.1); // Speed up burndown
+            #[cfg(debug_assertions)] { ctx.softbodies.dump_config(); }
+            ctx.burndown(4.0);
+            println!("\n= = =\n");
+        }
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    fn shape_err_baseline() {
+        for i in 0..32 {
+            let (mut ctx, e) = Context::single();
+            ctx.init_instance(
+                e, |pos| {
+                    let off = Vec3::new(rands(), rands(), rands());
+                    (pos + off, Vec3::zero())
+                }
+            );
+
+            {
+                let instance = ctx.softbodies.get_mut_instance(e);
+                instance.rigidity = 1.0;
+            }
+
+            println!("config={}", i + 1);
+            ctx.softbodies.iterations = 2; // Add runnoff iteration
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.0);
+            ctx.cycle(); // Should stabilize in one tick
+
+            {
+                let instance = ctx.softbodies.get_instance(e);
+                // Dependent on EXTRACT_ITER
+                assert_approx_eq!(instance.debug.err[1].shape, 0.0, 4.0);
+            }
+
+            println!("\n= = =\n");
+        }
+    }
+
+    #[test]
+    fn shape_regression_0() {
+        let (mut ctx, e) = Context::single();
+
+        {
+            let instance = ctx.softbodies.get_mut_instance(e);
+            instance.rigidity = 1.0;
+
+            instance.particles[0].position = Vec3::new(
+                -1.24987769, 0.68691027, -0.01353586,
+            );
+
+            instance.particles[1].position = Vec3::new(
+                -0.23069978, 0.62659800, 0.45957029,
+            );
+
+            instance.particles[2].position = Vec3::new(
+                1.32380474, -0.84423178, -0.0874966,
+            );
+
+            instance.particles[3].position = Vec3::new(
+                0.45426810, 0.32374418, -1.26090717,
+            );
+
+            instance.particles[4].position = Vec3::new(
+                -1.26433945, 0.39075643, 0.22179824,
+            );
+
+            instance.particles[5].position = Vec3::new(
+                0.95629561, -0.39130545, 0.17226774,
+            );
+
+            instance.particles[6].position = Vec3::new(
+                1.45903981, -0.81027216, -0.00294423,
+            );
+
+            instance.particles[7].position = Vec3::new(
+                -0.99564856, -0.07726038, 0.06232053,
+            );
+        }
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.1);
+        ctx.burndown(8.0);
     }
 }

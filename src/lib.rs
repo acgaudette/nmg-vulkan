@@ -53,7 +53,7 @@ mod util;
 use std::thread;
 use components::Component;
 
-const FIXED_DT: f32 = 1. / 100.;
+const FIXED_DT: f32 = 1. / 120.;
 const LIMIT_NS: u32 = 100_000;
 
 #[derive(Clone, Copy)]

@@ -28,9 +28,9 @@ impl nmg::Start for Demo {
         components.softbodies.register(shape);
 
         components.softbodies.build_instance()
-            .make_box_limb(alg::Vec3::one())
-            .mass(10.0)
-            .rigidity(0.015) // Jiggly
+            .make_box_limb(alg::Vec3::new(1.0, 0.75, 1.0))
+            .mass(8.0)
+            .rigidity(0.004) // Jiggly
             .for_entity(shape);
 
         /* Add planes */
@@ -91,7 +91,7 @@ impl nmg::Update for Demo {
 
         components.softbodies.set_force(
             self.shape.unwrap(),
-            if add_force { alg::Vec3::up() * 800.0 }
+            if add_force { alg::Vec3::up() * 1600.0 }
             else { alg::Vec3::zero() }
         );
 
@@ -107,7 +107,7 @@ impl nmg::Update for Demo {
                 self.shape.unwrap()
             );
 
-            self.last_target.lerp(new_target, delta as f32)
+            self.last_target.lerp(new_target, delta as f32 * 4.0)
         };
 
         self.last_target = target;

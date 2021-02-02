@@ -444,6 +444,50 @@ impl<'a> JointBuilder<'a> {
     }
 }
 
+#[cfg(debug_assertions)]
+struct InstanceIterationDebug {
+    plane: f32,
+    shape: f32,
+}
+
+#[cfg(debug_assertions)]
+struct InstanceFrameDebug {
+    pos_delta: f32,
+    internal_vel: f32,
+    err: Vec<InstanceIterationDebug>,
+    age: usize,
+}
+
+#[cfg(debug_assertions)]
+impl InstanceFrameDebug {
+    fn new() -> InstanceFrameDebug {
+        InstanceFrameDebug {
+            pos_delta: 0.0,
+            internal_vel: 0.0,
+            err: Vec::with_capacity(16),
+            age: 0,
+        }
+    }
+
+    fn log_frame(&self) {
+        println!(
+            "         pos-delta : {:.2} m\n  \
+                   internal-vel : {:.2} m/s",
+            self.pos_delta,
+            self.internal_vel,
+        );
+
+        for (i, e) in self.err.iter().enumerate() {
+            println!(
+                "   plane-err [{:03}] : {:.2} m\n   \
+                    shape-err [{:03}] : {:.2} m",
+                i, e.plane,
+                i, e.shape,
+            );
+        }
+    }
+}
+
 /* TODO: Refactor Instance data structure for memory performance
  * now that you have converged on how/where it is actually used.
  */
@@ -459,7 +503,8 @@ pub struct Instance {
     /* Updated per-frame */
 
     frame_position: alg::Vec3,
-    frame_orientation_conjugate: alg::Quat,
+    frame_orient_conj: alg::Quat,
+    frame_orient_diff: alg::Quat,
     frame_vel: alg::Vec3,
     frame_accel: alg::Vec3,
 
@@ -476,6 +521,8 @@ pub struct Instance {
     // Lower values produce springier meshes
     // A value of zero nullifies all rods in the instance
     pub rigidity: f32,
+
+    #[cfg(debug_assertions)] debug: InstanceFrameDebug,
 }
 
 /// Source mesh reference structure.
@@ -557,7 +604,8 @@ impl Instance {
             accel_dt: initial_accel * FIXED_DT * FIXED_DT,
 
             frame_position: alg::Vec3::zero(),
-            frame_orientation_conjugate: alg::Quat::id(),
+            frame_orient_conj: alg::Quat::id(),
+            frame_orient_diff: alg::Quat::id(),
             frame_vel: alg::Vec3::zero(),
             frame_accel: alg::Vec3::zero(),
 
@@ -576,6 +624,7 @@ impl Instance {
             start_indices: start_indices.to_vec(),
             end_indices: end_indices.to_vec(),
             rigidity,
+            #[cfg(debug_assertions)] debug: InstanceFrameDebug::new(),
         }
     }
 
@@ -697,7 +746,8 @@ impl Instance {
             accel_dt: initial_accel * FIXED_DT * FIXED_DT,
 
             frame_position: alg::Vec3::zero(),
-            frame_orientation_conjugate: alg::Quat::id(),
+            frame_orient_conj: alg::Quat::id(),
+            frame_orient_diff: alg::Quat::id(),
             frame_vel: alg::Vec3::zero(),
             frame_accel: alg::Vec3::zero(),
 
@@ -715,6 +765,7 @@ impl Instance {
                 duplicates,
             },
             rigidity,
+            #[cfg(debug_assertions)] debug: InstanceFrameDebug::new(),
         }
     }
 
@@ -782,37 +833,30 @@ impl Instance {
     }
 
     /// Returns velocity of instance in meters per second.
-    pub fn approx_velocity(&self) -> alg::Vec3 { self.frame_vel }
+    pub fn velocity(&self) -> alg::Vec3 { self.frame_vel }
 
     /// Returns acceleration of instance in meters per second squared.
-    pub fn approx_acceleration(&self) -> alg::Vec3 { self.frame_accel }
+    pub fn acceleration(&self) -> alg::Vec3 { self.frame_accel }
 
-    /// Returns axis and angular velocity of instance in radians per second. \
-    /// `center` and `velocity` are parameters for optional caching.
-    pub fn ang_velocity(
-        &self,
-        center: alg::Vec3,
-        velocity: alg::Vec3,
-    ) -> (alg::Vec3, f32) {
-        let omega = self.particles.iter().fold(
-            alg::Vec3::zero(),
-            |sum, particle| {
-                let r = particle.position - center; // m
-                let v = particle.displacement / FIXED_DT - velocity; // m/s
-                let r_mag = r.mag();
+    /// Returns axis and angular velocity of instance in radians per second.
+    pub fn ang_vel(&self) -> (alg::Vec3, f32) {
+        debug_assert!(self.match_shape);
 
-                sum + r.cross(v)      // m^2/s
-                    / (r_mag * r_mag) // rad/s
-            },
-        ) / self.particles.len() as f32; // Average values
+        // Computing via the torque equation
+        // grows in error with the magnitude of the angular velocity
+        // (consider the 2D case), so we use the frame diff instead.
 
-        let mag = omega.mag_squared();
-        if std::f32::EPSILON >= mag {
-            (alg::Vec3::up(), 0.0) // Always return normalized vector
-        } else {
-            let inv = alg::inverse_sqrt(mag);
-            (omega * inv, 1.0 / inv)
-        }
+        let q = self.frame_orient_diff;
+        let a = q.abs_angle();
+        debug_assert!(a <= std::f32::consts::PI);
+
+        let vec = q.vec();
+        let mag = vec.mag();
+        let n = if mag < std::f32::EPSILON
+            { alg::Vec3::up() } else { vec / mag };
+
+        // Return separately for increased accuracy
+        (n, a / FIXED_DT)
     }
 
     /// Returns instance orientation using least squares fit. \
@@ -1368,7 +1412,7 @@ impl Manager {
     pub fn velocity(&self, entities: &[entity::Handle]) -> alg::Vec3 {
         let sum = entities.iter()
             .map(|handle| get_instance!(self, *handle))
-            .map(|instance| (instance.approx_velocity(), instance.mass))
+            .map(|instance| (instance.velocity(), instance.mass))
             .fold(
                 (alg::Vec3::zero(), 0f32),
                 |sum, (v, mass)| (sum.0 + v * mass, sum.1 + mass)
@@ -1420,7 +1464,7 @@ impl Manager {
             {
                 // Get offset from center; compare current transform against
                 // model reference
-                let offset = instance.frame_orientation_conjugate * (
+                let offset = instance.frame_orient_conj * (
                     instance.particles[j].position - instance.frame_position
                 ) - instance.model.positions_override.as_ref()
                     .unwrap_or(&instance.model.positions)[j];
@@ -1471,7 +1515,7 @@ impl Manager {
             // Compute offsets
             for i in 0..new.len() {
                 offsets[i] = render::PaddedVec3::new(
-                    instance.frame_orientation_conjugate * new[i]
+                    instance.frame_orient_conj * new[i]
                         - instance.model.normals[i]
                 );
             }
@@ -1655,6 +1699,10 @@ impl Manager {
                 particle.last = particle.position;
                 particle.position = next_position;
             }
+
+            #[cfg(debug_assertions)] {
+                instance.debug.err.clear();
+            }
         }
 
         // Solve abstracted constraints first
@@ -1675,6 +1723,18 @@ impl Manager {
                     None => continue,
                 };
 
+                #[cfg(debug_assertions)]
+                instance.debug.err.push(
+                    InstanceIterationDebug {
+                        plane: 0.0,
+                        shape: 0.0,
+                    }
+                );
+
+                let dbg_idx = if cfg!(debug_assertions) {
+                    instance.debug.err.len() - 1
+                } else { 0 };
+
                 // Plane collision
                 for plane in &self.planes {
                     for particle in &mut instance.particles {
@@ -1686,6 +1746,15 @@ impl Manager {
 
                         particle.position = particle.position
                             - plane.normal * self.bounce * distance;
+
+                        #[cfg(debug_assertions)] {
+                            instance.debug.err[dbg_idx].plane -= distance;
+                        }
+                    }
+
+                    #[cfg(debug_assertions)] {
+                        instance.debug.err[dbg_idx].plane /=
+                            instance.particles.len() as f32;
                     }
                 }
 
@@ -1717,9 +1786,20 @@ impl Manager {
                             + center;
 
                         let offset = target - particle.position;
-
                         particle.position = particle.position
                             + offset * instance.rigidity;
+
+                        #[cfg(debug_assertions)] {
+                            instance.debug.err[dbg_idx].shape
+                                += offset.mag().powf(2.0);
+                        }
+                    }
+
+                    #[cfg(debug_assertions)] {
+                        let len = instance.particles.len() as f32;
+                        instance.debug.err[dbg_idx].shape = (
+                            instance.debug.err[dbg_idx].shape / len
+                        ).sqrt();
                     }
                 }
 
@@ -1747,17 +1827,40 @@ impl Manager {
             let center = instance.center();
             let orientation = instance.matched_orientation(center).to_quat();
 
+            #[cfg(debug_assertions)] {
+                instance.debug.pos_delta = if instance.debug.age > 0 {
+                    (center - instance.frame_position).mag()
+                } else { 0.0 };
+            }
+
             // Update instance position and orientation
             instance.frame_position = center;
-            instance.frame_orientation_conjugate = orientation.conjugate();
+            instance.frame_orient_diff = (
+                instance.frame_orient_conj * orientation
+            ).norm();
+            instance.frame_orient_conj = orientation.conjugate();
 
             // Update transform
             debug_validate_entity!(transforms, self.handles[i].unwrap());
             transforms.set_raw(i, center, orientation, alg::Vec3::one());
 
+            #[cfg(debug_assertions)] {
+                instance.debug.internal_vel = 0.0;
+            }
+
             for particle in &mut instance.particles {
                 // Meters per FIXED_DT
                 particle.displacement = particle.position - particle.last;
+
+                #[cfg(debug_assertions)] {
+                    instance.debug.internal_vel += particle.displacement.mag()
+                        / FIXED_DT;
+                }
+            }
+
+            #[cfg(debug_assertions)] {
+                instance.debug.internal_vel /= instance.particles.len() as f32;
+                instance.debug.age += 1;
             }
 
             let new_vel = instance.compute_velocity();
@@ -2096,6 +2199,62 @@ impl Manager {
         alg::Quat::simple(alg::Vec3::fwd(), midpoint)
     }
 
+    #[cfg(debug_assertions)]
+    pub fn dump_config(&self) {
+        let mut str = String::new();
+        str += &format!("\n # # # nmg/softbody/config # # # \n\n");
+
+        str += &format!(
+            "iter={}\n\
+             grav={}\n\
+             drag={}\n\
+             frct={}\n\
+             bnce={}\n",
+            self.iterations,
+            self.gravity,
+            self.drag,
+            self.friction,
+            self.bounce,
+        );
+
+        for (i, inst) in self.instances.iter()
+            .filter_map(|i| i.as_ref())
+            .enumerate()
+        {
+            str += &format!("\n\t-- instance {} --\n", i);
+            str += &format!(
+                " mass={}\n\
+                 rigid={}\n\
+                 match={}\n\
+                 force={}\n",
+                inst.mass,
+                inst.rigidity,
+                if inst.match_shape { 1 } else { 0 },
+                inst.force,
+            );
+
+            str += &format!("\n\t-- particles={} --\n", inst.particles.len());
+            for (j, p) in inst.particles.iter().enumerate() {
+                str += &format!("\t{}\n", j);
+                str += &format!(
+                    "curr={}\n\
+                     prev={}\n\
+                     disp={}\n",
+                    p.position,
+                    p.last,
+                    p.displacement,
+                );
+            }
+
+            /* TODO: rods, joint data */
+        }
+
+        /* TODO: joints, planes */
+
+        str += &format!("\n # # # nmg/softbody/config # # # \n\n");
+        eprint!("{}", str);
+    }
+
     #[allow(unused_variables)]
     pub fn draw_all(&self, debug: &mut debug::Handler) {
         #[cfg(debug_assertions)] {
@@ -2390,6 +2549,269 @@ impl Manager {
                     // Draw joint endpoint
                     debug.add_local_axes(point, fwd, up, 1.0, 1.0);
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate rand;
+    use components::*;
+    use alg::*;
+
+    use ::FIXED_DT;
+    const KE_MARGIN: f32 = std::f32::EPSILON * 2.0;
+
+    struct Empty { }
+    impl softbody::Iterate for Empty { }
+
+    struct Context {
+        entities: entity::Manager,
+        transforms: transform::Manager,
+        softbodies: softbody::Manager,
+        empty: Empty,
+    }
+
+    impl Context {
+        fn new() -> Context {
+            Context {
+                entities: entity::Manager::new(1),
+                transforms: transform::Manager::new(1),
+                softbodies: softbody::Manager::new(1, 1, 1),
+                empty: Empty { },
+            }
+        }
+
+        fn single() -> (Context, entity::Handle) {
+            let mut ctx = Context::new();
+            let e = ctx.entities.add();
+            ctx.transforms.register(e);
+            ctx.softbodies.register(e);
+
+            ctx.softbodies.build_instance()
+                .make_box_limb(Vec3::one())
+                .mass(1.0)
+                .for_entity(e);
+
+            (ctx, e)
+        }
+
+        fn init_instance(
+            &mut self,
+            e: entity::Handle,
+            f: fn(Vec3) -> (Vec3, Vec3),
+        ) {
+            let instance = self.softbodies.get_mut_instance(e);
+            instance.particles.iter_mut().for_each(
+                |p| {
+                    let (to, vel) = f(p.position);
+                    p.init(to, vel);
+                }
+            );
+        }
+
+        #[cfg(debug_assertions)]
+        fn log_instances(&self) {
+            for (i, opt) in self.softbodies.instances.iter().enumerate() {
+                let instance = match opt {
+                    Some(ref instance) => instance,
+                    None => continue,
+                };
+
+                println!("instance={}", i);
+                instance.debug.log_frame();
+            }
+        }
+
+        fn cycle(&mut self) {
+            self.softbodies.simulate(&mut self.empty, &mut self.transforms);
+            #[cfg(debug_assertions)] self.log_instances();
+        }
+
+        fn spin(&mut self, duration: f32) {
+            let count = (duration / FIXED_DT) as u32;
+            for _ in 0..count { self.cycle(); }
+        }
+
+        fn burndown(&mut self, duration: f32) {
+            let count = (duration / FIXED_DT) as u32 - 1;
+
+            println!("tick={}", 0);
+            self.cycle();
+            let initial = self.softbodies.energy();
+            let mut last = initial;
+            println!("\tinitial energy={:.4}J (1 tick warmup)", initial);
+
+            for i in 0..count {
+                let tick = i + 1;
+
+                println!("tick={}", tick);
+                self.cycle();
+                let ke = self.softbodies.energy();
+                println!("\tenergy={:.4}J", ke);
+
+                if last < KE_MARGIN {
+                    if ke > KE_MARGIN {
+                        eprintln!(" initial value: {:.2}J", initial);
+                        eprintln!("previous value: {}J < {}J", last, KE_MARGIN);
+
+                        eprintln!(
+                            " trigger value: {}J @ tick {} > {}J",
+                            ke,
+                            tick,
+                            KE_MARGIN
+                        );
+
+                        assert!(ke < KE_MARGIN);
+                    }
+                } else if ke > last {
+                    eprintln!(" initial value: {:.2}J", initial);
+                    eprintln!("previous value: {}J > {}J", last, KE_MARGIN);
+
+                    eprintln!(
+                        " trigger value: {:.2}J @ tick {} > prev.",
+                        ke,
+                        tick,
+                    );
+
+                    assert!(ke < last);
+                }
+
+                last = ke;
+            }
+
+            if last > KE_MARGIN {
+                eprintln!("initial value: {:.2}J", initial);
+
+                eprintln!(
+                    "  final value: {}J ({}s) > {}J",
+                    last,
+                    duration,
+                    KE_MARGIN
+                );
+
+                assert!(last < KE_MARGIN);
+            }
+        }
+    }
+
+    fn rands() -> f32 {
+        let rand::Closed01(result) = rand::random::<rand::Closed01<f32>>();
+        result * 2f32 - 1f32
+    }
+
+    #[test]
+    fn energy() {
+        let (mut ctx, e) = Context::single();
+        ctx.init_instance(e, |pos| (pos, Vec3::up()));
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.cycle();
+
+        // Note: error is timestep-dependent
+        assert_approx_eq!(ctx.softbodies.energy(), 0.5, 16.0);
+    }
+
+    #[test]
+    fn baseline() {
+        let (mut ctx, e) = Context::single();
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.burndown(4.0);
+
+        let pos = ctx.transforms.get_position(e);
+        let orient = ctx.transforms.get_orientation(e);
+        assert_approx_eq_vec3!(pos, Vec3::zero(), 1.0);
+        assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+    }
+
+    #[test]
+    fn drag_none() {
+        {   /* Pull vertices */
+
+            let (mut ctx, e) = Context::single();
+            ctx.init_instance(e, |pos| (pos, Vec3::up()));
+            ctx.softbodies.iterations = 1;
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.0);
+            ctx.spin(1.0);
+
+            let pos = ctx.transforms.get_position(e);
+            let orient = ctx.transforms.get_orientation(e);
+
+            // Note: error is timestep-dependent
+            assert_approx_eq_vec3!(pos, Vec3::up(), 10.0 * 8192.0);
+            assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+        }
+        {   /* Add force */
+
+            let (mut ctx, e) = Context::single();
+            ctx.softbodies.iterations = 1;
+            ctx.softbodies.set_gravity(Vec3::up());
+            ctx.softbodies.set_drag(0.0);
+            ctx.spin(1.0);
+
+            let pos = ctx.transforms.get_position(e);
+            let orient = ctx.transforms.get_orientation(e);
+
+            // Note: error is timestep-dependent
+            assert_approx_eq_vec3!(pos, Vec3::up() * 0.5, 10.0 * 8192.0);
+            assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+        }
+    }
+
+    #[test]
+    fn drag_full() {
+        let (mut ctx, e) = Context::single();
+        ctx.init_instance(e, |pos| (pos, Vec3::one()));
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::up() * 128.0);
+        ctx.softbodies.set_drag(1.0);
+        ctx.burndown(2.0);
+
+        let pos = ctx.transforms.get_position(e);
+        let orient = ctx.transforms.get_orientation(e);
+        assert_approx_eq_vec3!(pos, Vec3::zero(), 1.0);
+        assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+    }
+
+    #[test]
+    fn shape_scale() {
+        for i in 1..8 {
+            let (mut ctx, e) = Context::single();
+            let scale = i as f32 * 0.5;
+            {
+                let inst = ctx.softbodies.get_mut_instance(e);
+                inst.rigidity = 1.0;
+                inst.particles.iter_mut()
+                    .for_each(|p| p.init(p.position * scale, Vec3::zero()));
+                let orient = inst.matched_orientation(inst.center());
+                assert_approx_eq_quat!(orient.to_quat(), Quat::id(), 1.0);
+            }
+
+            println!("scale={}", scale);
+            ctx.softbodies.iterations = 1;
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.75); // Reduce rubber banding
+            ctx.burndown(1.0);
+            {
+                let orient = ctx.transforms.get_orientation(e);
+                assert_approx_eq_quat!(orient, Quat::id(), 1.0);
+
+                let inst = ctx.softbodies.get_mut_instance(e);
+                inst.particles.iter()
+                    .for_each(
+                        |p| {
+                            assert_approx_eq!(
+                                p.position.mag_squared(),
+                                0.75, // Distance from unit cube to center
+                                1.0
+                            );
+                        }
+                    );
             }
         }
     }

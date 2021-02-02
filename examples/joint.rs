@@ -33,8 +33,9 @@ impl nmg::Start for Demo {
         components.transforms.register(first);
         components.softbodies.register(first);
         components.softbodies.build_instance()
-            .make_box_limb(alg::Vec3::one())
-            .mass(10.0)
+            .make_box_limb(alg::Vec3::new(0.75, 0.75, 1.0))
+            .mass(4.0)
+            .rigidity(0.01)
             .for_entity(first);
 
         let second = entities.add();
@@ -43,6 +44,7 @@ impl nmg::Start for Demo {
         components.softbodies.build_instance()
             .make_box_limb(alg::Vec3::one())
             .mass(10.0)
+            .rigidity(0.01)
             .for_entity(second);
 
         let third = entities.add();
@@ -51,6 +53,7 @@ impl nmg::Start for Demo {
         components.softbodies.build_instance()
             .make_box_limb(alg::Vec3::one())
             .mass(10.0)
+            .rigidity(0.01)
             .for_entity(third);
 
         /* Create joints */
@@ -121,7 +124,17 @@ impl nmg::Update for Demo {
         // Draw softbodies
         components.softbodies.draw_all(debug);
 
-        // Update camera
+        /* Add force on key press */
+
+        let add_force = input.key_pressed(input::Key::Space);
+
+        components.softbodies.set_force(
+            self.first.unwrap(),
+            if add_force { alg::Vec3::up() * 1600.0 }
+            else { alg::Vec3::zero() }
+        );
+
+        /* Update camera */
 
         let camera_position =
               alg::Mat3::rotation(0.0, 90_f32.to_radians(), 0.0)
@@ -135,7 +148,7 @@ impl nmg::Update for Demo {
                 + components.transforms.get_position(self.third.unwrap())
             ) * 0.33;
 
-            self.last_target.lerp(new_target, delta as f32)
+            self.last_target.lerp(new_target, delta as f32 * 4.0)
         };
 
         self.last_target = target;

@@ -1776,9 +1776,8 @@ impl Manager {
                     }
                 );
 
-                let dbg_idx = if cfg!(debug_assertions) {
-                    instance.debug.err.len() - 1
-                } else { 0 };
+                #[cfg(debug_assertions)]
+                let dbg_idx = instance.debug.err.len() - 1;
 
                 // Plane collision
                 for plane in &self.planes {

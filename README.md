@@ -1,6 +1,6 @@
 # The `nmg` Rust x Vulkan Engine
 
-For the upcoming game, nmg ([original prototype here][3])
+For the upcoming game, nmg ([original prototype here][3])!
 
 [![Build Status][1]][2]
 
@@ -30,7 +30,7 @@ specialized for two things:
 ## Acknowledgements
 - [cogciprocate/voodoo][4]
 
-Papers implemented
+Papers implemented:
 - [Meshless Deformations Based On Shape Matching (Muller et al. 2016)][5]
 - [A Robust Method to Extract the Rotational Part of Deformations (Muller et al. '05)][6]
 - [Inverse Kinematics with Quaternion Joint Limits (JBlow '02)][7]

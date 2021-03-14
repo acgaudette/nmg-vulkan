@@ -2026,12 +2026,8 @@ impl Manager {
                 // forward direction
                 #[cfg(debug_assertions)] {
                     let compare = (child_end - child_start).norm();
-                    if child_fwd.dot(compare) < 0.99 {
-                        panic!(
-                            "Softbody instance orientation \
-                            and start/end do not match!",
-                        );
-                    }
+                    // Softbody instance orientation and start/end do not match
+                    assert_approx_eq!(child_fwd.dot(compare), 1.0, 4.0);
                 }
 
                 let child_correction = alg::Quat::from_to(

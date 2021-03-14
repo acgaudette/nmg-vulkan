@@ -2688,6 +2688,28 @@ mod tests {
             (ctx, e)
         }
 
+        fn double(fixed_dt: f32) -> (Context, entity::Handle, entity::Handle) {
+            let mut ctx = Context::new(fixed_dt);
+
+            let fst = ctx.entities.add();
+            ctx.transforms.register(fst);
+            ctx.softbodies.register(fst);
+            ctx.softbodies.build_instance()
+                .make_box_limb(Vec3::one())
+                .mass(1.0)
+                .for_entity(fst);
+
+            let snd = ctx.entities.add();
+            ctx.transforms.register(snd);
+            ctx.softbodies.register(snd);
+            ctx.softbodies.build_instance()
+                .make_box_limb(Vec3::one())
+                .mass(1.0)
+                .for_entity(snd);
+
+            (ctx, fst, snd)
+        }
+
         fn init_instance<F>(&mut self, e: entity::Handle, f: F)
             where F: Copy, F: FnOnce(Vec3) -> (Vec3, Vec3)
         {
@@ -3425,4 +3447,102 @@ mod tests {
         assert_approx_eq_vec3!(pos, Vec3::up() * (0.5 + 1e-4), 1.0);
         assert_approx_eq_vec3!(vel, Vec3::up() * vy, 1.0);
     }
+
+    #[test]
+    fn joint_baseline() {
+        let (mut ctx, fst, snd) = Context::double(1.0 / 30.0);
+
+        ctx.softbodies.build_joint()
+            .with_parent(fst)
+            .offset(Vec3::fwd() * 0.5)
+            .xyz(-45.0, 45.0)
+            .for_child(snd);
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.burndown(4.0);
+    }
+
+    /* TODO:
+     * will not work until joint.locked is a thing,
+     * but consider that that is a special case anyway
+    #[test]
+    fn joint_tight() {
+        let (mut ctx, fst, snd) = Context::double();
+
+        ctx.softbodies.build_joint()
+            .with_parent(fst)
+            .offset(Vec3::fwd() * 0.5)
+            .xyz(0.0, 0.0)
+            .for_child(snd);
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.burndown(4.0);
+    }
+    */
+
+    /*
+    // might work better if this had an infinite mass?
+    #[test]
+    fn joint_constrained() {
+        let (mut ctx, fst, snd) = Context::double();
+
+        ctx.softbodies.build_joint()
+            .with_parent(fst)
+            .offset(Vec3::fwd() * 0.5)
+            .x(-45.0, 45.0)
+            .yz(0.0, 0.0)
+            .for_child(snd);
+
+        // angle is wrong?
+        let rot = Quat::axis_angle(Vec3::right(), 0.5 * std::f32::consts::PI);
+        {
+            let inst = ctx.softbodies.get_mut_instance(snd);
+            let center = inst.center();
+            let id = inst.matched_orient(center);
+            inst.rotate_around(rot, center);
+            inst.rigidity = 1.0;
+
+            let initial = inst.matched_orient(inst.center());
+            println!("{} id", id);
+            println!("{} initial", initial);
+            assert_approx_eq!(id.dot(initial), 0.0, 1.0);
+        }
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.burndown(4.0);
+    }
+
+    #[test]
+    fn joint_fall() {
+        let (mut ctx, fst, snd) = Context::double();
+
+        ctx.softbodies.build_joint()
+            .with_parent(fst)
+            .offset(Vec3::fwd() * 0.5)
+            .xyz(-45.0, 45.0)
+            .for_child(snd);
+
+        ctx.init_instance(fst, |pos| (pos + Vec3::up(), -Vec3::up() * 10.0));
+        ctx.init_instance(snd, |pos| (pos + Vec3::up(), -Vec3::up() * 10.0));
+
+        ctx.softbodies.iterations = 2;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_bounce(1.0);
+
+        ctx.softbodies.add_planes(
+            &[
+                Plane::new(Vec3::up(), 0.0),
+             ]
+        );
+
+        ctx.burndown(8.0);
+    }
+    */
 }

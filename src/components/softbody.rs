@@ -973,12 +973,12 @@ impl Instance {
 
     // optional caching
     #[inline]
-    fn start(&self, center: alg::Vec3, orientation: alg::Mat3) -> alg::Vec3 {
+    fn start(&self, center: alg::Vec3, orientation: alg::Quat) -> alg::Vec3 {
         center + orientation * alg::Vec3::fwd() * self.end_offset * -1.0
     }
 
     #[inline]
-    fn end(&self, center: alg::Vec3, orientation: alg::Mat3) -> alg::Vec3 {
+    fn end(&self, center: alg::Vec3, orientation: alg::Quat) -> alg::Vec3 {
         center + orientation * alg::Vec3::fwd() * self.end_offset * 1.0
     }
 
@@ -988,8 +988,8 @@ impl Instance {
     #[inline] fn extend(
         &self,
         offset: alg::Vec3,
-        orientation: alg::Mat3,
         center: alg::Vec3,
+        orientation: alg::Quat,
     ) -> alg::Vec3 {
         center + orientation * offset
     }
@@ -1428,12 +1428,12 @@ impl Manager {
             Some(joints) => for joint in joints {
                 if joint.child == j {
                     let center = parent_instance.center();
-                    let orient = parent_instance.matched_orient(center).to_mat();
+                    let orient = parent_instance.matched_orient(center);
 
                     return parent_instance.extend(
                         joint.offset,
-                        orient,
                         center,
+                        orient,
                     );
                 }
             },
@@ -1632,7 +1632,7 @@ impl Manager {
             let rotation = parent_orient * transform;
 
             let child_center = child.center();
-            let child_orient = child.matched_orient(child_center).to_mat();
+            let child_orient = child.matched_orient(child_center);
 
             let child_start = child.start(
                 child_center,
@@ -1645,7 +1645,7 @@ impl Manager {
             );
 
             let end = (child_end - child_start) * 0.5;
-            let position = parent.extend(offset, parent_orient.to_mat(), parent_center)
+            let position = parent.extend(offset, parent_center, parent_orient)
                 + rotation * end;
 
             child.rotate_around(rotation, child_center);
@@ -1986,24 +1986,24 @@ impl Manager {
                 /* Recompute parent center, orientation, start/end */
 
                 let parent_center = parent.center();
-                let parent_orient = parent.matched_orient(parent_center).to_mat();
+                let parent_orient = parent.matched_orient(parent_center);
 
                 let parent_start = parent.extend(
                     -joints[i].offset,
-                    parent_orient,
                     parent_center,
+                    parent_orient,
                 );
 
                 let parent_end = parent.extend(
                     joints[i].offset,
-                    parent_orient,
                     parent_center,
+                    parent_orient,
                 );
 
                 /* Recompute child center, orientation, start/end */
 
                 let child_center = children[i].center();
-                let child_orient = children[i].matched_orient(child_center).to_mat();
+                let child_orient = children[i].matched_orient(child_center);
 
                 let child_start = children[i].start(
                     child_center,
@@ -2057,7 +2057,7 @@ impl Manager {
 
                 // Recompute child orientation
                 let child_center = children[i].center();
-                let child_orient = children[i].matched_orient(child_center).to_mat();
+                let child_orient = children[i].matched_orient(child_center);
 
                 let child_start = children[i].start(
                     child_center,
@@ -2146,7 +2146,7 @@ impl Manager {
 
         /* Correct child */
 
-        let point = child.start(child_center, child_orient);
+        let point = child.start(child_center, child_orient.to_quat());
 
         // Clear child, apply new rotation, apply parent joint
         let child_correction = joint_global
@@ -2163,7 +2163,7 @@ impl Manager {
 
         // Transform from the same position as the midpoint correction
         // Reuse parent center and orientation from above
-        let point = parent.extend(-joint.offset, parent_orient, parent_center);
+        let point = parent.extend(-joint.offset, parent.center(), parent_orient.to_quat());
 
         let parent_correction = child_orient
             * (simple * twist).conjugate().to_mat()
@@ -2372,7 +2372,7 @@ impl Manager {
             if let Some(ref instance) = self.instances[index] {
                 if draw_endpoints && instance.end_offset > 0.0 {
                     let center = instance.center();
-                    let orientation = instance.matched_orient(center).to_mat();
+                    let orientation = instance.matched_orient(center);
 
                     debug.add_cross(
                         instance.start(center, orientation),
@@ -2494,9 +2494,9 @@ impl Manager {
             // Draw all joints for this parent
             for joint in joints {
                 let center = parent.center();
-                let orientation = parent.frame_orient_conj.conjugate().to_mat();
-                let point = parent.extend(joint.offset, orientation, center);
-                let joint_orientation = orientation * joint.transform.to_mat();
+                let orientation = parent.frame_orient_conj.conjugate();
+                let point = parent.extend(joint.offset, center, orientation);
+                let joint_orientation = orientation.to_mat() * joint.transform.to_mat();
 
                 if draw_cone {
                     // Compute endpoints
@@ -2526,7 +2526,7 @@ impl Manager {
                     let lower_ray = joint_orientation * lower * 0.5;
                     let right_ray = joint_orientation * right * 0.5;
                     let upper_ray = joint_orientation * upper * 0.5;
-                    let left_ray = joint_orientation * left * 0.5;
+                    let left_ray  = joint_orientation * left * 0.5;
 
                     debug.add_ray(point, lower_ray, graphics::Color::green());
                     debug.add_ray(point, right_ray, graphics::Color::red());

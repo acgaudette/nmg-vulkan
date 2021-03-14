@@ -159,7 +159,7 @@ where
         cameras:    components::camera::Manager::new(1),
         lights:     components::light::Manager::new(8),
         draws:      components::draw::Manager::new(1, instances),
-        softbodies: components::softbody::Manager::new(1, 1, 1),
+        softbodies: components::softbody::Manager::new(FIXED_DT, 1, 1, 1),
         texts:      components::text::Manager::new(8),
         labels:     components::label::Manager::new(8),
     };

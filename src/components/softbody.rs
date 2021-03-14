@@ -9,7 +9,6 @@ use debug;
 
 #[cfg(debug_assertions)] use graphics;
 
-use ::FIXED_DT; // Import from lib
 use components::transform;
 const EXTRACT_ITER: usize = 16;
 
@@ -104,7 +103,6 @@ pub trait Iterate {
 struct Particle {
     position: alg::Vec3,
     last: alg::Vec3,
-    displacement: alg::Vec3,
 }
 
 impl Particle {
@@ -112,14 +110,12 @@ impl Particle {
         Particle {
             position,
             last: position,
-            displacement: alg::Vec3::zero(),
         }
     }
 
-    pub fn init(&mut self, to: alg::Vec3, vel: alg::Vec3) {
-        self.position = to;
-        self.last = to - vel * FIXED_DT;
-        self.displacement = alg::Vec3::zero();
+    fn displacement(&self) -> alg::Vec3 {
+        // TODO: remove usages
+        self.position - self.last
     }
 }
 
@@ -229,10 +225,10 @@ impl ReachCone {
         };
 
         // Build planes
-        let lower_left = ReachPlane::new(left, lower);
+        let lower_left  = ReachPlane::new(left, lower);
         let lower_right = ReachPlane::new(lower, right);
         let upper_right = ReachPlane::new(right, upper);
-        let upper_left = ReachPlane::new(upper, left);
+        let upper_left  = ReachPlane::new(upper, left);
 
         ReachCone {
             lower_left,
@@ -537,6 +533,7 @@ pub struct Instance {
     frame_orient_diff: alg::Quat,
     frame_vel: alg::Vec3,
     frame_accel: alg::Vec3,
+    frame_ang_vel: (alg::Vec3, f32),
 
     /* "Constants" */
 
@@ -576,7 +573,7 @@ impl Instance {
         mass: f32,
         rigidity: f32,
         initial_pos: alg::Vec3,
-        initial_accel: alg::Vec3,
+        initial_accel_dt: alg::Vec3,
         end_offset: f32,
         start_indices: &[usize],
         end_indices: &[usize],
@@ -608,12 +605,16 @@ impl Instance {
         ) / model.len() as f32;
 
         // Compute base comparison normals for instance
-        debug_assert!(indices.len() % 3 == 0);
-        let normals = Instance::compute_normals(
-            &particles,
-            &indices,
-            duplicates.len(),
-        );
+        let normals = if indices.len() > 1 {
+            debug_assert!(indices.len() % 3 == 0);
+            Instance::compute_normals(
+                &particles,
+                &indices,
+                duplicates.len(),
+            )
+        } else {
+            vec![alg::Vec3::zero()]
+        };
 
         // Initialize rods
         let mut rods = Vec::with_capacity(bindings.len());
@@ -631,13 +632,14 @@ impl Instance {
             match_shape,
 
             force: alg::Vec3::zero(),
-            accel_dt: initial_accel * FIXED_DT * FIXED_DT,
+            accel_dt: initial_accel_dt,
 
             frame_position: alg::Vec3::zero(),
             frame_orient_conj: alg::Quat::id(),
             frame_orient_diff: alg::Quat::id(),
             frame_vel: alg::Vec3::zero(),
             frame_accel: alg::Vec3::zero(),
+            frame_ang_vel: (alg::Vec3::up(), 0.0),
 
             mass,
             inv_pt_mass: 1.0 / (mass / points_len as f32),
@@ -663,7 +665,7 @@ impl Instance {
         mass: f32,
         rigidity: f32,
         initial_pos: alg::Vec3,
-        initial_accel: alg::Vec3,
+        initial_accel_dt: alg::Vec3,
         end_offset: f32,
         start_indices: &[usize],
         end_indices: &[usize],
@@ -773,13 +775,14 @@ impl Instance {
             match_shape: true,
 
             force: alg::Vec3::zero(),
-            accel_dt: initial_accel * FIXED_DT * FIXED_DT,
+            accel_dt: initial_accel_dt,
 
             frame_position: alg::Vec3::zero(),
             frame_orient_conj: alg::Quat::id(),
             frame_orient_diff: alg::Quat::id(),
             frame_vel: alg::Vec3::zero(),
             frame_accel: alg::Vec3::zero(),
+            frame_ang_vel: (alg::Vec3::up(), 0.0),
 
             mass,
             inv_pt_mass: 1.0 / (mass / vertices_len as f32),
@@ -832,9 +835,9 @@ impl Instance {
 
     // Must be called when gravity or force changes
     #[inline]
-    fn update_cache(&mut self, gravity: alg::Vec3) {
+    fn update_cache(&mut self, gravity: alg::Vec3, fixed_dt: f32) {
         self.accel_dt = (self.force * self.inv_pt_mass + gravity)
-            * FIXED_DT * FIXED_DT;
+            * fixed_dt * fixed_dt;
     }
 
     /* General instance methods */
@@ -846,30 +849,23 @@ impl Instance {
         ) / self.particles.len() as f32
     }
 
-    // TODO: mass weighted result
-    fn compute_velocity(&mut self) -> alg::Vec3 {
+    fn compute_velocity(&self, fixed_dt: f32) -> alg::Vec3 {
+        // TODO: mass weighted result
         let new = self.particles.iter().fold(
             alg::Vec3::zero(),
-            |sum, particle| sum + particle.displacement,
-        ) / (self.particles.len() as f32 * FIXED_DT);
+            |sum, particle| sum + particle.displacement(),
+        ) / (self.particles.len() as f32 * fixed_dt);
 
        new.lerp(self.frame_vel, INTEGRAL_SMOOTH_BIAS)
     }
 
-    fn compute_accel(&mut self, new_vel: alg::Vec3) -> alg::Vec3 {
+    fn compute_accel(&self, new_vel: alg::Vec3, fixed_dt: f32) -> alg::Vec3 {
         let diff = new_vel - self.frame_vel;
-        let new = diff / FIXED_DT;
+        let new = diff / fixed_dt;
         new.lerp(self.frame_accel, INTEGRAL_SMOOTH_BIAS)
     }
 
-    /// Returns velocity of instance in meters per second.
-    pub fn velocity(&self) -> alg::Vec3 { self.frame_vel }
-
-    /// Returns acceleration of instance in meters per second squared.
-    pub fn acceleration(&self) -> alg::Vec3 { self.frame_accel }
-
-    /// Returns axis and angular velocity of instance in radians per second.
-    pub fn ang_vel(&self) -> (alg::Vec3, f32) {
+    fn compute_ang_vel(&self, fixed_dt: f32) -> (alg::Vec3, f32) {
         debug_assert!(self.match_shape);
 
         // Computing via the torque equation
@@ -886,8 +882,17 @@ impl Instance {
             { alg::Vec3::up() } else { vec / mag };
 
         // Return separately for increased accuracy
-        (n, a / FIXED_DT)
+        (n, a / fixed_dt)
     }
+
+    /// Returns velocity of instance in meters per second.
+    pub fn velocity(&self) -> alg::Vec3 { self.frame_vel }
+
+    /// Returns acceleration of instance in meters per second squared.
+    pub fn acceleration(&self) -> alg::Vec3 { self.frame_accel }
+
+    /// Returns axis and angular velocity of instance in radians per second.
+    pub fn ang_vel(&self) -> (alg::Vec3, f32) { self.frame_ang_vel }
 
     /// Returns instance transform using least squares fit. \
     /// `center` is a parameter for optional caching.
@@ -1127,7 +1132,8 @@ impl<'a> InstanceBuilder<'a> {
 
     /// Finalize
     pub fn for_entity(&mut self, entity: entity::Handle) {
-        let initial_accel = self.manager.gravity; // Initialize with gravity
+        let initial_accel_dt = self.manager.gravity // Initialize with gravity
+            * self.manager.fixed_dt * self.manager.fixed_dt;
 
         #[cfg(debug_assertions)] {
             if self.start_indices.is_some() && !self.end_indices.is_some() {
@@ -1205,7 +1211,7 @@ impl<'a> InstanceBuilder<'a> {
                 self.mass,
                 self.rigidity,
                 self.initial_pos,
-                initial_accel,
+                initial_accel_dt,
                 self.end_offset.unwrap_or(0.5),
                 &[0, 1, 2, 3], // Start indices
                 &[4, 5, 6, 7], // End indices
@@ -1224,7 +1230,7 @@ impl<'a> InstanceBuilder<'a> {
                 self.mass,
                 self.rigidity,
                 self.initial_pos,
-                initial_accel,
+                initial_accel_dt,
                 self.end_offset.unwrap_or(0.0),
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
@@ -1246,7 +1252,7 @@ impl<'a> InstanceBuilder<'a> {
                 self.mass,
                 self.rigidity,
                 self.initial_pos,
-                initial_accel,
+                initial_accel_dt,
                 self.end_offset.unwrap_or(0.0),
                 self.start_indices.unwrap_or(&[]),
                 self.end_indices.unwrap_or(&[]),
@@ -1268,6 +1274,7 @@ pub struct Manager {
     planes: Vec<alg::Plane>,
 
     pub iterations: usize,
+    fixed_dt: f32,
     gravity: alg::Vec3,
     drag: f32,
     friction: f32,
@@ -1309,6 +1316,7 @@ impl components::Component for Manager {
 
 impl Manager {
     pub fn new(
+        fixed_dt: f32,
         instance_hint: usize,
         joint_hint: usize,
         plane_hint: usize,
@@ -1325,6 +1333,7 @@ impl Manager {
             joints: joint_map,
             planes: Vec::with_capacity(plane_hint),
             iterations: MNGR_DEFAULT_ITER,
+            fixed_dt: fixed_dt,
             gravity: alg::Vec3::new(0., -9.8, 0.), // Default gravity
             drag: MNGR_DEFAULT_DRAG,
             friction: MNGR_DEFAULT_FRICTION,
@@ -1356,15 +1365,15 @@ impl Manager {
     }
 
     pub fn energy(&self) -> f32 {
-        return self.instances.iter().filter_map(|i| i.as_ref())
+        self.instances.iter().filter_map(|i| i.as_ref())
             .map(
                 |i| i.particles.iter()
                     .map(
                         move |p|
-                        (1. / i.inv_pt_mass, p.displacement.mag() / FIXED_DT)
+                        (1. / i.inv_pt_mass, p.displacement().mag() / self.fixed_dt)
                     )
             ).flatten()
-                .fold(0., |acc, p| acc + 0.5 * p.0 * p.1 * p.1); // KE
+                .fold(0., |acc, p| acc + 0.5 * p.0 * p.1 * p.1) // KE
     }
 
     /// Returns closest particle in specified direction. \
@@ -1469,7 +1478,7 @@ impl Manager {
     pub fn set_force(&mut self, entity: entity::Handle, force: alg::Vec3) {
         let instance = get_mut_instance!(self, entity);
         instance.force = force;
-        instance.update_cache(self.gravity);
+        instance.update_cache(self.gravity, self.fixed_dt);
     }
 
     /// Get instance particle offsets from the model.
@@ -1672,7 +1681,7 @@ impl Manager {
 
         for i in 0..self.instances.len() {
             if let Some(ref mut instance) = self.instances[i] {
-                instance.update_cache(self.gravity);
+                instance.update_cache(self.gravity, self.fixed_dt);
             }
         }
     }
@@ -1705,35 +1714,14 @@ impl Manager {
         game: &mut T,
         transforms: &mut transform::Manager
     ) where T: Iterate {
+        let mut dbg_idx = 0;
+
         // Update instance particles
         for i in 0..self.instances.len() {
             let instance = match self.instances[i] {
                 Some(ref mut instance) => instance,
                 None => continue,
             };
-
-            // Plane friction
-            for plane in &self.planes {
-                for particle in &mut instance.particles {
-                    let distance = plane.dist(particle.position);
-
-                    if distance > 0. {
-                        continue;
-                    }
-
-                    let direction = particle.displacement.norm_safe();
-                    let tangent = direction
-                        .cross(plane.normal)
-                        .cross(plane.normal);
-
-                    let factor = tangent.dot(direction);
-                    let projected = tangent
-                        * particle.displacement.mag() * factor;
-
-                    particle.position = particle.position
-                        - projected * self.friction;
-                }
-            }
 
             // Position Verlet
             for particle in &mut instance.particles {
@@ -1748,16 +1736,6 @@ impl Manager {
             #[cfg(debug_assertions)] {
                 instance.debug.err.clear();
             }
-        }
-
-        // Solve abstracted constraints first
-        // Note: "true" delta time is FIXED_DT / ITERATIONS
-        for _ in 0..self.iterations {
-            // External constraints
-            game.iterate(FIXED_DT, self.iterations, self);
-
-            // Joint constraints
-            self.solve_joints();
         }
 
         // Solve constraints
@@ -1776,30 +1754,8 @@ impl Manager {
                     }
                 );
 
-                #[cfg(debug_assertions)]
-                let dbg_idx = instance.debug.err.len() - 1;
-
-                // Plane collision
-                for plane in &self.planes {
-                    for particle in &mut instance.particles {
-                        let distance = plane.dist(particle.position);
-
-                        if distance > 0. {
-                            continue;
-                        }
-
-                        particle.position = particle.position
-                            - plane.normal * self.bounce * distance;
-
-                        #[cfg(debug_assertions)] {
-                            instance.debug.err[dbg_idx].plane -= distance;
-                        }
-                    }
-
-                    #[cfg(debug_assertions)] {
-                        instance.debug.err[dbg_idx].plane /=
-                            instance.particles.len() as f32;
-                    }
+                #[cfg(debug_assertions)] {
+                    dbg_idx = instance.debug.err.len() - 1;
                 }
 
                 // Rods
@@ -1866,6 +1822,77 @@ impl Manager {
             }
         }
 
+        // Solve abstracted constraints
+        // Note: "true" delta time is FIXED_DT / ITERATIONS
+        for _ in 0..self.iterations {
+            // External constraints
+            game.iterate(self.fixed_dt, self.iterations, self);
+
+            // Joint constraints
+            self.solve_joints();
+        }
+
+        #[cfg(debug_assertions)] { dbg_idx = 0 }
+
+        // Apply velocity constraints in one pass
+        for i in 0..self.instances.len() {
+            let instance = match self.instances[i] {
+                Some(ref mut instance) => instance,
+                None => continue,
+            };
+
+            for plane in &self.planes {
+                for particle in &mut instance.particles {
+                    let distance = plane.dist(particle.position);
+
+                    if distance > 0. {
+                        continue;
+                    }
+
+                    let disp = particle.displacement();
+
+                    /* Plane collision */
+
+                    if distance < 0. {
+                        particle.position = particle.position
+                            - plane.normal * self.bounce * distance;
+
+                        if self.bounce >= 1. {
+                            let b = self.bounce - 1.0;
+                            let v = plane.normal.dot(disp);
+                            let last_distance = plane.dist(particle.last);
+                            particle.last = particle.last + plane.normal
+                                * (b * (v - distance) - last_distance);
+                        }
+
+                        #[cfg(debug_assertions)] {
+                            instance.debug.err[dbg_idx].plane -= distance;
+                        }
+                    }
+
+                    /* Plane friction */
+
+                    let direction = disp.norm_safe();
+                    let tangent = direction
+                        .cross( plane.normal)
+                        .cross(-plane.normal)
+                        .norm_safe();
+
+                    let factor = tangent.dot(disp);
+                    let projected = tangent * factor;
+                    particle.position = particle.position
+                        - projected * self.friction;
+                }
+
+                #[cfg(debug_assertions)] {
+                    instance.debug.err[dbg_idx].plane /=
+                        instance.particles.len() as f32;
+                }
+            }
+
+            #[cfg(debug_assertions)] { dbg_idx += 1 }
+        }
+
         // Finalize instances
         for i in 0..self.instances.len() {
             let mut instance = match self.instances[i] {
@@ -1898,13 +1925,10 @@ impl Manager {
                 instance.debug.internal_vel = 0.0;
             }
 
-            for particle in &mut instance.particles {
-                // Meters per FIXED_DT
-                particle.displacement = particle.position - particle.last;
-
-                #[cfg(debug_assertions)] {
-                    instance.debug.internal_vel += particle.displacement.mag()
-                        / FIXED_DT;
+            #[cfg(debug_assertions)] {
+                for particle in &mut instance.particles {
+                    let disp = particle.displacement(); // Meters per FIXED_DT
+                    instance.debug.internal_vel += disp.mag() / self.fixed_dt;
                 }
             }
 
@@ -1913,9 +1937,13 @@ impl Manager {
                 instance.debug.age += 1;
             }
 
-            let new_vel = instance.compute_velocity();
-            instance.frame_accel = instance.compute_accel(new_vel);
+            let new_vel = instance.compute_velocity(self.fixed_dt);
+            instance.frame_accel = instance.compute_accel(new_vel, self.fixed_dt);
             instance.frame_vel = new_vel;
+
+            if instance.match_shape {
+                instance.frame_ang_vel = instance.compute_ang_vel(self.fixed_dt);
+            }
         }
     }
 
@@ -2286,7 +2314,7 @@ impl Manager {
                      disp={}\n",
                     p.position,
                     p.last,
-                    p.displacement,
+                    p.displacement(),
                 );
             }
 
@@ -2605,13 +2633,15 @@ mod tests {
     use components::*;
     use alg::*;
 
-    use ::FIXED_DT;
-    const KE_MARGIN: f32 = std::f32::EPSILON * 2.0;
+    const DEFAULT_FIXED_DT: f32 = ::FIXED_DT;
+    const KE_THRESH: f32 = std::f32::EPSILON * 2.0;
+    const KE_MARGIN: f32 = 1e-4;
 
     struct Empty { }
     impl softbody::Iterate for Empty { }
 
     struct Context {
+        fixed_dt: f32,
         entities: entity::Manager,
         transforms: transform::Manager,
         softbodies: softbody::Manager,
@@ -2619,17 +2649,33 @@ mod tests {
     }
 
     impl Context {
-        fn new() -> Context {
+        fn new(fixed_dt: f32) -> Context {
             Context {
+                fixed_dt: fixed_dt,
                 entities: entity::Manager::new(1),
                 transforms: transform::Manager::new(1),
-                softbodies: softbody::Manager::new(1, 1, 1),
+                softbodies: softbody::Manager::new(fixed_dt, 1, 1, 1),
                 empty: Empty { },
             }
         }
 
-        fn single() -> (Context, entity::Handle) {
-            let mut ctx = Context::new();
+        fn particle(fixed_dt: f32) -> (Context, entity::Handle) {
+            let mut ctx = Context::new(fixed_dt);
+            let e = ctx.entities.add();
+            ctx.transforms.register(e);
+            ctx.softbodies.register(e);
+
+            ctx.softbodies.build_instance()
+                .particles(&[Vec3::zero()])
+                .indices(&[0])
+                .mass(1.0)
+                .for_entity(e);
+
+            (ctx, e)
+        }
+
+        fn single(fixed_dt: f32) -> (Context, entity::Handle) {
+            let mut ctx = Context::new(fixed_dt);
             let e = ctx.entities.add();
             ctx.transforms.register(e);
             ctx.softbodies.register(e);
@@ -2642,16 +2688,16 @@ mod tests {
             (ctx, e)
         }
 
-        fn init_instance(
-            &mut self,
-            e: entity::Handle,
-            f: fn(Vec3) -> (Vec3, Vec3),
-        ) {
+        fn init_instance<F>(&mut self, e: entity::Handle, f: F)
+            where F: Copy, F: FnOnce(Vec3) -> (Vec3, Vec3)
+        {
             let instance = self.softbodies.get_mut_instance(e);
+            let fixed_dt = self.fixed_dt;
             instance.particles.iter_mut().for_each(
                 |p| {
                     let (to, vel) = f(p.position);
-                    p.init(to, vel);
+                    p.position = to;
+                    p.last = to - vel * fixed_dt;
                 }
             );
         }
@@ -2674,19 +2720,21 @@ mod tests {
             #[cfg(debug_assertions)] self.log_instances();
         }
 
-        fn spin(&mut self, duration: f32) {
-            let count = (duration / FIXED_DT) as u32;
+        fn spin_unchecked(&mut self, duration: f32) {
+            let count = (duration / self.fixed_dt) as u32;
             for _ in 0..count { self.cycle(); }
         }
 
-        fn burndown(&mut self, duration: f32) {
-            let count = (duration / FIXED_DT) as u32 - 1;
+        fn spin(&mut self, duration: f32) -> (f32, f32) {
+            let count = (duration / self.fixed_dt) as u32;
+            let count = if count > 0 { count - 1 } else { count };
 
             println!("tick={}", 0);
             self.cycle();
             let initial = self.softbodies.energy();
             let mut last = initial;
             println!("\tinitial energy={:.4}J (1 tick warmup)", initial);
+            println!("\tfixed_dt={}, count=1+{}", self.fixed_dt, count);
 
             for i in 0..count {
                 let tick = i + 1;
@@ -2696,23 +2744,24 @@ mod tests {
                 let ke = self.softbodies.energy();
                 println!("\tenergy={:.4}J", ke);
 
-                if last < KE_MARGIN {
-                    if ke > KE_MARGIN {
+                if last < KE_THRESH {
+                    if ke > KE_THRESH {
                         eprintln!(" initial value: {:.2}J", initial);
-                        eprintln!("previous value: {}J < {}J", last, KE_MARGIN);
+                        eprintln!("previous value: {}J < {}J", last, KE_THRESH);
 
                         eprintln!(
                             " trigger value: {}J @ tick {} > {}J",
                             ke,
                             tick,
-                            KE_MARGIN
+                            KE_THRESH
                         );
 
-                        assert!(ke < KE_MARGIN);
+                        assert!(ke < KE_THRESH);
                     }
-                } else if ke > last {
+                // TODO: add warning for strict gt
+                } else if ke - last > KE_MARGIN {
                     eprintln!(" initial value: {:.2}J", initial);
-                    eprintln!("previous value: {}J > {}J", last, KE_MARGIN);
+                    eprintln!("previous value: {}J > {}J", last, KE_THRESH);
 
                     eprintln!(
                         " trigger value: {:.2}J @ tick {} > prev.",
@@ -2720,23 +2769,29 @@ mod tests {
                         tick,
                     );
 
-                    assert!(ke < last);
+                    assert!(ke - last > KE_MARGIN);
                 }
 
                 last = ke;
             }
 
-            if last > KE_MARGIN {
+            (initial, last)
+        }
+
+        fn burndown(&mut self, duration: f32) {
+            let (initial, end) = self.spin(duration);
+
+            if end > KE_THRESH {
                 eprintln!("initial value: {:.2}J", initial);
 
                 eprintln!(
                     "  final value: {}J ({}s) > {}J",
-                    last,
+                    end,
                     duration,
-                    KE_MARGIN
+                    KE_THRESH
                 );
 
-                assert!(last < KE_MARGIN);
+                assert!(end < KE_THRESH);
             }
         }
     }
@@ -2748,20 +2803,19 @@ mod tests {
 
     #[test]
     fn energy() {
-        let (mut ctx, e) = Context::single();
+        let (mut ctx, e) = Context::single(1.0);
         ctx.init_instance(e, |pos| (pos, Vec3::up()));
         ctx.softbodies.iterations = 1;
         ctx.softbodies.set_gravity(Vec3::zero());
         ctx.softbodies.set_drag(0.0);
         ctx.cycle();
 
-        // Note: error is timestep-dependent
-        assert_approx_eq!(ctx.softbodies.energy(), 0.5, 16.0);
+        assert_approx_eq!(ctx.softbodies.energy(), 0.5, 1.0);
     }
 
     #[test]
     fn baseline() {
-        let (mut ctx, e) = Context::single();
+        let (mut ctx, e) = Context::single(DEFAULT_FIXED_DT);
         ctx.softbodies.iterations = 1;
         ctx.softbodies.set_gravity(Vec3::zero());
         ctx.softbodies.set_drag(0.0);
@@ -2777,40 +2831,38 @@ mod tests {
     fn drag_none() {
         {   /* Pull vertices */
 
-            let (mut ctx, e) = Context::single();
+            let (mut ctx, e) = Context::single(1.0);
             ctx.init_instance(e, |pos| (pos, Vec3::up()));
             ctx.softbodies.iterations = 1;
             ctx.softbodies.set_gravity(Vec3::zero());
             ctx.softbodies.set_drag(0.0);
-            ctx.spin(1.0);
+            ctx.spin(2.0);
 
             let pos = ctx.transforms.get_position(e);
             let orient = ctx.transforms.get_orientation(e);
 
-            // Note: error is timestep-dependent
-            assert_approx_eq_vec3!(pos, Vec3::up(), 10.0 * 8192.0);
+            assert_approx_eq_vec3!(pos, Vec3::up() * 2.0, 1.0);
             assert_approx_eq_quat!(orient, Quat::id(), 1.0);
         }
         {   /* Add force */
 
-            let (mut ctx, e) = Context::single();
+            let (mut ctx, e) = Context::single(1.0);
             ctx.softbodies.iterations = 1;
             ctx.softbodies.set_gravity(Vec3::up());
             ctx.softbodies.set_drag(0.0);
-            ctx.spin(1.0);
+            ctx.spin_unchecked(2.0);
 
             let pos = ctx.transforms.get_position(e);
             let orient = ctx.transforms.get_orientation(e);
 
-            // Note: error is timestep-dependent
-            assert_approx_eq_vec3!(pos, Vec3::up() * 0.5, 10.0 * 8192.0);
+            assert_approx_eq_vec3!(pos, Vec3::up() * 3.0, 1.0);
             assert_approx_eq_quat!(orient, Quat::id(), 1.0);
         }
     }
 
     #[test]
     fn drag_full() {
-        let (mut ctx, e) = Context::single();
+        let (mut ctx, e) = Context::single(DEFAULT_FIXED_DT);
         ctx.init_instance(e, |pos| (pos, Vec3::one()));
         ctx.softbodies.iterations = 1;
         ctx.softbodies.set_gravity(Vec3::up() * 128.0);
@@ -2830,12 +2882,12 @@ mod tests {
             println!("i={}, scale={}", i, scale);
 
             // Implicitly tests singular shapes
-            let (mut ctx, e) = Context::single();
+            let (mut ctx, e) = Context::single(1.0 / 30.0);
             {
                 let inst = ctx.softbodies.get_mut_instance(e);
                 inst.rigidity = 1.0;
                 inst.particles.iter_mut()
-                    .for_each(|p| p.init(p.position * scale, Vec3::zero()));
+                    .for_each(|p| p.position = p.position * scale);
 
                 let orient = inst.matched_orient(inst.center());
                 assert_approx_eq_quat!(orient, Quat::id(), 1.0);
@@ -2843,7 +2895,7 @@ mod tests {
 
             ctx.softbodies.iterations = 1;
             ctx.softbodies.set_gravity(Vec3::zero());
-            ctx.softbodies.set_drag(0.5); // Reduce rubber banding
+            ctx.softbodies.set_drag(0.0);
             ctx.burndown(1.0);
             {
                 let orient = ctx.transforms.get_orientation(e);
@@ -2878,7 +2930,7 @@ mod tests {
             let rot = Quat::axis_angle(Vec3::up(), rad);
             println!("rot={}", rot);
 
-            let (mut ctx, e) = Context::single();
+            let (mut ctx, e) = Context::single(1.0 / 30.0);
             {
                 let inst = ctx.softbodies.get_mut_instance(e);
                 let center = inst.center();
@@ -2895,7 +2947,6 @@ mod tests {
             ctx.softbodies.set_drag(0.0);
             ctx.cycle();
 
-            let new = rot * rot;
             let orient = ctx.transforms.get_orientation(e);
             let actual = orient.abs_angle();
             let err = (actual - 2.0 * rad).abs()
@@ -2909,7 +2960,7 @@ mod tests {
 
             if err > 1.0 {
                 assert_eq!(i, regress_limit);
-                let rps = deg / (360.0 * FIXED_DT);
+                let rps = deg / (360.0 * ctx.fixed_dt);
                 let rpm = 60.0 * rps;
 
                 println!(
@@ -2929,7 +2980,7 @@ mod tests {
 
     #[test]
     fn shape_inv() {
-        let (mut ctx, e) = Context::single();
+        let (mut ctx, e) = Context::single(1.0 / 30.0);
         ctx.init_instance(
             e,
             |mut pos| {
@@ -2972,7 +3023,7 @@ mod tests {
 
     #[test]
     fn shape_planar() {
-        let (mut ctx, e) = Context::single();
+        let (mut ctx, e) = Context::single(1.0 / 30.0);
         ctx.init_instance(
             e,
             |mut pos| {
@@ -3016,7 +3067,7 @@ mod tests {
     #[test]
     fn shape_rand() {
         for i in 0..128 {
-            let (mut ctx, e) = Context::single();
+            let (mut ctx, e) = Context::single(1.0 / 30.0);
             ctx.init_instance(
                 e, |pos| {
                     let off = Vec3::new(rands(), rands(), rands());
@@ -3043,7 +3094,7 @@ mod tests {
     #[cfg(debug_assertions)]
     fn shape_err_baseline() {
         for i in 0..32 {
-            let (mut ctx, e) = Context::single();
+            let (mut ctx, e) = Context::single(1.0 / 30.0);
             ctx.init_instance(
                 e, |pos| {
                     let off = Vec3::new(rands(), rands(), rands());
@@ -3065,7 +3116,7 @@ mod tests {
             {
                 let instance = ctx.softbodies.get_instance(e);
                 // Dependent on EXTRACT_ITER
-                assert_approx_eq!(instance.debug.err[1].shape, 0.0, 4.0);
+                assert_approx_eq!(instance.debug.err[1].shape, 0.0, 2.0);
             }
 
             println!("\n= = =\n");
@@ -3074,7 +3125,7 @@ mod tests {
 
     #[test]
     fn shape_regression_0() {
-        let (mut ctx, e) = Context::single();
+        let (mut ctx, e) = Context::single(1.0 / 30.0);
 
         {
             let instance = ctx.softbodies.get_mut_instance(e);
@@ -3117,5 +3168,261 @@ mod tests {
         ctx.softbodies.set_gravity(Vec3::zero());
         ctx.softbodies.set_drag(0.1);
         ctx.burndown(8.0);
+    }
+
+    #[test]
+    fn plane_particle_baseline()
+    {
+        let (mut ctx, e) = Context::particle(1.0);
+        ctx.init_instance(e, |pos| (pos, -Vec3::up()));
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(0.0);
+        ctx.softbodies.set_bounce(2.0);
+
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+
+        ctx.spin(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        assert_approx_eq_vec3!(pos, Vec3::up(), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::up(), 1.0);
+    }
+
+    #[test]
+    fn plane_particle_null()
+    {
+        let (mut ctx, e) = Context::particle(1.0);
+        ctx.init_instance(e, |pos| (pos, -Vec3::up()));
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(0.0);
+        ctx.softbodies.set_bounce(1.0);
+
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+
+        ctx.spin(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        assert_approx_eq_vec3!(pos, Vec3::zero(), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::zero(), 1.0);
+    }
+
+    #[test]
+    fn plane_particle_reflect()
+    {
+        let (mut ctx, e) = Context::particle(1.0);
+        ctx.init_instance(
+            e, |pos| (
+                pos + Vec3::zero(),
+                      Vec3::new(-1.0, -1.0, 0.0)
+            )
+        );
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(0.0);
+        ctx.softbodies.set_bounce(2.0);
+
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+
+        ctx.spin(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        assert_approx_eq_vec3!(pos, Vec3::new(-1.0, 1.0, 0.0), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::new(-1.0, 1.0, 0.0), 1.0);
+    }
+
+    #[test]
+    fn plane_particle_reflect_damp()
+    {
+        let (mut ctx, e) = Context::particle(1.0);
+        ctx.init_instance(
+            e, |pos| (
+                pos + Vec3::zero(),
+                      Vec3::new(-1.0, -1.0, 0.0)
+            )
+        );
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(0.0);
+        ctx.softbodies.set_bounce(1.5);
+
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+
+        ctx.spin(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        assert_approx_eq_vec3!(pos, Vec3::new(-1.0, 0.5, 0.0), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::new(-1.0, 0.5, 0.0), 1.0);
+    }
+
+    #[test]
+    fn plane_particle_friction_full()
+    {
+        let (mut ctx, e) = Context::particle(1.0);
+        ctx.init_instance(
+            e, |pos| (
+                pos + Vec3::zero(),
+                      Vec3::new(-1.0, -1.0, 0.0)
+            )
+        );
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(1.0);
+        ctx.softbodies.set_bounce(2.0);
+
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+
+        ctx.spin(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        assert_approx_eq_vec3!(pos, Vec3::new(0.0, 1.0, 0.0), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::new(0.0, 1.0, 0.0), 1.0);
+    }
+
+    #[test]
+    fn plane_particle_friction_half()
+    {
+        let (mut ctx, e) = Context::particle(1.0);
+        ctx.init_instance(
+            e, |pos| (
+                pos + Vec3::zero(),
+                      Vec3::new(-1.0, -1.0, 0.0)
+            )
+        );
+
+        ctx.softbodies.iterations = 1;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(0.5);
+        ctx.softbodies.set_bounce(2.0);
+
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+
+        ctx.spin(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        assert_approx_eq_vec3!(pos, Vec3::new(-0.5, 1.0, 0.0), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::new(-0.5, 1.0, 0.0), 1.0);
+    }
+
+    #[test]
+    fn plane_particle_fract()
+    {
+        for i in 2..9 {
+            let v = (i as f32) * 0.1;
+
+            let (mut ctx, e) = Context::particle(1.0);
+            ctx.init_instance(e, |_| (Vec3::right(), -Vec3::right() * v));
+
+            ctx.softbodies.iterations = 1;
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.0);
+            ctx.softbodies.set_friction(0.0);
+            ctx.softbodies.set_bounce(2.0);
+
+            ctx.softbodies.add_planes(&[Plane::new(Vec3::right(), 0.0)]);
+
+            let steps = 2.0 * 1.0 / v;
+
+            ctx.spin(steps.floor());
+            let prev = ctx.transforms.get_position(e);
+            ctx.spin(1.0);
+            let pos = ctx.transforms.get_position(e);
+
+            let fract = steps % 1.0;
+            let interp = prev.lerp(pos, fract).x;
+
+            println!("v={}, steps={}+1", v, steps.floor());
+            assert_approx_eq!(interp, 1.0, 400.0);
+        }
+    }
+
+    #[test]
+    fn plane_shape_damp() {
+        for i in 0..5 {
+            let v = i as f32 * 0.25;
+
+            let (mut ctx, e) = Context::single(1.0);
+            ctx.init_instance(e, |pos| (pos + Vec3::up() * 0.5, -Vec3::up() * v));
+            ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+            ctx.softbodies.iterations = 2;
+            ctx.softbodies.set_gravity(Vec3::zero());
+            ctx.softbodies.set_drag(0.0);
+            ctx.softbodies.set_friction(0.0);
+            ctx.softbodies.set_bounce(2.0);
+
+            // The initial velocity is cancelled out for one tick
+            // due to the constraint order;
+            // afterwards we regain the original energy.
+            ctx.spin(2.0);
+
+            let pos = ctx.transforms.get_position(e);
+            let vel = {
+                let instance = ctx.softbodies.get_instance(e);
+                instance.velocity()
+            };
+
+            assert_approx_eq_vec3!(pos, Vec3::up() * 0.5, 1.0);
+            assert_approx_eq_vec3!(vel, Vec3::up() * v, 1.0);
+        }
+    }
+
+    #[test]
+    fn plane_shape_full() {
+        let vy = 1.0 + 1e-4;
+
+        let (mut ctx, e) = Context::single(1.0);
+        ctx.init_instance(e, |pos| (pos + Vec3::up() * 0.5, -Vec3::up() * vy));
+        ctx.softbodies.add_planes(&[Plane::new(Vec3::up(), 0.0)]);
+        ctx.softbodies.iterations = 2;
+        ctx.softbodies.set_gravity(Vec3::zero());
+        ctx.softbodies.set_drag(0.0);
+        ctx.softbodies.set_friction(0.0);
+        ctx.softbodies.set_bounce(2.0);
+
+        ctx.spin_unchecked(1.0);
+        let pos = ctx.transforms.get_position(e);
+        let vel = {
+            let instance = ctx.softbodies.get_instance(e);
+            instance.velocity()
+        };
+
+        // The mesh completely penetrates the plane
+        // and a full bounce is observed.
+        assert_approx_eq_vec3!(pos, Vec3::up() * (0.5 + 1e-4), 1.0);
+        assert_approx_eq_vec3!(vel, Vec3::up() * vy, 1.0);
     }
 }

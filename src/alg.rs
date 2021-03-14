@@ -12,11 +12,13 @@ macro_rules! assert_approx_eq {
         let err = ($lhs - $rhs).abs();
         let min = std::f32::EPSILON * $prec;
         let mag = err / min;
+
         if err > min {
+            let fit = err / std::f32::EPSILON;
             panic!(
                 "assertion failed: `(lhs ~= rhs)`\
-                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
-                $lhs, $rhs, err, min, mag,
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x) (fit={:.2})",
+                $lhs, $rhs, err, min, mag, fit
             );
         }
     }
@@ -35,10 +37,11 @@ macro_rules! assert_approx_eq_vec3 {
         let mag = err / min;
 
         if err > min {
+            let fit = err / std::f32::EPSILON;
             panic!(
                 "assertion failed: `(lhs ~= rhs)`\
-                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x)",
-                $lhs, $rhs, err, min, mag,
+                 \n  lhs: {}\n  rhs: {}\n  err: {} > {} ({:.1}x) (fit={:.2})",
+                $lhs, $rhs, err, min, mag, fit
             );
         }
     }
